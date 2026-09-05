@@ -1,0 +1,267 @@
+{
+  "_meta": {
+    "purpose": "Per-node rules for generating concrete IUPAC molecules when the graph traversal picks a node. Each node has a pool of molecule templates. The generator samples one, scales complexity by difficulty, and applies IUPAC semantic obfuscation.",
+    "fields": {
+      "node_id": "Canonical graph node ID",
+      "molecules": "Pool of concrete molecule examples for this node class",
+      "iupac_preferred": "IUPAC name (required for semantic_obfuscation meta-tag)",
+      "complexity": "1-3: how structurally complex (1=simple chain, 3=chiral/cyclic/polyfunctional)",
+      "interesting_when": "List of edge IDs or conditions where this molecule makes for a good question (rich stereochemistry, rearrangement, etc.)",
+      "avoid_with": "List of edge IDs where this molecule is too simple or misleading"
+    }
+  },
+
+  "nodes": {
+    "alkane": {
+      "molecules": [
+        { "iupac": "propane",                  "common": "propane",     "formula": "C3H8",   "complexity": 1 },
+        { "iupac": "butane",                   "common": "butane",      "formula": "C4H10",  "complexity": 1 },
+        { "iupac": "2-methylpropane",          "common": "isobutane",   "formula": "C4H10",  "complexity": 1,
+          "interesting_when": ["alkane_to_alkyl_halide"],
+          "note": "Two distinct H environments → selectivity question" },
+        { "iupac": "2-methylbutane",           "common": "isopentane",  "formula": "C5H12",  "complexity": 2,
+          "interesting_when": ["alkane_to_alkyl_halide"],
+          "note": "3 distinct H environments → monobromination selectivity" },
+        { "iupac": "2,2-dimethylpropane",      "common": "neopentane",  "formula": "C5H12",  "complexity": 2,
+          "interesting_when": ["alkane_to_alkyl_halide"],
+          "note": "All 12 H equivalent → single monobromination product" }
+      ],
+      "generation_rule": "For chain length n=3-6, prefer branched isomers for selectivity questions"
+    },
+
+    "alkene": {
+      "molecules": [
+        { "iupac": "prop-1-ene",               "common": "propene",     "formula": "C3H6",   "complexity": 1 },
+        { "iupac": "but-1-ene",                "common": "1-butene",    "formula": "C4H8",   "complexity": 1 },
+        { "iupac": "but-2-ene",                "common": "2-butene",    "formula": "C4H8",   "complexity": 1,
+          "stereo_variants": ["(E)-but-2-ene", "(Z)-but-2-ene"],
+          "interesting_when": ["alkene_to_vicinal_dihalide", "alkene_to_diol"],
+          "note": "Anti addition → meso vs racemic distinction; classic JEE stereochemistry" },
+        { "iupac": "2-methylprop-1-ene",       "common": "isobutylene", "formula": "C4H8",   "complexity": 1,
+          "interesting_when": ["alkene_to_alkyl_halide", "alkene_to_alcohol"],
+          "note": "Markovnikov regioselectivity: gives tertiary product" },
+        { "iupac": "pent-1-ene",               "common": "1-pentene",   "formula": "C5H10",  "complexity": 2 },
+        { "iupac": "cyclohex-1-ene",           "common": "cyclohexene", "formula": "C6H10",  "complexity": 2,
+          "interesting_when": ["alkene_to_diol", "alkene_to_epoxide", "alkene_to_halohydrin"],
+          "note": "Cyclic alkene: syn addition → cis diol; anti addition → trans product" },
+        { "iupac": "styrene",                  "common": "styrene",     "formula": "C8H8",   "complexity": 2,
+          "interesting_when": ["alkene_to_alkyl_halide"],
+          "note": "Benzylic carbocation stabilization → Markovnikov always gives benzylic product" }
+      ],
+      "generation_rule": "Prefer disubstituted for stereochemistry questions; monosubstituted for Markovnikov/anti-Markovnikov"
+    },
+
+    "alkyne": {
+      "molecules": [
+        { "iupac": "ethyne",                   "common": "acetylene",   "formula": "C2H2",   "complexity": 1,
+          "interesting_when": ["alkyne_to_acetylide_ion"],
+          "note": "Both H acidic; forms dicarbanion with excess NaNH2" },
+        { "iupac": "prop-1-yne",               "common": "propyne",     "formula": "C3H4",   "complexity": 1,
+          "interesting_when": ["alkyne_to_acetylide_ion", "alkyne_to_alkene"] },
+        { "iupac": "but-1-yne",                "common": "1-butyne",    "formula": "C4H6",   "complexity": 1 },
+        { "iupac": "but-2-yne",                "common": "2-butyne",    "formula": "C4H6",   "complexity": 1,
+          "interesting_when": ["alkyne_to_alkene"],
+          "note": "Internal alkyne: Lindlar gives (Z)-alkene; Na/liq NH3 gives (E)-alkene" }
+      ],
+      "generation_rule": "Terminal alkynes for Grignard/alkylation; internal for cis/trans hydrogenation"
+    },
+
+    "diene_conjugated": {
+      "molecules": [
+        { "iupac": "buta-1,3-diene",           "common": "1,3-butadiene", "formula": "C4H6", "complexity": 1,
+          "interesting_when": ["diene_conjugated_to_alkene"],
+          "note": "1,2 vs 1,4 addition; Diels-Alder with dienophile" },
+        { "iupac": "2-methylbuta-1,3-diene",   "common": "isoprene",    "formula": "C5H8",   "complexity": 1 },
+        { "iupac": "cyclopenta-1,3-diene",     "common": "cyclopentadiene", "formula": "C5H6","complexity": 2,
+          "interesting_when": [],
+          "note": "Best Diels-Alder diene (s-cis locked); also acidic C-H (pKa ~16)" }
+      ]
+    },
+
+    "alcohol": {
+      "molecules": [
+        { "iupac": "propan-1-ol",              "common": "n-propanol",  "formula": "C3H8O",  "complexity": 1 },
+        { "iupac": "propan-2-ol",              "common": "isopropanol", "formula": "C3H8O",  "complexity": 1,
+          "interesting_when": ["alcohol_to_alkene", "alcohol_to_alkyl_halide"],
+          "note": "Secondary alcohol: E2 gives propene; Lucas test slower than tertiary" },
+        { "iupac": "2-methylpropan-2-ol",      "common": "tert-butanol","formula": "C4H10O", "complexity": 1,
+          "interesting_when": ["alcohol_to_alkene"],
+          "note": "Tertiary: fastest Lucas; dehydration gives 2-methylprop-1-ene" },
+        { "iupac": "butan-1-ol",               "common": "n-butanol",   "formula": "C4H10O", "complexity": 1 },
+        { "iupac": "butan-2-ol",               "common": "sec-butanol", "formula": "C4H10O", "complexity": 2,
+          "interesting_when": ["alcohol_to_alkene"],
+          "note": "E2 gives both but-1-ene and but-2-ene; Saytzeff gives but-2-ene (major)" },
+        { "iupac": "(R)-butan-2-ol",           "common": "(R)-2-butanol","formula": "C4H10O","complexity": 3,
+          "interesting_when": ["alcohol_to_alkyl_halide"],
+          "note": "Chiral: SOCl2/pyridine gives INVERSION; SNi gives RETENTION" }
+      ]
+    },
+
+    "alkyl_halide": {
+      "molecules": [
+        { "iupac": "2-bromopropane",           "common": "isopropyl bromide","formula": "C3H7Br", "complexity": 1 },
+        { "iupac": "2-bromo-2-methylpropane",  "common": "tert-butyl bromide","formula": "C4H9Br","complexity": 1,
+          "interesting_when": ["alkyl_halide_to_alkene"],
+          "note": "Tertiary: E1 dominant under SN1 conditions; E2 with strong base" },
+        { "iupac": "1-bromopropane",           "common": "n-propyl bromide","formula": "C3H7Br","complexity": 1,
+          "interesting_when": ["alkyl_halide_to_alkene"],
+          "note": "Primary: SN2 dominant; E2 gives propene only" },
+        { "iupac": "(R)-2-bromobutane",        "common": "(R)-2-bromobutane","formula": "C4H9Br","complexity": 3,
+          "interesting_when": ["alkyl_halide_to_alcohol", "alkyl_halide_to_alkene"],
+          "note": "SN2 → inversion to (S); E2 → anti-periplanar H requirement → E/Z product" },
+        { "iupac": "2-bromo-2-methylbutane",   "common": "tert-amyl bromide","formula": "C5H11Br","complexity": 2,
+          "interesting_when": ["alkyl_halide_to_alkene"],
+          "note": "Zaitsev (2-methylbut-2-ene, more substituted) vs Hofmann product" },
+        { "iupac": "3-bromo-3-methylpentane",  "common": "3-bromo-3-methylpentane","formula": "C6H13Br","complexity": 2 }
+      ]
+    },
+
+    "epoxide": {
+      "molecules": [
+        { "iupac": "oxirane",                  "common": "ethylene oxide","formula": "C2H4O", "complexity": 1 },
+        { "iupac": "methyloxirane",            "common": "propylene oxide","formula": "C3H6O","complexity": 2,
+          "interesting_when": ["epoxide_to_alcohol", "epoxide_to_diol"],
+          "note": "Acid conditions: Nu attacks more substituted C; base: less substituted C" },
+        { "iupac": "(1R,2R)-cyclohex-1,2-ene oxide","common": "cyclohexene oxide","formula": "C6H10O","complexity": 3,
+          "interesting_when": ["epoxide_to_diol"],
+          "note": "Ring opening: trans-diaxial product; anti-addition overall" }
+      ]
+    },
+
+    "aldehyde": {
+      "molecules": [
+        { "iupac": "ethanal",                  "common": "acetaldehyde","formula": "C2H4O",  "complexity": 1,
+          "interesting_when": ["aldehyde_to_alcohol", "aldehyde_to_carboxylic_acid"] },
+        { "iupac": "propanal",                 "common": "propionaldehyde","formula": "C3H6O","complexity": 1 },
+        { "iupac": "pentanal",                 "common": "valeraldehyde","formula": "C5H10O","complexity": 2 },
+        { "iupac": "benzaldehyde",             "common": "benzaldehyde","formula": "C7H6O",  "complexity": 2,
+          "interesting_when": ["aldehyde_to_carboxylic_acid", "aldehyde_to_alcohol"],
+          "note": "Cannizzaro (no alpha-H): disproportionation; Tollens positive; NaBH4 but not Fehling for aromatic" },
+        { "iupac": "(E)-but-2-enal",           "common": "crotonaldehyde","formula": "C4H6O","complexity": 2,
+          "interesting_when": ["aldehyde_to_alcohol"],
+          "note": "Alpha-beta-unsaturated aldehyde: 1,2 vs 1,4 addition selectivity" }
+      ]
+    },
+
+    "ketone": {
+      "molecules": [
+        { "iupac": "propan-2-one",             "common": "acetone",     "formula": "C3H6O",  "complexity": 1,
+          "interesting_when": ["ketone_to_alcohol"],
+          "note": "Simplest ketone; iodoform test positive" },
+        { "iupac": "butan-2-one",              "common": "methyl ethyl ketone","formula": "C4H8O","complexity": 1 },
+        { "iupac": "cyclohexanone",            "common": "cyclohexanone","formula": "C6H10O","complexity": 2,
+          "interesting_when": ["ketone_to_alcohol", "ketone_to_alkene"],
+          "note": "Wittig/Wolff-Kishner; axial vs equatorial OH in cyclohexanol product" },
+        { "iupac": "pentan-2-one",             "common": "methyl propyl ketone","formula": "C5H10O","complexity": 1,
+          "interesting_when": ["ketone_to_alcohol"],
+          "note": "Iodoform test positive (CH3CO- group present)" },
+        { "iupac": "pentan-3-one",             "common": "diethyl ketone","formula": "C5H10O","complexity": 1,
+          "note": "Iodoform test NEGATIVE — no CH3CO- group; important JEE distinction" }
+      ]
+    },
+
+    "carboxylic_acid": {
+      "molecules": [
+        { "iupac": "ethanoic acid",            "common": "acetic acid",  "formula": "C2H4O2","complexity": 1 },
+        { "iupac": "propanoic acid",           "common": "propionic acid","formula": "C3H6O2","complexity": 1 },
+        { "iupac": "benzoic acid",             "common": "benzoic acid", "formula": "C7H6O2","complexity": 2 },
+        { "iupac": "2-methylpropanoic acid",   "common": "isobutyric acid","formula": "C4H8O2","complexity": 1 },
+        { "iupac": "2-chloroethanoic acid",    "common": "chloroacetic acid","formula": "C2H3ClO2","complexity": 2,
+          "interesting_when": [],
+          "note": "EWG alpha to COOH: pKa 2.86 vs acetic 4.76 — acidity JEE trap" }
+      ]
+    },
+
+    "amine": {
+      "molecules": [
+        { "iupac": "propan-1-amine",           "common": "n-propylamine","formula": "C3H9N",  "complexity": 1 },
+        { "iupac": "N-methylethanamine",       "common": "ethylmethylamine","formula": "C3H9N","complexity": 1,
+          "note": "Secondary amine: reacts with HNO2 to give N-nitroso, not diazonium" },
+        { "iupac": "N,N-dimethylmethanamine",  "common": "trimethylamine","formula": "C3H9N", "complexity": 1,
+          "note": "Tertiary: Hofmann exhaustive methylation pathway" },
+        { "iupac": "cyclohexylamine",          "common": "cyclohexylamine","formula": "C6H13N","complexity": 2 }
+      ]
+    },
+
+    "phenol": {
+      "molecules": [
+        { "iupac": "phenol",                   "common": "phenol",       "formula": "C6H6O",  "complexity": 1 },
+        { "iupac": "4-methylphenol",           "common": "p-cresol",     "formula": "C7H8O",  "complexity": 2 },
+        { "iupac": "2-nitrophenol",            "common": "o-nitrophenol","formula": "C6H5NO3","complexity": 2,
+          "interesting_when": [],
+          "note": "Intramolecular H-bond → steam distillable; more volatile than 4-nitrophenol" },
+        { "iupac": "4-nitrophenol",            "common": "p-nitrophenol","formula": "C6H5NO3","complexity": 2,
+          "note": "Intermolecular H-bond → less volatile; more acidic than 2-nitrophenol" }
+      ]
+    },
+
+    "aniline": {
+      "molecules": [
+        { "iupac": "aniline",                  "common": "aniline",      "formula": "C6H7N",  "complexity": 1 },
+        { "iupac": "4-methylaniline",          "common": "p-toluidine",  "formula": "C7H9N",  "complexity": 2 },
+        { "iupac": "4-nitroaniline",           "common": "p-nitroaniline","formula": "C6H6N2O2","complexity": 2,
+          "note": "EWG: weakest base in aniline series; barely forms diazonium" }
+      ]
+    },
+
+    "benzene": {
+      "molecules": [
+        { "iupac": "benzene",                  "common": "benzene",      "formula": "C6H6",   "complexity": 1 }
+      ]
+    },
+
+    "substituted_benzene": {
+      "molecules": [
+        { "iupac": "methylbenzene",            "common": "toluene",      "formula": "C7H8",   "complexity": 1,
+          "interesting_when": [],
+          "note": "EDG methyl: o/p activation; benzylic H for radical halogenation" },
+        { "iupac": "nitrobenzene",             "common": "nitrobenzene", "formula": "C6H5NO2","complexity": 1,
+          "note": "EWG nitro: meta director; strongly deactivated ring" },
+        { "iupac": "1,3-dimethylbenzene",      "common": "m-xylene",     "formula": "C8H10",  "complexity": 2 },
+        { "iupac": "cumene",                   "common": "cumene",       "formula": "C9H12",  "complexity": 2,
+          "interesting_when": [],
+          "note": "Cumene process → phenol; oxidation at benzylic C" }
+      ]
+    },
+
+    "diazonium_salt": {
+      "molecules": [
+        { "iupac": "benzenediazonium chloride","common": "PhN2+ Cl-",   "formula": "C6H5N2Cl","complexity": 2,
+          "interesting_when": ["diazonium_salt_to_phenol", "diazonium_salt_to_aryl_halide"],
+          "note": "Sandmeyer: replace N2 with CN, Cl, Br; Balz-Schiemann: with F" }
+      ]
+    },
+
+    "nitrile": {
+      "molecules": [
+        { "iupac": "ethanenitrile",            "common": "acetonitrile", "formula": "C2H3N",  "complexity": 1 },
+        { "iupac": "propanenitrile",           "common": "propionitrile","formula": "C3H5N",  "complexity": 1 },
+        { "iupac": "benzonitrile",             "common": "benzonitrile", "formula": "C7H5N",  "complexity": 2 }
+      ]
+    },
+
+    "grignard": {
+      "molecules": [
+        { "iupac": "ethylmagnesium bromide",   "common": "EtMgBr",      "formula": "C2H5MgBr","complexity": 2 },
+        { "iupac": "phenylmagnesium bromide",  "common": "PhMgBr",      "formula": "C6H5MgBr","complexity": 2 }
+      ]
+    },
+
+    "amino_acid": {
+      "molecules": [
+        { "iupac": "2-aminoethanoic acid",     "common": "glycine",      "formula": "C2H5NO2","complexity": 1 },
+        { "iupac": "2-aminopropanoic acid",    "common": "alanine",      "formula": "C3H7NO2","complexity": 2,
+          "note": "Only natural amino acid without stereocentre: glycine" },
+        { "iupac": "2-amino-3-phenylpropanoic acid","common": "phenylalanine","formula": "C9H11NO2","complexity": 3 }
+      ]
+    },
+
+    "carbohydrate": {
+      "molecules": [
+        { "iupac": "(2R,3S,4R,5R)-2,3,4,5,6-pentahydroxyhexanal","common": "D-glucose","formula": "C6H12O6","complexity": 3,
+          "note": "Open-chain Haworth: α-D-glucopyranose vs β-D-glucopyranose; Tollens/Fehling positive" },
+        { "iupac": "(2R,3S,4R)-2,3,4,5-tetrahydroxypentanose","common": "D-ribose","formula": "C5H10O5","complexity": 3 }
+      ]
+    }
+  }
+}

@@ -1,0 +1,292 @@
+{
+  "carbocation_stability": {
+    "description": "Stability order of carbocations (most → least stable)",
+    "tiers": [
+      {
+        "rank": 1,
+        "label": "Most stable",
+        "members": ["tropylium (C7H7+)", "allylic/benzylic tertiary", "benzylic secondary", "tertiary (R3C+)", "allylic secondary"],
+        "reason": "Aromatic stabilization > extended conjugation > hyperconjugation"
+      },
+      {
+        "rank": 2,
+        "label": "Moderately stable",
+        "members": ["tertiary (R3C+)", "secondary allylic", "benzylic primary"]
+      },
+      {
+        "rank": 3,
+        "label": "Less stable",
+        "members": ["secondary (R2CH+)", "secondary cyclopropylcarbinyl"]
+      },
+      {
+        "rank": 4,
+        "label": "Unstable",
+        "members": ["primary (RCH2+)", "methyl (CH3+)", "vinyl cation", "phenyl cation"]
+      }
+    ],
+    "jee_traps": [
+      "Cyclopropylcarbinyl cation is MORE stable than secondary — bisected σ-delocalization",
+      "Neopentyl cation (1°) rearranges immediately to tertiary — not observed as primary",
+      "Vinyl and phenyl cations are LESS stable than primary alkyl",
+      "EWG on benzylic C destabilizes, EDG stabilizes",
+      "1-Phenylethyl (benzylic 2°) > 2-phenylethyl (primary with homoconjugation)"
+    ],
+    "exceptions": [
+      "2-Norbornyl cation — non-classical; particularly stable due to bridged σ-delocalization"
+    ]
+  },
+
+  "radical_stability": {
+    "description": "Stability order of carbon radicals (most → least stable)",
+    "tiers": [
+      { "rank": 1, "label": "Most stable",     "members": ["allylic tertiary", "benzylic tertiary", "tertiary (R3C•)"] },
+      { "rank": 2, "label": "Stable",           "members": ["benzylic secondary", "allylic secondary", "secondary (R2CH•)"] },
+      { "rank": 3, "label": "Moderately stable","members": ["primary (RCH2•)", "allylic primary", "benzylic primary"] },
+      { "rank": 4, "label": "Least stable",     "members": ["methyl (•CH3)", "vinyl radical", "phenyl radical"] }
+    ],
+    "jee_traps": [
+      "Allylic and benzylic radicals: same tier as corresponding tertiary for JEE purposes",
+      "Vinyl radicals are LESS stable than primary alkyl — sp hybridized C, no hyperconjugation",
+      "Phenyl radical ≈ vinyl radical in instability"
+    ],
+    "exceptions": []
+  },
+
+  "carbanion_stability": {
+    "description": "Stability order of carbanions (most → least stable)",
+    "tiers": [
+      { "rank": 1, "label": "Most stable",     "members": ["sp carbon (alkynide RC≡C-)", "aryl carbanion (conjugated)", "allylic carbanion (conjugated)"] },
+      { "rank": 2, "label": "Stable",           "members": ["benzylic carbanion", "alpha to carbonyl (enolate)"] },
+      { "rank": 3, "label": "Moderately stable","members": ["secondary carbanion"] },
+      { "rank": 4, "label": "Least stable",     "members": ["tertiary carbanion", "primary carbanion", "methyl carbanion"] }
+    ],
+    "jee_traps": [
+      "Order is INVERSE of carbocation stability — EWG stabilizes carbanion, EDG destabilizes",
+      "sp hybridized C is most acidic → alkynide is most stable carbanion",
+      "Tertiary carbanion is LEAST stable (opposite of carbocation!)"
+    ],
+    "exceptions": []
+  },
+
+  "acidity": {
+    "description": "Brønsted acidity order (pKa, lower = more acidic)",
+    "tiers": [
+      { "rank": 1, "label": "Strongest acids (pKa < 2)",    "members": ["HI", "HBr", "HCl", "H2SO4", "HClO4", "RSO3H (sulfonic acids)"] },
+      { "rank": 2, "label": "Moderate acids (pKa 3–5)",     "members": ["RCOOH (carboxylic acids, ~4.5)", "CCl3COOH (trichloroacetic, 0.66)", "ArCOOH"] },
+      { "rank": 3, "label": "Weak acids (pKa 9–12)",        "members": ["ArOH (phenol, ~10)", "o-/p-nitrophenol (7–8)", "β-diketone (malonic ester, ~13)"] },
+      { "rank": 4, "label": "Very weak acids (pKa 15–20)",  "members": ["H2O (15.7)", "ROH (alcohol, 16–18)", "RC≡CH (terminal alkyne, ~25)"] },
+      { "rank": 5, "label": "Extremely weak (pKa 25–50)",   "members": ["NH3 (38)", "RNH2 (amine, ~35)", "alkene (C=C-H, ~44)", "alkane (C-H, ~50)"] }
+    ],
+    "jee_traps": [
+      "EWG on carboxylic acid INCREASES acidity (lowers pKa) — CCl3COOH >> CH3COOH",
+      "EWG on phenol INCREASES acidity; EDG DECREASES it — para effect stronger than meta",
+      "ortho-effect: bulky groups near OH decrease acidity (steric inhibition of solvation)",
+      "Inductive vs resonance: inductive fades with distance, resonance is direct",
+      "Terminal alkyne pKa ~25: more acidic than alkene (44) or alkane (50) due to sp hybridization",
+      "Phenol (pKa ~10) MORE acidic than alcohol (~16) but LESS than carboxylic acid (~5)"
+    ],
+    "exceptions": [
+      "2-Nitrophenol is MORE acidic than 4-nitrophenol due to intramolecular H-bonding (reduces solvation of 2-NP anion... actually 4-NP is more acidic — JEE trap: ortho-intramolecular H-bond in 2-NP anion actually stabilizes it less than para)",
+      "Picric acid (2,4,6-trinitrophenol) pKa ~0.4 — stronger than benzoic acid"
+    ]
+  },
+
+  "basicity": {
+    "description": "Brønsted basicity order (pKb, lower = more basic; or pKa of conjugate acid, higher = more basic)",
+    "tiers": [
+      { "rank": 1, "label": "Strongest bases",   "members": ["R3C- (carbanion)", "RNH- (amide anion)", "NaNH2", "NaH", "RLi", "RMgX (Grignard)"] },
+      { "rank": 2, "label": "Strong bases",       "members": ["NaOH/KOH (aq)", "alkoxide RO- (pKa ~16–18 of ROH)", "LDA", "NaOEt/KOtBu"] },
+      { "rank": 3, "label": "Moderate bases",     "members": ["aliphatic amines R3N (pKa ~10–11)", "aliphatic primary amines RNH2 (pKa ~10)"] },
+      { "rank": 4, "label": "Weak bases",         "members": ["pyridine (pKa 5.2)", "aniline ArNH2 (pKa 4.6)", "NaHCO3 / carbonate"] },
+      { "rank": 5, "label": "Very weak/non-bases","members": ["amide RCONH2 (pKa ~0)", "imide phthalimide (pKa ~8.3)", "urea"] }
+    ],
+    "jee_traps": [
+      "In water: secondary amine (R2NH) < tertiary (R3N) — hydration of conjugate acid matters",
+      "In gas phase: basicity order is 3° > 2° > 1° > NH3 (pure inductive)",
+      "Aniline MUCH weaker base than aliphatic amine — lone pair delocalized into ring",
+      "EWG on ring DECREASES aniline basicity; EDG INCREASES it",
+      "Amide nitrogen NOT basic — lone pair fully conjugated with C=O",
+      "Guanidine is the strongest neutral organic base (pKa of conjugate acid ~13.6)"
+    ],
+    "exceptions": [
+      "2,6-di-tert-butylpyridine: weaker base than pyridine despite EDG — steric blockade of N"
+    ]
+  },
+
+  "nucleophilicity_protic": {
+    "description": "Nucleophilicity order in protic solvents (e.g., water, methanol). Order differs from basicity due to solvation.",
+    "tiers": [
+      { "rank": 1, "label": "Best nucleophiles",  "members": ["I-", "RS- (thiolate)", "CN-", "N3-"] },
+      { "rank": 2, "label": "Good nucleophiles",  "members": ["Br-", "HO-", "RO- (alkoxide)", "PhO-"] },
+      { "rank": 3, "label": "Moderate",           "members": ["Cl-", "RNH2", "R2NH", "NH3"] },
+      { "rank": 4, "label": "Poor nucleophiles",  "members": ["F-", "H2O", "ROH", "RCOOH", "RCOO-"] }
+    ],
+    "jee_traps": [
+      "CRITICAL: In protic solvents, order is I- > Br- > Cl- > F- (inverse of basicity/electronegativity!)",
+      "F- is WORST nucleophile in protic solvents — most solvated (smallest ion, strongest H-bond)",
+      "I- is BEST — largest, least solvated, most polarizable",
+      "Thiolates (RS-) are better nucleophiles than alkoxides (RO-) despite weaker basicity — polarizability wins",
+      "CN- is excellent nucleophile (less solvated than OH-) but moderate base"
+    ],
+    "exceptions": []
+  },
+
+  "nucleophilicity_aprotic": {
+    "description": "Nucleophilicity order in aprotic solvents (DMSO, DMF, acetone). Parallels basicity — no solvation effect.",
+    "tiers": [
+      { "rank": 1, "label": "Best nucleophiles",  "members": ["F-", "HO-", "RO-", "CH3O-"] },
+      { "rank": 2, "label": "Good nucleophiles",  "members": ["Cl-", "Br-", "RNH2", "CN-"] },
+      { "rank": 3, "label": "Moderate",           "members": ["I-", "N3-", "RS-"] },
+      { "rank": 4, "label": "Poor nucleophiles",  "members": ["H2O", "ROH", "RCOOH"] }
+    ],
+    "jee_traps": [
+      "CRITICAL: In aprotic solvents, F- > Cl- > Br- > I- (same as basicity order — solvation removed)",
+      "This is the INVERTED order relative to protic solvents — a classic JEE trap",
+      "RO- (alkoxide) is excellent nucleophile in aprotic — not solvated",
+      "Polar aprotic solvents (DMSO, DMF) favor SN2 with hard nucleophiles"
+    ],
+    "exceptions": []
+  },
+
+  "leaving_group_ability": {
+    "description": "Leaving group ability in SN reactions (best → worst). Inversely correlated with basicity of the leaving group anion.",
+    "tiers": [
+      { "rank": 1, "label": "Excellent leaving groups", "members": ["I-", "Br-", "TsO- (tosylate)", "MsO- (mesylate)", "TfO- (triflate)", "N2 (from diazonium)"] },
+      { "rank": 2, "label": "Good leaving groups",      "members": ["Cl-", "ArSO3-"] },
+      { "rank": 3, "label": "Moderate",                 "members": ["AcO- (acetate)", "H2O (from protonated alcohol)"] },
+      { "rank": 4, "label": "Poor leaving groups",      "members": ["F-", "CN-", "N3-", "OR- (alkoxide)", "OH- (hydroxide)"] },
+      { "rank": 5, "label": "Cannot leave (no LG)",     "members": ["NR2- (amine)", "H- (hydride)", "R- (carbanion)"] }
+    ],
+    "jee_traps": [
+      "OH- is a BAD leaving group — must be protonated to H2O first, or converted to tosylate",
+      "F- is a WORSE leaving group than Cl- (opposite of its nucleophilicity in protic solvents)",
+      "Triflate (TfO-) is the best LG of all — pKa of TfOH ≈ -14",
+      "N2 from diazonium is thermodynamic driving force — irreversible, hence diazonium SN very fast",
+      "NR2- cannot leave — too basic, would require impossible carbanion/hydride-like process"
+    ],
+    "exceptions": []
+  },
+
+  "sn1_vs_sn2": {
+    "description": "Factors governing SN1 vs SN2 selectivity",
+    "dimensions": {
+      "substrate_structure": {
+        "favors_sn2": "methyl > primary > secondary",
+        "favors_sn1": "tertiary > secondary > primary (never methyl — methyl cation too unstable)",
+        "jee_trap": "2° substrates can go either way — solvent and nucleophile concentration determine it"
+      },
+      "nucleophile": {
+        "favors_sn2": "strong nucleophile (high concentration, charged)",
+        "favors_sn1": "weak nucleophile or solvent (H2O, ROH) — SN1 is first-order, nucleophile not in rate"
+      },
+      "solvent": {
+        "favors_sn2": "polar aprotic (DMSO, DMF, acetone) — naked nucleophile",
+        "favors_sn1": "polar protic (H2O, MeOH, EtOH) — stabilizes carbocation and anion"
+      },
+      "stereochemistry": {
+        "sn2": "100% inversion of configuration (Walden inversion)",
+        "sn1": "racemisation (carbocation is planar sp2) with slight excess inversion (~55:45) due to ion pair shielding"
+      }
+    },
+    "jee_traps": [
+      "SN1 gives racemisation, NOT 100% inversion",
+      "SN2 with retention: ONLY via neighbouring group participation (NGP/anchimeric assistance)",
+      "Neopentyl bromide: primary but reacts very slowly by SN2 (steric) AND cannot do SN1 (1° cation); rearranges",
+      "Allylic and benzylic substrates: SN1 at these positions even for primary/secondary due to resonance stabilisation of cation"
+    ],
+    "exceptions": [
+      "Neighbouring group participation (NGP): gives retention of configuration via double inversion"
+    ]
+  },
+
+  "alkene_stability": {
+    "description": "Stability order of alkenes (Saytzeff/Zaitsev preference)",
+    "tiers": [
+      { "rank": 1, "members": ["tetrasubstituted (R2C=CR2)"] },
+      { "rank": 2, "members": ["trisubstituted (R2C=CHR)"] },
+      { "rank": 3, "members": ["disubstituted cis/trans (RHC=CHR)", "disubstituted gem (R2C=CH2)"] },
+      { "rank": 4, "members": ["monosubstituted (RCH=CH2)"] },
+      { "rank": 5, "members": ["unsubstituted (H2C=CH2)"] }
+    ],
+    "stereo_note": "Trans (E) > cis (Z) in stability — less steric strain",
+    "jee_traps": [
+      "More substituted = more stable (hyperconjugation + steric stabilization by induction)",
+      "Hofmann product (less substituted) is kinetic product under some conditions — bulky base favors it",
+      "Cyclic alkenes: cis-fused cyclohexene more stable than trans (trans-cyclohexene is strained)"
+    ],
+    "exceptions": []
+  },
+
+  "eas_reactivity": {
+    "description": "EAS (electrophilic aromatic substitution) reactivity of benzene derivatives",
+    "tiers": [
+      { "rank": 1, "label": "Highly activated (faster than benzene)",  "members": ["-OH (phenol)", "-OR (anisole)", "-NR2 (dimethylaniline)", "-NH2 (aniline)", "-NHR (secondary amine)"] },
+      { "rank": 2, "label": "Activated",                               "members": ["-NHCOR (acetanilide)", "-R (alkyl group, toluene)"] },
+      { "rank": 3, "label": "Benchmark",                               "members": ["benzene"] },
+      { "rank": 4, "label": "Deactivated (slower than benzene)",       "members": ["-X (halogen — deactivating but ortho/para director)", "-COOH", "-COOR", "-COR", "-CHO", "-SO3H"] },
+      { "rank": 5, "label": "Strongly deactivated",                    "members": ["-NO2", "-CN", "-CCl3", "-CF3", "-NR3+ (quaternary ammonium)", "-SO3-"] }
+    ],
+    "regiochemistry": {
+      "ortho_para_directors": ["EDG: -OH, -OR, -NR2, -NH2, -NHR, -NHCOR, -R, -Ar", "Halogens: -X (deactivating but o/p directing!)"],
+      "meta_directors":       ["EWG: -NO2, -CN, -CHO, -COR, -COOH, -COOR, -SO3H, -NR3+, -CF3"]
+    },
+    "jee_traps": [
+      "Halogens are DEACTIVATING but ortho/para DIRECTORS — lone pair donation overrides induction for regiochemistry",
+      "Strongly deactivated rings may not react under normal EAS conditions at all",
+      "Nitro group is meta director AND deactivating; amine is ortho/para director AND activating",
+      "Acetanilide: -NHCOR is weaker activator than -NH2 because lone pair partially tied up by C=O"
+    ],
+    "exceptions": [
+      "Diazonium coupling (Ar-N2+) only with strongly activated rings (phenol, aniline) — very weak electrophile"
+    ]
+  },
+
+  "bond_dissociation_energy": {
+    "description": "C-H BDE order for radical halogenation selectivity",
+    "tiers": [
+      { "rank": 1, "label": "Weakest C-H bond (lowest BDE → fastest radical abstraction)",
+        "members": ["benzylic C-H (~88 kcal/mol)", "allylic C-H (~88 kcal/mol)", "tertiary C-H (~99 kcal/mol)"] },
+      { "rank": 2, "members": ["secondary C-H (~99 kcal/mol)"] },
+      { "rank": 3, "members": ["primary C-H (~101 kcal/mol)"] },
+      { "rank": 4, "label": "Strongest C-H bonds", "members": ["methyl C-H (~105 kcal/mol)", "vinyl C-H (~111 kcal/mol)", "aryl C-H (~113 kcal/mol)"] }
+    ],
+    "jee_traps": [
+      "Radical selectivity: Br• highly selective (thermodynamic, high activation energy) — prefers 3° >> 2° >> 1°",
+      "Cl• less selective (kinetic, low activation energy) — gives statistical mixture at fast reactions",
+      "Allylic and benzylic: same BDE tier as tertiary — resonance stabilizes radical",
+      "Fluorination: not useful (too exothermic, unselective, often explosive)"
+    ],
+    "exceptions": []
+  },
+
+  "ring_strain": {
+    "description": "Ring strain in cycloalkanes (most strained → least strained)",
+    "tiers": [
+      { "rank": 1, "label": "Highest strain",  "members": ["cyclopropane (27.5 kcal/mol)", "cyclobutane (26.3 kcal/mol)"] },
+      { "rank": 2, "label": "Moderate strain", "members": ["cyclopentane (6.2 kcal/mol)"] },
+      { "rank": 3, "label": "Negligible strain","members": ["cyclohexane (0 kcal/mol — chair conformation)", "cyclooctane"] },
+      { "rank": 4, "label": "Small strain",    "members": ["cycloheptane (6.2 kcal/mol)"] }
+    ],
+    "jee_traps": [
+      "Cyclopropane undergoes ring-opening with HX (electrophilic) unlike cyclohexane",
+      "Cyclobutane is strained but does NOT open as easily as cyclopropane",
+      "Cyclohexane chair has ZERO ring strain — all C-C-C angles at tetrahedral 109.5°",
+      "Angle strain + eclipsing strain + torsional strain all contribute"
+    ],
+    "exceptions": []
+  },
+
+  "imine_formation_rate": {
+    "description": "Rate of imine (Schiff base) formation from carbonyl + amine",
+    "tiers": [
+      { "rank": 1, "label": "Fastest",  "members": ["aldehyde + primary amine (RNH2)", "aryl aldehyde + aniline (acidic catalysis)"] },
+      { "rank": 2, "label": "Slower",   "members": ["ketone + primary amine (steric hindrance)"] },
+      { "rank": 3, "label": "Slowest",  "members": ["ketone + secondary amine → enamine (no NH — iminium pathway)"] }
+    ],
+    "jee_traps": [
+      "pH optimum ~4–5: too acidic → amine protonated (no nucleophile); too basic → no acid catalyst for dehydration",
+      "Secondary amines give ENAMINES, not imines — no N-H to lose in dehydration"
+    ],
+    "exceptions": []
+  }
+}
