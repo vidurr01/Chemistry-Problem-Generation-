@@ -1,0 +1,535 @@
+{
+  "_meta": "Qualitative chemical tests for JEE Advanced organic chemistry. Used by the generator to enrich questions and add scope/exception context. Each entry covers: reagents, positive result, scope_nodes (graph node IDs), exceptions, and JEE-specific traps.",
+
+  "tollens": {
+    "name": "Tollens' Test (Silver Mirror Test)",
+    "reagents": ["Tollens' reagent (ammoniacal AgNO₃)", "[Ag(NH₃)₂]⁺"],
+    "conditions": "Warm gently with fresh Tollens' reagent in a clean glass tube; do not boil",
+    "positive_result": "Silver mirror deposited on the inner wall of the test tube; silver precipitate",
+    "scope_nodes": ["aldehyde", "carbohydrate"],
+    "scope_note": "All aldehydes (aliphatic and aromatic); reducing sugars (which contain free aldehyde group)",
+    "exceptions": {
+      "false_positives": [
+        "Formic acid (HCOOH) gives silver mirror because it is also an aldehyde-type reducing agent (can be oxidised to CO₂)",
+        "Fructose gives positive (reducing sugar via enediol tautomerism in alkaline conditions)",
+        "Glucose, maltose, lactose all give positive (reducing sugars)"
+      ],
+      "false_negatives": [
+        "Ketones give NEGATIVE — cannot be oxidised by mild Tollens' reagent",
+        "Sucrose gives NEGATIVE — non-reducing sugar (no free anomeric OH)"
+      ],
+      "scope_restrictions": "No restriction between aliphatic vs aromatic — benzaldehyde gives positive (slow)"
+    },
+    "mechanism_note": "Aldehyde is oxidised to carboxylate; Ag⁺ is reduced to Ag metal (Ag⁰) which deposits as mirror",
+    "jee_traps": [
+      "Trap 1: Benzaldehyde gives positive with Tollens' but NEGATIVE with Fehling's — the key distinction between the two tests",
+      "Trap 2: Fructose (a ketose) gives positive with Tollens' because in alkaline conditions it isomerises via enediol to an aldose form",
+      "Trap 3: Formic acid gives positive (unusual — it is the only carboxylic acid that reduces Tollens')",
+      "Trap 4: Acetaldehyde gives positive (aldehyde); acetone gives NEGATIVE (ketone) — Tollens' distinguishes them"
+    ]
+  },
+
+  "fehlings": {
+    "name": "Fehling's Test",
+    "reagents": ["Fehling's solution A (CuSO₄)", "Fehling's solution B (NaOH + sodium potassium tartrate)", "Heat"],
+    "conditions": "Mix equal volumes of Fehling's A and B to get deep blue solution; add compound and heat",
+    "positive_result": "Brick-red (orange-red) precipitate of Cu₂O; blue colour of solution disappears",
+    "scope_nodes": ["aldehyde", "carbohydrate"],
+    "scope_note": "Aliphatic aldehydes only; reducing sugars. DOES NOT react with aromatic aldehydes.",
+    "exceptions": {
+      "false_positives": [
+        "Reducing sugars (glucose, fructose, maltose, lactose) give positive",
+        "Fructose gives positive despite being a ketose (isomerises to aldose in alkaline conditions)"
+      ],
+      "false_negatives": [
+        "Benzaldehyde gives NEGATIVE — aromatic aldehydes do not reduce Fehling's (electron-poor ring stabilises the carbonyl against oxidation by Cu²⁺)",
+        "Ketones give NEGATIVE — cannot reduce Fehling's",
+        "Sucrose gives NEGATIVE (non-reducing sugar)",
+        "Starch gives NEGATIVE (non-reducing polysaccharide)",
+        "Formic acid — borderline; HCOOH can reduce Fehling's in some conditions"
+      ],
+      "scope_restrictions": "Aliphatic aldehydes only — aromatic aldehydes (benzaldehyde, cinnamaldehyde) give NEGATIVE"
+    },
+    "mechanism_note": "Aliphatic aldehyde reduces Cu²⁺ (from CuSO₄ complexed with tartrate) to Cu⁺, which precipitates as Cu₂O brick-red solid",
+    "jee_traps": [
+      "Trap 1: Benzaldehyde gives NEGATIVE with Fehling's but POSITIVE with Tollens' — this is the classic Fehling's vs Tollens' JEE distinction",
+      "Trap 2: Fructose (ketose) gives POSITIVE with Fehling's because alkaline conditions convert it to glucose-like aldose via enediol",
+      "Trap 3: Both Fehling's and Tollens' are positive for aliphatic aldehydes — use Fehling's specifically to detect aromatic vs aliphatic aldehyde",
+      "Trap 4: Sucrose is non-reducing — it gives NEGATIVE with both Fehling's and Tollens'"
+    ]
+  },
+
+  "iodoform": {
+    "name": "Iodoform Test (Haloform Test with Iodine)",
+    "reagents": ["I₂", "NaOH (aq)", "or Na₂CO₃"],
+    "conditions": "Add I₂/NaOH at room temperature; warm gently if no immediate precipitate",
+    "positive_result": "Yellow crystalline precipitate of iodoform (CHI₃) with distinctive antiseptic odour",
+    "scope_nodes": ["ketone", "aldehyde", "alcohol"],
+    "scope_note": "CH₃CO- group (methyl ketones, acetaldehyde) OR CH₃CH(OH)- group (secondary alcohols with methyl adjacent to CHOH, and ethanol)",
+    "exceptions": {
+      "false_positives": [
+        "Ethanol (CH₃CH₂OH) gives positive — the only primary alcohol that gives iodoform test",
+        "Isopropanol (propan-2-ol, CH₃CHOHCH₃) gives positive — secondary alcohol with CH₃CHOH- group",
+        "Acetaldehyde (ethanal, CH₃CHO) gives positive — the only aldehyde that gives iodoform (it has CH₃CO- group)"
+      ],
+      "false_negatives": [
+        "Methanol (CH₃OH) gives NEGATIVE — no CH₃CO- or CH₃CHOH- group",
+        "Formaldehyde (HCHO) gives NEGATIVE — has no methyl group",
+        "n-Propanol (propan-1-ol) gives NEGATIVE — CH₃CH₂CH₂OH has no CH₃CHOH- pattern",
+        "Benzaldehyde gives NEGATIVE",
+        "Diethyl ketone (pentan-3-one, CH₃CH₂COCH₂CH₃) gives NEGATIVE — no methyl adjacent to C=O"
+      ],
+      "scope_restrictions": "Positive ONLY for: (1) methyl ketones R-CO-CH₃, (2) acetaldehyde CH₃CHO, (3) ethanol CH₃CH₂OH, (4) secondary alcohols with structure CH₃CHOH-R (e.g., isopropanol, butan-2-ol)"
+    },
+    "mechanism_note": "I₂/NaOH first oxidises CH₃CHOH- to CH₃CO-; then alpha-iodination of methyl group proceeds three times to give CI₃-CO-R; base then cleaves the CI₃-CO bond (haloform reaction) to give CHI₃ + RCOO⁻",
+    "jee_traps": [
+      "Trap 1: Ethanol gives POSITIVE, methanol gives NEGATIVE — most commonly tested pair",
+      "Trap 2: Acetaldehyde gives POSITIVE, formaldehyde gives NEGATIVE",
+      "Trap 3: Isopropanol (2° alcohol) gives POSITIVE, n-propanol (1° primary) gives NEGATIVE",
+      "Trap 4: Butan-2-ol gives POSITIVE (CH₃CHOH-CH₂CH₃ has CH₃CHOH-), butan-1-ol gives NEGATIVE",
+      "Trap 5: The test identifies CH₃CO- group — NOT C=O in general; pentan-3-one (diethyl ketone) gives NEGATIVE"
+    ]
+  },
+
+  "carbylamine": {
+    "name": "Carbylamine Test (Isocyanide Test)",
+    "reagents": ["CHCl₃ (chloroform)", "alc. KOH (alcoholic potassium hydroxide)"],
+    "conditions": "Warm with CHCl₃ and excess alc. KOH; primary amine MUST be present",
+    "positive_result": "Foul-smelling isocyanide (carbylamine) vapour — characteristically nauseating smell; no visible precipitate",
+    "scope_nodes": ["amine", "aniline", "isocyanide"],
+    "scope_note": "Primary amines ONLY (1°) — both aliphatic (R-NH₂) and aromatic (Ar-NH₂ including aniline)",
+    "exceptions": {
+      "false_positives": [],
+      "false_negatives": [
+        "Secondary amines (R₂NH) give NO reaction — no free NH₂ group to form isocyanide",
+        "Tertiary amines (R₃N) give NO reaction — no N-H bond available",
+        "Amides (R-CO-NH₂) give NEGATIVE — nitrogen lone pair is delocalised into carbonyl",
+        "Nitro compounds give NEGATIVE"
+      ],
+      "scope_restrictions": "Exclusively primary amines (1°). The test FAILS for 2° and 3° amines — this is its primary analytical utility."
+    },
+    "mechanism_note": "CHCl₃ + KOH → :CCl₂ (dichlorocarbene); dichlorocarbene inserts into N-H of primary amine to give RNH-CHCl₂; two dehydrohalogenation steps give R-N≡C (isocyanide)",
+    "jee_traps": [
+      "Trap 1: Secondary and tertiary amines give NEGATIVE — this is the key distinction; carbylamine distinguishes 1° from 2°/3°",
+      "Trap 2: Aniline (C₆H₅NH₂) gives POSITIVE — it is a primary amine (aromatic, but still 1°)",
+      "Trap 3: The product isocyanide is NOT the same as isocyanate (R-NCO) — isocyanide is R-NC with no oxygen",
+      "Trap 4: Alcoholic KOH is essential, not aqueous KOH — aqueous KOH gives different products",
+      "Trap 5: Amides (1° amide R-CONH₂) look like primary amines but give NEGATIVE — amide nitrogen is deactivated"
+    ]
+  },
+
+  "lucas": {
+    "name": "Lucas Test",
+    "reagents": ["ZnCl₂ (anhydrous zinc chloride)", "conc. HCl"],
+    "conditions": "Mix alcohol with Lucas reagent (ZnCl₂ + conc. HCl) at room temperature; observe turbidity",
+    "positive_result": "Turbidity (cloudiness) due to formation of insoluble alkyl chloride (R-Cl layer separates)",
+    "scope_nodes": ["alcohol"],
+    "scope_note": "Alcohols — used to distinguish 1°, 2°, 3° by rate of turbidity formation",
+    "exceptions": {
+      "false_positives": [
+        "Allylic alcohols (R-CH=CH-CH₂OH) behave like tertiary — immediate turbidity due to resonance-stabilised allylic carbocation",
+        "Benzylic alcohols (Ar-CH₂OH) behave like tertiary — immediate turbidity due to benzylic carbocation stability"
+      ],
+      "false_negatives": [
+        "Primary alcohols (except allylic/benzylic) give NO turbidity at room temperature — SN1 too slow for 1° carbocation"
+      ],
+      "scope_restrictions": "Only applicable to low molecular weight (C1-C6) alcohols that are soluble in Lucas reagent (HCl/ZnCl₂). Higher alcohols are insoluble and give misleading results."
+    },
+    "mechanism_note": "ZnCl₂ coordinates to OH to make it a better leaving group; 3° and 2° alcohols undergo SN1 via stable carbocations to give R-Cl; 1° alcohols require heating for slow SN2",
+    "jee_traps": [
+      "Trap 1: Tertiary alcohol → immediate turbidity; secondary → turbidity in ~5 min (may need gentle warming); primary → no turbidity at RT (requires heat/prolonged time)",
+      "Trap 2: Allylic and benzylic PRIMARY alcohols give immediate turbidity like 3° (stabilised cations) — don't assume turbidity = tertiary",
+      "Trap 3: Lucas test fails for alcohols with >6 carbons (insoluble in reagent)",
+      "Trap 4: 2-methylpropan-2-ol (tert-butanol) gives immediate turbidity; propan-1-ol gives no turbidity at RT"
+    ]
+  },
+
+  "victor_meyer": {
+    "name": "Victor Meyer Test",
+    "reagents": ["P + I₂ (or HI)", "AgNO₃", "HNO₂ (or NaNO₂ + HCl)", "NaOH"],
+    "conditions": "Multistep: (1) alcohol → alkyl iodide (P/I₂); (2) R-I → R-NO₂ (AgNO₂ or KNO₂); (3) R-NO₂ + HNO₂ → nitroso derivative; (4) dissolve in NaOH — observe colour",
+    "positive_result": "1° alcohol → red colour; 2° alcohol → blue colour; 3° alcohol → colourless (no reaction in step 3)",
+    "scope_nodes": ["alcohol"],
+    "scope_note": "Distinguishes primary, secondary, and tertiary alcohols",
+    "exceptions": {
+      "false_positives": [],
+      "false_negatives": [
+        "3° alcohols give colourless / no colour change with NaOH — they have no alpha-H on the nitroalkane to react with HNO₂"
+      ],
+      "scope_restrictions": "The coloured product comes from the aci-form of 1° or 2° nitroalkanes reacting with NaOH. 3° nitroalkanes have no alpha-H so no aci-form → colourless."
+    },
+    "mechanism_note": "Primary nitroalkane (R-CH₂-NO₂) has two alpha-H: forms red aci-form on treatment with NaOH; secondary nitroalkane (R₂CH-NO₂) has one alpha-H: forms blue aci-form; tertiary (R₃C-NO₂) has no alpha-H: no coloured product",
+    "jee_traps": [
+      "Trap 1: 1° → red; 2° → blue; 3° → colourless — these exact colours are frequently tested",
+      "Trap 2: The coloured product is the aci-form (nitronic acid) of the nitroalkane, not the amine",
+      "Trap 3: This test identifies primary vs secondary vs tertiary ALCOHOLS (indirectly via nitroalkane chemistry)",
+      "Trap 4: Different from Lucas test — Victor Meyer uses nitrosation; Lucas uses HCl/ZnCl₂"
+    ]
+  },
+
+  "hinsberg": {
+    "name": "Hinsberg Test",
+    "reagents": ["Benzenesulfonyl chloride (C₆H₅SO₂Cl)", "KOH (aq)"],
+    "conditions": "Shake amine with benzenesulfonyl chloride and aq. KOH; observe solubility",
+    "positive_result": "1° amine: soluble sulfonamide formed (acidic N-H → dissolves in KOH); 2° amine: insoluble sulfonamide precipitate; 3° amine: no sulfonamide (no reaction with sulfonyl chloride — N-H absent)",
+    "scope_nodes": ["amine", "aniline"],
+    "scope_note": "Distinguishes primary, secondary, and tertiary amines",
+    "exceptions": {
+      "false_positives": [],
+      "false_negatives": [
+        "3° amines give NO sulfonamide — they appear to 'not react' but are simply unreactive toward benzenesulfonyl chloride since there is no N-H"
+      ],
+      "scope_restrictions": "Works for aliphatic and aromatic amines"
+    },
+    "mechanism_note": "Benzenesulfonyl chloride reacts with N-H amines to form sulfonamide (C₆H₅SO₂-NR-); 1° sulfonamide has acidic N-H (pKa ~10) that dissolves in KOH; 2° sulfonamide has no N-H, so insoluble; 3° amine has no N-H to react",
+    "jee_traps": [
+      "Trap 1: 3° amine gives NO product at all — not an insoluble product, just no sulfonamide",
+      "Trap 2: 1° amine sulfonamide is SOLUBLE in KOH (acidic N-H); 2° amine sulfonamide is INSOLUBLE (no N-H)",
+      "Trap 3: Aniline (1° aromatic amine) gives a soluble sulfonamide — do not assume 1° aromatic gives no reaction",
+      "Trap 4: This test distinguishes all three types; Lucas test only distinguishes alcohol degrees"
+    ]
+  },
+
+  "baeyer": {
+    "name": "Baeyer's Test (Alkaline KMnO₄)",
+    "reagents": ["Cold dilute alkaline KMnO₄ (purple)"],
+    "conditions": "Add cold dilute KMnO₄ (Baeyer's reagent) at room temperature; no heating",
+    "positive_result": "Purple colour of KMnO₄ is decolourised (KMnO₄ → MnO₂ brown precipitate); solution turns colourless or brown",
+    "scope_nodes": ["alkene", "alkyne", "aldehyde", "diene_conjugated", "diene_isolated"],
+    "scope_note": "Compounds with C=C, C≡C, or oxidisable groups (aldehydes). Used to detect unsaturation.",
+    "exceptions": {
+      "false_positives": [
+        "Aldehydes decolourise cold KMnO₄ (oxidised to carboxylic acids) — so decolourisation does not exclusively mean unsaturation",
+        "Primary and secondary alcohols can slowly reduce KMnO₄ at room temperature"
+      ],
+      "false_negatives": [
+        "Benzene does NOT decolourise cold dilute KMnO₄ — aromatic stability prevents oxidation under mild conditions",
+        "Alkanes do NOT decolourise cold KMnO₄",
+        "Ketones do NOT decolourise cold KMnO₄ under mild conditions"
+      ],
+      "scope_restrictions": "Cold and dilute conditions are critical — hot concentrated KMnO₄ oxidises toluene side chains and gives different products (not Baeyer's test)"
+    },
+    "mechanism_note": "KMnO₄ syn-dihydroxylates C=C (giving diol) or oxidises C≡C/CHO; Mn(VII) is reduced to Mn(IV) (MnO₂, brown) or Mn(II) (colourless), decolourising the purple reagent",
+    "jee_traps": [
+      "Trap 1: Benzene does NOT decolourise cold KMnO₄ (aromatic) — toluene DOES with hot KMnO₄ (side-chain oxidation) — temperature matters",
+      "Trap 2: Baeyer's test detects unsaturation but aldehydes also give positive — specify 'Baeyer's test' ≠ 'test for alkene only'",
+      "Trap 3: Cyclohexene (alkene) gives positive; cyclohexane (alkane) gives negative — useful distinction",
+      "Trap 4: Acetylene (ethyne) gives positive with cold KMnO₄"
+    ]
+  },
+
+  "can_test": {
+    "name": "CAN Test (Ceric Ammonium Nitrate Test)",
+    "reagents": ["Ceric ammonium nitrate (CAN)", "(NH₄)₂Ce(NO₃)₆ in dilute HNO₃"],
+    "conditions": "Add a few drops of orange CAN reagent to compound; observe colour change",
+    "positive_result": "Orange CAN reagent turns red (formation of red Ce-alcohol complex [Ce(NO₃)₄(ROH)₃])",
+    "scope_nodes": ["alcohol"],
+    "scope_note": "All alcohols (primary, secondary, tertiary) give red complex. Used to confirm presence of -OH group.",
+    "exceptions": {
+      "false_positives": [
+        "Phenols give a different coloured complex (not consistently red — often different shades) — should not be confused with alcohol positive"
+      ],
+      "false_negatives": [
+        "Ethers give NEGATIVE — no -OH group, oxygen not accessible to Ce complex formation",
+        "Esters give NEGATIVE",
+        "Alkyl halides give NEGATIVE"
+      ],
+      "scope_restrictions": "Tertiary alcohols also give positive (unlike Lucas test which is slow for 3° SN1 — CAN works for all three degrees equally)"
+    },
+    "mechanism_note": "Cerium(IV) coordinates to the lone pair of the hydroxyl oxygen, forming a coloured Ce-alcohol complex",
+    "jee_traps": [
+      "Trap 1: All three degrees of alcohol give positive — CAN does NOT distinguish 1°, 2°, 3° (unlike Lucas)",
+      "Trap 2: Ethers give NEGATIVE — the oxygen is not a free -OH",
+      "Trap 3: CAN test is specific for the -OH group in alcohols",
+      "Trap 4: Phenols give a different colour response — should be tested separately with FeCl₃"
+    ]
+  },
+
+  "fecl3_test": {
+    "name": "FeCl₃ Test (Ferric Chloride Test)",
+    "reagents": ["FeCl₃ solution (aqueous or neutral)"],
+    "conditions": "Add neutral FeCl₃ solution dropwise; observe immediate colour change",
+    "positive_result": "Violet/purple colour (phenols give intense violet); enols give red/violet",
+    "scope_nodes": ["phenol", "enol"],
+    "scope_note": "Phenols (Ar-OH) and enols (C=C-OH); also compounds with chelatable C=C-OH arrangement",
+    "exceptions": {
+      "false_positives": [
+        "Acetylacetone (pentan-2,4-dione) gives intense red-violet — it exists predominantly as enol form (C=C-OH) which chelates Fe³⁺",
+        "Salicylic acid gives intense purple (both phenol and carboxylate chelate Fe³⁺)",
+        "Hydroxamic acids give red-brown colour"
+      ],
+      "false_negatives": [
+        "Carboxylic acids give buff/yellow-brown colour (not violet) — do not confuse with phenol positive",
+        "Alcohols give no distinctive colour (pale yellow at most)",
+        "Amines give no response"
+      ],
+      "scope_restrictions": "Response varies by phenol substituents: electron-donating groups on phenol → deeper violet; electron-withdrawing groups → lighter colour"
+    },
+    "mechanism_note": "Fe³⁺ forms a highly coloured coordination complex with the phenolate oxygen; the complex absorbs in the green region, transmitting violet/purple",
+    "jee_traps": [
+      "Trap 1: Carboxylic acids give buff/light yellow — NOT violet; alcohols give NO colour — do not confuse with phenol",
+      "Trap 2: Acetylacetone (a beta-diketone) gives positive via its enol form — even though it looks like a ketone, the dominant enol tautomer chelates Fe³⁺",
+      "Trap 3: Phenol, catechol, resorcinol, hydroquinone all give violet but with different shades",
+      "Trap 4: FeCl₃ distinguishes phenol from alcohol and from carboxylic acid"
+    ]
+  },
+
+  "ninhydrin": {
+    "name": "Ninhydrin Test",
+    "reagents": ["Ninhydrin (triketohydrindene hydrate)", "aqueous solution"],
+    "conditions": "Heat with aqueous ninhydrin solution; observe colour after few minutes",
+    "positive_result": "Intense purple colour (Ruhemann's purple) for alpha-amino acids and proteins; yellow for proline",
+    "scope_nodes": ["amino_acid", "polymer"],
+    "scope_note": "Alpha-amino acids (H₂N-CHR-COOH) and proteins containing them; secondary amines give yellow",
+    "exceptions": {
+      "false_positives": [
+        "Primary amines (aliphatic) can give purple with ninhydrin — not exclusive to amino acids",
+        "Ammonia gives purple colour"
+      ],
+      "false_negatives": [
+        "Proline (secondary amine) gives YELLOW/ORANGE colour, not purple — this distinguishes proline from other amino acids"
+      ],
+      "scope_restrictions": "Test is specific for alpha-amino group. N-substituted amino acids (secondary amines) give yellow, not purple."
+    },
+    "mechanism_note": "Alpha-amino acid undergoes oxidative decarboxylation with ninhydrin to give CO₂ + aldehyde; the resulting amine intermediate reacts with a second ninhydrin molecule to form Ruhemann's purple chromophore",
+    "jee_traps": [
+      "Trap 1: Proline gives YELLOW (not purple) because it is a secondary amine (cyclic structure) — the purple mechanism requires primary amine",
+      "Trap 2: Ninhydrin distinguishes between common alpha-amino acids (purple) and proline/hydroxyproline (yellow)",
+      "Trap 3: Proteins give purple because they contain peptide-linked alpha-amino acids (N-terminal free NH₂ reacts)",
+      "Trap 4: Simple amines can also give purple — ninhydrin is not exclusive to amino acids"
+    ]
+  },
+
+  "biuret": {
+    "name": "Biuret Test",
+    "reagents": ["CuSO₄ (dilute)", "NaOH (excess)"],
+    "conditions": "Add dilute CuSO₄ then excess NaOH; observe violet/purple colour",
+    "positive_result": "Violet/purple colour due to Cu²⁺ complex with peptide bonds",
+    "scope_nodes": ["amino_acid", "polymer", "amide"],
+    "scope_note": "Compounds with TWO or more peptide bonds (-CO-NH-) — dipeptides and larger proteins; also urea and biuret itself",
+    "exceptions": {
+      "false_positives": [
+        "Urea (H₂N-CO-NH₂) gives positive — it has two -NH-CO- type bonds that chelate Cu²⁺",
+        "Biuret (H₂N-CO-NH-CO-NH₂) gives positive (namesake compound)"
+      ],
+      "false_negatives": [
+        "Single amino acids (no peptide bond) give NEGATIVE",
+        "Dipeptides give positive (two peptide bonds)",
+        "Simple amides (single RCONH₂) may give weak or negative response"
+      ],
+      "scope_restrictions": "Requires at least 2 peptide bonds (-CO-NH-) in proximity for Cu²⁺ chelation"
+    },
+    "mechanism_note": "Cu²⁺ forms a violet chelate complex with the nitrogen atoms of peptide bonds in an alkaline solution (similar to biuret compound NH₂-CO-NH-CO-NH₂)",
+    "jee_traps": [
+      "Trap 1: Amino acids alone give NEGATIVE — no peptide bonds; proteins give POSITIVE",
+      "Trap 2: Urea gives POSITIVE — it mimics two -NH-CO- units in its structure",
+      "Trap 3: Biuret test does NOT detect the presence of amino groups specifically — it detects PEPTIDE BONDS",
+      "Trap 4: Ninhydrin detects amino acids; biuret detects peptide bonds/proteins — they test for different things"
+    ]
+  },
+
+  "dnp": {
+    "name": "Brady's Reagent / DNP Test (2,4-Dinitrophenylhydrazine Test)",
+    "reagents": ["2,4-Dinitrophenylhydrazine (2,4-DNPH)", "dilute H₂SO₄ or HCl"],
+    "conditions": "Add 2,4-DNPH reagent (orange solution); observe precipitate formation",
+    "positive_result": "Orange or yellow crystalline precipitate (DNP derivative / phenylhydrazone)",
+    "scope_nodes": ["aldehyde", "ketone"],
+    "scope_note": "All aldehydes and ketones (any C=O compound)",
+    "exceptions": {
+      "false_positives": [
+        "Alpha,beta-unsaturated carbonyls also react (Michael acceptors)"
+      ],
+      "false_negatives": [
+        "Carboxylic acids do NOT give precipitate (different reaction mechanism)",
+        "Esters do NOT give precipitate under mild conditions"
+      ],
+      "scope_restrictions": "Tests for C=O group (aldehyde OR ketone) — does NOT distinguish between them"
+    },
+    "mechanism_note": "2,4-DNPH attacks carbonyl carbon as nucleophile; condensation with loss of water gives a coloured crystalline DNP derivative (hydrazone)",
+    "jee_traps": [
+      "Trap 1: DNP test does NOT distinguish aldehyde from ketone — both give orange/yellow precipitate",
+      "Trap 2: To distinguish aldehyde from ketone, use Tollens' or Fehling's (ketone gives negative)",
+      "Trap 3: The DNP derivative melting point is used to identify the specific carbonyl compound",
+      "Trap 4: Carboxylic acids do NOT give precipitate — C=O in COOH is less electrophilic"
+    ]
+  },
+
+  "benedict": {
+    "name": "Benedict's Test",
+    "reagents": ["Benedict's reagent (CuSO₄ + sodium citrate + Na₂CO₃)", "Heat"],
+    "conditions": "Add Benedict's reagent and heat in boiling water bath for 5 minutes",
+    "positive_result": "Orange-red precipitate of Cu₂O (brick-red); colour ranges from green (small amount) to orange to red (large amount of reducing sugar)",
+    "scope_nodes": ["carbohydrate", "aldehyde"],
+    "scope_note": "Reducing sugars (free aldehyde or reducible keto group in alkaline conditions)",
+    "exceptions": {
+      "false_positives": [
+        "Fructose gives POSITIVE despite being a ketose — in alkaline Benedict's conditions, fructose isomerises via enediol to give an aldose; specifically fructose → epimer glucose/mannose in basic conditions",
+        "Maltose and lactose give positive (reducing sugars with free anomeric OH)"
+      ],
+      "false_negatives": [
+        "Sucrose gives NEGATIVE — non-reducing sugar (both anomeric carbons locked in glycosidic bond, no free aldehyde/ketone)",
+        "Starch gives NEGATIVE (non-reducing polysaccharide, reducing end is minimal)",
+        "Cellulose gives NEGATIVE"
+      ],
+      "scope_restrictions": "Reducing sugars only. Non-reducing sugars (sucrose, trehalose) must first be hydrolysed to give positive."
+    },
+    "mechanism_note": "Reducing sugar reduces Cu²⁺ (complexed with citrate in alkaline solution) to Cu⁺ which precipitates as Cu₂O. Citrate prevents Cu(OH)₂ precipitation, keeping copper in solution for reaction.",
+    "jee_traps": [
+      "Trap 1: Sucrose gives NEGATIVE with Benedict's but glucose gives POSITIVE — sucrose is non-reducing",
+      "Trap 2: Fructose (ketose) gives POSITIVE — alkaline conditions cause enediol rearrangement to aldose form",
+      "Trap 3: Starch gives NEGATIVE (only the reducing end can react, but that proportion is negligible)",
+      "Trap 4: Benedict's is more sensitive and stable than Fehling's for medical sugar detection"
+    ]
+  },
+
+  "molisch": {
+    "name": "Molisch Test",
+    "reagents": ["α-Naphthol (1-naphthol) in ethanol (Molisch's reagent)", "conc. H₂SO₄ (added down the side)"],
+    "conditions": "Mix compound with Molisch's reagent; carefully add conc. H₂SO₄ along the side of the tilted tube to create a layer",
+    "positive_result": "Purple/violet ring at the interface of the two liquid layers",
+    "scope_nodes": ["carbohydrate"],
+    "scope_note": "ALL carbohydrates — monosaccharides, disaccharides, polysaccharides",
+    "exceptions": {
+      "false_positives": [
+        "Glycoproteins and glycolipids also give positive (contain carbohydrate moiety)",
+        "Any compound that can be dehydrated to furfural or HMF (some aromatic compounds)"
+      ],
+      "false_negatives": [],
+      "scope_restrictions": "General test for all carbohydrates — does NOT distinguish between monosaccharides, disaccharides, or polysaccharides"
+    },
+    "mechanism_note": "Conc. H₂SO₄ dehydrates pentoses to furfural and hexoses to hydroxymethylfurfural (HMF); furfural/HMF then condenses with α-naphthol to give purple-coloured complex",
+    "jee_traps": [
+      "Trap 1: Molisch test is GENERAL for all carbohydrates — sucrose gives positive (unlike Benedict's which is negative for sucrose)",
+      "Trap 2: The test detects ALL sugars regardless of reducing ability — not specific for reducing sugars",
+      "Trap 3: Cellulose and starch also give positive (eventually hydrolysed by H₂SO₄ to glucose)",
+      "Trap 4: Molisch's is used first to confirm 'carbohydrate present'; Seliwanoff's or Benedict's are used for further characterisation"
+    ]
+  },
+
+  "seliwanoff": {
+    "name": "Seliwanoff's Test",
+    "reagents": ["Resorcinol (1,3-dihydroxybenzene)", "conc. HCl", "Heat"],
+    "conditions": "Heat compound with resorcinol in conc. HCl for 2 minutes; observe colour",
+    "positive_result": "Ketoses → deep red colour within 2 minutes; Aldoses → very light pink colour after longer time (>5 min)",
+    "scope_nodes": ["carbohydrate"],
+    "scope_note": "Distinguishes ketoses (fructose) from aldoses (glucose) — ketoses give rapid red colour",
+    "exceptions": {
+      "false_positives": [
+        "Sucrose gives positive (hydrolysed to fructose by HCl, then fructose gives red)"
+      ],
+      "false_negatives": [
+        "Aldoses (glucose, galactose) give very faint pink after prolonged heating — NOT the deep red of ketoses"
+      ],
+      "scope_restrictions": "Specific for ketoses (C=O at C-2 or higher); aldoses react very slowly and give only faint colour"
+    },
+    "mechanism_note": "HCl dehydrates ketoses faster (ketoses → HMF more readily than aldoses → furfural); HMF then condenses with resorcinol to give red chromophore",
+    "jee_traps": [
+      "Trap 1: Fructose → deep red in 2 min; glucose → faint pink after 5+ min — time is the key discriminator",
+      "Trap 2: Sucrose gives POSITIVE because acid hydrolysis releases fructose",
+      "Trap 3: Seliwanoff distinguishes ketose from aldose (Molisch does not)",
+      "Trap 4: Both fructose and glucose give colour, but the intensity and rate are very different"
+    ]
+  },
+
+  "barfoed": {
+    "name": "Barfoed's Test",
+    "reagents": ["Copper acetate (Cu(CH₃COO)₂) in acetic acid (Barfoed's reagent)", "Heat"],
+    "conditions": "Heat with Barfoed's reagent for 5 minutes; observe precipitate",
+    "positive_result": "Orange-red Cu₂O precipitate; monosaccharides react in ~2-5 min; disaccharides react much more slowly (15-20 min) or not at all",
+    "scope_nodes": ["carbohydrate"],
+    "scope_note": "Distinguishes monosaccharides from disaccharides",
+    "exceptions": {
+      "false_positives": [
+        "Disaccharides (e.g., maltose, lactose) do give precipitate after prolonged heating but the rate is much slower"
+      ],
+      "false_negatives": [
+        "Non-reducing sugars (sucrose) give NEGATIVE even after prolonged heating"
+      ],
+      "scope_restrictions": "Rate-based test — monosaccharides react quickly, reducing disaccharides react slowly; interpretation is time-dependent"
+    },
+    "mechanism_note": "Acidic conditions (acetic acid) prevent non-specific reactions; only the most reducing (monosaccharides) reduce Cu²⁺ fast enough for rapid precipitate formation",
+    "jee_traps": [
+      "Trap 1: Maltose and lactose eventually give precipitate but SLOWLY — quick reaction means monosaccharide",
+      "Trap 2: Sucrose gives NO precipitate (non-reducing)",
+      "Trap 3: Barfoed's distinguishes monosaccharide from reducing disaccharide by rate, not by colour"
+    ]
+  },
+
+  "xanthoproteic": {
+    "name": "Xanthoproteic Test",
+    "reagents": ["conc. HNO₃", "NH₃ (aqueous, added after)"],
+    "conditions": "Add conc. HNO₃ and warm; observe yellow colour; add NH₃ — observe colour deepening to orange",
+    "positive_result": "Yellow colour on heating with conc. HNO₃; orange colour on addition of NH₃",
+    "scope_nodes": ["amino_acid", "polymer"],
+    "scope_note": "Proteins and amino acids containing aromatic rings: phenylalanine (Phe), tyrosine (Tyr), tryptophan (Trp)",
+    "exceptions": {
+      "false_positives": [],
+      "false_negatives": [
+        "Proteins without aromatic amino acids (e.g., gelatin-like proteins) give NEGATIVE or weak response",
+        "Alanine, glycine, serine and other non-aromatic amino acids give NEGATIVE"
+      ],
+      "scope_restrictions": "Only detects proteins containing aromatic amino acids (Phe, Tyr, Trp). Glycine, alanine, etc. do NOT give yellow colour."
+    },
+    "mechanism_note": "Nitro group (-NO₂) is introduced into the aromatic ring by electrophilic aromatic nitration; nitro-phenyl compounds are yellow; in alkaline (NH₃) conditions, they form sodium salts which are orange",
+    "jee_traps": [
+      "Trap 1: Positive only for aromatic amino acids — phenylalanine, tyrosine, tryptophan; glycine and alanine give NEGATIVE",
+      "Trap 2: Yellow turns orange on addition of NH₃ (alkali) — two distinct colour stages",
+      "Trap 3: Skin turns yellow on contact with conc. HNO₃ — xanthoproteic reaction with skin protein",
+      "Trap 4: Gelatin (collagen) has very little aromatic amino acid content — may give weak or negative result"
+    ]
+  },
+
+  "millon": {
+    "name": "Millon's Test",
+    "reagents": ["Millon's reagent (Hg(NO₃)₂ in HNO₃, contains Hg²⁺ and Hg⁺)"],
+    "conditions": "Add Millon's reagent and heat; observe colour",
+    "positive_result": "Red precipitate (or red colour) on heating — indicates presence of phenolic -OH (tyrosine in proteins)",
+    "scope_nodes": ["amino_acid", "polymer", "phenol"],
+    "scope_note": "Proteins containing tyrosine (phenolic -OH group); also phenols in general",
+    "exceptions": {
+      "false_positives": [
+        "Phenols in general give positive (Millon's reagent reacts with any phenolic -OH)",
+        "Salicylate gives positive"
+      ],
+      "false_negatives": [
+        "Proteins lacking tyrosine (e.g., gelatin) give NEGATIVE",
+        "Amino acids without phenolic group (glycine, alanine, etc.) give NEGATIVE"
+      ],
+      "scope_restrictions": "Specific for phenolic -OH group (tyrosine in proteins). Not all proteins give positive — only those containing tyrosine."
+    },
+    "mechanism_note": "Mercury ions react with the phenol ring of tyrosine (electrophilic substitution onto ring) to form a red mercury-phenol complex on heating",
+    "jee_traps": [
+      "Trap 1: Gelatin gives NEGATIVE (no tyrosine) — Millon's positive does NOT mean 'protein present'; means 'protein with tyrosine present'",
+      "Trap 2: Simple phenols also give red colour — the test is for phenolic -OH, not exclusively protein",
+      "Trap 3: Distinction from biuret — biuret detects peptide bonds; Millon's detects phenolic OH (tyrosine specifically)"
+    ]
+  },
+
+  "sodium_test": {
+    "name": "Sodium Metal Test (Active Hydrogen Test)",
+    "reagents": ["Na metal (small piece)"],
+    "conditions": "Add dry compound to dry test tube; add small piece of sodium; observe gas evolution",
+    "positive_result": "Brisk effervescence of H₂ gas (can be confirmed by burning — gives squeaky pop or burns at mouth of tube)",
+    "scope_nodes": ["alcohol", "phenol", "carboxylic_acid", "alkyne", "amine"],
+    "scope_note": "Any compound with an acidic hydrogen (O-H or N-H in amines; C-H in terminal alkynes): alcohols, phenols, carboxylic acids, terminal alkynes (RC≡CH), primary and secondary amines",
+    "exceptions": {
+      "false_positives": [],
+      "false_negatives": [
+        "Ethers give NO H₂ (no active hydrogen)",
+        "Tertiary amines give NO H₂ (no N-H bond)",
+        "Alkyl halides give NO H₂",
+        "Esters give very slow/no reaction at RT",
+        "Ketones and aldehydes give no direct H₂ with Na metal at RT (alpha-H is too weakly acidic under mild conditions)"
+      ],
+      "scope_restrictions": "Requires an acidic enough O-H or N-H. Acidity order: carboxylic acid > phenol > water > terminal alkyne > alcohol > amine (1° > 2° > 3°=0)"
+    },
+    "mechanism_note": "Na reacts with any compound that can donate an H⁺ (Brønsted acid): R-OH + Na → R-ONa + ½H₂; RC≡C-H + Na → RC≡C-Na + ½H₂; R-NH₂ + Na → R-NHNa + ½H₂",
+    "jee_traps": [
+      "Trap 1: Diethyl ether gives NO H₂ with Na — common trap; O in ether cannot donate H⁺ (no O-H)",
+      "Trap 2: Tertiary amines (R₃N) give NO H₂ — no N-H bond; primary and secondary amines give H₂",
+      "Trap 3: Terminal alkynes (RC≡CH) give H₂ because sp carbon is acidic enough; internal alkynes (RC≡CR') give NO H₂",
+      "Trap 4: Carboxylic acids react most vigorously; alcohols react moderately; amines react slowly",
+      "Trap 5: Phenol reacts with Na (but more slowly than carboxylic acid) — 2C₆H₅OH + 2Na → 2C₆H₅ONa + H₂"
+    ]
+  }
+}
