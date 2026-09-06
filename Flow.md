@@ -22,7 +22,7 @@ Organic has a real graph. Inorganic graph input is not built yet. Physical has n
 
 `data/jee_advanced/*.json` holds the JEE Advanced papers from 2012 to 2025.
 
-`calibration/calibrate_thresholds*.py` runs real questions through both solvers. It derives the two acceptance thresholds. The values 85 and 60 are baked into each entrypoint.
+`calibration/calibrate_thresholds*.py` runs real questions through the old weak and strong solvers to derive two 0-100 thresholds. The values 85 and 60 are baked into each entrypoint as `STRONG_FLOOR` and `WEAK_CEILING`. The ground-up path no longer gates on them. It gates on the council solve-count instead, so those constants are vestigial there. `run_graph_final.py` still uses them.
 
 `calibration/calibrate_solver_metatags*.py` measures solution length and distractor count over the seed corpus. It writes the per-subject z-score parameters to `data/seeds/meta_tag_norm_stats_<subject>.json`.
 
@@ -35,7 +35,7 @@ Two entrypoint families run the same core loop. They differ in knowledge source 
 
 `subject_config.py` is the single source of truth for per-subject paths, prompts, and default values. `get_subject_config(subject)` returns a config dict.
 
-`generate_questions.py` is an optional batch driver on top of `run_groundup_final.py`. It takes a target count per subject. For each question it runs the entrypoint in a fresh subprocess, then compares the record count in `generated_questions_<subject>.json` before and after to see whether that run accepted a question. It retries a subject until the target is met or a consecutive-failure limit is reached. It does not change the generation loop.
+`generate_questions.py` is an optional batch driver on top of `run_groundup_final.py`. It takes a target count per subject. For each question it runs the entrypoint in a fresh subprocess, then compares the record count in `generated_questions_<subject>.json` before and after to see whether that run accepted a question. It retries a subject until the target is met or a consecutive-failure limit is reached, kills a hung question after `--child-timeout`, and appends the full run console to `batch_run.log` in append mode. It does not change the generation loop.
 
 ### Ground-up flow in `run_groundup_final.py`
 
@@ -51,8 +51,8 @@ This is the file you run most often. It supports all three subjects.
 
 Inside each iteration:
 
-1. `concept_reasoner()` selects a subset of transformations and returns a chain description. It is an RLM over the filtered transformations. This runs once per lineage.
-2. `generator()` writes a question and a solution.
+1. `concept_reasoner()` (`deepseek/deepseek-chat-v3-0324`) selects a subset of transformations and returns a chain description. This runs once per lineage.
+2. `generator()` (`google/gemini-2.5-flash`) writes a question and a reference solution.
 3. `verify_problem()` in `core/verifier.py` runs. Tier 1 is a deterministic duplicate-input check with no model. Tier 2 is a sequence of narrow `google/gemini-3-flash-preview` calls: blind-solve the problem with the candidate withheld, extract the candidate's final answer, compare the two answers, and only if they agree, check for structural flaws and rate difficulty. The PASS or FAIL verdict is decided in code from those results. A disagreeing answer is an immediate FAIL. On the second consecutive FAIL of a lineage (`VERIFIER_FAIL_MAX` is 2, so one refine pass) the lineage is abandoned and a new idea starts.
 4. On verifier PASS, `council_solve()` runs the three council models (`meta-llama/llama-3.3-70b-instruct`, `mistralai/mistral-large-2407`, `google/gemma-3-27b-it`) in parallel on a thread pool. Each member blind-solves closed-book, then `grade_answer()` (`openai/gpt-4o`) judges its answer against the construction steps. The count of members that solved is the difficulty signal.
 5. The attempt is recorded on the blackboard.
@@ -62,30 +62,32 @@ On acceptance the loop calls `compute_meta_tags_for_subject()` for the six-axis 
 
 ### Graph flow in `run_graph_final.py`
 
-`coverage.py` selects the least-covered edge, chapter, and archetype. `graph_traversal.py` runs a breadth-first search to build a candidate reaction path. The rest of the loop matches the ground-up flow. The weak and strong solvers run as a blind two-pass protocol.
+`coverage.py` selects the least-covered edge, chapter, and archetype. `graph_traversal.py` runs a breadth-first search to build a candidate reaction path. The rest of the loop is the older weak-solver plus strong-solver two-pass protocol with the 85 and 60 gates. This path has not been moved to the answer-first verifier or the council.
 
 ## How data moves
 
 The inputs are the concept book, the reaction graph, the seed corpus, and the norm stats. The pipeline reduces those to a validated question record.
 
-The `Blackboard` is the shared working object. It carries the seed, the archetype, the target profile, and the full attempt history. It records each problem, solution, verifier result, and both solver scores.
+The `Blackboard` is the shared working object. It carries the seed, the archetype, the target profile, and the full attempt history. It records each problem, solution, verifier result, and a score slot. In the ground-up path that slot holds the council solve-count, not a 0-100 score.
 
 The coverage object tracks which chapters and archetypes have been accepted. It is saved to `coverage_state_<subject>.json` after each acceptance.
 
-The output is `generated_questions_<subject>.json`. Each record holds the question, solution, meta-tags, scores, and attempt history.
+The output is `generated_questions_<subject>.json`. Each record holds the question, solution, meta-tags, council detail, verifier detail, and attempt history. Every attempt, accepted or not, is also written to `generated_questions_<subject>_attempts.jsonl`.
 
 ## Where an error can originate
 
 - A missing or placeholder API key stops the run before generation.
 - A missing concept book stops the run early.
 - An empty transformation list stops the run early.
+- A missing `data/seeds/meta_tag_norm_stats_<subject>.json` (inorganic, physical) crashes the run at the meta-tag step, after the item has already passed the gate.
 - The inorganic graph entrypoint fails if `knowledge/reaction_graph_inorg.json` does not exist.
-- The weak solver runs locally. A failure sets its score to zero, which usually fails the gate.
-- The strong solver reads the API. Rate limits are retried with backoff.
+- Every LLM role reads the OpenRouter API. Rate limits and 503s are retried with backoff. A key over its spend limit returns 403 and every call then fails fast.
+- A council member that returns malformed JSON is recorded as not solved, which biases the difficulty signal toward "harder".
 
 ## Component dependencies
 
-- Entrypoints depend on `subject_config.py`, `core/meta_tags.py`, `core/coverage.py`, and `core/blackboard.py`.
+- Entrypoints depend on `subject_config.py`, `core/meta_tags.py`, `core/coverage.py`, `core/blackboard.py`, and `core/verifier.py`.
 - Graph entrypoints also depend on `core/graph_traversal.py`.
 - `core/meta_tags.py` depends on the committed norm stats.
-- The `core/` modules `generator.py`, `verifier.py`, `strong_solver.py`, and `weak_solver.py` are reference stubs. The live logic is defined inline in the entrypoints.
+- `core/verifier.py` is live. It holds the two-tier verifier and its own `VERIFIER_MODEL` (`google/gemini-3-flash-preview`), which is the authoritative value.
+- The `core/` modules `generator.py`, `concept_reasoner.py`, `strong_solver.py`, and `weak_solver.py` are reference stubs. The live generation, solving, and grading logic is defined inline in the entrypoints.

@@ -4,6 +4,16 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-09-07
 
+### README.md
+Refreshed the design doc to match the build. The generation-loop diagram, the model roster, the "no producer clears itself" note, the verifier section, the calibration note, the two-entrypoints table, the repository layout, and the known-limitations list all still described the old weak-solver plus strong-solver architecture with a Qwen verifier and a DeepSeek generator.
+Now documents: Gemini 2.5 Flash generator, Gemini 3 Flash answer-first verifier (the five-call flow), the 3-model parallel council with the solve-count difficulty signal, the `MAX_LINEAGES`/`MAX_ITERS`/`VERIFIER_FAIL_MAX` caps, `generate_questions.py`, the `data/seeds/meta_tag_norm_stats_*` files, and the append-only `batch_run.log`. Notes `STRONG_FLOOR`/`WEAK_CEILING` as vestigial in the ground-up path and the chain-coherence limitation.
+Impact: documentation only.
+
+### generate_questions.py — append-only run log
+The driver now writes `batch_run.log` itself, opened in append mode, with a `RUN <timestamp> :: <args>` separator per run. The child subprocess is run via `Popen` and its output is tee'd to both the console and the log line by line. Added `--log` (path, or empty to disable). Parent stdout/stderr are reconfigured to UTF-8 so the child's box-drawing characters do not raise `UnicodeEncodeError` when tee'd.
+Reason: earlier runs were launched with `> batch_run.log`, so each relaunch overwrote the previous run's console output and one run's log was lost.
+Impact: relaunching never clobbers earlier output. Launch the driver without shell redirection to `batch_run.log`.
+
 ### core/verifier.py — answer-first, one job per call
 Rebuilt Tier 2 so a wrong reference solution cannot pass. Before, one `_judge` call received the candidate solution and decided PASS/FAIL, so a solution that read as internally consistent was accepted even when its final answer was wrong. Now the verdict is assembled in code from separate single-purpose calls:
 1. `_blind_solve` solves the problem with the candidate withheld and commits to a `final_answer`.

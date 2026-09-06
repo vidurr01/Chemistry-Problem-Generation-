@@ -2,13 +2,14 @@
 
 A pipeline that **synthesises** JEE-Advanced-style chemistry questions with LLMs and
 **validates** each one before it enters the dataset. Validation is deliberately
-adversarial: the models that *write* a question are never the models that *clear* it, the
-solvers work **blind** (they never see the answer key), and a **deterministic gate** catches
-whole classes of error with no model in the loop. Supports **organic, inorganic, physical**.
+adversarial: no model grades or clears its own output, the solvers work **blind** (they
+never see the answer key), the verifier commits its own answer before it is shown the
+candidate, and a **deterministic gate** catches whole classes of error with no model in
+the loop. Supports **organic, inorganic, physical**.
 
-> **Read the code, not old prose.** This README was rewritten to match the current build.
-> Where a doc and the code disagree, the code wins. See `ChangeLog.md`, `Decisions.md`,
-> `Flow.md`, and the live diagram in `pipeline_overview.html`.
+> **Read the code, not old prose.** This README was refreshed on 2026-09-07 to match the
+> build. Where a doc and the code disagree, the code wins. See `ChangeLog.md`,
+> `Decisions.md`, `Flow.md`, and the live diagram in `pipeline_overview.html`.
 
 ---
 
@@ -21,49 +22,59 @@ graph-wired path and is **not** yet on the new roster (see [Two entrypoints](#tw
 ### The generation loop (`run_groundup_final.py`)
 
 ```
-Coverage picks least-covered chapter/archetype
+Coverage picks the least-covered chapter/archetype
    │
    ▼
-Concept-reasoner  (DeepSeek-V3)   selects 3–4 transforms from the chapter's concept-book slice
+Concept-reasoner  (DeepSeek-V3)     selects 3-4 transforms from the chapter's concept-book slice
    │
    ▼
-Generator         (DeepSeek-V3)   writes the question + a reference solution
+Generator         (Gemini 2.5 Flash)  writes the question + a reference solution
    │
    ▼
-Verifier (2-tier, core/verifier.py)
-   ├─ Tier 1  deterministic, NO LLM: hash numeric inputs + formula signature;
-   │          hard-FAIL if identical inputs ever produced a different final answer
-   └─ Tier 2  Qwen2.5-72B: solve the problem BLIND, then judge the candidate
-              (arithmetic, out-of-regime formulas, impossible results, non-circularity)
+Verifier, two tiers, core/verifier.py
+   ├─ Tier 1  deterministic, NO LLM: hash the numeric inputs + formula signature.
+   │          Hard-FAIL if identical inputs ever produced a different final answer.
+   └─ Tier 2  Gemini 3 Flash, one narrow call per check, verdict assembled in code:
+              a) solve the problem BLIND (candidate solution withheld), commit an answer
+              b) extract the candidate's final answer
+              c) compare the two answers.  Disagreement => FAIL, stop here
+              d) structural check: arithmetic, out-of-regime formulas, impossible
+                 results, non-uniqueness, non-circularity
+              e) rate difficulty
    │
    ▼
-Weak solver   (Llama-3.2-3B)   solves BLIND (no answer key)   ─┐
-Strong solver (Qwen3-235B)     solves BLIND (no answer key)   ─┤
-   │                                                           ▼
-   │                            Grader (GPT-4o) compares each blind answer
-   │                            to the reference → 0–100 score  (solver ≠ grader)
+Council of 3 solvers, run in PARALLEL, each BLIND (no answer key) and closed-book:
+   Llama-3.3-70B   ·   Mistral-Large   ·   Gemma-3-27B
+   each one blind-solves, then Grader (GPT-4o) judges its answer against the reference
+   │
    ▼
-4-gate check:  verifier PASS  ·  strong ≥ 85  ·  weak ≤ 60  ·  reference_correct
-   │           (an UNMEASURED score — None — can never satisfy a gate)
-   ├─ all pass → compute 6 difficulty meta-tags → append to generated_questions_<subject>.json
-   └─ any fail → record on blackboard → REFINE IN PLACE (≤ 4 attempts total)
+Gate:  verifier PASS  ·  reference_correct  ·  at most 1 of 3 council members solved
+   ├─ 2 or 3 solved  => too easy => refine for reasoning complexity
+   ├─ gate passes    => compute 6 difficulty meta-tags => append to generated_questions_<subject>.json
+   └─ verifier FAIL  => record on blackboard => REFINE IN PLACE
 ```
+
+Refine-in-place caps live at the top of `main()`: `MAX_LINEAGES = 3` fresh ideas,
+`MAX_ITERS = 4` total generate-check iterations, `VERIFIER_FAIL_MAX = 2` (one refine pass
+per idea before it is abandoned).
 
 **Two design commitments enforced in code:**
 
-1. **No producer clears itself.** Generator (DeepSeek) ≠ verifier (Qwen2.5-72B) ≠ strong
-   solver (Qwen3-235B) ≠ grader (GPT-4o) ≠ weak (Llama-3B) — five roles, four families.
-2. **Solvers are blind, and a separate grader scores them.** A solver never sees the
-   reference; it produces an answer cold, and the grader compares that answer to the
-   reference. This replaces the old self-scoring, which pinned the strong score at ~100
-   because the solver was shown the answer it was meant to reproduce.
+1. **No producer clears itself.** Concept-reasoner (DeepSeek), generator (Gemini 2.5 Flash),
+   verifier (Gemini 3 Flash), grader (GPT-4o), council (Meta, Mistral, Google). The
+   generator and verifier are both Google models now, but different versions, and neither
+   solves nor grades its own output.
+2. **The verdict is answer-driven and assembled in code.** The verifier solves the problem
+   without seeing the candidate solution, then a wrong reference answer FAILs immediately
+   even if the candidate's own reasoning looks consistent. The model never writes the
+   PASS/FAIL string; the code does, from discrete booleans.
 
 ### Closed-book solving
 
-Both solvers run **closed-book**: they are handed the chapter's concept-book knowledge
-(the same `valid_transformations` used to build the question — organic reactions, inorganic
-structure/reactivity facts, physical formulas) and instructed to **use only that, not their
-pretrained memory**, citing the index of each item used. See `build_knowledge_sheet()`.
+The council members run **closed-book**. They are handed the chapter's concept-book
+knowledge, the same `valid_transformations` used to build the question, and instructed to
+use only that and not their pretrained memory, citing the index of each item used. See
+`build_knowledge_sheet()`.
 
 ---
 
@@ -78,18 +89,26 @@ cp .env.example .env         # then put your key in it:  OPENROUTER_KEY=...
 
 `.env` is **gitignored** — never commit keys.
 
-**Generate (ground-up, all three subjects):**
+**Generate one question:**
 ```bash
 python run_groundup_final.py --subject organic
 python run_groundup_final.py --subject inorganic
 python run_groundup_final.py --subject physical --chapter "Chemical Kinetics"
 ```
-Each invocation attempts **one** accepted question (up to 4 refine-in-place attempts) and
-appends it to `generated_questions_<subject>.json`.
+Each invocation attempts **one** accepted question and appends it to
+`generated_questions_<subject>.json`, with every attempt (pass or fail) logged to
+`generated_questions_<subject>_attempts.jsonl`.
 
-**Note on Ollama:** the weak solver runs on **OpenRouter** (`meta-llama/llama-3.2-3b-instruct`),
-*not* local Ollama — Ollama's `llama3.2` returns an empty JSON object under
-`response_format=json_object`, which silently broke the weak gate.
+**Generate many, across subjects:** `generate_questions.py` runs the entrypoint once per
+question in a fresh subprocess.
+```bash
+python generate_questions.py --organic 5 --inorganic 5 --physical 10
+```
+It takes a target count per subject, resumes from the current accepted counts, kills and
+retries a hung question after `--child-timeout` seconds, and moves on from a subject after
+`--max-consecutive-failures` runs in a row accept nothing. It appends the full run console
+to `batch_run.log`, never overwriting, and each run gets a `RUN <timestamp>` separator.
+Launch it without shell redirection to `batch_run.log`.
 
 ---
 
@@ -97,15 +116,20 @@ appends it to `generated_questions_<subject>.json`.
 
 | Role | Model | Family | Why |
 |------|-------|--------|-----|
-| Concept-reasoner | `deepseek/deepseek-chat-v3-0324` | DeepSeek | selects reaction steps |
-| Generator | `deepseek/deepseek-chat-v3-0324` | DeepSeek | writes question + reference solution |
-| **Verifier** (Tier 2) | `qwen/qwen-2.5-72b-instruct` | Qwen | blind-judge (≠ generator) |
-| **Strong solver** | `qwen/qwen3-235b-a22b-2507` | Qwen | blind expert solver |
-| **Grader** | `openai/gpt-4o` | OpenAI | scores solver answers (≠ solvers, ≠ generator) |
-| Weak solver | `meta-llama/llama-3.2-3b-instruct` | Llama | blind non-expert floor |
+| Concept-reasoner | `deepseek/deepseek-chat-v3-0324` | DeepSeek | selects reaction/formula steps |
+| Generator | `google/gemini-2.5-flash` | Google | writes question + reference solution (cheaper than the verifier) |
+| **Verifier** (Tier 2) | `google/gemini-3-flash-preview` | Google | blind-solves, then answer-first checks (≠ generator version) |
+| **Grader** | `openai/gpt-4o` | OpenAI | scores council answers (≠ council, ≠ generator) |
+| Council solver 1 | `meta-llama/llama-3.3-70b-instruct` | Meta | blind, Mains-level |
+| Council solver 2 | `mistralai/mistral-large-2407` | Mistral | blind, Mains-level |
+| Council solver 3 | `google/gemma-3-27b-it` | Google | blind, Mains-level |
 
-Model assignments live at the top of `run_groundup_final.py`; the verifier model lives in
-`core/verifier.py`. Change them there.
+The council replaced the earlier single weak solver plus single strong solver. The count of
+council members that solve a question is the difficulty signal: **2 or 3 solved means too
+easy** (refine), **0 or 1 solved means hard enough** (accept if the verifier passed).
+
+Model assignments live at the top of `run_groundup_final.py`. The verifier model lives in
+`core/verifier.py` and is the authoritative value. Change them there.
 
 ---
 
@@ -128,19 +152,19 @@ It blind-solves real JEE Advanced questions (no answer key) and grades against t
 | Weak (`llama-3.2-3b`) | **7 %** | 19 |
 
 **What it means:** a strong reasoning model solves only *half* of real Advanced numeric
-items blind. Generated items, by contrast, are solved at ~100 — so **current generation
-lands around Intermediate, with a measured gap to Advanced.** That gap is the honest,
-reportable finding, not a bug to hide.
+items blind. Generated items are solved more often, so **generation lands around
+Intermediate, with a measured gap to Advanced.** That gap is the honest, reportable
+finding, not a bug to hide.
 
-> ⚠️ **The `STRONG_FLOOR = 85` / `WEAK_CEILING = 60` gate thresholds are stale.** They were
-> fit to the *old self-scoring* calibration (strong "scored" 96 % with the answer visible).
-> Under blind grading the strong model averages ~60 on real Advanced, so 85 no longer means
-> "expert-level." Re-derive them from the blind distributions before relying on them.
+> ⚠️ **`STRONG_FLOOR = 85` and `WEAK_CEILING = 60` are vestigial in the ground-up path.**
+> That path now gates on the council solve-count, not on a 0-100 score. The constants and
+> the "Weak/Strong Solver Score" lines in the refine prompt are leftovers from the old
+> weak/strong design. `run_graph_final.py` still uses them.
 
-**Caveats:** n = 54 is a numeric-only subset (MCQ/MSQ excluded — the dataset lacks option
-text; 19 figure-dependent items dropped as unsolvable text-only). The anchor uses
-`gpt-oss-120b` as strong solver while generation now uses `qwen3-235b`; reconcile the two if
-you need the same expert across both.
+**Caveats:** n = 54 is a numeric-only subset. MCQ and MSQ are excluded because the dataset
+lacks option text, and 19 figure-dependent items were dropped as unsolvable text-only. The
+anchor still blind-solves with `gpt-oss-120b` and `llama-3.2-3b`, which are no longer the
+generation solvers. Re-run it with the current council models before comparing directly.
 
 ---
 
@@ -148,8 +172,8 @@ you need the same expert across both.
 
 | Entrypoint | Knowledge | Provider | Architecture |
 |------------|-----------|----------|--------------|
-| `run_groundup_final.py` | concept-book slice (no graph) | OpenRouter | **current**: blind solvers, 2-tier verifier, per-role models, closed-book |
-| `run_graph_final.py` | reaction graph (organic) | SambaNova | **older**: blind strong solver + None-safe gates, but single-model (DeepSeek-V3.2) and not on the new roster |
+| `run_groundup_final.py` | concept-book slice (no graph) | OpenRouter | **current**: answer-first 2-tier verifier, 3-model parallel council, per-role models, closed-book |
+| `run_graph_final.py` | reaction graph (organic) | SambaNova | **older**: blind strong solver + None-safe gates, single-model (DeepSeek-V3.2), not on the new roster |
 
 The graph path constrains each step to a real reaction edge (prevents invented chemistry)
 but has not been migrated to the diversified roster or the two-tier verifier, and its
@@ -162,21 +186,29 @@ SambaNova keys may be unfunded. Prefer `run_groundup_final.py`.
 ```
 run_groundup_final.py    ← recommended entrypoint (OpenRouter, current architecture)
 run_graph_final.py       ← graph-wired entrypoint (SambaNova, older)
+generate_questions.py    ← batch driver: N questions per subject, appends to batch_run.log
 subject_config.py        ← per-subject paths/prompts/filtering (source of truth)
 core/
-  verifier.py            ← two-tier verifier: deterministic dedup + blind LLM judge
+  verifier.py            ← two-tier verifier: deterministic dedup + answer-first LLM checks
   blackboard.py          ← shared attempt history (enables refine-in-place); None-safe scores
   coverage.py            ← inverse-frequency diversity tracker
   meta_tags.py           ← 6-axis difficulty labels (z-scored within archetype)
   graph_traversal.py     ← reaction-graph queries (graph path)
 knowledge/               ← per-subject concept books + organic reaction graph + orders/tests
 calibration/
-  anchor_calibration.py  ← blind solve-rate of strong/weak on REAL JEE Advanced (the anchor)
-  calibrate_thresholds*.py ← OLD threshold derivation (self-scoring; see stale-thresholds note)
-data/                    ← JEE Advanced papers, seeds, Mains contrast set (read-only inputs)
+  anchor_calibration.py  ← blind solve-rate on REAL JEE Advanced (the anchor)
+  calibrate_thresholds*.py ← OLD threshold derivation (self-scoring; see calibration note)
+data/
+  jee_advanced/          ← JEE Advanced papers 2012-2025 (read-only inputs)
+  seeds/                 ← seed corpora + meta_tag_norm_stats_{inorganic,physical}.json
+  chapterwise/           ← chapter-tagged question banks
 pipeline_overview.html   ← live architecture diagram
 ChangeLog.md / Decisions.md / Flow.md
 ```
+
+`data/seeds/meta_tag_norm_stats_{inorganic,physical}.json` are the per-subject z-score
+baselines the inorganic and physical paths load at acceptance. Without them those subjects
+crash at meta-tag computation. Organic uses `calibration/meta_tag_norm_stats.json`.
 
 ### `knowledge/` files
 
@@ -200,28 +232,49 @@ disagree on the final answer, both hard-FAIL — at least one must be wrong, and
 needed to know that. This was written to catch a real bug where two identical U-Pb dating
 questions produced two different ages, both stamped PASS by the previous mock verifier.
 
-**Tier 2 — independent blind judge (Qwen2.5-72B).** Solves the problem cold, then compares
-to the candidate and checks arithmetic, out-of-regime formula use, physically impossible
-results, uniqueness, and **non-circularity** (the product must differ from the starting
-material). Returns PASS/FAIL + actionable feedback that feeds refine-in-place.
+**Tier 2 — answer-first checks (Gemini 3 Flash), one narrow call each.** The verdict is
+assembled in code from discrete results, not written by the model.
 
-The verifier is the **binding quality gate**: a circular/inconsistent chain that a strong
-model still "solves" (strong = 100) is now rejected here, where the old pipeline would have
-emitted it. Acceptance rate dropped from ~100 % to ~20 % accordingly — fewer, cleaner items.
+1. `_blind_solve` solves the problem with the candidate solution withheld and commits a
+   final answer.
+2. `_extract_candidate_answer` reads the candidate solution and returns only its answer.
+3. `_answers_equivalent` compares the two answers. If they disagree, the candidate's
+   reference solution is not trustworthy, so the item FAILs and the later calls are skipped.
+4. `_structural_check` looks only for arithmetic errors, out-of-regime formula use,
+   physically impossible results, non-uniqueness, and non-circularity.
+5. `_rate_difficulty` runs only on a clean PASS.
+
+This replaced a single `_judge` call that saw the candidate solution and returned the
+verdict itself. That call would pass a tidy but wrong solution. Splitting the work into
+short single-purpose prompts is where a small model drifts least, and moving the PASS/FAIL
+decision into code removes the "looks fine" failure mode.
+
+The verifier is the **binding quality gate**. A circular or inconsistent chain that a
+solver still "solves" is rejected here. The FAIL feedback names both the independent answer
+and the candidate answer, so the generator can correct its key on the refine pass.
 
 ---
 
 ## Known limitations (honest status)
 
-- **Generation reaches Intermediate, not Advanced.** Measured against the anchor above.
-- **Gate thresholds (85/60) are stale** — see the calibration note.
-- **The anchor is numeric-only (n = 54)** and uses a different strong solver than generation.
-- **Closed-book with a full-chapter sheet doesn't add difficulty** for a strong model (the
-  sheet is complete) — it demonstrates the capability; it bites only when knowledge is
-  withheld or the question needs genuine multi-step reasoning.
+- **Generation reaches Intermediate, not Advanced.** Measured against the anchor, though the
+  anchor now uses different solver models than generation, so the gap is less precisely
+  quantified.
+- **`STRONG_FLOOR` / `WEAK_CEILING` are vestigial** in the ground-up path. See the
+  calibration note. The council solve-count is the real difficulty gate.
+- **The concept-reasoner sometimes picks a chain that does not connect** (product of step N
+  is not the substrate of step N+1). The verifier catches the resulting broken question,
+  but it costs refine iterations. A deterministic adjacency check is not built because the
+  concept book's `from`/`to` fields are free text, not typed tokens. This is what the graph
+  path solves structurally.
+- **The generator (Gemini 2.5 Flash) and verifier (Gemini 3 Flash) are both Google models.**
+  Different versions, and neither grades its own output, but family separation is weaker
+  than the earlier roster.
+- **The anchor is numeric-only (n = 54)** and blind-solves with models that are no longer
+  in the generation loop.
 - **The graph path (`run_graph_final.py`) is not migrated** to the current architecture.
-- **Provenance typing, an RDKit-level deterministic chemistry checker, and a multi-model
-  verifier council are not built** — future work.
+- **Provenance typing and an RDKit-level deterministic chemistry checker are not built.**
+  Future work.
 
 ---
 

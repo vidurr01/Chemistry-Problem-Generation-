@@ -21,6 +21,11 @@ Usage
     # keep going even if a subject produces no accepted question for a while
     python generate_questions.py --organic 10 --max-consecutive-failures 5
 
+Launch it WITHOUT shell redirection to batch_run.log — the driver writes that log
+itself, in APPEND mode, so relaunching never overwrites an earlier run. Each run
+starts with a "RUN <timestamp> :: <args>" separator. Use --log to change the path
+or --log "" to disable. Console output still streams live as well.
+
 Output
 ------
 Questions are appended to (created if absent):
@@ -29,7 +34,8 @@ Questions are appended to (created if absent):
     generated_questions_physical.json
 Every attempt (accepted or not) is also logged to
     generated_questions_<subject>_attempts.jsonl
-by the underlying script.
+by the underlying script, and the full run console is appended to
+    batch_run.log
 """
 
 import argparse
@@ -39,6 +45,14 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+
+# The child prints box-drawing / arrow characters; make sure our console can too
+# (Windows consoles default to cp1252, which raises UnicodeEncodeError on them).
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ENTRYPOINT = os.path.join(HERE, "run_groundup_final.py")
@@ -52,11 +66,29 @@ OUTPUT_FILES = {
 
 SUBJECTS = ("organic", "inorganic", "physical")
 
+# Append-only run log. Opened in main(); every run adds a separator header and its
+# lines to the end, so relaunching never clobbers an earlier run's output. The
+# child subprocess's stdout is tee'd here line by line as well (see generate_one).
+_LOG = None
+
+
+def emit(text, end="\n"):
+    """Write to the real console AND append to the run log. Never let an encoding
+    or I/O hiccup on one sink kill the run."""
+    for sink in (sys.stdout, _LOG):
+        if sink is None:
+            continue
+        try:
+            sink.write(text + end)
+            sink.flush()
+        except Exception:
+            pass
+
 
 def stamp(msg):
     """Print a timestamped, flushed line so batch transitions are always visible,
     even while the child subprocess is quiet (loading, waiting on the API)."""
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
+    emit(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 
 
 def load_env_key():
@@ -103,12 +135,23 @@ def generate_one(subject, chapter, python_exe, child_timeout):
     # after child_timeout and counted as a non-acceptance, so the batch continues.
     stamp(f"{subject}: launching run_groundup_final.py (timeout {child_timeout}s)")
     t0 = time.time()
+    rc = None
     try:
-        result = subprocess.run(cmd, cwd=HERE, env=env, timeout=child_timeout)
-        rc = result.returncode
-    except subprocess.TimeoutExpired:
-        stamp(f"[warn] {subject}: run exceeded {child_timeout}s, killed. Continuing.")
-        rc = None
+        # Capture the child's output so we can tee it to both the console and the
+        # append log, line by line. PYTHONUNBUFFERED on the child keeps it live.
+        proc = subprocess.Popen(cmd, cwd=HERE, env=env, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, bufsize=1,
+                                encoding="utf-8", errors="replace")
+        try:
+            for line in proc.stdout:
+                emit(line.rstrip("\n"))
+            rc = proc.wait(timeout=child_timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            stamp(f"[warn] {subject}: run exceeded {child_timeout}s, killed. Continuing.")
+    except Exception as e:
+        stamp(f"[warn] {subject}: run failed to launch: {e}")
     dt = time.time() - t0
 
     after = count_questions(out_file)
@@ -176,10 +219,13 @@ def parse_args():
                    help="seconds before a single hung question run is killed and retried")
     p.add_argument("--python", default=sys.executable,
                    help="python executable used to run run_groundup_final.py")
+    p.add_argument("--log", default="batch_run.log",
+                   help="run log, APPENDED to (never overwritten). Empty string disables.")
     return p.parse_args()
 
 
 def main():
+    global _LOG
     args = parse_args()
 
     targets = {
@@ -208,6 +254,15 @@ def main():
         print("  Put your key in a .env file next to this script:  OPENROUTER_KEY=sk-or-...")
         return 1
 
+    if args.log:
+        log_path = args.log if os.path.isabs(args.log) else os.path.join(HERE, args.log)
+        _LOG = open(log_path, "a", encoding="utf-8")
+        _LOG.write("\n\n" + "=" * 78 + "\n")
+        _LOG.write(f"RUN {datetime.now().isoformat(timespec='seconds')}  ::  "
+                   f"{' '.join(sys.argv[1:])}\n")
+        _LOG.write("=" * 78 + "\n")
+        _LOG.flush()
+
     order = [s.strip() for s in args.order.split(",") if s.strip()]
     for s in order:
         if s not in SUBJECTS:
@@ -227,9 +282,9 @@ def main():
         )
 
     elapsed = time.time() - start
-    print("\n" + "=" * 70)
-    print(" SUMMARY")
-    print("=" * 70)
+    emit("\n" + "=" * 70)
+    emit(" SUMMARY")
+    emit("=" * 70)
     any_short = False
     for subject in SUBJECTS:
         want = targets[subject]
@@ -239,8 +294,10 @@ def main():
         flag = "" if got >= want else "  <-- short"
         if got < want:
             any_short = True
-        print(f"  {subject:<10} {got}/{want}   -> {OUTPUT_FILES[subject]}{flag}")
-    print(f"\n  elapsed: {elapsed/60:.1f} min")
+        emit(f"  {subject:<10} {got}/{want}   -> {OUTPUT_FILES[subject]}{flag}")
+    emit(f"\n  elapsed: {elapsed/60:.1f} min")
+    if _LOG is not None:
+        _LOG.close()
     return 1 if any_short else 0
 
 
