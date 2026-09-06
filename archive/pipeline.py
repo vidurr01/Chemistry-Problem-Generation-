@@ -5,7 +5,7 @@ from core.concept_reasoner import reason_over_concept_book
 from core.generator import generate_augmented_problem
 from core.verifier import verify_problem
 from core.weak_solver import solve_weak, WEAK_SCORE_CEILING
-from core.strong_solver import solve_strong, STRONG_SCORE_FLOOR
+from core.strong_solver import solve_strong, STRONG_FLOOR
 
 
 def check_acceptance(verifier_result: dict, weak_result: dict, strong_result: dict):
@@ -18,9 +18,9 @@ def check_acceptance(verifier_result: dict, weak_result: dict, strong_result: di
     """
     if verifier_result["verdict"] == "FAIL":
         return False, f"VERIFIER_FAIL: {verifier_result['feedback_for_generator']}"
-    if strong_result["score"] < STRONG_SCORE_FLOOR:
+    if strong_result["score"] < STRONG_FLOOR:
         return False, (
-            f"STRONG_TOO_LOW: {strong_result['score']}% (floor={STRONG_SCORE_FLOOR}%) — "
+            f"STRONG_TOO_LOW: {strong_result['score']}% (floor={STRONG_FLOOR}%) — "
             f"problem may be unsolvable or chemically broken"
         )
     if weak_result["score"] > WEAK_SCORE_CEILING:

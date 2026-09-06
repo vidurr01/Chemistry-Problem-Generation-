@@ -152,7 +152,12 @@ def sample_paths(coverage, config: dict, n_options: int = 6, depth: int = 3,
     arch_code   = config["default_archetype_code"]
 
     for start in start_nodes:
-        result = get_paths(start, depth=depth, avoid_nodes=avoid)
+        # archetype/chapter were computed above but never passed here before this fix —
+        # get_paths() silently ignored config["default_archetype_code"]/["default_chapter"]
+        # and traversed every edge regardless of tag, including edges belonging to a
+        # different chapter than the one this run is supposed to be building within.
+        result = get_paths(start, depth=depth, avoid_nodes=avoid,
+                            archetype=arch_code, chapter=chapter)
         for p in result.get("paths", []):
             if len(p["edges"]) < 2:
                 continue  # need at least 2 steps for a good chain

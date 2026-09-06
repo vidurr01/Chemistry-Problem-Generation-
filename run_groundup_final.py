@@ -152,10 +152,10 @@ def filter_txs_for_subject(concept_book: dict, config: dict, chapter: str) -> li
 
 # ── Pipeline functions ──────────────────────────────────────────────────────────
 
-def concept_reasoner(blackboard: Blackboard, txs: list, config: dict) -> dict:
+def concept_reasoner(blackboard: Blackboard, txs: list, config: dict, chapter: str = None) -> dict:
     context = blackboard.context_summary()
     tried   = blackboard.operators_tried()
-    chapter = config["default_chapter"]
+    chapter = chapter or config["default_chapter"]
     arch    = config["default_archetype"]
     code    = config["default_archetype_code"]
 
@@ -227,9 +227,9 @@ Return JSON:
 
 
 def generator(blackboard: Blackboard, selected_txs: list, chain_desc: str,
-              attempt_num: int, config: dict) -> dict:
+              attempt_num: int, config: dict, chapter: str = None) -> dict:
     last = blackboard.last_attempt()
-    chapter = config["default_chapter"]
+    chapter = chapter or config["default_chapter"]
     arch    = config["default_archetype"]
     code    = config["default_archetype_code"]
 
@@ -642,7 +642,7 @@ def main():
         print(f"\n╔═══ LINEAGE {lineage} (new question idea) ═══╗")
         # Fresh idea for this lineage.
         try:
-            cr = concept_reasoner(blackboard, txs, config)
+            cr = concept_reasoner(blackboard, txs, config, chapter=chapter)
             selected_ids = cr.get("selected_tx_ids", [])
             chain_desc   = cr.get("chain_description", "")
             try:
@@ -651,7 +651,7 @@ def main():
                 selected_ids = []
             selected_txs = [txs[i] for i in selected_ids if 0 <= i < len(txs)]
             print(f"  Selected {len(selected_txs)} steps: {[t['from']+' → '+t['to'] for t in selected_txs]}")
-            gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+            gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config, chapter=chapter)
         except Exception as e:
             print(f"  lineage {lineage} setup error: {e}")
             continue
@@ -695,7 +695,7 @@ def main():
                         verifier_result=ver, weak_score=None, strong_score=None,
                     )
                     print("  → refining to fix the flagged issue...")
-                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config, chapter=chapter)
                     continue
 
                 # 2) verifier PASS → COUNCIL of solvers decides difficulty.
@@ -724,7 +724,7 @@ def main():
                         "verifier": ver, "council": council,
                         "ts": datetime.now(timezone.utc).isoformat(),
                     })
-                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config, chapter=chapter)
                     continue
 
                 if n_solved >= COUNCIL_TOO_EASY_IF_SOLVED_GE:
@@ -745,7 +745,7 @@ def main():
                         f"REASONING difficulty — add a chemoselectivity decision, an exception/trap where "
                         f"the naive rule fails, or a constraint to resolve. Do NOT just add more steps or jargon."
                     )
-                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config, chapter=chapter)
                     continue
 
                 # 3) verifier PASS + ≤1 of 3 solved → ACCEPT.
@@ -816,7 +816,7 @@ def main():
                 print(f"  iter {iters} error: {e}")
                 # treat as a soft failure; refine and continue within cap
                 try:
-                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config, chapter=chapter)
                 except Exception:
                     break
 
