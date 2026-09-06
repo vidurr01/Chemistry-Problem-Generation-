@@ -112,6 +112,40 @@ Launch it without shell redirection to `batch_run.log`.
 
 ---
 
+## Curated Question Datasets
+
+The final curated benchmark sets are located in the repository root:
+
+| Dataset File | Subject | Count | Status / Curation Notes |
+|---|---|---|---|
+| `generated_questions_organic_final.json` | Organic Chemistry | **10** | Curated from 13 raw accepted questions. Pruned 3 items: circular hydrogenation (`GEN_20260906T093311`), invalid sulfuric acid hydration of alkyl halide (`GEN_20260906T182711`), and ambiguous ozonolysis product naming (`GEN_20260906T182848`). |
+| `generated_questions_inorganic_final.json` | Inorganic Chemistry | **10** | Curated from 11 raw accepted questions. Pruned 1 defective MCQ with no valid option (`GEN_20260906T203528`). |
+| `generated_questions_physical_final.json` | Physical Chemistry | **7** | All 7 questions accepted from Chemical Kinetics & Nuclear Chemistry retained. |
+
+The raw acceptance logs and attempt histories from generation runs remain in:
+- `generated_questions_<subject>.json`: All accepted candidates passing the gate during runs.
+- `generated_questions_<subject>_attempts.jsonl`: Full trace of every iteration attempt (passes, verifier rejections, council ratings, blackboard state).
+- `batch_run.log`: Timestamped run logs from `generate_questions.py`.
+
+### Human Evaluation & Scoring (n = 27)
+
+All 27 curated benchmark items were evaluated and tagged with expert human scores:
+- **0 = Wrong**: Question generated is chemically or mathematically incorrect / contradictory.
+- **1 = CBSE level**: Standard Class 12 board exam level (direct textbook recall, straightforward conversions, single-formula arithmetic).
+- **2 = JEE Mains level**: Multi-step competition level (standard reaction mechanisms, typical regioselectivity, multi-formula calculations).
+- **3 = JEE Advanced level**: Multi-concept integration, deep stereochemical/conformational analysis, complex coupled kinetics, or non-obvious inorganic equilibria.
+
+| Subject | Total | Score 0 (Wrong) | Score 1 (CBSE) | Score 2 (JEE Mains) | Score 3 (JEE Advanced) | Mean Score (0–3) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Organic Chemistry** | 10 | 0 (0.0%) | 1 (10.0%) | 7 (70.0%) | 2 (20.0%) | **2.10** |
+| **Inorganic Chemistry** | 10 | 1 (10.0%) | 1 (10.0%) | 5 (50.0%) | 3 (30.0%) | **2.00** |
+| **Physical Chemistry** | 7 | 2 (28.6%) | 0 (0.0%) | 3 (42.9%) | 2 (28.6%) | **1.71** |
+| **Overall Dataset** | **27** | **3 (11.1%)** | **2 (7.4%)** | **15 (55.6%)** | **7 (25.9%)** | **1.96** |
+
+Each item in `generated_questions_*_final.json` contains `human_eval_score`, `human_eval_level`, and `human_eval_rationale`.
+
+---
+
 ## Models (live roster, all via OpenRouter)
 
 | Role | Model | Family | Why |
@@ -184,10 +218,11 @@ SambaNova keys may be unfunded. Prefer `run_groundup_final.py`.
 ## Repository layout
 
 ```
-run_groundup_final.py    ← recommended entrypoint (OpenRouter, current architecture)
-run_graph_final.py       ← graph-wired entrypoint (SambaNova, older)
-generate_questions.py    ← batch driver: N questions per subject, appends to batch_run.log
-subject_config.py        ← per-subject paths/prompts/filtering (source of truth)
+run_groundup_final.py              ← recommended entrypoint (OpenRouter, current architecture)
+run_graph_final.py                 ← graph-wired entrypoint (SambaNova, older)
+generate_questions.py              ← batch driver: N questions per subject, appends to batch_run.log
+subject_config.py                  ← per-subject paths/prompts/filtering (source of truth)
+generated_questions_*_final.json   ← curated benchmarks (10 organic, 10 inorganic, 7 physical)
 core/
   verifier.py            ← two-tier verifier: deterministic dedup + answer-first LLM checks
   blackboard.py          ← shared attempt history (enables refine-in-place); None-safe scores
