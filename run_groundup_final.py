@@ -27,6 +27,7 @@ except (AttributeError, ValueError):
     pass
 
 from core.blackboard import Blackboard
+from core.verifier import verify_problem  # two-tier: deterministic dedup + blind-solve LLM judge
 
 from subject_config import (
     get_subject_config,
@@ -58,7 +59,7 @@ weak_client = OpenAI(api_key="ollama", base_url="http://localhost:11434/v1")
 CONCEPT_MODEL       = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — selects reaction steps
 GENERATOR_MODEL     = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — writes question + reference solution
 VERIFIER_MODEL      = "qwen/qwen-2.5-72b-instruct"       # Qwen2.5-72B — blind-checks the item (≠ generator)
-STRONG_SOLVER_MODEL = "openai/gpt-oss-120b"              # gpt-oss — blind expert solver (≠ generator)
+STRONG_SOLVER_MODEL = "qwen/qwen3-235b-a22b-2507"       # Qwen3-235B — blind expert solver (≠ generator)
 GRADER_MODEL        = "openai/gpt-4o"                     # GPT-4o  — grades solvers' answers (≠ solvers, ≠ generator)
 WEAK_MODEL          = "meta-llama/llama-3.2-3b-instruct"  # Llama 3B — blind weak floor (OpenRouter, not Ollama)
 STRONG_FLOOR = 85
@@ -177,10 +178,18 @@ Attempt history:
 
 Reasoning instructions:
 1. Pick 3-4 steps that form a CHEMICALLY COHERENT chain (product of step N is substrate of step N+1).
-2. Prefer steps with non-obvious selectivity or exception behaviour.
-3. Avoid steps tried in previous attempts if they caused verifier rejection.
-4. If weak score was too high (problem too easy), pick steps with more subtle reasoning.
-5. If strong score was too low (problem broken), simplify — ensure each step is unambiguous.
+2. NON-CIRCULARITY (hard rule): the final product MUST be a different compound class than
+   the starting material. Do NOT pick a step that undoes a previous one — e.g. elimination
+   then hydrogenation back to the same alkane, or oxidation then reduction to the original.
+   Trace the class through every step and confirm start-class ≠ end-class before returning.
+3. FUNCTIONAL-GROUP PROGRESSION: each step should install or transform a group that carries
+   forward; avoid a step whose product has no valid next step in the list (dead ends waste
+   the chain).
+4. Prefer steps with non-obvious selectivity or exception behaviour (this is where difficulty
+   comes from — chemoselectivity, regio-/stereochemistry — NOT from obscurity).
+5. Avoid steps tried in previous attempts if they caused verifier rejection.
+6. If weak score was too high (problem too easy), pick steps with more subtle reasoning.
+7. If strong score was too low (problem broken), simplify — ensure each step is unambiguous.
 
 Return JSON:
 {{
@@ -322,7 +331,24 @@ Return JSON:
     return parse_llm_json(resp.choices[0].message.content)
 
 
-def blind_solve(problem: str, config: dict, expert: bool) -> dict:
+def build_knowledge_sheet(txs: list, config: dict) -> str:
+    """Format the chapter's allowed knowledge from the concept book into a closed-book
+    sheet. Each subject stores its rules the same way (valid_transformations): organic
+    reactions, inorganic structure/reactivity facts, physical formulas (e.g. the reagents
+    field carries formulas like 'mole = mass/GAM'). The solver may use ONLY these."""
+    lines = []
+    for i, t in enumerate(txs):
+        frm = t.get("from", ""); to = t.get("to", "")
+        rg = ", ".join(t.get("reagents", [])) if t.get("reagents") else ""
+        cond = (t.get("conditions", "") or "").strip().replace("\n", " ")[:160]
+        entry = f"[{i}] {frm} → {to}"
+        if rg:   entry += f"  | reagents/formula: {rg}"
+        if cond: entry += f"  | {cond}"
+        lines.append(entry)
+    return "\n".join(lines)
+
+
+def blind_solve(problem: str, config: dict, expert: bool, knowledge_sheet: str = None) -> dict:
     """Solve the problem WITHOUT seeing the reference solution (edit 1: blind solving).
 
     The solver used to be handed the reference "for scoring only" and asked to
@@ -330,6 +356,10 @@ def blind_solve(problem: str, config: dict, expert: bool) -> dict:
     shown (pinning the strong score at 100) and gave the weak model no honest task.
     Here the solver works cold and only reports its own answer; scoring is done
     separately by grade_answer().
+
+    If knowledge_sheet is given, the solver runs CLOSED-BOOK: it may use ONLY the
+    reactions/formulas/facts on the sheet, not its own pretrained knowledge. This tests
+    application/reasoning rather than memorised recall.
 
     expert=True → strong model (OpenRouter); expert=False → weak model (Ollama).
     """
@@ -343,10 +373,22 @@ def blind_solve(problem: str, config: dict, expert: bool) -> dict:
         instruction = (f"You are a chemistry undergraduate student. Solve this "
                        f"{config['display_name']} problem as best you can.")
 
+    closed_book = ""
+    if knowledge_sheet:
+        closed_book = f"""
+CLOSED-BOOK CONSTRAINT — you may use ONLY the reactions/formulas/facts listed below.
+Do NOT rely on any reaction, formula, or fact from your own memory that is not on this
+list. Cite the [index] of each item you use. If solving requires knowledge that is not
+on the list, state exactly what is missing and stop — do not guess from memory.
+
+ALLOWED KNOWLEDGE (concept book, this chapter):
+{knowledge_sheet}
+"""
+
     prompt = f"""{instruction}
 
 You are NOT given an answer key. Work the answer out yourself.
-
+{closed_book}
 Problem:
 {problem}
 
@@ -381,29 +423,57 @@ Return JSON:
     return parse_llm_json(resp.choices[0].message.content)
 
 
-def grade_answer(problem: str, reference_solution: str, candidate: dict, config: dict) -> dict:
-    """Independent grader (edit 1): judge a blind solver's final answer against the
-    reference. The solver never saw the reference; the grader does — grading needs a
-    key, but the thing being graded was produced cold, so a solver can no longer
-    certify itself by copying the answer it was shown."""
+def _score_from_rubric(g: dict) -> "int | None":
+    """Derive the 0-100 score in CODE from the grader's discrete TRUE/FALSE judgments,
+    so the number is deterministic and auditable instead of a hallucinated magnitude.
+    reference_correct == false ⇒ the item's own key is wrong ⇒ None (quarantine, don't score)."""
+    if not g.get("reference_correct", True):
+        return None
+    ans   = bool(g.get("final_answer_correct"))
+    steps = bool(g.get("all_construction_steps_used_correctly"))
+    route = bool(g.get("method_sound"))
+    if ans and steps:
+        return 100          # right answer AND used the intended construction chemistry correctly
+    if ans:
+        return 85           # right answer, but a construction step was slipped/skipped
+    if route:
+        return 50           # right route, wrong answer (arithmetic/regio/stereo slip)
+    return 0                # wrong route and wrong answer
+
+
+def grade_answer(problem: str, reference_solution: str, candidate: dict, config: dict,
+                 construction: list = None) -> dict:
+    """Combined rubric + construction-comparison grader.
+
+    GROUND TRUTH = the construction knowledge (the concept-book transformations/formulas
+    the question was actually BUILT from), passed in as `construction`. The grader does
+    NOT invent a magnitude; it makes discrete TRUE/FALSE calls (which LLMs do reliably),
+    and _score_from_rubric() computes the number in code. It also audits, per construction
+    step, whether the solver used that exact chemistry — giving a `took_shortcut` signal
+    (the solver reached the answer without the intended steps ⇒ the item is easier than built)."""
     role = config["chemist_role"]
-    prompt = f"""You are an expert {role} acting as an impartial grader.
 
-A solver attempted the problem below WITHOUT seeing any answer key. Judge their FINAL
-ANSWER against the reference solution.
+    construction = construction or []
+    constr_block = json.dumps(
+        [{"id": i, "from": t.get("from"), "to": t.get("to"),
+          "reagents": t.get("reagents", []), "conditions": (t.get("conditions", "") or "")[:160]}
+         for i, t in enumerate(construction)],
+        indent=2, ensure_ascii=False,
+    )
 
-Rules:
-- Give a score 0-100 for how chemically correct and complete the solver's final answer
-  is (partial credit allowed). Judge equivalence of chemistry, not wording or format.
-- If the solver's answer disagrees with the reference AND the solver is the one who is
-  chemically correct (i.e. the reference key is wrong), set reference_correct=false and
-  explain the error in the reference.
+    prompt = f"""You are an expert {role} auditing a solver who worked WITHOUT any answer key.
+Do NOT invent a numeric score. Make only the discrete TRUE/FALSE judgments below, and for
+each cite the exact step in the solver's working that justifies it.
+
+GROUND TRUTH — the transformations/formulas this problem was CONSTRUCTED from. Correct
+solving should use these, applied correctly:
+{constr_block}
+
+Reference solution (secondary check; the construction steps above are primary ground truth):
+{reference_solution}
 
 Problem:
 {problem}
-
-Reference solution:
-{reference_solution}
 
 Solver's final answer:
 {candidate.get('final_answer', '')}
@@ -411,24 +481,34 @@ Solver's final answer:
 Solver's full working:
 {candidate.get('attempted_solution', '')}
 
+For EACH construction step, decide whether the solver used it and used it correctly.
+Then make the overall judgments.
+
 Return JSON:
 {{
-  "score": integer 0-100,
-  "reference_correct": true or false,
-  "reasoning": "brief justification of the score"
+  "per_step": [{{"id": 0, "used": true/false, "used_correctly": true/false, "note": "..."}}, ...],
+  "coverage": 0.0-1.0,                              // fraction of construction steps used
+  "took_shortcut": true/false,                      // reached the answer WITHOUT the intended steps
+  "final_answer_correct": true/false,               // chemically equivalent to the reference answer
+  "method_sound": true/false,                       // overall route valid even if a number is off
+  "all_construction_steps_used_correctly": true/false,
+  "reference_correct": true/false,                  // false ONLY if the solver is right and the KEY is wrong
+  "justification": "cite the exact step(s) behind each judgment"
 }}"""
 
     resp = api_call(lambda: openrouter_client().chat.completions.create(
         model=GRADER_MODEL,
         messages=[
-            {"role": "system", "content": "You are a chemistry grader. Output JSON only."},
+            {"role": "system", "content": "You are a rigorous chemistry grader. Output JSON only."},
             {"role": "user",   "content": prompt},
         ],
         response_format={"type": "json_object"},
         temperature=0.0,
-        max_tokens=800,
+        max_tokens=1500,
     ))
-    return parse_llm_json(resp.choices[0].message.content)
+    g = parse_llm_json(resp.choices[0].message.content)
+    g["score"] = _score_from_rubric(g)   # deterministic number from the discrete judgments
+    return g
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -478,6 +558,12 @@ def main():
         print("ERROR: No matching transformations found. Check --chapter / concept book contents.")
         return
 
+    # Closed-book solving: solvers may use ONLY this chapter's concept-book knowledge,
+    # not their pretrained memory. Same sheet given to strong and weak so the comparison
+    # is apples-to-apples.
+    knowledge_sheet = build_knowledge_sheet(txs, config)
+    print(f"Closed-book knowledge sheet: {len(txs)} allowed items injected into solvers")
+
     coverage = load_coverage_for_subject(config)
     print(f"Coverage loaded ({args.subject}): {coverage.total_accepted()} questions accepted so far.")
 
@@ -523,41 +609,61 @@ def main():
             print("Generator...")
             gen = generator(blackboard, selected_txs, chain_desc, attempt, config)
 
-            print("Verifier...")
-            ver = verifier(gen["problem"], gen["solution"], config)
+            print("Verifier (Tier1 dedup + Tier2 blind judge)...")
+            ver = verify_problem(
+                gen["problem"], gen["solution"], arch, args.subject,
+                formula_signature="|".join(gen.get("operators_applied", [])),
+            )
             print(f"  Verdict: {ver['verdict']} | Difficulty: {ver.get('difficulty_rating','?')}")
+
+            weak_score = strong_score = None
+            ref_correct = True
+            strong_trace = ""
+            # Full per-attempt trace for traceability (#1); None until measured.
+            wk_blind = st_blind = wk_grade = st_grade = None
+
             if ver["verdict"] == "FAIL":
+                # Short-circuit: the verifier is the binding gate. If it FAILs, skip the
+                # expensive blind solves + grader entirely and go straight to refine —
+                # a failed item can't be accepted anyway, and the verifier feedback is the
+                # signal the generator needs.
                 print(f"  Flaw: {ver['semantic_flaws']}")
                 print(f"  Fix needed: {ver['feedback_for_generator']}")
+                print("  (verifier FAIL → skipping solvers, refining)")
+            else:
+                # Weak solver — blind: solve WITHOUT the reference, then grade the blind
+                # answer with an independent grader. Score is None if the call/grade fails
+                # (unmeasured) — never silently 0, which used to *pass* the weak gate.
+                print("Weak solver (llama3.2, blind)...")
+                try:
+                    wk_blind   = blind_solve(gen["problem"], config, expert=False, knowledge_sheet=knowledge_sheet)
+                    wk_grade   = grade_answer(gen["problem"], gen["solution"], wk_blind, config,
+                                              construction=selected_txs)
+                    weak_score = wk_grade.get("score")
+                except Exception as e:
+                    print(f"  Weak solver error: {e}")
+                    weak_score = None
+                print(f"  Weak score: {weak_score if weak_score is not None else 'n/a (unmeasured)'}")
 
-            # Weak solver — blind (edit 1): solve WITHOUT the reference, then grade the
-            # blind answer with an independent grader. Score is None if the call or grade
-            # fails (edit 2) — never silently 0, which used to *pass* the weak gate.
-            print("Weak solver (llama3.2, blind)...")
-            try:
-                wk_blind   = blind_solve(gen["problem"], config, expert=False)
-                wk_grade   = grade_answer(gen["problem"], gen["solution"], wk_blind, config)
-                weak_score = wk_grade.get("score")
-            except Exception as e:
-                print(f"  Weak solver error: {e}")
-                weak_score = None
-            print(f"  Weak score: {weak_score if weak_score is not None else 'n/a (unmeasured)'}")
-
-            # Strong solver — blind (edit 1): same protocol with the expert model.
-            print("Strong solver (blind)...")
-            try:
-                st_blind     = blind_solve(gen["problem"], config, expert=True)
-                st_grade     = grade_answer(gen["problem"], gen["solution"], st_blind, config)
-                strong_score = st_grade.get("score")
-                ref_correct  = st_grade.get("reference_correct", True)
-                strong_trace = st_blind.get("attempted_solution", "")
-            except Exception as e:
-                print(f"  Strong solver error: {e}")
-                strong_score = None
-                ref_correct  = True
-                strong_trace = ""
-            print(f"  Strong score: {strong_score if strong_score is not None else 'n/a (unmeasured)'}"
-                  f"  |  reference_correct: {ref_correct}")
+                # Strong solver — blind: same protocol with the expert model.
+                print("Strong solver (blind)...")
+                try:
+                    st_blind     = blind_solve(gen["problem"], config, expert=True, knowledge_sheet=knowledge_sheet)
+                    st_grade     = grade_answer(gen["problem"], gen["solution"], st_blind, config,
+                                                construction=selected_txs)
+                    strong_score = st_grade.get("score")
+                    ref_correct  = st_grade.get("reference_correct", True)
+                    strong_trace = st_blind.get("attempted_solution", "")
+                    if st_grade.get("took_shortcut"):
+                        print(f"  ⚠ shortcut: strong solver reached the answer without the intended steps "
+                              f"(coverage={st_grade.get('coverage')})")
+                except Exception as e:
+                    print(f"  Strong solver error: {e}")
+                    strong_score = None
+                    ref_correct  = True
+                    strong_trace = ""
+                print(f"  Strong score: {strong_score if strong_score is not None else 'n/a (unmeasured)'}"
+                      f"  |  reference_correct: {ref_correct}")
 
             blackboard.record_attempt(
                 problem          = gen["problem"],
@@ -619,6 +725,33 @@ def main():
                     "verifier_verdict":  ver["verdict"],
                     "verifier_difficulty": ver.get("difficulty_rating", "?"),
                     "meta_tags":         meta,
+
+                    # ── Full traceability (#1): every input and judgment behind the scores ──
+                    "models": {
+                        "concept_reasoner": CONCEPT_MODEL, "generator": GENERATOR_MODEL,
+                        "verifier": VERIFIER_MODEL, "strong_solver": STRONG_SOLVER_MODEL,
+                        "grader": GRADER_MODEL, "weak_solver": WEAK_MODEL,
+                    },
+                    "construction": {   # the ground truth the question was built from
+                        "selected_tx_ids": selected_ids,
+                        "knowledge_used": selected_txs,
+                    },
+                    "verifier_detail": {
+                        "verdict": ver.get("verdict"),
+                        "independent_solution": ver.get("independent_solution", ""),
+                        "flaws": ver.get("semantic_flaws", ""),
+                    },
+                    "strong_eval": {    # blind answer + rubric/construction grade (may be None)
+                        "blind_final_answer": (st_blind or {}).get("final_answer"),
+                        "blind_working":      (st_blind or {}).get("attempted_solution"),
+                        "grade":              st_grade,
+                    },
+                    "weak_eval": {
+                        "blind_final_answer": (wk_blind or {}).get("final_answer"),
+                        "blind_working":      (wk_blind or {}).get("attempted_solution"),
+                        "grade":              wk_grade,
+                    },
+
                     "attempt_history":   blackboard.history(),
                     "generated_at":      datetime.now(timezone.utc).isoformat(),
                 }
