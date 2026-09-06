@@ -59,9 +59,23 @@ weak_client = OpenAI(api_key="ollama", base_url="http://localhost:11434/v1")
 CONCEPT_MODEL       = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — selects reaction steps
 GENERATOR_MODEL     = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — writes question + reference solution
 VERIFIER_MODEL      = "qwen/qwen-2.5-72b-instruct"       # Qwen2.5-72B — blind-checks the item (≠ generator)
-STRONG_SOLVER_MODEL = "qwen/qwen3-235b-a22b-2507"       # Qwen3-235B — blind expert solver (≠ generator)
 GRADER_MODEL        = "openai/gpt-4o"                     # GPT-4o  — grades solvers' answers (≠ solvers, ≠ generator)
-WEAK_MODEL          = "meta-llama/llama-3.2-3b-instruct"  # Llama 3B — blind weak floor (OpenRouter, not Ollama)
+
+# ── Council of solvers ──────────────────────────────────────────────────────
+# Three DIFFERENT families, all ~Mains-capable / not Advanced (non-reasoning instruct).
+# The count of how many solve a question IS the difficulty signal:
+#   3 or 2 solved → too easy (still within Mains reach) → refine, add reasoning complexity
+#   0 or 1 solved → hard enough (above the council's Mains ceiling) → accept (if verifier PASS)
+# Distinct from generator (DeepSeek) and verifier (Qwen2.5) → no model grades its own output.
+# NOTE: the "Mains-capable / not-Advanced" profile must be confirmed empirically with
+# calibration/council_eval.py before trusting the count; slugs verified present on OpenRouter.
+COUNCIL = [
+    ("llama-3.3-70b", "meta-llama/llama-3.3-70b-instruct"),   # Meta
+    ("mistral-large", "mistralai/mistral-large-2407"),         # Mistral
+    ("gemma-2-27b",   "google/gemma-2-27b-it"),                # Google
+]
+COUNCIL_TOO_EASY_IF_SOLVED_GE = 2   # ≥2 of 3 solve ⇒ too easy
+
 STRONG_FLOOR = 85
 WEAK_CEILING = 60
 
@@ -348,30 +362,19 @@ def build_knowledge_sheet(txs: list, config: dict) -> str:
     return "\n".join(lines)
 
 
-def blind_solve(problem: str, config: dict, expert: bool, knowledge_sheet: str = None) -> dict:
-    """Solve the problem WITHOUT seeing the reference solution (edit 1: blind solving).
+def blind_solve(problem: str, config: dict, model: str, knowledge_sheet: str = None,
+                temperature: float = 0.0) -> dict:
+    """Solve the problem WITHOUT seeing the reference solution, on the given `model`.
 
-    The solver used to be handed the reference "for scoring only" and asked to
-    self-score against it — which let a capable model confirm the answer it was
-    shown (pinning the strong score at 100) and gave the weak model no honest task.
-    Here the solver works cold and only reports its own answer; scoring is done
-    separately by grade_answer().
-
-    If knowledge_sheet is given, the solver runs CLOSED-BOOK: it may use ONLY the
-    reactions/formulas/facts on the sheet, not its own pretrained knowledge. This tests
-    application/reasoning rather than memorised recall.
-
-    expert=True → strong model (OpenRouter); expert=False → weak model (Ollama).
+    The solver works cold and only reports its own answer; scoring is done separately
+    by grade_answer(). If knowledge_sheet is given, the solver runs CLOSED-BOOK: it may
+    use ONLY the reactions/formulas/facts on the sheet, not its pretrained knowledge —
+    testing application/reasoning rather than memorised recall.
     """
-    if expert:
-        role = config["chemist_role"]
-        system = f"You are an expert {role}. Output JSON only."
-        instruction = (f"You are an expert {role}. Solve this {config['display_name']} "
-                       f"problem rigorously, showing full step-by-step reasoning.")
-    else:
-        system = "You are a chemistry undergraduate. Output JSON only."
-        instruction = (f"You are a chemistry undergraduate student. Solve this "
-                       f"{config['display_name']} problem as best you can.")
+    role = config["chemist_role"]
+    system = f"You are an expert {role}. Output JSON only."
+    instruction = (f"You are an expert {role}. Solve this {config['display_name']} "
+                   f"problem rigorously, showing full step-by-step reasoning.")
 
     closed_book = ""
     if knowledge_sheet:
@@ -398,29 +401,57 @@ Return JSON:
   "final_answer": "your final answer only (product name / value / reagent)"
 }}"""
 
-    if expert:
-        resp = api_call(lambda: openrouter_client().chat.completions.create(
-            model=STRONG_SOLVER_MODEL,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user",   "content": prompt},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.0,
-            max_tokens=4000,
-        ))
-    else:
-        resp = api_call(lambda: openrouter_client().chat.completions.create(
-            model=WEAK_MODEL,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user",   "content": prompt},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.7,
-            max_tokens=4000,
-        ))
+    resp = api_call(lambda: openrouter_client().chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user",   "content": prompt},
+        ],
+        response_format={"type": "json_object"},
+        temperature=temperature,
+        max_tokens=4000,
+    ))
     return parse_llm_json(resp.choices[0].message.content)
+
+
+def council_solve(problem: str, reference_solution: str, config: dict,
+                  knowledge_sheet: str = None, construction: list = None) -> dict:
+    """Run the 3-model council. Each member blind-solves (closed-book) and is graded
+    independently; `solved` = the grader judged its final answer correct. The COUNT of
+    solvers that solved is the difficulty signal.
+
+    Returns:
+      { "members": [ {model, name, final_answer, working, grade, solved, error} ],
+        "n_solved": int, "n_measured": int,
+        "reference_correct": bool  (False if any member's grade flags the key wrong) }
+    """
+    members = []
+    n_solved = 0
+    n_measured = 0
+    reference_correct = True
+    for name, slug in COUNCIL:
+        rec = {"name": name, "model": slug, "final_answer": None, "working": None,
+               "grade": None, "solved": None, "error": None}
+        try:
+            blind = blind_solve(problem, config, model=slug, knowledge_sheet=knowledge_sheet)
+            grade = grade_answer(problem, reference_solution, blind, config, construction=construction)
+            rec["final_answer"] = blind.get("final_answer")
+            rec["working"]      = blind.get("attempted_solution")
+            rec["grade"]        = grade
+            rec["solved"]       = bool(grade.get("final_answer_correct"))
+            if not grade.get("reference_correct", True):
+                reference_correct = False
+            n_measured += 1
+            if rec["solved"]:
+                n_solved += 1
+        except Exception as e:
+            rec["error"] = str(e)[:160]
+        members.append(rec)
+        tag = "n/a" if rec["solved"] is None else ("solved" if rec["solved"] else "failed")
+        print(f"    [{name}] {tag}"
+              + (f" — {rec['error']}" if rec["error"] else ""))
+    return {"members": members, "n_solved": n_solved, "n_measured": n_measured,
+            "reference_correct": reference_correct}
 
 
 def _score_from_rubric(g: dict) -> "int | None":
@@ -589,127 +620,149 @@ def main():
     print(f" GROUND-UP GENERATION [{config['display_name']}]: {chapter} / Archetype {code}")
     print("══════════════════════════════════════════════════\n")
 
-    accepted = False
-    for attempt in range(1, MAX_RETRIES + 2):
-        print(f"── Attempt {attempt} ─────────────────────────────────")
+    # ── Control parameters for the verifier-first + council state machine ──────
+    MAX_LINEAGES     = 4    # fresh question ideas to try before giving up
+    MAX_ITERS        = 8    # hard cap on total generate→check iterations (anti-loop)
+    VERIFIER_FAIL_MAX = 2   # consecutive verifier FAILs on a lineage → abandon it
 
+    # Full run log — EVERY attempt (accepted, failed, or discarded), for traceability.
+    run_log = []
+    def log_attempt(rec):
+        run_log.append(rec)
+        log_path = OUTPUT_FILE.replace(".json", "_attempts.jsonl")
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    accepted = False
+    iters = 0
+    lineage = 0
+
+    while not accepted and lineage < MAX_LINEAGES and iters < MAX_ITERS:
+        lineage += 1
+        print(f"\n╔═══ LINEAGE {lineage} (new question idea) ═══╗")
+        # Fresh idea for this lineage.
         try:
-            print("Concept reasoner (RLM)...")
             cr = concept_reasoner(blackboard, txs, config)
-            selected_ids  = cr.get("selected_tx_ids", [])
-            chain_desc    = cr.get("chain_description", "")
+            selected_ids = cr.get("selected_tx_ids", [])
+            chain_desc   = cr.get("chain_description", "")
             try:
                 selected_ids = [int(i) for i in selected_ids]
             except (TypeError, ValueError):
                 selected_ids = []
-            selected_txs  = [txs[i] for i in selected_ids if 0 <= i < len(txs)]
+            selected_txs = [txs[i] for i in selected_ids if 0 <= i < len(txs)]
             print(f"  Selected {len(selected_txs)} steps: {[t['from']+' → '+t['to'] for t in selected_txs]}")
-            print(f"  Chain: {chain_desc}")
+            gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+        except Exception as e:
+            print(f"  lineage {lineage} setup error: {e}")
+            continue
 
-            print("Generator...")
-            gen = generator(blackboard, selected_txs, chain_desc, attempt, config)
+        verifier_fails = 0
 
-            print("Verifier (Tier1 dedup + Tier2 blind judge)...")
-            ver = verify_problem(
-                gen["problem"], gen["solution"], arch, args.subject,
-                formula_signature="|".join(gen.get("operators_applied", [])),
-            )
-            print(f"  Verdict: {ver['verdict']} | Difficulty: {ver.get('difficulty_rating','?')}")
+        # Inner loop: refine within this lineage until accept / abandon / cap.
+        while iters < MAX_ITERS:
+            iters += 1
+            print(f"── iter {iters} (lineage {lineage}) ─────────────────────")
 
-            weak_score = strong_score = None
-            ref_correct = True
-            strong_trace = ""
-            # Full per-attempt trace for traceability (#1); None until measured.
-            wk_blind = st_blind = wk_grade = st_grade = None
+            try:
+                # 1) VERIFIER FIRST — validity gate.
+                print("Verifier (Tier1 dedup + Tier2 blind judge)...")
+                ver = verify_problem(
+                    gen["problem"], gen["solution"], arch, args.subject,
+                    formula_signature="|".join(gen.get("operators_applied", [])),
+                )
+                print(f"  Verdict: {ver['verdict']} | Difficulty: {ver.get('difficulty_rating','?')}")
 
-            if ver["verdict"] == "FAIL":
-                # Short-circuit: the verifier is the binding gate. If it FAILs, skip the
-                # expensive blind solves + grader entirely and go straight to refine —
-                # a failed item can't be accepted anyway, and the verifier feedback is the
-                # signal the generator needs.
-                print(f"  Flaw: {ver['semantic_flaws']}")
-                print(f"  Fix needed: {ver['feedback_for_generator']}")
-                print("  (verifier FAIL → skipping solvers, refining)")
-            else:
-                # Weak solver — blind: solve WITHOUT the reference, then grade the blind
-                # answer with an independent grader. Score is None if the call/grade fails
-                # (unmeasured) — never silently 0, which used to *pass* the weak gate.
-                print("Weak solver (llama3.2, blind)...")
-                try:
-                    wk_blind   = blind_solve(gen["problem"], config, expert=False, knowledge_sheet=knowledge_sheet)
-                    wk_grade   = grade_answer(gen["problem"], gen["solution"], wk_blind, config,
-                                              construction=selected_txs)
-                    weak_score = wk_grade.get("score")
-                except Exception as e:
-                    print(f"  Weak solver error: {e}")
-                    weak_score = None
-                print(f"  Weak score: {weak_score if weak_score is not None else 'n/a (unmeasured)'}")
+                if ver["verdict"] == "FAIL":
+                    verifier_fails += 1
+                    print(f"  Flaw: {ver.get('semantic_flaws','')[:160]}")
+                    print(f"  Fix: {ver.get('feedback_for_generator','')[:160]}")
+                    log_attempt({
+                        "lineage": lineage, "iter": iters, "outcome": "verifier_fail",
+                        "verifier_fails": verifier_fails,
+                        "question": gen["problem"], "solution": gen["solution"],
+                        "construction": {"selected_tx_ids": selected_ids, "knowledge_used": selected_txs},
+                        "verifier": ver, "council": None,
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                    })
+                    if verifier_fails >= VERIFIER_FAIL_MAX:
+                        # Verifier bounced this lineage twice → abandon, make a NEW question.
+                        print(f"  ✗ verifier failed {verifier_fails}× → abandoning lineage, new question.")
+                        break
+                    # Otherwise flag once and refine, telling the generator exactly where.
+                    blackboard.record_attempt(
+                        problem=gen["problem"], solution=gen["solution"],
+                        operators_used=gen.get("operators_applied", []),
+                        verifier_result=ver, weak_score=None, strong_score=None,
+                    )
+                    print("  → refining to fix the flagged issue...")
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    continue
 
-                # Strong solver — blind: same protocol with the expert model.
-                print("Strong solver (blind)...")
-                try:
-                    st_blind     = blind_solve(gen["problem"], config, expert=True, knowledge_sheet=knowledge_sheet)
-                    st_grade     = grade_answer(gen["problem"], gen["solution"], st_blind, config,
-                                                construction=selected_txs)
-                    strong_score = st_grade.get("score")
-                    ref_correct  = st_grade.get("reference_correct", True)
-                    strong_trace = st_blind.get("attempted_solution", "")
-                    if st_grade.get("took_shortcut"):
-                        print(f"  ⚠ shortcut: strong solver reached the answer without the intended steps "
-                              f"(coverage={st_grade.get('coverage')})")
-                except Exception as e:
-                    print(f"  Strong solver error: {e}")
-                    strong_score = None
-                    ref_correct  = True
-                    strong_trace = ""
-                print(f"  Strong score: {strong_score if strong_score is not None else 'n/a (unmeasured)'}"
-                      f"  |  reference_correct: {ref_correct}")
+                # 2) verifier PASS → COUNCIL of solvers decides difficulty.
+                verifier_fails = 0
+                print(f"Council solve ({len(COUNCIL)} models, blind, closed-book)...")
+                council = council_solve(gen["problem"], gen["solution"], config,
+                                        knowledge_sheet=knowledge_sheet, construction=selected_txs)
+                n_solved = council["n_solved"]
+                ref_ok   = council["reference_correct"]
+                print(f"  Council: {n_solved}/{len(COUNCIL)} solved | reference_correct={ref_ok}")
 
-            blackboard.record_attempt(
-                problem          = gen["problem"],
-                solution         = gen["solution"],
-                operators_used   = gen.get("operators_applied", [t["from"]+"→"+t["to"] for t in selected_txs]),
-                verifier_result  = ver,
-                weak_score       = weak_score,
-                strong_score     = strong_score,
-            )
+                blackboard.record_attempt(
+                    problem=gen["problem"], solution=gen["solution"],
+                    operators_used=gen.get("operators_applied", []),
+                    verifier_result=ver,
+                    weak_score=None, strong_score=n_solved,   # store council count in strong slot
+                )
 
-            # Gates (edit 2): an unmeasured score (None) can never satisfy a gate, so a
-            # failed solver call quarantines the item instead of silently passing it.
-            gate_verifier = ver["verdict"] == "PASS"
-            gate_strong   = strong_score is not None and strong_score >= STRONG_FLOOR
-            gate_weak     = weak_score   is not None and weak_score   <= WEAK_CEILING
-            gate_ref_ok   = ref_correct
+                if not ref_ok:
+                    # A council member judged the generator's own key wrong → refine.
+                    print("  ⚠ reference flagged wrong by a solver → refining.")
+                    log_attempt({
+                        "lineage": lineage, "iter": iters, "outcome": "reference_wrong",
+                        "question": gen["problem"], "solution": gen["solution"],
+                        "construction": {"selected_tx_ids": selected_ids, "knowledge_used": selected_txs},
+                        "verifier": ver, "council": council,
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                    })
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    continue
 
-            print(f"  Gates: verifier={'✓' if gate_verifier else '✗'}  "
-                  f"strong={'✓' if gate_strong else '✗'} ({strong_score} vs ≥{STRONG_FLOOR})  "
-                  f"weak={'✓' if gate_weak else '✗'} ({weak_score} vs ≤{WEAK_CEILING})  "
-                  f"ref_ok={'✓' if gate_ref_ok else '✗'}")
+                if n_solved >= COUNCIL_TOO_EASY_IF_SOLVED_GE:
+                    # Too easy — within the Mains-level council's reach. Refine for
+                    # REASONING complexity (a decision/trap/constraint), NOT more steps.
+                    print(f"  Too easy ({n_solved}/{len(COUNCIL)} solved) → refine, add reasoning complexity.")
+                    log_attempt({
+                        "lineage": lineage, "iter": iters, "outcome": "too_easy",
+                        "n_solved": n_solved,
+                        "question": gen["problem"], "solution": gen["solution"],
+                        "construction": {"selected_tx_ids": selected_ids, "knowledge_used": selected_txs},
+                        "verifier": ver, "council": council,
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                    })
+                    # Inject a difficulty directive via the blackboard feedback channel.
+                    blackboard.attempts[-1]["verifier_feedback"] = (
+                        f"TOO EASY: {n_solved}/{len(COUNCIL)} Mains-level models solved it. Increase "
+                        f"REASONING difficulty — add a chemoselectivity decision, an exception/trap where "
+                        f"the naive rule fails, or a constraint to resolve. Do NOT just add more steps or jargon."
+                    )
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                    continue
 
-            if gate_verifier and gate_strong and gate_weak and gate_ref_ok:
+                # 3) verifier PASS + ≤1 of 3 solved → ACCEPT.
                 accepted = True
-
                 meta = compute_meta_tags_for_subject(
-                    config,
-                    question_text    = gen["problem"],
-                    archetype_code   = code,
-                    solver_trace     = strong_trace,
-                    fragility_weight = None,
+                    config, question_text=gen["problem"], archetype_code=code,
+                    solver_trace=next((m["working"] for m in council["members"] if m.get("working")), ""),
+                    fragility_weight=None,
                 )
-
-                coverage.on_acceptance(
-                    archetype = code,
-                    chapter   = chapter,
-                    edges     = [],
-                    concepts  = gen.get("operators_applied", []),
-                )
+                coverage.on_acceptance(archetype=code, chapter=chapter, edges=[],
+                                       concepts=gen.get("operators_applied", []))
                 save_coverage(coverage, config)
-                print(f"  Coverage updated. Total accepted: {coverage.total_accepted()}")
 
                 record = {
                     "question_id":       f"GEN_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}",
                     "seed_id":           f"GROUNDUP_{config['seed_id_prefix']}_001",
-                    "generation_mode":   "ground_up",
+                    "generation_mode":   "ground_up_council",
                     "subject":           args.subject,
                     "chapter":           chapter,
                     "archetype":         arch,
@@ -718,44 +771,30 @@ def main():
                     "solution":          gen["solution"],
                     "operators_applied": gen.get("operators_applied", []),
                     "chain_description": chain_desc,
-                    "loops_run":         attempt,
-                    "strong_score":      strong_score,
-                    "weak_score":        weak_score,
-                    "reference_correct": ref_correct,
+                    "lineage":           lineage,
+                    "iters_run":         iters,
+                    "council_n_solved":  n_solved,
+                    "council_size":      len(COUNCIL),
+                    "reference_correct": ref_ok,
                     "verifier_verdict":  ver["verdict"],
                     "verifier_difficulty": ver.get("difficulty_rating", "?"),
                     "meta_tags":         meta,
-
-                    # ── Full traceability (#1): every input and judgment behind the scores ──
+                    # ── Full traceability (#1) ──
                     "models": {
                         "concept_reasoner": CONCEPT_MODEL, "generator": GENERATOR_MODEL,
-                        "verifier": VERIFIER_MODEL, "strong_solver": STRONG_SOLVER_MODEL,
-                        "grader": GRADER_MODEL, "weak_solver": WEAK_MODEL,
+                        "verifier": VERIFIER_MODEL, "grader": GRADER_MODEL,
+                        "council": [slug for _, slug in COUNCIL],
                     },
-                    "construction": {   # the ground truth the question was built from
-                        "selected_tx_ids": selected_ids,
-                        "knowledge_used": selected_txs,
-                    },
+                    "construction": {"selected_tx_ids": selected_ids, "knowledge_used": selected_txs},
                     "verifier_detail": {
                         "verdict": ver.get("verdict"),
                         "independent_solution": ver.get("independent_solution", ""),
                         "flaws": ver.get("semantic_flaws", ""),
                     },
-                    "strong_eval": {    # blind answer + rubric/construction grade (may be None)
-                        "blind_final_answer": (st_blind or {}).get("final_answer"),
-                        "blind_working":      (st_blind or {}).get("attempted_solution"),
-                        "grade":              st_grade,
-                    },
-                    "weak_eval": {
-                        "blind_final_answer": (wk_blind or {}).get("final_answer"),
-                        "blind_working":      (wk_blind or {}).get("attempted_solution"),
-                        "grade":              wk_grade,
-                    },
-
+                    "council_detail": council,   # per-member blind answer + grade
                     "attempt_history":   blackboard.history(),
                     "generated_at":      datetime.now(timezone.utc).isoformat(),
                 }
-
                 existing = []
                 if os.path.exists(OUTPUT_FILE):
                     with open(OUTPUT_FILE) as f:
@@ -763,36 +802,27 @@ def main():
                 existing.append(record)
                 with open(OUTPUT_FILE, "w") as f:
                     json.dump(existing, f, indent=2)
+                log_attempt({**{k: record[k] for k in ("question_id","lineage","iters_run","council_n_solved")},
+                             "outcome": "accepted", "question": gen["problem"],
+                             "ts": record["generated_at"]})
 
-                print(f"\n✓ ACCEPTED on attempt {attempt}")
+                print(f"\n✓ ACCEPTED (lineage {lineage}, iter {iters}) — {n_solved}/{len(COUNCIL)} council solved")
                 print(f"  Meta-tags: {meta}")
-                print(f"\n{'='*60}")
-                print("QUESTION:")
-                print('='*60)
-                print(gen["problem"])
-                print(f"\n{'='*60}")
-                print("SOLUTION:")
-                print('='*60)
-                print(gen["solution"])
-                print(f"\nVerifier difficulty: {ver.get('difficulty_rating','?')}")
-                print(f"Strong: {strong_score}% | Weak: {weak_score}%")
-                print(f"Saved to {OUTPUT_FILE}")
+                print("="*60); print("QUESTION:\n"+gen["problem"])
+                print("="*60); print(f"Saved to {OUTPUT_FILE}")
                 break
 
-        except Exception as e:
-            print(f"  Attempt {attempt} error: {e}")
-
-        if attempt > MAX_RETRIES:
-            print(f"\n✗ Max retries ({MAX_RETRIES}) reached without acceptance.")
-            break
-
-        print("  → Refining...\n")
+            except Exception as e:
+                print(f"  iter {iters} error: {e}")
+                # treat as a soft failure; refine and continue within cap
+                try:
+                    gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config)
+                except Exception:
+                    break
 
     if not accepted:
-        last = blackboard.last_attempt()
-        print("\nBest attempt (not accepted):")
-        if last:
-            print(last["problem"])
+        print(f"\n✗ No question accepted ({lineage} lineages, {iters} iters). "
+              f"Full attempt log: {OUTPUT_FILE.replace('.json','_attempts.jsonl')}")
 
 
 if __name__ == "__main__":
