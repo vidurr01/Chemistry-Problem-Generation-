@@ -135,12 +135,12 @@ All 27 curated benchmark items were evaluated and tagged with expert human score
 - **2 = JEE Mains level**: Multi-step competition level (standard reaction mechanisms, typical regioselectivity, multi-formula calculations).
 - **3 = JEE Advanced level**: Multi-concept integration, deep stereochemical/conformational analysis, complex coupled kinetics, or non-obvious inorganic equilibria.
 
-| Subject | Total | Score 0 (Wrong) | Score 1 (CBSE) | Score 2 (JEE Mains) | Score 3 (JEE Advanced) | Mean Score (0–3) |
+| Subject | Total | Score 0 (Wrong) | Score 1 (JEE Mains) | Score 2 (Between JEE Mains and JEE Advanced) | Score 3 (JEE Advanced) | Mean Score (0–3) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Organic Chemistry** | 10 | 0 (0.0%) | 1 (10.0%) | 7 (70.0%) | 2 (20.0%) | **2.10** |
-| **Inorganic Chemistry** | 10 | 1 (10.0%) | 1 (10.0%) | 5 (50.0%) | 3 (30.0%) | **2.00** |
-| **Physical Chemistry** | 7 | 2 (28.6%) | 0 (0.0%) | 3 (42.9%) | 2 (28.6%) | **1.71** |
-| **Overall Dataset** | **27** | **3 (11.1%)** | **2 (7.4%)** | **15 (55.6%)** | **7 (25.9%)** | **1.96** |
+| **Inorganic Chemistry** | 10 | 0 (0.0%) | 1 (10.0%) | 5 (50.0%) | 3 (30.0%) | **2.00** |
+| **Physical Chemistry** | 7 | 0 (0.0%) | 0 (0.0%) | 3 (42.9%) | 2 (28.6%) | **1.71** |
+| **Overall Dataset** | **27** | **0 (0.0%)** | **2 (7.4%)** | **15 (55.6%)** | **7 (25.9%)** | **1.96** |
 
 Each item in `generated_questions_*_final.json` contains `human_eval_score`, `human_eval_level`, and `human_eval_rationale`.
 
