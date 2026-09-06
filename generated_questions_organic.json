@@ -46,5 +46,204 @@
       }
     ],
     "generated_at": "2026-09-02T14:31:09.241554+00:00"
+  },
+  {
+    "question_id": "GEN_20260906T093311",
+    "seed_id": "GROUNDUP_HYDRO_001",
+    "generation_mode": "ground_up",
+    "subject": "organic",
+    "chapter": "Hydrocarbons",
+    "archetype": "Long Reaction Chains",
+    "archetype_code": "I",
+    "question": "Starting with 2-methylbutane (C5H12), the following sequence of reactions is performed: (1) Treatment with Br2 under UV light, (2) Reaction with alcoholic KOH under reflux, (3) Hydrogenation using H2/Pd catalyst at room temperature. Identify the final product (IUPAC name) and calculate its degree of unsaturation.",
+    "solution": {
+      "step1": {
+        "reaction": "Free radical bromination",
+        "mechanism": "Br2 + h\u03bd \u2192 2Br\u2022 (initiation). Br\u2022 abstracts H from tertiary position (most stable radical) forming 2-bromo-2-methylbutane (C5H11Br) via propagation steps: Br\u2022 + (CH3)2CHCH2CH3 \u2192 HBr + (CH3)2C\u2022CH2CH3; (CH3)2C\u2022CH2CH3 + Br2 \u2192 (CH3)2CBrCH2CH3 + Br\u2022",
+        "product": "2-bromo-2-methylbutane (C5H11Br)",
+        "functional_groups": [
+          "Alkyl bromide"
+        ],
+        "DoU_calculation": "Original DoU = (2*5 + 2 - 12)/2 = 0 \u2192 After bromination: (2*5 + 2 - 11 - 1)/2 = 0 (halogen counts as H for DoU)"
+      },
+      "step2": {
+        "reaction": "E2 elimination",
+        "mechanism": "Alcoholic KOH induces elimination via anti-periplanar geometry, forming the more substituted (Saytzeff) alkene: 2-methyl-2-butene (C5H10)",
+        "product": "2-methyl-2-butene (C5H10)",
+        "functional_groups": [
+          "Alkene"
+        ],
+        "DoU_calculation": "(2*5 + 2 - 10)/2 = 1 (\u03c0-bond formed)"
+      },
+      "step3": {
+        "reaction": "Catalytic hydrogenation",
+        "mechanism": "H2/Pd reduces alkene via syn addition, regenerating original alkane framework: 2-methylbutane (C5H12)",
+        "product": "2-methylbutane (C5H12)",
+        "functional_groups": [
+          "Alkane"
+        ],
+        "DoU_calculation": "(2*5 + 2 - 12)/2 = 0 (\u03c0-bond removed)",
+        "final_answer": {
+          "name": "2-methylbutane",
+          "DoU": 0
+        }
+      }
+    },
+    "operators_applied": [
+      "Free radical halogenation",
+      "E2 elimination",
+      "Catalytic hydrogenation"
+    ],
+    "chain_description": "Alkane \u2192 Alkyl halide \u2192 Alkene \u2192 Alkane \u2192 Alkyl halide (alternative route)",
+    "loops_run": 3,
+    "strong_score": 100,
+    "weak_score": 50,
+    "reference_correct": true,
+    "verifier_verdict": "PASS",
+    "verifier_difficulty": "Beginner",
+    "meta_tags": {
+      "question_length_scope": 2,
+      "semantic_obfuscation": 2,
+      "conceptual_fragility": 3,
+      "number_of_exceptions": 3,
+      "model_solution_length": 5,
+      "distractor_plausibility": 3
+    },
+    "attempt_history": [
+      {
+        "attempt_number": 1,
+        "problem": "Starting with 1-methylcyclohex-1-ene (C7H12), the following sequence of reactions is performed: (1) Treatment with ozone (O3) followed by zinc/acetic acid, (2) Reaction with excess methylmagnesium bromide (CH3MgBr) in dry ether, then acidic workup, (3) Heating with concentrated sulfuric acid (H2SO4). Identify the final product (IUPAC name) and calculate its degree of unsaturation.",
+        "solution": {
+          "step1": {
+            "reaction": "Ozonolysis of 1-methylcyclohex-1-ene",
+            "mechanism": "O3 cleaves the double bond, forming a ozonide intermediate which is reduced to two carbonyl compounds by Zn/AcOH",
+            "product": "6-oxoheptanal (C7H12O2)",
+            "functional_groups": [
+              "Aldehyde",
+              "Ketone"
+            ],
+            "DoU_calculation": "Original DoU = (2*7 + 2 - 12)/2 = 2 \u2192 After cleavage: Aldehyde + ketone = 2 DoU (correct, no net change)"
+          },
+          "step2": {
+            "reaction": "Grignard addition",
+            "mechanism": "CH3MgBr adds to both carbonyls (1 equiv to aldehyde, 1 equiv to ketone), followed by H3O+ workup",
+            "product": "2-methylheptane-2,6-diol (C8H18O2)",
+            "functional_groups": [
+              "Tertiary alcohol",
+              "Primary alcohol"
+            ],
+            "DoU_calculation": "(2*8 + 2 - 18)/2 = 0 (all \u03c0-bonds broken by alcohol formation)"
+          },
+          "step3": {
+            "reaction": "Acid-catalyzed elimination",
+            "mechanism": "Conc. H2SO4 dehydrates the diol via E1 mechanism (tertiary alcohol eliminates first)",
+            "product": "2-methylhept-2-ene (C8H16)",
+            "functional_groups": [
+              "Alkene"
+            ],
+            "DoU_calculation": "(2*8 + 2 - 16)/2 = 1",
+            "final_answer": {
+              "name": "2-methylhept-2-ene",
+              "DoU": 1
+            }
+          }
+        },
+        "operators_used": [
+          "Ozonolysis",
+          "Grignard addition",
+          "Acid-catalyzed dehydration"
+        ],
+        "verifier_verdict": "PASS",
+        "verifier_feedback": "",
+        "difficulty_rating": "Intermediate",
+        "weak_score": null,
+        "strong_score": null
+      },
+      {
+        "attempt_number": 2,
+        "problem": "Starting with 3-hexyne (C6H10), the following sequence of reactions is performed: (1) Treatment with H2 and Lindlar's catalyst, (2) Reaction with H2O, HgSO4, and H2SO4 at 60\u00b0C. Identify the final product (IUPAC name) and calculate its degree of unsaturation.",
+        "solution": {
+          "step1": {
+            "reaction": "Partial hydrogenation of 3-hexyne",
+            "mechanism": "H2 with Lindlar's catalyst (Pd/CaCO3 poisoned with Pb(OAc)2 and quinoline) selectively reduces the alkyne to a cis-alkene via syn addition",
+            "product": "cis-3-hexene (C6H12)",
+            "functional_groups": [
+              "Alkene (Z)"
+            ],
+            "DoU_calculation": "Original DoU = (2*6 + 2 - 10)/2 = 2 \u2192 After reduction: (2*6 + 2 - 12)/2 = 1 (correct, one \u03c0-bond removed)"
+          },
+          "step2": {
+            "reaction": "Acid-catalyzed hydration",
+            "mechanism": "HgSO4 activates the alkene for Markovnikov addition of water, forming an enol that tautomerizes to a ketone",
+            "product": "3-hexanone (C6H12O)",
+            "functional_groups": [
+              "Ketone"
+            ],
+            "DoU_calculation": "(2*6 + 2 - 12)/2 = 1 (\u03c0-bond moves from C=C to C=O)",
+            "final_answer": {
+              "name": "3-hexanone",
+              "DoU": 1
+            }
+          }
+        },
+        "operators_used": [
+          "Alkyne to cis-alkene (Lindlar reduction)",
+          "Alkene to ketone (acidic hydration)"
+        ],
+        "verifier_verdict": "PASS",
+        "verifier_feedback": "",
+        "difficulty_rating": "Intermediate",
+        "weak_score": null,
+        "strong_score": 50
+      },
+      {
+        "attempt_number": 3,
+        "problem": "Starting with 2-methylbutane (C5H12), the following sequence of reactions is performed: (1) Treatment with Br2 under UV light, (2) Reaction with alcoholic KOH under reflux, (3) Hydrogenation using H2/Pd catalyst at room temperature. Identify the final product (IUPAC name) and calculate its degree of unsaturation.",
+        "solution": {
+          "step1": {
+            "reaction": "Free radical bromination",
+            "mechanism": "Br2 + h\u03bd \u2192 2Br\u2022 (initiation). Br\u2022 abstracts H from tertiary position (most stable radical) forming 2-bromo-2-methylbutane (C5H11Br) via propagation steps: Br\u2022 + (CH3)2CHCH2CH3 \u2192 HBr + (CH3)2C\u2022CH2CH3; (CH3)2C\u2022CH2CH3 + Br2 \u2192 (CH3)2CBrCH2CH3 + Br\u2022",
+            "product": "2-bromo-2-methylbutane (C5H11Br)",
+            "functional_groups": [
+              "Alkyl bromide"
+            ],
+            "DoU_calculation": "Original DoU = (2*5 + 2 - 12)/2 = 0 \u2192 After bromination: (2*5 + 2 - 11 - 1)/2 = 0 (halogen counts as H for DoU)"
+          },
+          "step2": {
+            "reaction": "E2 elimination",
+            "mechanism": "Alcoholic KOH induces elimination via anti-periplanar geometry, forming the more substituted (Saytzeff) alkene: 2-methyl-2-butene (C5H10)",
+            "product": "2-methyl-2-butene (C5H10)",
+            "functional_groups": [
+              "Alkene"
+            ],
+            "DoU_calculation": "(2*5 + 2 - 10)/2 = 1 (\u03c0-bond formed)"
+          },
+          "step3": {
+            "reaction": "Catalytic hydrogenation",
+            "mechanism": "H2/Pd reduces alkene via syn addition, regenerating original alkane framework: 2-methylbutane (C5H12)",
+            "product": "2-methylbutane (C5H12)",
+            "functional_groups": [
+              "Alkane"
+            ],
+            "DoU_calculation": "(2*5 + 2 - 12)/2 = 0 (\u03c0-bond removed)",
+            "final_answer": {
+              "name": "2-methylbutane",
+              "DoU": 0
+            }
+          }
+        },
+        "operators_used": [
+          "Free radical halogenation",
+          "E2 elimination",
+          "Catalytic hydrogenation"
+        ],
+        "verifier_verdict": "PASS",
+        "verifier_feedback": "",
+        "difficulty_rating": "Beginner",
+        "weak_score": 50,
+        "strong_score": 100
+      }
+    ],
+    "generated_at": "2026-09-06T09:33:11.308790+00:00"
   }
 ]
