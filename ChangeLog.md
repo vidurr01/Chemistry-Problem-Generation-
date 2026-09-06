@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-09-07
 
+### Removed unused files
+Deleted the pre-`_final` entrypoints `run_groundup.py` and `run_graph.py`, the `archive/` directory (`pipeline.py`, `run_live.py`), the four `core/` stubs those imported (`generator.py`, `concept_reasoner.py`, `strong_solver.py`, `weak_solver.py`), and `pipeline_overview_standalone.html` (a wrapper-only duplicate of `pipeline_overview.html`).
+Reason: an import trace showed nothing in the live path or in `tools/` and `calibration/` referenced any of them. The docs already pointed only at the `_final` entrypoints.
+Impact: none on behaviour. `subject_config.py` comments updated to name `run_*_final.py`. `Decisions.md` and `Flow.md` updated. Git history retains every deleted file.
+
 ### README.md
 Refreshed the design doc to match the build. The generation-loop diagram, the model roster, the "no producer clears itself" note, the verifier section, the calibration note, the two-entrypoints table, the repository layout, and the known-limitations list all still described the old weak-solver plus strong-solver architecture with a Qwen verifier and a DeepSeek generator.
 Now documents: Gemini 2.5 Flash generator, Gemini 3 Flash answer-first verifier (the five-call flow), the 3-model parallel council with the solve-count difficulty signal, the `MAX_LINEAGES`/`MAX_ITERS`/`VERIFIER_FAIL_MAX` caps, `generate_questions.py`, the `data/seeds/meta_tag_norm_stats_*` files, and the append-only `batch_run.log`. Notes `STRONG_FLOOR`/`WEAK_CEILING` as vestigial in the ground-up path and the chain-coherence limitation.

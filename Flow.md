@@ -90,4 +90,4 @@ The output is `generated_questions_<subject>.json`. Each record holds the questi
 - Graph entrypoints also depend on `core/graph_traversal.py`.
 - `core/meta_tags.py` depends on the committed norm stats.
 - `core/verifier.py` is live. It holds the two-tier verifier and its own `VERIFIER_MODEL` (`google/gemini-3-flash-preview`), which is the authoritative value.
-- The `core/` modules `generator.py`, `concept_reasoner.py`, `strong_solver.py`, and `weak_solver.py` are reference stubs. The live generation, solving, and grading logic is defined inline in the entrypoints.
+- `core/blackboard.py`, `core/coverage.py`, `core/meta_tags.py`, and `core/graph_traversal.py` are live. The generation, solving, and grading logic is defined inline in the entrypoints, not in `core/`.
