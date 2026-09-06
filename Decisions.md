@@ -36,11 +36,19 @@ Trade-off: the mapping is a judgement call. Buckets with no raw match warn and a
 
 ## Real pipeline logic lives in the entrypoints
 
-Date: 2026-09-01
-Context: some `core/` modules are reference stubs, while the live generation logic is defined inline in `run_*_final.py`.
-Decision: keep the entrypoints as the live source of truth and leave the `core/` modules as reference implementations.
-Alternatives: move the logic into `core/` and call it.
-Trade-off: the current split is a known debt. The entrypoints work end to end. Consolidating into `core/` is a future refactor, noted in the README.
+Date: 2026-09-01, revised 2026-09-07
+Context: the live generation, solving, and grading logic is defined inline in `run_*_final.py`. Some `core/` modules were reference stubs kept alongside it.
+Decision: keep the entrypoints as the live source of truth. On 2026-09-07 the unused stubs `core/generator.py`, `core/concept_reasoner.py`, `core/strong_solver.py`, and `core/weak_solver.py` were deleted, along with `archive/` (`pipeline.py`, `run_live.py`), the only code that imported them. `core/blackboard.py`, `core/coverage.py`, `core/meta_tags.py`, `core/verifier.py`, and `core/graph_traversal.py` stay because the entrypoints import them.
+Alternatives: keep the stubs as documentation of intent.
+Trade-off: git history still holds the stubs if the inline logic is ever refactored back into `core/`. Keeping dead files in the tree just misleads a reader about what runs.
+
+## Delete unused entrypoints and duplicate assets
+
+Date: 2026-09-07
+Context: `run_groundup.py` and `run_graph.py` were the pre-`_final` entrypoints. Nothing imported them, and the README, `Flow.md`, and the code paths only use `run_groundup_final.py` and `run_graph_final.py`. `pipeline_overview_standalone.html` duplicated `pipeline_overview.html` apart from an HTML wrapper and was referenced nowhere.
+Decision: delete all three, plus the `archive/` directory.
+Alternatives: keep them as historical reference.
+Trade-off: git history preserves every deleted file. A repository that lists two runnable ground-up entrypoints when only one is maintained is a navigation hazard.
 
 ## Verifier verdict is assembled in code from single-purpose calls
 

@@ -1,6 +1,6 @@
 """
 subject_config.py — single source of truth for subject-specific settings used by
-run_graph.py and run_groundup.py.
+run_groundup_final.py and run_graph_final.py.
 
 Add a new subject by adding one entry to SUBJECT_CONFIGS. No other file should
 need subject-specific branching beyond reading fields off this config via --subject.
@@ -74,7 +74,7 @@ CHECK 6 — DIFFICULTY LEVER VALIDITY: note (don't fail) any decorative conditio
         "chemist_role":     "inorganic chemist",
         "concept_book_path": os.path.join(_HERE, "knowledge", "concept_book_inorg.json"),
         # Built by `python3 tools/build_graph.py --subject inorganic` (Phase 0 TODO —
-        # may not exist yet; run_graph.py will error clearly if it's missing).
+        # may not exist yet; run_graph_final.py will error clearly if it's missing).
         "graph_path":        os.path.join(_HERE, "knowledge", "reaction_graph_inorg.json"),
         "norm_stats_path":   os.path.join(_HERE, "data", "seeds", "meta_tag_norm_stats_inorganic.json"),
         "coverage_state_file": os.path.join(_HERE, "coverage_state_inorganic.json"),
@@ -86,8 +86,8 @@ CHECK 6 — DIFFICULTY LEVER VALIDITY: note (don't fail) any decorative conditio
 
         # graph-mode only: placeholder node ids — replace with real node ids once
         # reaction_graph_inorg.json exists (Phase 0 TODO). Keeping this list here
-        # (rather than hardcoding in run_graph.py) is what makes --subject work
-        # once that file lands.
+        # (rather than hardcoding in run_graph_final.py) is what makes --subject
+        # work once that file lands.
         "start_nodes": ["coordination_complex", "metal_salt", "metal_oxide",
                         "metal_hydroxide", "metal_hydride"],
 
