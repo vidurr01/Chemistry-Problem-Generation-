@@ -58,7 +58,7 @@ if not OPENROUTER_KEY:
 # provider.) openai/gpt-oss-120b is reasoning-tuned, so a FAILURE means the question is
 # genuinely hard, not that the solver isn't expert enough — which is what makes it a
 # trustworthy expert-ceiling probe.
-STRONG_MODEL = "openai/gpt-oss-120b"              # OpenRouter
+STRONG_MODEL = "qwen/qwen3-235b-a22b-2507"        # OpenRouter — matches the generation strong solver
 # Weak solver via OpenRouter, NOT local Ollama: Ollama's llama3.2 returns an empty JSON
 # object ("{}") under response_format=json_object, so every answer came back None — a
 # broken solver, not a genuine failure. The hosted llama-3.2-3b actually attempts it.
