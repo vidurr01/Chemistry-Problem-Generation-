@@ -1,4 +1,4 @@
-# Prahlada — JEE Advanced Chemistry Question Generator
+# JEE Advanced Chemistry Question Generator
 
 A pipeline that **synthesises** JEE-Advanced-style chemistry questions with LLMs and
 **validates** each one before it enters the dataset. Validation is deliberately
