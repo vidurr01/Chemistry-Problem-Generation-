@@ -16,13 +16,16 @@ import os
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from openai import OpenAI
 
 # Enforce UTF-8 output (Windows console default cp1252 cannot print box-drawing chars).
+# line_buffering=True flushes every print on its newline, so progress stays visible
+# when stdout is a pipe or file (for example a batch driver or `... > run.log`).
 try:
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
+    sys.stderr.reconfigure(encoding="utf-8", line_buffering=True)
 except (AttributeError, ValueError):
     pass
 
@@ -57,8 +60,8 @@ weak_client = OpenAI(api_key="ollama", base_url="http://localhost:11434/v1")
 # and certifies it (the "no producer certifies itself" commitment). NOTE: the README is
 # stale — these are the live assignments, verified against this code.
 CONCEPT_MODEL       = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — selects reaction steps
-GENERATOR_MODEL     = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — writes question + reference solution
-VERIFIER_MODEL      = "qwen/qwen-2.5-72b-instruct"       # Qwen2.5-72B — blind-checks the item (≠ generator)
+GENERATOR_MODEL     = "google/gemini-2.5-flash"          # Gemini 2.5 Flash — writes question + reference solution (cheaper than the verifier)
+VERIFIER_MODEL      = "google/gemini-3-flash-preview"    # Gemini 3 Flash — blind-solves then checks the item. Live value is in core/verifier.py.
 GRADER_MODEL        = "openai/gpt-4o"                     # GPT-4o  — grades solvers' answers (≠ solvers, ≠ generator)
 
 # ── Council of solvers ──────────────────────────────────────────────────────
@@ -72,7 +75,7 @@ GRADER_MODEL        = "openai/gpt-4o"                     # GPT-4o  — grades s
 COUNCIL = [
     ("llama-3.3-70b", "meta-llama/llama-3.3-70b-instruct"),   # Meta
     ("mistral-large", "mistralai/mistral-large-2407"),         # Mistral
-    ("gemma-2-27b",   "google/gemma-2-27b-it"),                # Google
+    ("gemma-3-27b",   "google/gemma-3-27b-it"),                # Google — gemma-2-27b-it 400s on OpenRouter
 ]
 COUNCIL_TOO_EASY_IF_SOLVED_GE = 2   # ≥2 of 3 solve ⇒ too easy
 
@@ -425,11 +428,9 @@ def council_solve(problem: str, reference_solution: str, config: dict,
         "n_solved": int, "n_measured": int,
         "reference_correct": bool  (False if any member's grade flags the key wrong) }
     """
-    members = []
-    n_solved = 0
-    n_measured = 0
-    reference_correct = True
-    for name, slug in COUNCIL:
+    def solve_member(name, slug):
+        """Blind-solve then grade one council member. Its two API calls stay
+        sequential (the grade needs the answer); members run concurrently."""
         rec = {"name": name, "model": slug, "final_answer": None, "working": None,
                "grade": None, "solved": None, "error": None}
         try:
@@ -439,16 +440,27 @@ def council_solve(problem: str, reference_solution: str, config: dict,
             rec["working"]      = blind.get("attempted_solution")
             rec["grade"]        = grade
             rec["solved"]       = bool(grade.get("final_answer_correct"))
-            if not grade.get("reference_correct", True):
-                reference_correct = False
-            n_measured += 1
-            if rec["solved"]:
-                n_solved += 1
         except Exception as e:
             rec["error"] = str(e)[:160]
-        members.append(rec)
+        return rec
+
+    # Run all council members in parallel — the work is API I/O, so threads are
+    # enough. Results are collected back in COUNCIL order for a stable log.
+    with ThreadPoolExecutor(max_workers=len(COUNCIL)) as pool:
+        members = list(pool.map(lambda pair: solve_member(*pair), COUNCIL))
+
+    n_solved = 0
+    n_measured = 0
+    reference_correct = True
+    for rec in members:
+        if rec["grade"] is not None:
+            n_measured += 1
+            if not rec["grade"].get("reference_correct", True):
+                reference_correct = False
+        if rec["solved"]:
+            n_solved += 1
         tag = "n/a" if rec["solved"] is None else ("solved" if rec["solved"] else "failed")
-        print(f"    [{name}] {tag}"
+        print(f"    [{rec['name']}] {tag}"
               + (f" — {rec['error']}" if rec["error"] else ""))
     return {"members": members, "n_solved": n_solved, "n_measured": n_measured,
             "reference_correct": reference_correct}
@@ -621,9 +633,10 @@ def main():
     print("══════════════════════════════════════════════════\n")
 
     # ── Control parameters for the verifier-first + council state machine ──────
-    MAX_LINEAGES     = 4    # fresh question ideas to try before giving up
-    MAX_ITERS        = 8    # hard cap on total generate→check iterations (anti-loop)
+    MAX_LINEAGES     = 3    # fresh question ideas to try before giving up
+    MAX_ITERS        = 4    # hard cap on total generate→check iterations (anti-loop)
     VERIFIER_FAIL_MAX = 2   # consecutive verifier FAILs on a lineage → abandon it
+                            # (2 ⇒ the generator gets one refine pass against verifier feedback)
 
     # Full run log — EVERY attempt (accepted, failed, or discarded), for traceability.
     run_log = []
@@ -642,6 +655,7 @@ def main():
         print(f"\n╔═══ LINEAGE {lineage} (new question idea) ═══╗")
         # Fresh idea for this lineage.
         try:
+            print("  [1/5] concept-reasoner: selecting a reaction chain...")
             cr = concept_reasoner(blackboard, txs, config, chapter=chapter)
             selected_ids = cr.get("selected_tx_ids", [])
             chain_desc   = cr.get("chain_description", "")
@@ -651,6 +665,7 @@ def main():
                 selected_ids = []
             selected_txs = [txs[i] for i in selected_ids if 0 <= i < len(txs)]
             print(f"  Selected {len(selected_txs)} steps: {[t['from']+' → '+t['to'] for t in selected_txs]}")
+            print("  [2/5] generator: writing question + reference solution...")
             gen = generator(blackboard, selected_txs, chain_desc, iters + 1, config, chapter=chapter)
         except Exception as e:
             print(f"  lineage {lineage} setup error: {e}")
@@ -665,7 +680,7 @@ def main():
 
             try:
                 # 1) VERIFIER FIRST — validity gate.
-                print("Verifier (Tier1 dedup + Tier2 blind judge)...")
+                print("  [3/5] verifier: Tier1 dedup + Tier2 blind judge (solving blind)...")
                 ver = verify_problem(
                     gen["problem"], gen["solution"], arch, args.subject,
                     formula_signature="|".join(gen.get("operators_applied", [])),
@@ -700,7 +715,8 @@ def main():
 
                 # 2) verifier PASS → COUNCIL of solvers decides difficulty.
                 verifier_fails = 0
-                print(f"Council solve ({len(COUNCIL)} models, blind, closed-book)...")
+                print(f"  [4/5] council: {len(COUNCIL)} models solving blind, closed-book "
+                      f"({', '.join(name for name, _ in COUNCIL)})...")
                 council = council_solve(gen["problem"], gen["solution"], config,
                                         knowledge_sheet=knowledge_sheet, construction=selected_txs)
                 n_solved = council["n_solved"]
@@ -750,6 +766,7 @@ def main():
 
                 # 3) verifier PASS + ≤1 of 3 solved → ACCEPT.
                 accepted = True
+                print("  [5/5] accepted: computing difficulty meta-tags and saving...")
                 meta = compute_meta_tags_for_subject(
                     config, question_text=gen["problem"], archetype_code=code,
                     solver_trace=next((m["working"] for m in council["members"] if m.get("working")), ""),

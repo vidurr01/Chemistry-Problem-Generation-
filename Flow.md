@@ -35,6 +35,8 @@ Two entrypoint families run the same core loop. They differ in knowledge source 
 
 `subject_config.py` is the single source of truth for per-subject paths, prompts, and default values. `get_subject_config(subject)` returns a config dict.
 
+`generate_questions.py` is an optional batch driver on top of `run_groundup_final.py`. It takes a target count per subject. For each question it runs the entrypoint in a fresh subprocess, then compares the record count in `generated_questions_<subject>.json` before and after to see whether that run accepted a question. It retries a subject until the target is met or a consecutive-failure limit is reached. It does not change the generation loop.
+
 ### Ground-up flow in `run_groundup_final.py`
 
 This is the file you run most often. It supports all three subjects.
@@ -45,17 +47,16 @@ This is the file you run most often. It supports all three subjects.
 4. It loads the concept book and calls `filter_txs_for_subject()` to keep only the transformations for the chosen chapter and archetype.
 5. It loads or creates the coverage state with `load_coverage_for_subject()`.
 6. It builds a `Blackboard` from a topic anchor and a target difficulty profile.
-7. The loop runs up to four attempts.
+7. The loop tries up to `MAX_LINEAGES` (3) fresh question ideas, with a hard cap of `MAX_ITERS` (4) total generate-check iterations.
 
-Inside each attempt:
+Inside each iteration:
 
-1. `concept_reasoner()` selects a subset of transformations and returns a chain description. It is an RLM over the filtered transformations.
+1. `concept_reasoner()` selects a subset of transformations and returns a chain description. It is an RLM over the filtered transformations. This runs once per lineage.
 2. `generator()` writes a question and a solution.
-3. `verifier()` blind-solves and returns a verdict. On fail it returns feedback for the generator.
-4. `weak_solver()` scores the item with a local model.
-5. `strong_solver()` scores the item with a strong model.
-6. The attempt is recorded on the blackboard.
-7. Three gates must pass: verifier verdict, strong score at least 85, weak score at most 60.
+3. `verify_problem()` in `core/verifier.py` runs. Tier 1 is a deterministic duplicate-input check with no model. Tier 2 is a sequence of narrow `google/gemini-3-flash-preview` calls: blind-solve the problem with the candidate withheld, extract the candidate's final answer, compare the two answers, and only if they agree, check for structural flaws and rate difficulty. The PASS or FAIL verdict is decided in code from those results. A disagreeing answer is an immediate FAIL. On the second consecutive FAIL of a lineage (`VERIFIER_FAIL_MAX` is 2, so one refine pass) the lineage is abandoned and a new idea starts.
+4. On verifier PASS, `council_solve()` runs the three council models (`meta-llama/llama-3.3-70b-instruct`, `mistralai/mistral-large-2407`, `google/gemma-3-27b-it`) in parallel on a thread pool. Each member blind-solves closed-book, then `grade_answer()` (`openai/gpt-4o`) judges its answer against the construction steps. The count of members that solved is the difficulty signal.
+5. The attempt is recorded on the blackboard.
+6. Gates: verifier PASS, `reference_correct` true, and at most one of three council members solved. Two or three solved means too easy, so the loop refines for reasoning complexity.
 
 On acceptance the loop calls `compute_meta_tags_for_subject()` for the six-axis difficulty label, updates coverage, and appends a record to `generated_questions_<subject>.json`.
 
