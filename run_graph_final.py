@@ -427,21 +427,23 @@ Return JSON:
     return result
 
 
-def weak_solver(problem: str, solution: str, config: dict) -> dict:
+def weak_solver(problem: str, config: dict) -> dict:
+    """Blind (edit 1): the weak model solves WITHOUT the reference and does NOT
+    self-score. It used to be handed the answer key "for scoring only" and asked to
+    grade its own attempt against it — so its score reflected self-assessment noise,
+    not whether it could actually solve the problem. Scoring is now done separately by
+    grade_answer()."""
     prompt = f"""You are a chemistry undergraduate student.
-Solve this {config['display_name']} problem as best you can, then score yourself 0-100 against the reference.
+Solve this {config['display_name']} problem as best you can. You are NOT given an
+answer key — work it out yourself.
 
 Problem:
 {problem}
 
-Reference Solution (for scoring only):
-{solution}
-
 Return JSON:
 {{
-  "attempted_solution": "your answer",
-  "score": integer 0-100,
-  "reasoning": "where you lost points"
+  "attempted_solution": "your full working",
+  "final_answer": "your final answer only (product name / value / reagent)"
 }}"""
 
     resp = weak_client.chat.completions.create(
@@ -453,6 +455,53 @@ Return JSON:
         response_format={"type": "json_object"},
         temperature=0.7
     )
+    return parse_llm_json(resp.choices[0].message.content)
+
+
+def grade_answer(problem: str, reference_solution: str, candidate: dict, config: dict) -> dict:
+    """Independent grader (edit 1): score a blind solver's final answer against the
+    reference. The solver never saw the reference; the grader does — decoupling solving
+    from scoring so the weak baseline gives an honest can-it-solve-this signal."""
+    role = config["chemist_role"]
+    prompt = f"""You are an expert {role} acting as an impartial grader.
+
+A solver attempted the problem below WITHOUT seeing any answer key. Judge their FINAL
+ANSWER against the reference solution.
+
+Rules:
+- Give a score 0-100 for how chemically correct/complete the solver's final answer is
+  (partial credit allowed). Judge equivalence of chemistry, not wording or format.
+- If the solver disagrees with the reference AND the solver is chemically correct
+  (the reference key is wrong), set reference_correct=false and explain.
+
+Problem:
+{problem}
+
+Reference solution:
+{reference_solution}
+
+Solver's final answer:
+{candidate.get('final_answer', '')}
+
+Solver's full working:
+{candidate.get('attempted_solution', '')}
+
+Return JSON:
+{{
+  "score": integer 0-100,
+  "reference_correct": true or false,
+  "reasoning": "brief justification"
+}}"""
+
+    resp = api_call(lambda: samba_client().chat.completions.create(
+        model=STRONG_SOLVER_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a chemistry grader. Output JSON only."},
+            {"role": "user",   "content": prompt}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.0
+    ))
     return parse_llm_json(resp.choices[0].message.content)
 
 
@@ -522,7 +571,7 @@ Return JSON:
         "attempted_solution":       blind.get("attempted_solution", ""),
         "blind_final_answer":       blind.get("final_answer", ""),
         "blind_formula_trace":      blind.get("formula_trace", []),
-        "score":                    scored.get("score", 0),
+        "score":                    scored.get("score"),
         "reference_correct":        scored.get("reference_correct", True),
         "disagreement_explanation": scored.get("disagreement_explanation", ""),
         "reasoning":                scored.get("reasoning", ""),
@@ -633,20 +682,33 @@ def main():
             print(f"  Flaw: {ver.get('semantic_flaws','')[:120]}")
             print(f"  Fix: {ver.get('feedback_for_generator','')[:120]}")
 
-        print("Weak solver (llama3.2)...")
+        # Weak solver — blind (edit 1): solve WITHOUT the reference, then grade the
+        # blind answer independently. Score is None if the call or grade fails (edit 2)
+        # — never silently 0, which used to *pass* the weak gate for free.
+        print("Weak solver (llama3.2, blind)...")
         try:
-            wk = weak_solver(gen["problem"], gen["solution"], config)
-            weak_score = wk.get("score", 0)
+            wk_blind   = weak_solver(gen["problem"], config)
+            wk_grade   = grade_answer(gen["problem"], gen["solution"], wk_blind, config)
+            weak_score = wk_grade.get("score")
         except Exception as e:
             print(f"  Weak solver error: {e}")
-            weak_score = 0
-        print(f"  Weak score: {weak_score}%")
+            weak_score = None
+        print(f"  Weak score: {weak_score if weak_score is not None else 'n/a (unmeasured)'}")
 
         print("Strong solver — blind first...")
-        st = strong_solver(gen["problem"], gen["solution"], config)
-        strong_score = st.get("score", 0)
-        ref_correct  = st.get("reference_correct", True)
-        print(f"  Strong score: {strong_score}%  |  reference_correct: {ref_correct}")
+        try:
+            st           = strong_solver(gen["problem"], gen["solution"], config)
+            strong_score = st.get("score")
+            ref_correct  = st.get("reference_correct", True)
+            strong_trace = st.get("attempted_solution", "")
+        except Exception as e:
+            print(f"  Strong solver error: {e}")
+            st           = {}
+            strong_score = None
+            ref_correct  = True
+            strong_trace = ""
+        print(f"  Strong score: {strong_score if strong_score is not None else 'n/a (unmeasured)'}"
+              f"  |  reference_correct: {ref_correct}")
         if not ref_correct:
             print(f"  !! Reference key flagged wrong: {st.get('disagreement_explanation','')[:120]}")
 
@@ -659,14 +721,16 @@ def main():
             strong_score     = strong_score,
         )
 
+        # Gates (edit 2): an unmeasured score (None) can never satisfy a gate, so a
+        # failed solver call quarantines the item instead of silently passing it.
         gate_verifier = ver["verdict"] == "PASS"
-        gate_strong   = strong_score >= STRONG_FLOOR
-        gate_weak     = weak_score   <= WEAK_CEILING
+        gate_strong   = strong_score is not None and strong_score >= STRONG_FLOOR
+        gate_weak     = weak_score   is not None and weak_score   <= WEAK_CEILING
         gate_ref_ok   = ref_correct
 
         print(f"  Gates: verifier={'✓' if gate_verifier else '✗'}  "
-              f"strong={'✓' if gate_strong else '✗'} ({strong_score}% vs ≥{STRONG_FLOOR})  "
-              f"weak={'✓' if gate_weak else '✗'} ({weak_score}% vs ≤{WEAK_CEILING})  "
+              f"strong={'✓' if gate_strong else '✗'} ({strong_score} vs ≥{STRONG_FLOOR})  "
+              f"weak={'✓' if gate_weak else '✗'} ({weak_score} vs ≤{WEAK_CEILING})  "
               f"ref_ok={'✓' if gate_ref_ok else '✗'}")
 
         if gate_verifier and gate_strong and gate_weak and gate_ref_ok:
@@ -676,7 +740,7 @@ def main():
                 config,
                 question_text    = gen["problem"],
                 archetype_code   = code,
-                solver_trace     = st.get("attempted_solution", ""),
+                solver_trace     = strong_trace,
                 fragility_weight = None,
             )
 
