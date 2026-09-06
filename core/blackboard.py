@@ -2,6 +2,13 @@ import json
 from typing import Optional
 
 
+def _fmt_score(s) -> str:
+    """Format a solver score for display. Scores may be None when a solver call or
+    grade failed (see the blind-solve / unmeasured-gate handling in the entrypoints);
+    a None must not crash the '%.0f' formatting used in attempt summaries."""
+    return f"{s:.0f}%" if isinstance(s, (int, float)) else "n/a"
+
+
 class Blackboard:
     def __init__(self, seed: dict, archetype: str, target_profile: dict):
         self.seed = seed
@@ -49,8 +56,8 @@ class Blackboard:
             lines.append(
                 f"Attempt {a['attempt_number']}: "
                 f"Verdict={a['verifier_verdict']} | "
-                f"Weak={a['weak_score']:.0f}% | "
-                f"Strong={a['strong_score']:.0f}% | "
+                f"Weak={_fmt_score(a['weak_score'])} | "
+                f"Strong={_fmt_score(a['strong_score'])} | "
                 f"Operators={a['operators_used']} | "
                 f"Feedback='{a['verifier_feedback']}'"
             )

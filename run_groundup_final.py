@@ -52,8 +52,15 @@ def openrouter_client():
 
 weak_client = OpenAI(api_key="ollama", base_url="http://localhost:11434/v1")
 
-STRONG_MODEL = "deepseek/deepseek-chat-v3-0324"
-WEAK_MODEL   = "llama3.2"
+# Per-role models, diversified across families so no single model both produces a claim
+# and certifies it (the "no producer certifies itself" commitment). NOTE: the README is
+# stale — these are the live assignments, verified against this code.
+CONCEPT_MODEL       = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — selects reaction steps
+GENERATOR_MODEL     = "deepseek/deepseek-chat-v3-0324"   # DeepSeek — writes question + reference solution
+VERIFIER_MODEL      = "qwen/qwen-2.5-72b-instruct"       # Qwen2.5-72B — blind-checks the item (≠ generator)
+STRONG_SOLVER_MODEL = "openai/gpt-oss-120b"              # gpt-oss — blind expert solver (≠ generator)
+GRADER_MODEL        = "openai/gpt-4o"                     # GPT-4o  — grades solvers' answers (≠ solvers, ≠ generator)
+WEAK_MODEL          = "meta-llama/llama-3.2-3b-instruct"  # Llama 3B — blind weak floor (OpenRouter, not Ollama)
 STRONG_FLOOR = 85
 WEAK_CEILING = 60
 
@@ -184,13 +191,14 @@ Return JSON:
 }}"""
 
     resp = api_call(lambda: openrouter_client().chat.completions.create(
-        model=STRONG_MODEL,
+        model=CONCEPT_MODEL,
         messages=[
             {"role": "system", "content": "You are a chemistry reasoning model. Output JSON only."},
             {"role": "user",   "content": prompt}
         ],
         response_format={"type": "json_object"},
-        temperature=1.0
+        temperature=1.0,
+        max_tokens=1500,
     ))
     return parse_llm_json(resp.choices[0].message.content)
 
@@ -259,13 +267,14 @@ Return JSON:
 }}"""
 
     resp = api_call(lambda: openrouter_client().chat.completions.create(
-        model=STRONG_MODEL,
+        model=GENERATOR_MODEL,
         messages=[
             {"role": "system", "content": "You are a chemistry problem generator. Output JSON only."},
             {"role": "user",   "content": prompt}
         ],
         response_format={"type": "json_object"},
-        temperature=0.7
+        temperature=0.7,
+        max_tokens=4000,
     ))
     return parse_llm_json(resp.choices[0].message.content)
 
@@ -301,71 +310,123 @@ Return JSON:
 }}"""
 
     resp = api_call(lambda: openrouter_client().chat.completions.create(
-        model=STRONG_MODEL,
+        model=VERIFIER_MODEL,
         messages=[
             {"role": "system", "content": "You are a chemistry verifier. Output JSON only."},
             {"role": "user",   "content": prompt}
         ],
         response_format={"type": "json_object"},
-        temperature=0.0
+        temperature=0.0,
+        max_tokens=3000,
     ))
     return parse_llm_json(resp.choices[0].message.content)
 
 
-def weak_solver(problem: str, solution: str, config: dict) -> dict:
-    prompt = f"""You are a chemistry undergraduate student.
-Solve this {config['display_name']} problem as best you can, then score yourself 0-100 against the reference.
+def blind_solve(problem: str, config: dict, expert: bool) -> dict:
+    """Solve the problem WITHOUT seeing the reference solution (edit 1: blind solving).
+
+    The solver used to be handed the reference "for scoring only" and asked to
+    self-score against it — which let a capable model confirm the answer it was
+    shown (pinning the strong score at 100) and gave the weak model no honest task.
+    Here the solver works cold and only reports its own answer; scoring is done
+    separately by grade_answer().
+
+    expert=True → strong model (OpenRouter); expert=False → weak model (Ollama).
+    """
+    if expert:
+        role = config["chemist_role"]
+        system = f"You are an expert {role}. Output JSON only."
+        instruction = (f"You are an expert {role}. Solve this {config['display_name']} "
+                       f"problem rigorously, showing full step-by-step reasoning.")
+    else:
+        system = "You are a chemistry undergraduate. Output JSON only."
+        instruction = (f"You are a chemistry undergraduate student. Solve this "
+                       f"{config['display_name']} problem as best you can.")
+
+    prompt = f"""{instruction}
+
+You are NOT given an answer key. Work the answer out yourself.
 
 Problem:
 {problem}
 
-Reference Solution (for scoring only):
-{solution}
-
 Return JSON:
 {{
-  "attempted_solution": "your answer",
-  "score": integer 0-100,
-  "reasoning": "where you lost points"
+  "attempted_solution": "your full step-by-step working",
+  "final_answer": "your final answer only (product name / value / reagent)"
 }}"""
 
-    resp = weak_client.chat.completions.create(
-        model=WEAK_MODEL,
-        messages=[
-            {"role": "system", "content": "You are a chemistry undergraduate. Output JSON only."},
-            {"role": "user",   "content": prompt}
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.7
-    )
+    if expert:
+        resp = api_call(lambda: openrouter_client().chat.completions.create(
+            model=STRONG_SOLVER_MODEL,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user",   "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0,
+            max_tokens=4000,
+        ))
+    else:
+        resp = api_call(lambda: openrouter_client().chat.completions.create(
+            model=WEAK_MODEL,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user",   "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7,
+            max_tokens=4000,
+        ))
     return parse_llm_json(resp.choices[0].message.content)
 
 
-def strong_solver(problem: str, solution: str, config: dict) -> dict:
+def grade_answer(problem: str, reference_solution: str, candidate: dict, config: dict) -> dict:
+    """Independent grader (edit 1): judge a blind solver's final answer against the
+    reference. The solver never saw the reference; the grader does — grading needs a
+    key, but the thing being graded was produced cold, so a solver can no longer
+    certify itself by copying the answer it was shown."""
     role = config["chemist_role"]
-    prompt = f"""You are an expert {role}. Solve rigorously with full reasoning, then score 0-100.
+    prompt = f"""You are an expert {role} acting as an impartial grader.
+
+A solver attempted the problem below WITHOUT seeing any answer key. Judge their FINAL
+ANSWER against the reference solution.
+
+Rules:
+- Give a score 0-100 for how chemically correct and complete the solver's final answer
+  is (partial credit allowed). Judge equivalence of chemistry, not wording or format.
+- If the solver's answer disagrees with the reference AND the solver is the one who is
+  chemically correct (i.e. the reference key is wrong), set reference_correct=false and
+  explain the error in the reference.
 
 Problem:
 {problem}
 
-Reference Solution (for scoring only):
-{solution}
+Reference solution:
+{reference_solution}
+
+Solver's final answer:
+{candidate.get('final_answer', '')}
+
+Solver's full working:
+{candidate.get('attempted_solution', '')}
 
 Return JSON:
 {{
-  "attempted_solution": "full step-by-step solution",
   "score": integer 0-100,
-  "reasoning": "explanation of score and any discrepancies"
+  "reference_correct": true or false,
+  "reasoning": "brief justification of the score"
 }}"""
 
     resp = api_call(lambda: openrouter_client().chat.completions.create(
-        model=STRONG_MODEL,
+        model=GRADER_MODEL,
         messages=[
-            {"role": "system", "content": "You are an expert chemist. Output JSON only."},
-            {"role": "user",   "content": prompt}
+            {"role": "system", "content": "You are a chemistry grader. Output JSON only."},
+            {"role": "user",   "content": prompt},
         ],
         response_format={"type": "json_object"},
-        temperature=0.0
+        temperature=0.0,
+        max_tokens=800,
     ))
     return parse_llm_json(resp.choices[0].message.content)
 
@@ -469,20 +530,34 @@ def main():
                 print(f"  Flaw: {ver['semantic_flaws']}")
                 print(f"  Fix needed: {ver['feedback_for_generator']}")
 
-            print("Weak solver (llama3.2)...")
+            # Weak solver — blind (edit 1): solve WITHOUT the reference, then grade the
+            # blind answer with an independent grader. Score is None if the call or grade
+            # fails (edit 2) — never silently 0, which used to *pass* the weak gate.
+            print("Weak solver (llama3.2, blind)...")
             try:
-                wk = weak_solver(gen["problem"], gen["solution"], config)
-                weak_score = wk.get("score", 0)
+                wk_blind   = blind_solve(gen["problem"], config, expert=False)
+                wk_grade   = grade_answer(gen["problem"], gen["solution"], wk_blind, config)
+                weak_score = wk_grade.get("score")
             except Exception as e:
                 print(f"  Weak solver error: {e}")
-                weak_score = 0
+                weak_score = None
+            print(f"  Weak score: {weak_score if weak_score is not None else 'n/a (unmeasured)'}")
 
-            print(f"  Weak score: {weak_score}%")
-
-            print("Strong solver...")
-            st = strong_solver(gen["problem"], gen["solution"], config)
-            strong_score = st.get("score", 0)
-            print(f"  Strong score: {strong_score}%")
+            # Strong solver — blind (edit 1): same protocol with the expert model.
+            print("Strong solver (blind)...")
+            try:
+                st_blind     = blind_solve(gen["problem"], config, expert=True)
+                st_grade     = grade_answer(gen["problem"], gen["solution"], st_blind, config)
+                strong_score = st_grade.get("score")
+                ref_correct  = st_grade.get("reference_correct", True)
+                strong_trace = st_blind.get("attempted_solution", "")
+            except Exception as e:
+                print(f"  Strong solver error: {e}")
+                strong_score = None
+                ref_correct  = True
+                strong_trace = ""
+            print(f"  Strong score: {strong_score if strong_score is not None else 'n/a (unmeasured)'}"
+                  f"  |  reference_correct: {ref_correct}")
 
             blackboard.record_attempt(
                 problem          = gen["problem"],
@@ -493,22 +568,26 @@ def main():
                 strong_score     = strong_score,
             )
 
+            # Gates (edit 2): an unmeasured score (None) can never satisfy a gate, so a
+            # failed solver call quarantines the item instead of silently passing it.
             gate_verifier = ver["verdict"] == "PASS"
-            gate_strong   = strong_score >= STRONG_FLOOR
-            gate_weak     = weak_score   <= WEAK_CEILING
+            gate_strong   = strong_score is not None and strong_score >= STRONG_FLOOR
+            gate_weak     = weak_score   is not None and weak_score   <= WEAK_CEILING
+            gate_ref_ok   = ref_correct
 
             print(f"  Gates: verifier={'✓' if gate_verifier else '✗'}  "
-                  f"strong={'✓' if gate_strong else '✗'} ({strong_score}% vs ≥{STRONG_FLOOR})  "
-                  f"weak={'✓' if gate_weak else '✗'} ({weak_score}% vs ≤{WEAK_CEILING})")
+                  f"strong={'✓' if gate_strong else '✗'} ({strong_score} vs ≥{STRONG_FLOOR})  "
+                  f"weak={'✓' if gate_weak else '✗'} ({weak_score} vs ≤{WEAK_CEILING})  "
+                  f"ref_ok={'✓' if gate_ref_ok else '✗'}")
 
-            if gate_verifier and gate_strong and gate_weak:
+            if gate_verifier and gate_strong and gate_weak and gate_ref_ok:
                 accepted = True
 
                 meta = compute_meta_tags_for_subject(
                     config,
                     question_text    = gen["problem"],
                     archetype_code   = code,
-                    solver_trace     = st.get("attempted_solution", ""),
+                    solver_trace     = strong_trace,
                     fragility_weight = None,
                 )
 
@@ -536,6 +615,7 @@ def main():
                     "loops_run":         attempt,
                     "strong_score":      strong_score,
                     "weak_score":        weak_score,
+                    "reference_correct": ref_correct,
                     "verifier_verdict":  ver["verdict"],
                     "verifier_difficulty": ver.get("difficulty_rating", "?"),
                     "meta_tags":         meta,
