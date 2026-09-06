@@ -262,7 +262,7 @@ flowchart LR
   <p><strong>Phase&nbsp;0</strong> turns teacher notes into structured chemistry: a <em>concept book</em> of reaction transformations, and (for organic) a <em>reaction graph</em> where nodes are functional-group classes and edges are valid reactions. <strong>Phase&nbsp;1</strong> runs real exam questions through the solvers to set the two acceptance thresholds and the difficulty-tag baselines. <strong>Phase&nbsp;2</strong> is the loop below.</p>
 
   <h2><span class="sec-num">02</span>Inside the generation loop</h2>
-  <p class="sub">One accepted question can take up to four attempts. Each attempt writes a question, checks it three ways, and either accepts it or feeds the failure back in to be repaired — never regenerated from scratch.</p>
+  <p class="sub">One accepted question can take up to four attempts. Each attempt writes a question, then gates it: a two-tier verifier, plus two independent solvers that work <em>blind</em> (they never see the reference) and a separate grader that scores their answers. On a miss it feeds the failure back to be repaired — never regenerated from scratch.</p>
 
   <div class="plate">
 <pre class="mermaid">
@@ -271,14 +271,15 @@ flowchart TD
   COV["<b>Coverage</b><br/>picks the least-covered target<br/>archetype · chapter · edge/concept"]
   COV --> PQ{"Entry path"}
   PQ -->|"graph-wired"| BFS["<b>graph_traversal</b><br/>BFS → reaction chain (3–5 edges)"]
-  PQ -->|"ground-up"| FILT["<b>concept_reasoner</b><br/>filter book → pick 3–4 transforms"]
+  PQ -->|"ground-up"| FILT["<b>concept_reasoner</b> · DeepSeek-V3<br/>filter book → pick 3–4 transforms"]
   BFS --> GEN
   FILT --> GEN
-  GEN["<b>Generator</b> · DeepSeek-V3.2, temp 0.7<br/>writes question + full solution"]
-  GEN --> VER["<b>Verifier</b> · DeepSeek-V3.2, temp 0.0<br/>solves blind, then compares → PASS / FAIL"]
-  VER --> WK["<b>Weak solver</b> · llama3.2 (local)<br/>must score ≤ 60  (hard enough)"]
-  WK --> ST["<b>Strong solver</b> · DeepSeek-V3.2, temp 0.0<br/>must score ≥ 85  (solvable)"]
-  ST --> G{"4-gate check<br/>verifier PASS · strong ≥85 · weak ≤60"}
+  GEN["<b>Generator</b> · DeepSeek-V3<br/>writes question + reference solution"]
+  GEN --> VER["<b>Verifier</b> (2-tier)<br/>T1 deterministic duplicate-input check (no LLM)<br/>T2 Qwen-2.5-72B blind-solve + judge → PASS/FAIL"]
+  VER --> WK["<b>Weak solver</b> · llama-3.2-3b<br/>solves BLIND · closed-book (concept-book sheet only)"]
+  WK --> ST["<b>Strong solver</b> · Qwen3-235B<br/>solves BLIND · closed-book (concept-book sheet only)"]
+  ST --> GR["<b>Grader</b> · GPT-4o<br/>compares each blind answer to the reference → 0–100"]
+  GR --> G{"Gate<br/>verifier PASS · strong ≥85 · weak ≤60 · ref_correct<br/>unmeasured (None) can never pass"}
   G -->|"all pass"| MT["compute 6-axis difficulty meta-tags"]
   MT --> EM["append record →<br/>generated_questions_[subject].json<br/>+ update coverage state"]
   G -->|"any fail"| BB["<b>Blackboard</b> records the attempt"]
@@ -321,23 +322,28 @@ flowchart TD
     </div>
     <div class="card">
       <h3>Generator</h3>
-      <span class="tag">DeepSeek-V3.2 · 0.7</span>
-      <p>Writes the question and a full worked solution from the selected steps. On a retry it <em>refines in place</em> — fixing only what the verifier flagged.</p>
+      <span class="tag">DeepSeek-V3</span>
+      <p>Writes the question and a reference solution from the selected steps. On a retry it <em>refines in place</em> — fixing only what the verifier flagged.</p>
     </div>
     <div class="card">
-      <h3>Verifier</h3>
-      <span class="tag">DeepSeek-V3.2 · 0.0</span>
-      <p>Solves the question blind first, then compares to the candidate and runs subject-specific checks (formula balance, stereo validity, non-circularity). Returns PASS/FAIL + feedback.</p>
+      <h3>Verifier — two-tier</h3>
+      <span class="tag">deterministic + Qwen-2.5-72B</span>
+      <p><b>Tier 1</b> (no LLM): hashes the numeric inputs + formula signature; hard-fails if identical inputs ever gave a different answer. <b>Tier 2</b>: Qwen blind-solves, then judges the candidate (arithmetic, regime-of-validity, non-circularity, uniqueness). A family independent of the generator.</p>
     </div>
     <div class="card">
       <h3>Weak solver</h3>
-      <span class="tag">llama3.2 · local</span>
-      <p>A non-expert baseline. If it scores above 60, the question is too easy and gets rejected.</p>
+      <span class="tag">llama-3.2-3b · blind</span>
+      <p>A non-expert baseline. Solves <em>blind</em> and <em>closed-book</em> (only the chapter's concept-book sheet, no pretrained recall). If it clears the ceiling, the item is too easy.</p>
     </div>
     <div class="card">
       <h3>Strong solver</h3>
-      <span class="tag">DeepSeek-V3.2 · 0.0</span>
-      <p>An expert baseline. If it scores below 85, the question is treated as broken or unsolvable and gets rejected.</p>
+      <span class="tag">Qwen3-235B · blind</span>
+      <p>An expert baseline. Also solves <em>blind</em> and <em>closed-book</em>. It never sees the reference — so it can no longer certify itself (the old self-scoring pinned this at 100).</p>
+    </div>
+    <div class="card">
+      <h3>Grader</h3>
+      <span class="tag">GPT-4o</span>
+      <p>The separate scorer. Compares each solver's blind answer to the reference and returns 0–100 (and a <code>reference_correct</code> flag). Decouples solving from scoring — the solvers don't grade themselves.</p>
     </div>
     <div class="card">
       <h3>Meta-tags</h3>
@@ -376,7 +382,7 @@ flowchart TD
   </div>
 
   <div class="note">
-    <strong>Where difficulty is decided.</strong> The two solvers are the difficulty gate: an item must be hard for the weak model (≤60) yet solvable for the strong one (≥85). Everything upstream exists to feed that gate a well-posed, on-topic, diverse candidate.
+    <strong>How the gate works — and one caveat.</strong> The solvers run <em>blind</em> and a separate grader scores them, so a high strong score means the model genuinely re-derived the answer (not that it was shown it). An item must be hard for the weak model (≤60) yet solvable for the strong one (≥85), the verifier must PASS, and any unmeasured score (<code>None</code>) can never pass. <strong>Caveat:</strong> the 85/60 thresholds were calibrated on the <em>old self-scoring</em> regime and are stale under blind grading — see the calibration section for what the numbers actually look like now.
   </div>
 
   <h2><span class="sec-num">05</span>What comes out</h2>
@@ -396,8 +402,22 @@ flowchart TD
 }
   </div>
 
+  <h2><span class="sec-num">06</span>How hard is "hard"? — the anchor</h2>
+  <p class="sub">Generation makes questions; calibration measures where they sit. Both use the same blind protocol, so the two are directly comparable.</p>
+
+  <p><code>calibration/anchor_calibration.py</code> blind-solves <strong>54 real JEE Advanced numeric questions</strong> (2021–2025) with a strong and a weak model, grading each answer by deterministic key-match against the official answer — no self-scoring, no model bias.</p>
+
+  <div class="out-record">
+STRONG (gpt-oss-120b): <span class="k">~50%</span> solved · mean score <span class="k">~60/100</span><br>
+WEAK   (llama-3.2-3b): <span class="k">~7%</span> solved · mean score <span class="k">~19/100</span>
+  </div>
+
+  <div class="note">
+    <strong>What the anchor is for.</strong> A frontier model solves only ~half of real Advanced questions blind — that's the difficulty yardstick. Generated items that the strong solver aces (~100) therefore sit <em>below</em> real-Advanced difficulty. The contrast — real Advanced ≈ 50%, generated ≈ 100% for the same model — is the honest measure of the gap. (The anchor used gpt-oss-120b; the generation strong solver is Qwen3-235B — a flagged inconsistency, not yet reconciled.)
+  </div>
+
   <footer class="foot">
-    Faithful to the current build · organic = graph + ground-up · inorganic / physical = ground-up only · reaction_graph_inorg.json not yet built
+    Reflects the current build after the blind-solver + independent-grader rework · generator DeepSeek-V3 · verifier Qwen-2.5-72B (2-tier) · strong Qwen3-235B · grader GPT-4o · weak llama-3.2-3b · organic = graph + ground-up · inorganic / physical = ground-up only · reaction_graph_inorg.json not yet built · 85/60 thresholds stale (pre-blind calibration)
   </footer>
 
 </div>
