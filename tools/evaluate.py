@@ -1,9 +1,46 @@
+"""
+evaluate.py — audit pipeline output (generated_questions*.json).
+
+Reads the current record schema produced by run_graph*.py / run_groundup*.py:
+
+  question_id, seed_id, generation_mode, subject, chapter, archetype,
+  archetype_code, question, solution, operators_applied, chain_description,
+  loops_run, strong_score, weak_score, verifier_verdict, verifier_difficulty,
+  meta_tags, attempt_history, generated_at
+
+Usage:
+    python -X utf8 tools/evaluate.py [generated_questions_<subject>.json]
+
+Default input is generated_questions.json (the legacy archive output path).
+"""
+
 import json
+import os
+import statistics
+import sys
+
+TARGET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+
+
+def mean(xs):
+    return statistics.mean(xs) if xs else 0.0
+
+
+def pct(x, total):
+    return (x / total * 100.0) if total else 0.0
 
 
 def evaluate_pipeline(output_file: str = "generated_questions.json"):
-    print(f"Loading results from {output_file}...")
-    with open(output_file, "r", encoding="utf-8") as f:
+    path = output_file
+    if not os.path.isabs(path):
+        path = os.path.join(TARGET, path)
+    if not os.path.exists(path):
+        print(f"ERROR: {path} not found.")
+        print("Run an entrypoint first (run_graph_final.py / run_groundup_final.py).")
+        sys.exit(1)
+
+    print(f"Loading results from {path}...")
+    with open(path, "r", encoding="utf-8") as f:
         results = json.load(f)
 
     total = len(results)
@@ -11,60 +48,72 @@ def evaluate_pipeline(output_file: str = "generated_questions.json"):
         print("No results to evaluate.")
         return
 
-    successes = [r for r in results if r["status"] == "SUCCESS"]
-    failures = [r for r in results if r["status"] == "FAILED"]
-    success_rate = len(successes) / total * 100
+    strong_scores = [r["strong_score"] for r in results]
+    weak_scores   = [r["weak_score"]   for r in results]
+    loops         = [r.get("loops_run", 1) for r in results]
 
-    difficulty_map = {"Beginner": 33, "Intermediate": 66, "Advanced": 100, "N/A": 0}
-    diff_scores = [difficulty_map[r.get("difficulty_rating", "N/A")] for r in successes]
-    mean_difficulty = sum(diff_scores) / len(diff_scores) if diff_scores else 0
+    strong_pct = [s for s in strong_scores if s >= 85]
+    weak_pct   = [w for w in weak_scores   if w <= 60]
 
-    weak_scores = [r["weak_score"] for r in successes]
-    strong_scores = [r["strong_score"] for r in successes]
-    mean_weak = sum(weak_scores) / len(weak_scores) if weak_scores else 0
-    mean_strong = sum(strong_scores) / len(strong_scores) if strong_scores else 0
+    difficulty_hist = {}
+    for r in results:
+        d = r.get("verifier_difficulty", "?")
+        difficulty_hist[d] = difficulty_hist.get(d, 0) + 1
 
-    attempt_counts = [r["attempts"] for r in results]
-    mean_attempts = sum(attempt_counts) / len(attempt_counts)
+    subjects = {}
+    for r in results:
+        s = r.get("subject", "organic")
+        subjects[s] = subjects.get(s, 0) + 1
 
-    # E1: per-tag desired-change rates
-    # In production: requires an LLM judge to assess each meta-tag shift per problem.
-    # Values below are from the paper's pilot results for reference.
-    e1_metrics = {
-        "Question Length / Scope (Structural)":    "92%",
-        "Model Solution Length (Structural)":      "88%",
-        "Conceptual Fragility (Interpretive)":     "78%",
-        "Number of Exceptions (Interpretive)":     "85%",
-        "Semantic Obfuscation (Interpretive)":     "80%",
-        "Distractor Plausibility (Interpretive)":  "72%",
-    }
+    archetypes = {}
+    for r in results:
+        a = r.get("archetype_code", "?")
+        archetypes[a] = archetypes.get(a, 0) + 1
+
+    meta_tag_totals = {}
+    for r in results:
+        for tag, val in (r.get("meta_tags") or {}).items():
+            vals = meta_tag_totals.setdefault(tag, [])
+            try:
+                vals.append(int(val))
+            except (TypeError, ValueError):
+                pass
 
     print("\n================ EVALUATION REPORT ================\n")
 
-    print("--- E2: Looping Hypothesis ---")
-    print(f"  Total processed:            {total}")
-    print(f"  Success rate:               {success_rate:.1f}%")
-    print(f"  Mean attempts to accept:    {mean_attempts:.2f}")
-    print(f"  Mean realised difficulty:   {mean_difficulty:.1f}/100")
+    print(f"--- Records ---")
+    print(f"  Total accepted questions: {total}")
+    print(f"  Per subject: {subjects}")
 
-    print("\n--- Solver Scores (Accepted Problems) ---")
-    print(f"  Mean weak solver score:     {mean_weak:.1f}%  (target: <={60}%)")
-    print(f"  Mean strong solver score:   {mean_strong:.1f}%  (target: >={85}%)")
+    print("\n--- Acceptance Gates (accepted records should already pass) ---")
+    print(f"  Mean weak score:   {mean(weak_scores):.1f}%   (gated ≤60%: {len(weak_pct)}/{total})")
+    print(f"  Mean strong score: {mean(strong_scores):.1f}%   (gated ≥85%: {len(strong_pct)}/{total})")
+    print(f"  Verifier PASS: {[r.get('verifier_verdict', '?') for r in results].count('PASS')}/{total}")
 
-    if failures:
-        print(f"\n--- Failure Analysis ({len(failures)} failed) ---")
-        for r in failures:
-            print(f"  [{r['seed_id']}]: {r.get('failure_reason', 'Unknown')}")
+    print("\n--- Efficiency ---")
+    print(f"  Mean loops to accept: {mean(loops):.2f}  (max {max(loops)})")
 
-    print("\n--- E1: Meta-tag Controllability (Paper Pilot Results) ---")
-    for tag, rate in e1_metrics.items():
-        print(f"  {tag}: {rate}")
+    print("\n--- Difficulty Labels (verifier_rating) ---")
+    for d in sorted(difficulty_hist, key=lambda k: -difficulty_hist[k]):
+        print(f"  {d:14s}: {difficulty_hist[d]} ({pct(difficulty_hist[d], total):.0f}%)")
+
+    print("\n--- Archetype Distribution ---")
+    for a in sorted(archetypes):
+        print(f"  Archetype {a}: {archetypes[a]} ({pct(archetypes[a], total):.0f}%)")
+
+    if meta_tag_totals:
+        print("\n--- Meta-tag Means (1-5 scale) ---")
+        for tag in sorted(meta_tag_totals):
+            print(f"  {tag:28s}: {mean(meta_tag_totals[tag]):.2f}  (n={len(meta_tag_totals[tag])})")
 
     print("\n===================================================\n")
 
 
 def main():
-    evaluate_pipeline()
+    if len(sys.argv) > 1:
+        evaluate_pipeline(sys.argv[1])
+    else:
+        evaluate_pipeline()
 
 
 if __name__ == "__main__":
