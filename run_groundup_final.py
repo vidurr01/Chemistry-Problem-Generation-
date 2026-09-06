@@ -300,7 +300,7 @@ Return JSON:
         ],
         response_format={"type": "json_object"},
         temperature=0.7,
-        max_tokens=4000,
+        max_tokens=8000,   # gemini-2.5-flash truncated verbose reference solutions at 4000, breaking the JSON
     ))
     return parse_llm_json(resp.choices[0].message.content)
 
