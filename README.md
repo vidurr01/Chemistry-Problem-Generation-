@@ -131,8 +131,8 @@ The raw acceptance logs and attempt histories from generation runs remain in:
 
 All 27 curated benchmark items were evaluated and tagged with expert human scores:
 - **0 = Wrong**: Question generated is chemically or mathematically incorrect / contradictory.
-- **1 = CBSE level**: Standard Class 12 board exam level (direct textbook recall, straightforward conversions, single-formula arithmetic).
-- **2 = JEE Mains level**: Multi-step competition level (standard reaction mechanisms, typical regioselectivity, multi-formula calculations).
+- **1 = JEE Mains level**: Multi-step competition level (standard reaction mechanisms, typical regioselectivity, multi-formula calculations).
+- **2 = Between JEE Mains and JEE Advanced level**: Questions that are medium level JEE Mains and easy level JEE Advanced (or borderline JEE Advanced)
 - **3 = JEE Advanced level**: Multi-concept integration, deep stereochemical/conformational analysis, complex coupled kinetics, or non-obvious inorganic equilibria.
 
 | Subject | Total | Score 0 (Wrong) | Score 1 (JEE Mains) | Score 2 (Between JEE Mains and JEE Advanced) | Score 3 (JEE Advanced) | Mean Score (0–3) |
