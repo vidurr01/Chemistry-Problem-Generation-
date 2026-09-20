@@ -7,10 +7,6 @@ never see the answer key), the verifier commits its own answer before it is show
 candidate, and a **deterministic gate** catches whole classes of error with no model in
 the loop. Supports **organic, inorganic, physical**.
 
-> **Read the code, not old prose.** This README was refreshed on 2026-09-07 to match the
-> build. Where a doc and the code disagree, the code wins. See `ChangeLog.md`,
-> `Decisions.md`, `Flow.md`, and the live diagram in `pipeline_overview.html`.
-
 ---
 
 ## What actually runs
