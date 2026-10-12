@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Council stops early when the last member cannot change the decision
+
+Date: 2026-10-13
+Context: at live prices Qwen3-235B-Thinking is about 60% of a pass's cost; the verifier (Haiku 5.5) is about 4%.
+Decision: GPT-OSS-120B and GLM-4.7-Flash solve first; Qwen-Thinking is called only when exactly one of them solved, the only case in which it can move the solved count across the too-easy line (2). The verifier keeps reading every attempt.
+Alternatives: verify only mismatches (saves ~₹0.1 per pass and lets lucky matches count as solved); swap Qwen for a cheaper model (needs calibration first, may lower the bar); lower Qwen's reasoning effort (lowers the bar for every question).
+Trade-off: when Qwen is not called its objection is not heard. Two members agreeing with the engine make an engine error unlikely; when both fail, the insight-hint test and the verifier re-check still guard acceptance. Per-member statistics are over the questions each member was called on, and the 3-member solve count is not known for every question.
+
 ## Concept-book audit flags entries instead of deleting them
 
 Date: 2026-10-13

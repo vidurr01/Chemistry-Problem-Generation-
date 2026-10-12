@@ -182,7 +182,30 @@ class PipelineOffline(_Env, unittest.TestCase):
         fake = FakeModels(council_answers={s: "2.24" for s in slugs}, verdicts={"2.24": {"verdict": "correct"}})
         self.assertEqual(self._run(fake), 0)
         self.assertEqual(self._records(), [])
-        self.assertEqual(fake.calls.count("council"), 3 * 4)        # original + 3 refinements
+        # original + 3 refinements; both cheaper members solve each time, so Qwen is never called
+        self.assertEqual(fake.calls.count("council"), 2 * 4)
+
+    def test_early_stop_skips_decider_when_both_first_members_fail(self):
+        slugs = [s for _, s in models.COUNCIL]
+        fake = FakeModels(
+            council_answers={slugs[0]: "2.45", slugs[1]: "2.24", slugs[2]: "1.12"},
+            hint_answers={slugs[0]: "2.24", slugs[2]: "2.24"},
+            verdicts={"2.24": {"verdict": "correct"}})
+        self.assertEqual(self._run(fake), 0)
+        r = self._records()[0]
+        self.assertEqual((r["council_n_solved"], r["council_n_called"]), (0, 2))
+        self.assertEqual(r["council_skipped"], [models.COUNCIL[1][0]])
+        self.assertEqual(fake.calls.count("council"), 2 + 2)        # two solves + two hint re-solves
+        self.assertNotIn(models.COUNCIL[1][0], {c["name"] for c in r["council"]})
+
+    def test_decider_called_when_first_members_split(self):
+        slugs = [s for _, s in models.COUNCIL]
+        fake = FakeModels(
+            council_answers={slugs[0]: "2.24", slugs[1]: "2.24", slugs[2]: "1.12"},
+            verdicts={"2.24": {"verdict": "correct"}}, refine_mode="reword")
+        self.assertEqual(self._run(fake), 0)        # Qwen makes it 2 solved -> too easy every round
+        self.assertEqual(self._records(), [])
+        self.assertEqual(fake.calls.count("council"), 3 * 4)
 
     def test_council_failure_parks_then_recheck_accepts(self):
         slugs = [s for _, s in models.COUNCIL]
