@@ -41,6 +41,7 @@ by the underlying script, and the full run console is appended to
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -95,6 +96,11 @@ OUTPUT_FILES = {s: SUBJECT_CONFIGS[s]["output_file"] for s in SUBJECTS}
 # lines to the end, so relaunching never clobbers an earlier run's output. The
 # child subprocess's stdout is tee'd here line by line as well (see generate_one).
 _LOG = None
+
+# Spend reported by the child runs ("Spend this run: $0.1234"), summed for --max-spend.
+SPENT = 0.0
+MAX_SPEND = None
+_SPEND_LINE = re.compile(r"Spend this run: \$([0-9.]+)")
 
 
 def emit(text, end="\n"):
@@ -163,8 +169,12 @@ def generate_one(subject, chapter, python_exe, child_timeout):
         # Read the output on a separate thread: iterating proc.stdout here would block
         # until the child exits, so the timeout below could never fire on a hung run.
         def pump():
+            global SPENT
             for line in proc.stdout:
                 emit(line.rstrip("\n"))
+                m = _SPEND_LINE.search(line)
+                if m:
+                    SPENT += float(m.group(1))
         reader = threading.Thread(target=pump, daemon=True)
         reader.start()
         try:
@@ -192,6 +202,10 @@ def generate_one(subject, chapter, python_exe, child_timeout):
         raise SubjectSkip()
     if rc not in (0, None) and not produced:
         stamp(f"[warn] {subject}: exit code {rc} and no question was saved.")
+    if MAX_SPEND is not None:
+        stamp(f"spend so far: ${SPENT:.4f} of ${MAX_SPEND:.2f}")
+        if SPENT >= MAX_SPEND:
+            raise BatchStop(f"spend cap of ${MAX_SPEND:.2f} reached (${SPENT:.4f} spent)")
     return produced
 
 
@@ -258,6 +272,8 @@ def parse_args():
                    help="give up on a subject after this many runs in a row accept nothing")
     p.add_argument("--child-timeout", type=int, default=1800,
                    help="seconds before a single hung question run is killed and retried")
+    p.add_argument("--max-spend", type=float, default=None,
+                   help="stop the batch once the runs have spent this many US dollars (as OpenRouter reports)")
     p.add_argument("--python", default=sys.executable,
                    help="python executable used to run run_groundup_final.py")
     p.add_argument("--log", default=os.path.join(OUTPUT_DIR, "batch_run.log"),
@@ -266,8 +282,9 @@ def parse_args():
 
 
 def main():
-    global _LOG
+    global _LOG, MAX_SPEND
     args = parse_args()
+    MAX_SPEND = args.max_spend
 
     targets = {
         "organic":   args.organic,
@@ -342,7 +359,7 @@ def main():
         if got < want:
             any_short = True
         emit(f"  {subject:<10} {got}/{want}   -> {OUTPUT_FILES[subject]}{flag}")
-    emit(f"\n  elapsed: {elapsed/60:.1f} min")
+    emit(f"\n  elapsed: {elapsed/60:.1f} min   spend: ${SPENT:.4f}")
     if stopped:
         emit(f"  batch STOPPED early: {stopped} (see the log above).")
     if _LOG is not None:

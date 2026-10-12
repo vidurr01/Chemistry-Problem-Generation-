@@ -1,5 +1,9 @@
 """
-Generate approach document PDF describing the actual question generation pipeline.
+Generate the approach document PDF (docs/QuestionGen_Approach.pdf).
+
+The file table reflects the current code; the narrative sections (generation loop,
+verifier) still describe the pipeline before the engine/council redesign of
+2026-10-13 and need rewriting before the PDF is regenerated for the new pipeline.
 """
 import os
 import sys
@@ -138,14 +142,15 @@ def build(doc):
         ["generate_questions.py",      "Batch driver — N questions per subject, each in a fresh process"],
         ["subject_config.py",          "Per-subject paths, prompts, default chapter and archetype"],
         ["core/graph_traversal.py",    "Knowledge-graph traversal and coverage-weighted chain sampling"],
-        ["core/verifier.py",           "Two-tier verifier: numeric duplicate check + answer-first LLM checks"],
-        ["core/blackboard.py",         "Attempt history shared across retries"],
+        ["core/engine/",               "Deterministic engines: answer, trace and traps for each chain"],
+        ["core/pipeline/",             "Pipeline stages: inputs, stem, gate, council, verifier, hints"],
+        ["core/dedup.py",              "Tier 1 duplicate check on exact engine inputs"],
+        ["core/blackboard.py",         "Per-question notebook every stage writes to"],
         ["core/coverage.py",           "Inverse-frequency counters that keep the question set diverse"],
         ["core/meta_tags.py",          "Six difficulty labels computed for each accepted question"],
         ["core/llm.py",                "Model-call helpers: retries on transient errors, JSON replies"],
         ["tools/build_graph.py",       "Concept book → knowledge graph, per subject"],
         ["tools/results.py",           "Review of results/: promote, pending, score, reject"],
-        ["run_graph_final.py",         "Older entry point (SambaNova, weak/strong solvers), kept for comparison"],
     ], [0.30, 0.70], doc))
     s += [Sp(12)]
 

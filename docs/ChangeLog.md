@@ -4,6 +4,21 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### New generation pipeline (engine-first, council-measured)
+`run_groundup_final.py` was rewritten around the engine. A run: graph walk (engine-computable, coherent chains, ranked by coverage and trap-type rarity) → Blackboard → generator proposes inputs or vetoes the chain → engine computes answer, trace and traps → generator writes the stem → chemistry gate (extractor copies facts, code compares values, constants and the asked quantity; original + 2 rewrites) → duplicate check → council of three reasoning models, closed book → mismatch verifier on every attempt → grading in code → hint tests (clarification, knowledge, insight) → accept with a readable solution. Details in `docs/Flow.md`; reasons in `docs/Decisions.md`.
+- New modules: `core/models.py` (roster, OpenRouter call helper with reasoning effort, spend tracking), `core/pipeline/` (`flow.py` decisions, `stages.py` model calls, `gate.py` comparison, `adapters.py` subject interface, `queues.py` review queues), `core/answers.py` (answer parsing and comparison, safe arithmetic for slip confirmation), `core/dedup.py` (Tier 1 as an exact duplicate check on engine inputs).
+- `core/blackboard.py` rewritten as the per-question notebook (chain, events of every stage, rounds).
+- `core/coverage.py` counts trap types; `trap_weight()` steers the walk towards rare ones.
+- Records now carry the engine answer and unit, tags (recall / closed_book, trap types), `council_n_correct` and `council_n_solved`, per-member `answer_matches`, verifier labels and `counts_as_solved`, hint tests, the engine trace and traps, rounds, spend and the Blackboard history.
+- Removed: `run_graph_final.py` (older SambaNova loop), `core/verifier.py` (LLM verifier; its numeric-answer parser moved to `core/answers.py`), the concept-reasoner, the generator-written solutions and the GPT-4o grader. Old pending questions without engine fields are dropped on the next run.
+- `generate_questions.py`: `--max-spend` stops the batch once the runs have spent that much.
+- `tools/evaluate.py` rewritten as the paper report; `tools/results.py` gained `queue` and `dismiss`.
+- `calibration/council_eval.py` imports `COUNCIL` from `core/models.py`.
+- `tests/test_pipeline_offline.py`: end-to-end runs with scripted model replies (acceptance with hint tests, confirmed slip, rounds running out, parking and recheck) and gate comparisons.
+- Inorganic and organic exit with code 2 until their engines are wired.
+- README, `docs/Flow.md`, `docs/Decisions.md` (new entries; superseded notes on the old verifier, grader, threshold and entrypoint decisions) and `docs/pipeline_overview.html` (the agreed flowchart) updated.
+
+
 ### Physical chemistry engine (new)
 First part of the engine/council redesign: every computable physical concept-book entry is now a deterministic computation, so a physical question's answer key comes from code instead of a model.
 - `core/engine/base.py`: `Step` (one concept-book entry as a computation between two graph nodes: inputs, answer field, traps, constants the question must state), `plan_chain()` (wires each step's outputs into the next step's inputs by name; every other input is a "given" the question states; refuses chains whose steps share nothing), `run_chain()` (answer, step-by-step trace, and traps: each typical mistake is run through the rest of the chain, so a trap is the final answer a student making that mistake would write), `answers_match()` (purely relative 1% tolerance), `assign_steps()` / `roles_consistent()` (pick one entry per graph edge so the chain links up and no value is reused as a different substance).

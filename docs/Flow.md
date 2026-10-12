@@ -4,100 +4,101 @@ This is a live description of the current system. It explains what happens first
 
 ## Overview
 
-The system builds JEE Advanced chemistry questions. It supports three subjects: organic, inorganic, and physical. There are three phases. Phase 0 and Phase 1 outputs are committed to the repository. Phase 2 is what you run.
+The system builds JEE Advanced chemistry questions for organic, inorganic and physical chemistry. There are three phases. Phase 0 and Phase 1 outputs are committed to the repository. Phase 2 is what you run.
 
-- Phase 0: build the knowledge base.
-- Phase 1: calibrate thresholds and norm stats.
+- Phase 0: build the knowledge base (concept books, knowledge graphs).
+- Phase 1: calibrate (meta-tag norm stats; anchor solve rates).
 - Phase 2: generate questions.
+
+The answer to every question comes from a deterministic engine (`core/engine/`), never from a model. Models pick inputs, write the stem, read facts back out of it, solve it as students would, and diagnose failures; every decision is made in code.
+
+Engine status: physical is wired end to end. Inorganic and organic engines are being built; until they are, `run_groundup_final.py` exits with code 2 for those subjects.
 
 ## Phase 0: knowledge build
 
-`tools/extract_notes.py` reads teacher PDFs and writes `knowledge/concept_book*.json`. Each file holds per-subject reaction transformations.
+`tools/extract_notes.py` reads teacher notes and writes `knowledge/concept_book*.json`, the per-subject concept books.
 
-`tools/build_graph.py --subject <s>` reads a subject's concept book and writes its knowledge graph, plus a `graph_unmapped*.json` diagnostic of entries left out (facts rather than steps). All three graphs share one schema:
+`tools/build_graph.py --subject <s>` reads a subject's concept book and writes its knowledge graph, plus a `graph_unmapped*.json` list of entries left out. All three graphs share one schema:
 
 - Organic: `knowledge/reaction_graph.json`, functional-group class nodes. This file was curated after it was built; the script no longer reproduces it exactly.
 - Inorganic: `knowledge/reaction_graph_inorg.json`, species nodes, rules in `tools/graph_rules_inorganic.py`.
-- Physical: `knowledge/reaction_graph_physical.json`, physical-quantity nodes. Its edges come from the physical engine (`core/engine/physical/`): `tools/graph_rules_physical.py` exposes `tx_nodes()`, which returns the two nodes a computed entry connects, so the graph holds exactly the entries the engine can compute; the rest are listed in `graph_unmapped_physical.json` as facts.
-
-The engine (`core/engine/`) turns a chain plus concrete inputs into the answer, a step-by-step trace and the traps. `plan_chain()` decides which inputs come from the previous step and which the question must state; `run_chain()` computes. `core/engine/physical/` defines the steps, their topics and the bridges between topics; `can_follow()` and `chain_steps()` let the walk keep only chains that link up and stay coherent. It is not yet called by the generation loop.
+- Physical: `knowledge/reaction_graph_physical.json`, physical-quantity nodes. Its edges come from the physical engine: `tools/graph_rules_physical.py` exposes `tx_nodes()`, which returns the two nodes a computed concept-book entry connects, so the graph holds exactly the entries the engine can compute. A step that keeps the same quantity (a dilution, Boyle's law) is a self-loop. Entries the engine does not compute (facts, classifications, plot readings) are listed in `graph_unmapped_physical.json`.
 
 ## Phase 1: calibration
 
 `data/jee_advanced/*.json` holds the JEE Advanced papers from 2012 to 2025.
 
-`calibration/calibrate_thresholds*.py` runs real questions through the old weak and strong solvers to derive two 0-100 thresholds. The values 85 and 60 are `STRONG_FLOOR` and `WEAK_CEILING` in `run_graph_final.py`, the only entrypoint that uses them. `run_groundup_final.py` gates on the council solve-count instead.
+`calibration/calibrate_solver_metatags.py --subject <s>` measures solution length and distractor count over the seed corpus and writes per-subject z-score parameters to `data/seeds/meta_tag_norm_stats_<subject>.json` (organic: `calibration/meta_tag_norm_stats.json`). Stats are written only for archetypes with at least two successful solver runs; a run stops without writing after five consecutive API failures.
 
-`calibration/calibrate_solver_metatags.py --subject <s>` measures solution length and distractor count over the seed corpus. Stats are written only for archetypes with at least two successful solver runs; the rest stay marked pending (`pending_calibration`), and a run stops without writing anything after five consecutive API failures. Errored seeds are retried on the next run. It writes the per-subject z-score parameters to `data/seeds/meta_tag_norm_stats_<subject>.json`.
+`calibration/anchor_calibration.py` blind-solves real JEE Advanced numeric questions to measure how hard they are for strong models; `calibration/council_eval.py` does the same with the generation council (it imports `COUNCIL` from `core/models.py`).
+
+`calibration/calibrate_thresholds*.py` derived the 0-100 thresholds of the earlier weak/strong-solver loop. That loop has been removed; their results are kept for reference.
+
+## The engine (`core/engine/`)
+
+`base.py` defines `Step`: one concept-book entry as a computation between two graph nodes, with its inputs (`Param`), answer field, typical mistakes (`Trap`), the constants the question must state, a role per output and a topic. `plan_chain(steps)` wires each step's outputs into the next step's inputs by field name; every input that is not wired is a "given" the question must state, and a chain whose steps share nothing is refused. `run_chain(plan, values)` computes the answer, a step-by-step trace and the traps: each trap's wrong value is run through the rest of the chain, so a trap is the final answer a student making that mistake would write.
+
+Coherence: `links(a, b, bridges)` lets step b follow step a only if b uses one of a's outputs, no wired value carries a role b's input rejects, and their topics are equal or bridged. `assign_steps()` picks one concept-book entry per graph edge so the whole chain links, and `roles_consistent()` follows roles through substance-preserving steps (`keeps_role`).
+
+`chem.py` holds the formula parser, equation parsing/balance checks, redox balancing (SymPy nullspace), atomic masses and the physical constants with the wording a question uses to state them.
+
+`physical/` holds 262 physical steps across all chapters, the topic of each step (chapter, with nuclear entries split from kinetics) and `BRIDGES`, the chapter pairs a chain may cross. `can_follow()` and `chain_steps()` are what the walk uses.
 
 ## Phase 2: generation
 
-Two entrypoint families run the same core loop. They differ in knowledge source and subject.
+`run_groundup_final.py --subject <s> [--chapter C] [--seed N]` generates at most one question per run. `generate_questions.py` runs it repeatedly in fresh subprocesses (`--physical 5` etc.), stops a subject after `--max-consecutive-failures`, kills a hung run after `--child-timeout`, stops the batch at `--max-spend` US dollars (summing each run's "Spend this run" line) and appends all output to `outputs/batch_run.log`.
 
-- `run_groundup_final.py`: the current architecture. Subjects: all three.
-- `run_graph_final.py`: the older SambaNova weak/strong loop. Subjects: all three.
+### One run
 
-Both pick chains with the same traversal, `sample_chains()` in `core/graph_traversal.py`, on the subject's graph.
+1. `main()` checks `OPENROUTER_KEY` (`core/models.key_is_set()`), loads the subject config and graph, and builds the subject adapter (`core/pipeline/adapters.py`; only physical exists, the others exit 2). A `--chapter` not on the graph exits 2.
+2. `recheck_pending()` judges parked questions first (see "Parking"). An acceptance ends the run.
+3. `flow.run()` (`core/pipeline/flow.py`) tries up to `MAX_CHAINS` (3) chains:
+   1. **Walk.** `adapter.candidates()` calls `sample_chains()` with the engine's `can_follow` and a validator, assigns one engine step per edge, plans the chain, and ranks candidates by coverage weight × trap-type weight (rarer trap types first). Chains tried earlier in the run are skipped.
+   2. **Blackboard.** `Blackboard.start_chain()` opens the chain's notebook; every later stage writes to it with `note()`.
+   3. **Inputs.** `stages.propose_inputs()` (generator, Gemini 2.5 Flash) either vetoes the chain as incoherent or proposes a scenario and a value for every given. `coerce_values()` types them, and the engine computes. An `EngineError` (impossible values) goes back to the generator, up to `INPUT_TRIES` (3); an unexpected engine exception queues `engine_unknown`.
+   4. **Stem and gate.** `stages.write_stem()` (generator) writes the question around the fixed values, constants and asked quantity, told the trap descriptions so it does not give them away. `stages.gate_extract()` (extractor, DeepSeek V4 Flash) copies the stated values, the asked quantity (from shuffled options) and the stated constants into a form; `gate.compare()` (code) requires every value within 0.1%, the right quantity, and every constant. A mismatch rewrites the stem with the mismatches as feedback (original + `GATE_RETRIES` 2); an unreadable form queues `gate_unreadable` and drops the chain.
+   5. **Duplicate check.** `dedup.signature()` hashes the subject, the engine steps and every given; an accepted question with the same signature sends the chain back for new inputs.
+   6. **Council.** `stages.council_solve()` runs GPT-OSS-120B, Qwen3-235B-Thinking and GLM-4.7-Flash in parallel, closed book (question only), reasoning effort medium. Each returns working, final answer, unit and an optional objection (chemistry or wording).
+   7. **Mismatch verifier.** `stages.verify_member()` (Claude Haiku 5.5) reads every member's work against the engine's trace: verdict (correct, right answer by wrong reasoning, wrong, reference wrong), and for a wrong answer why (genuine difficulty, unclear wording, missing knowledge, slip), the step where it went wrong, and for a slip the arithmetic the member set up.
+   8. **Grading (code).** `answers.matches()` compares each final answer with the engine's (numbers within 1%, text normalised) → `answer_matches`. A member counts as solved if it matches and the verdict is correct, or if a slip is confirmed by evaluating the member's own expression (`answers.safe_eval`). A "reference wrong" verdict or a valid objection queues `engine_wrong`; an objection the verifier is unsure about queues `objection_unresolved`; both drop the chain.
+   9. **Decision.** 2 or more solved: too easy. `stages.choose_refinement()` picks new inputs or rewording (physical allows both); each refinement is a round, at most `MAX_ROUNDS` (3), after which the chain is dropped. 0 or 1 solved: hint tests on each member that did not solve:
+      - unclear wording → clarification hint (generator); solved with it → reword and judge again (a round);
+      - missing knowledge → knowledge hint (the chain's relations, written by code); solved with it → tagged recall;
+      - otherwise (genuine difficulty, unconfirmed slip, right answer by wrong reasoning) → insight hint written by code from the step and its listed mistake; solved → difficulty confirmed; not solved → the verifier re-reads the hinted attempt: reference wrong → `engine_wrong`, unclear wording → reword, otherwise accepted as hard.
+4. **Acceptance.** `save_accepted()` builds the record (with the readable solution from `stages.write_solution()`, Mistral Small 3.2, and the meta-tags), writes it atomically to `outputs/generated_questions_<subject>.json` — the only step whose failure means "not accepted" — then updates coverage (edges, concepts, trap types), the duplicate store, `results/` (`tools/results.py promote`) and the attempt log; failures there only warn.
 
-`subject_config.py` is the single source of truth for per-subject paths, prompts, and default values. `get_subject_config(subject)` returns a config dict.
+### Parking
 
-`generate_questions.py` is an optional batch driver on top of `run_groundup_final.py`. It takes a target count per subject. For each question it runs the entrypoint in a fresh subprocess, then compares the record count in `outputs/generated_questions_<subject>.json` before and after to see whether that run accepted a question. It retries a subject until the target is met or a consecutive-failure limit is reached, kills a hung question after `--child-timeout`, and appends the full run console to `outputs/batch_run.log` in append mode. It does not change the generation loop.
-
-### Ground-up flow in `run_groundup_final.py`
-
-This is the file you run most often. It supports all three subjects.
-
-1. `main()` reads the CLI args and checks `OPENROUTER_KEY`. It returns early if the key is missing or still the placeholder.
-2. It loads the subject config and the archetype. Without `--chapter`, chains may come from anywhere in the graph.
-3. It checks that the subject concept book and knowledge graph exist. If not, it prints an error and returns.
-4. It loads the concept book and the graph (`load_graph()`), and loads or creates the coverage state with `load_coverage_for_subject()`.
-5. `recheck_pending()` runs the council again on each parked question, oldest first, before anything new is generated. Accepted (via the same `save_accepted()` as a new question) ends the run; a too-easy or wrong-key result drops the question and logs `pending_too_easy` / `pending_reference_wrong`; another member failure keeps it parked and stops the run with exit code 3.
-6. It checks that the graph has chains (in `--chapter`, if given); if not, it prints the chapters that do and exits with code 2.
-7. It builds a `Blackboard` from a topic anchor and a target difficulty profile.
-8. The loop tries up to `MAX_LINEAGES` (3) fresh question ideas, with a hard cap of `MAX_ITERS` (4) total generate-check iterations.
-
-Inside each iteration:
-
-1. Once per lineage, `sample_chains()` runs a breadth-first search over the whole graph from every start node and returns up to six chains of two or more steps, ranked by coverage weight (ties shuffled). Each step starts where the previous one ended, regardless of chapter; with `--chapter`, steps must stay in that chapter (topped up with chains that start in it). Chains used by an earlier lineage of the same run are skipped. The chain's chapters (`chain_chapters()`) become the question's chapter label and decide which concept-book entries go on the solvers' closed-book sheet. `concept_reasoner()` (`deepseek/deepseek-chat-v3-0324`) picks one; `chain_txs()` turns its edges into the concept-book entries the generator receives, and those entries are added to the solvers' knowledge sheet.
-2. `generator()` (`google/gemini-2.5-flash`) writes a question and a reference solution.
-3. `verify_problem()` in `core/verifier.py` runs. First one `google/gemini-3-flash-preview` call extracts the candidate's final answer. Tier 1 is a deterministic duplicate-input check on that answer, for numeric answers only (`parse_numeric_answers()`; compound names skip it): read-only, against accepted questions only (recorded on acceptance by `record_accepted_inputs()`), values equal within 1%. Tier 2 is a sequence of narrow calls: blind-solve the problem with the candidate withheld, compare the two answers, and only if they agree, check for structural flaws and rate difficulty. The PASS or FAIL verdict is decided in code from those results. A disagreeing answer is an immediate FAIL. On the second consecutive FAIL of a lineage (`VERIFIER_FAIL_MAX` is 2, so one refine pass) the lineage is abandoned and a new idea starts.
-4. On verifier PASS, `council_solve()` runs the three council models (`meta-llama/llama-3.3-70b-instruct`, `mistralai/mistral-large-2407`, `google/gemma-3-27b-it`) in parallel on daemon threads. Each member blind-solves closed-book, then `grade_answer()` (`openai/gpt-4o`) judges its answer against the construction steps. The count of members that solved is the difficulty signal.
-5. The attempt is recorded on the blackboard.
-6. Gates: verifier PASS, `reference_correct` true (fewer than two of the three graders flagged the generator's answer key as wrong), and at most one of three council members solved. Two or three solved means too easy, so the loop refines for reasoning complexity. All three members must be measured: if any member's solve or grade call fails, `council_solve()` raises `CouncilMemberFailed` without waiting for the others, `park_pending()` saves the question with its verifier result, chain and knowledge sheet to `outputs/pending_questions_<subject>.json`, and the run exits with code 3. `generate_questions.py` stops the whole batch on that exit code.
-
-On acceptance the loop calls `compute_meta_tags_for_subject()` for the six-axis difficulty label, updates coverage (including the chain's graph edges, which lowers their weight next time), and appends a record with its `graph_path` and `graph_edges` to `outputs/generated_questions_<subject>.json`.
-
-### Graph flow in `run_graph_final.py`
-
-Chain selection is the same `sample_chains()` call as above. The rest of the loop is the older weak-solver plus strong-solver two-pass protocol with the 85 and 60 gates. This path has not been moved to the answer-first verifier or the council.
+All three council members must be measured. If a council call fails after retries, `CouncilMemberFailed` → `flow.Parked`; the question (engine steps, givens, scenario, stem) goes to `outputs/pending_questions_<subject>.json` and the run exits 3 (the batch stops). The next run recomputes the engine result and runs `flow.judge()` on the stored stem; accept saves it, any other outcome drops it from pending.
 
 ## How data moves
 
-The inputs are the concept book, the reaction graph, the seed corpus, and the norm stats. The pipeline reduces those to a validated question record.
+Inputs: the concept book, the knowledge graph, the engine steps, and the meta-tag norm stats. Per question, the `Blackboard` holds the chain and every stage's events; it is saved in the accepted record.
 
-The `Blackboard` is the shared working object. It carries the seed, the archetype, the target profile, and the full attempt history. It records each problem, solution, verifier result, and a score slot. In the ground-up path that slot holds the council solve-count, not a 0-100 score.
+Outputs:
+- `outputs/generated_questions_<subject>.json`: accepted questions. Each record holds the question, the engine answer and unit, the readable solution, `tags` (knowledge: recall or closed_book; trap types), `council_n_correct` (raw answer matches) and `council_n_solved` (what acceptance used), each member's answer with `answer_matches`, verdict, failure type, `slip_confirmed` and `counts_as_solved`, the hint tests, the engine part (steps, edges, scenario, givens, constants, trace, traps), rounds, meta-tags, model roster, spend and the Blackboard history.
+- `outputs/generated_questions_<subject>_attempts.jsonl`: one line per event (veto, gate failure, decision per round, queue entries, acceptance).
+- `outputs/queue_<reason>_<subject>.json`: review queues; `tools/results.py queue` lists them, `dismiss` removes a reviewed item.
+- `outputs/verifier_seen_inputs.json`: the duplicate store.
+- `outputs/coverage_state_<subject>.json`: coverage counters, including trap types.
+- `results/generated_questions_<subject>_final.json`: the review set with human-eval slots (`tools/results.py score`).
 
-The coverage object tracks which chapters and archetypes have been accepted. It is saved to `outputs/coverage_state_<subject>.json` after each acceptance.
-
-The output is `outputs/generated_questions_<subject>.json`. Each record holds the question, solution, meta-tags, council detail, verifier detail, and attempt history. Every attempt, accepted or not, is also written to `outputs/generated_questions_<subject>_attempts.jsonl`. Each accepted question is also copied into `results/generated_questions_<subject>_final.json` with empty human-eval slots, by `promote()` in `tools/results.py`; humans fill them with `tools/results.py score`.
+`tools/evaluate.py` reports acceptance, solved vs correct, per-member rates, rounds, knowledge tags, trap-type spread, failure labels, hint outcomes and spend.
 
 ## Where an error can originate
 
-- A missing or placeholder API key stops the run before generation.
-- Setup problems (missing key, concept book or graph; a `--chapter` with no chains) exit with code 2; `generate_questions.py` then skips that subject instead of retrying it.
-- A missing concept book stops the run early.
-- An empty transformation list stops the run early.
-- A missing `data/seeds/meta_tag_norm_stats_<subject>.json` (inorganic, physical), or any other meta-tag error, no longer loses the item: it is saved with `meta_tags: null` and `meta_tags_error`.
-- Saving an accepted question: `save_accepted()` builds the record, then writes it to the output file atomically — the only step whose failure means "not accepted". If that write fails, nothing else has changed; the question is parked in the pending file with its council result, and the run exits with code 4 (the batch stops). The next run retries only the save, with no new API calls. Coverage, the Tier 1 store, the `results/` copy and the attempt log come after the write; a failure in any of them only prints a warning.
-- Both entrypoints stop early if the subject's graph file does not exist, or if it has no chains (in `--chapter`, if given).
-- Every LLM role reads the OpenRouter API. Rate limits and 503s are retried with backoff. A key over its spend limit returns 403 and every call then fails fast.
-- A council member whose call fails (after `api_call`'s 429/503 retries, or any other error such as a bad key or malformed JSON) stops the run and the batch; the question is parked in `outputs/pending_questions_<subject>.json` and rechecked first on the next run.
+- A missing or placeholder API key stops the run (exit 2); `generate_questions.py` also checks it before starting.
+- A missing graph, a subject whose engine is not wired yet, or an unknown `--chapter` exits 2; the batch driver skips that subject.
+- Every model call goes through `core/models.ask_json()`: transient errors (429, 5xx, timeouts) are retried with backoff, an unusable reply is asked for again twice; other errors raise.
+- A generator veto, three rejected input proposals, a failed gate or exhausted rounds only drop the current chain.
+- An unexpected exception inside the engine queues `engine_unknown`; the chain is dropped.
+- A council failure parks the question (exit 3, batch stops). A save failure exits 4.
+- A solution-writer or meta-tag failure never blocks acceptance: the record is saved without the solution / with `meta_tags_error`.
 
 ## Component dependencies
 
-- Entrypoints depend on `subject_config.py`, `core/meta_tags.py`, `core/coverage.py`, `core/blackboard.py`, and `core/verifier.py`.
-- `core/llm.py` is shared by the entrypoints, the verifier, the tools and the calibration scripts: `.env` loading, JSON parsing of model replies, atomic JSON writes, and retries on transient API errors.
-- Both entrypoints also depend on `core/graph_traversal.py` and the subject's graph file.
-- `core/meta_tags.py` depends on the committed norm stats.
-- `core/verifier.py` is live. It holds the two-tier verifier and its own `VERIFIER_MODEL` (`google/gemini-3-flash-preview`), which is the authoritative value.
-- `core/blackboard.py`, `core/coverage.py`, `core/meta_tags.py`, and `core/graph_traversal.py` are live. The generation, solving, and grading logic is defined inline in the entrypoints, not in `core/`.
+- `run_groundup_final.py` depends on `core/pipeline/` (flow, stages, gate, adapters, queues), `core/models.py`, `core/dedup.py`, `core/blackboard.py`, `subject_config.py` and `tools/results.py`.
+- `core/pipeline/adapters.py` depends on `core/engine/` and `core/graph_traversal.py`.
+- `core/pipeline/flow.py` depends on `core/answers.py` (answer parsing, safe arithmetic), `core/dedup.py` and the stages.
+- `core/models.py` holds the roster and the call helper; it uses `core/llm.py` (`.env`, JSON parsing, retries, atomic writes), which the tools and calibration scripts also use.
+- `core/coverage.py`, `core/meta_tags.py` (with the committed norm stats) and `core/graph_traversal.py` are shared by every subject.

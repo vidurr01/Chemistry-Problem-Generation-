@@ -34,6 +34,46 @@ Decision: each step lists typical mistakes as alternative computations; the engi
 Alternatives: traps as text descriptions written by the generator — not checkable.
 Trade-off: trap coverage depends on the mistakes listed per step.
 
+## Council measures difficulty; one cheap verifier explains every attempt
+
+Date: 2026-10-13
+Context: the earlier loop had a model-written key, an LLM verifier, a GPT-4o grader and a Mains-level non-reasoning council; a reviewer pointed out that models judging their own work, refinement against a fixed council, and a frontier check that also judges difficulty all bias the result.
+Decision: the council is three reasoning models (GPT-OSS-120B, Qwen3-235B-Thinking, GLM-4.7-Flash; effort medium) solving closed book. Answers are graded in code against the engine's answer. One mismatch verifier (Claude Haiku 5.5) reads every member's attempt next to the engine's trace and labels it (correct, right answer by wrong reasoning, wrong, reference wrong; for wrong: genuine difficulty, unclear wording, missing knowledge, slip). Removed: concept-reasoner (the walk's weighting chooses), the LLM verifier (the engine and the gate cover correctness), the GPT-4o grader (code compares), the wording verifier (unclear wording shows up as a diagnosed failure plus a clarification test), the solution model (the engine's trace is the solution; a cheap model writes the readable text after acceptance), the objection router (members label their own objections), the holdout solver, and run_graph_final.py.
+Alternatives: keep a frontier model to re-solve (the engine and gate already prove correctness), a separate failure-analysis model (one verifier call gives both who is wrong and why).
+Trade-off: every acceptance rests on the verifier's labels being right where code cannot check them; slips and hints are checked in code to limit that.
+
+## Closed book means the question only; knowledge gaps are tested with a hint
+
+Date: 2026-10-13
+Context: the old closed-book sheet told solvers to stop when a fact was missing from it, so strong models failed for lack of a listed fact rather than for the chemistry.
+Decision: members get only the question. A failure diagnosed as missing knowledge is retested with the chain's relations as a knowledge hint; solving then tags the question "recall" and the member still counts as failed. Genuine difficulty is always confirmed with an insight hint written by code from the failing step and its listed mistake (never the result); a member who still fails is re-read by the verifier.
+Alternatives: open-book sheet (less realistic), counting recall failures as solved (loses legitimately hard recall questions).
+Trade-off: more re-solves per accepted question.
+
+## A slip counts as solved only when code confirms it
+
+Date: 2026-10-13
+Context: a member that understood the chemistry but miscalculated did not find the question hard; but a verifier calling every failure a slip could hide real difficulty.
+Decision: the verifier writes the arithmetic the member set up (with any miscopied number corrected); code evaluates it safely, and only if it gives the engine's answer does the member count as solved. The record keeps answer_matches (fact) beside counts_as_solved (judgement), and council_n_correct beside council_n_solved; acceptance uses council_n_solved.
+Alternatives: count every wrong answer as failed (accepts questions that are hard only by accident); trust the label (a model decides).
+Trade-off: slips with no evaluable expression (a mistyped structure) count as failures.
+
+## Caps and queues
+
+Date: 2026-10-13
+Context: every retry costs council calls; some outcomes cannot be settled by code.
+Decision: 3 chains per run; at most 3 refinements per chain (too easy, or reworded for clarity), then the chain is dropped; stems get the original + 2 rewrites to pass the gate; 3 input proposals per round. Unsettled cases go to separate review queues per reason (engine_unknown, gate_unreadable, engine_wrong, objection_unresolved) and the run moves on. The batch driver stops at a spending cap (--max-spend), summing the cost each run reports.
+Alternatives: one shared queue (harder to work through by type); stopping the run on any queue item.
+Trade-off: an engine bug costs one chain per occurrence until someone reviews the queue.
+
+## Tier 1 becomes an exact duplicate check
+
+Date: 2026-10-13
+Context: Tier 1 hashed the numbers in a stem to catch two keys disagreeing for the same inputs; with engine-computed keys that cannot happen.
+Decision: the signature is the subject, the engine steps and every given value; an accepted question with the same signature is a duplicate and the chain gets new inputs.
+Alternatives: drop Tier 1 entirely.
+Trade-off: two different wordings of the same inputs are caught; two different inputs that make the same question are not.
+
 ## Use a single per-subject config file
 
 Date: 2026-09-01
@@ -57,6 +97,7 @@ Context: an item is accepted only when it is both solvable by a strong model and
 Decision: accept only when the strong solver scores at least 85 and the weak solver scores at most 60, and the verifier passes. Calibrated in `calibration/calibrate_thresholds*.py`.
 Alternatives: accept a wide band and sort items afterwards.
 Trade-off: the hard gate rejects borderline items. It keeps the accepted set clean for benchmarking.
+Superseded 2026-10-13: the weak/strong thresholds belonged to run_graph_final.py, which was removed; acceptance uses the council solve count (see "Council measures difficulty").
 
 ## Map the four raw archetypes onto subject buckets for calibration
 
@@ -73,6 +114,7 @@ Context: the live generation, solving, and grading logic is defined inline in `r
 Decision: keep the entrypoints as the live source of truth. On 2026-09-07 the unused stubs `core/generator.py`, `core/concept_reasoner.py`, `core/strong_solver.py`, and `core/weak_solver.py` were deleted, along with `archive/` (`pipeline.py`, `run_live.py`), the only code that imported them. `core/blackboard.py`, `core/coverage.py`, `core/meta_tags.py`, `core/verifier.py`, and `core/graph_traversal.py` stay because the entrypoints import them.
 Alternatives: keep the stubs as documentation of intent.
 Trade-off: git history still holds the stubs if the inline logic is ever refactored back into `core/`. Keeping dead files in the tree just misleads a reader about what runs.
+Superseded 2026-10-13: the pipeline now lives in core/engine/ and core/pipeline/; run_groundup_final.py only drives a run and saves results.
 
 ## Delete unused entrypoints and duplicate assets
 
@@ -89,6 +131,7 @@ Context: the verifier passed some questions whose reference solution was wrong. 
 Decision: Tier 2 is now blind-solve, then extract the candidate's answer, then compare the two answers, then check structural flaws, then rate difficulty. Each is its own call with a short prompt. `verify_problem` combines the booleans; the model never writes the final verdict. Answer disagreement fails immediately and skips the rest.
 Alternatives: keep one call and just harden its prompt. That does not fix the "looks fine" bias or the multi-task drift.
 Trade-off: 3 to 5 verifier calls per check instead of 2, so more latency and cost. Accepted because a wrong answer passing the gate defeats the point of the gate, and Gemini 3 Flash calls are fast and cheap.
+Superseded 2026-10-13: the LLM verifier was removed; the engine computes the key and the chemistry gate checks the stem.
 
 ## Verifier and one council model changed to working OpenRouter slugs
 
@@ -97,6 +140,7 @@ Context: `core/verifier.py` used `nvidia/nemotron-3-ultra-550b-a55b` and the cou
 Decision: verifier is `qwen/qwen-2.5-72b-instruct`, the model the entrypoint and README already name for that role. The council's Google seat is `google/gemma-3-27b-it`.
 Alternatives: keep the slugs and wrap every call in broad retries. That hides a dead model rather than fixing it.
 Trade-off: the council is now Gemma 3 rather than Gemma 2, a small shift in the difficulty baseline. The "three different families" rule still holds: DeepSeek generator, Qwen verifier, Meta/Mistral/Google council, GPT-4o grader.
+Superseded 2026-10-13: new roster in core/models.py.
 
 ## Council members solve in parallel
 
@@ -105,6 +149,7 @@ Context: `council_solve()` looped over the three members one at a time. Each mem
 Decision: run the three members on a `ThreadPoolExecutor`. The two calls within a member stay sequential because the grade needs the answer. Results are collected back in `COUNCIL` order so the log stays stable.
 Alternatives: async/await would need the whole call path converted. Threads are enough because the work is HTTP I/O and the OpenAI client is thread-safe.
 Trade-off: three concurrent requests instead of one raise the chance of a rate-limit reply. The existing per-call backoff already handles that.
+Still holds for the new council (core/pipeline/stages.council_solve).
 
 ## Run the batch driver as subprocesses, not by importing main()
 

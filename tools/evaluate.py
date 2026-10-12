@@ -1,128 +1,149 @@
 """
-evaluate.py — audit pipeline output (generated_questions*.json).
+evaluate.py — the paper report: what the pipeline accepted, what it rejected and why.
 
-Reads both record schemas:
-  run_groundup_final.py : council_n_solved, council_size, iters_run, ...
-  run_graph_final.py    : strong_score, weak_score, loops_run, ...
-plus the shared fields (subject, archetype_code, verifier_verdict,
-verifier_difficulty, meta_tags).
+Reads outputs/generated_questions_<subject>.json (accepted questions) and
+outputs/generated_questions_<subject>_attempts.jsonl (every event of every run).
 
-Usage:
-    python -X utf8 tools/evaluate.py [path/to/generated_questions_<subject>.json]
+    python tools/evaluate.py                       # all subjects with output
+    python tools/evaluate.py --subject physical
+    python tools/evaluate.py --json report.json    # also write the numbers as JSON
 
-Relative paths resolve against the repo root. Default input is
-outputs/generated_questions_organic.json.
+Sections: acceptance (chains tried, how each ended), council (answers matching the
+engine vs counted as solved, per member), refinement rounds, knowledge tags (recall vs
+closed book), trap-type spread, verifier labels, hint outcomes, spend. Questions saved
+by the pre-engine pipeline are counted but left out of the engine statistics.
 """
 
+import argparse
 import json
 import os
 import statistics
 import sys
+from collections import Counter
 
-TARGET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-
-def mean(xs):
-    return statistics.mean(xs) if xs else 0.0
-
-
-def pct(x, total):
-    return (x / total * 100.0) if total else 0.0
+from subject_config import SUBJECT_CONFIGS  # noqa: E402
 
 
-def evaluate_pipeline(output_file: str = os.path.join("outputs", "generated_questions_organic.json")):
-    path = output_file
-    if not os.path.isabs(path):
-        path = os.path.normpath(os.path.join(TARGET, path))
+def _load(path, default):
     if not os.path.exists(path):
-        print(f"ERROR: {path} not found.")
-        print("Run an entrypoint first (run_graph_final.py / run_groundup_final.py).")
-        sys.exit(1)
+        return default
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
-    print(f"Loading results from {path}...")
-    with open(path, "r", encoding="utf-8") as f:
-        results = json.load(f)
 
-    total = len(results)
-    if total == 0:
-        print("No results to evaluate.")
-        return
+def _events(path):
+    out = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        out.append(json.loads(line))
+                    except ValueError:
+                        pass
+    return out
 
-    strong_scores = [r["strong_score"] for r in results if r.get("strong_score") is not None]
-    weak_scores   = [r["weak_score"]   for r in results if r.get("weak_score") is not None]
-    council       = [(r["council_n_solved"], r.get("council_size", 3))
-                     for r in results if r.get("council_n_solved") is not None]
-    loops         = [r.get("iters_run", r.get("loops_run", 1)) for r in results]
 
-    strong_pct = [s for s in strong_scores if s >= 85]
-    weak_pct   = [w for w in weak_scores   if w <= 60]
+def pct(a, b):
+    return f"{(100.0 * a / b):.0f}%" if b else "—"
 
-    difficulty_hist = {}
-    for r in results:
-        d = r.get("verifier_difficulty", "?")
-        difficulty_hist[d] = difficulty_hist.get(d, 0) + 1
 
-    subjects = {}
-    for r in results:
-        s = r.get("subject", "organic")
-        subjects[s] = subjects.get(s, 0) + 1
+def report(subject: str) -> dict:
+    cfg = SUBJECT_CONFIGS[subject]
+    records = _load(cfg["output_file"], [])
+    events = _events(os.path.splitext(cfg["output_file"])[0] + "_attempts.jsonl")
+    new = [r for r in records if r.get("generation_mode") == "engine_council"]
+    legacy = len(records) - len(new)
+    ev = [e for e in events if "event" in e]
 
-    archetypes = {}
-    for r in results:
-        a = r.get("archetype_code", "?")
-        archetypes[a] = archetypes.get(a, 0) + 1
+    ends = Counter(e["event"] for e in ev)
+    judged = [e for e in ev if e["event"] in ("accept", "too_easy", "reword", "drop")]
+    members = Counter()
+    solved_by_member = Counter()
+    for r in new:
+        for m in r.get("council", []):
+            members[m["name"]] += 1
+            solved_by_member[m["name"]] += bool(m.get("counts_as_solved"))
+    labels = Counter(m.get("failure_type") or m.get("verdict")
+                     for r in new for m in r.get("council", []) if not m.get("counts_as_solved"))
+    hints = Counter((h["hint"], h["solved"]) for r in new for h in r.get("hint_tests", []))
+    traps = Counter(t for r in new for t in r.get("tags", {}).get("trap_types", []))
+    rounds = Counter(r.get("rounds", 0) for r in new)
+    tags = Counter(r.get("tags", {}).get("knowledge") for r in new)
+    spend = [r.get("spend", {}).get("total_cost_usd") for r in new if r.get("spend")]
+    by_round = {}
+    for e in judged:
+        rd = e.get("round", 0)
+        b = by_round.setdefault(rd, {"judged": 0, "correct": 0, "members": 0})
+        b["judged"] += 1
+        for m in e.get("council") or []:
+            b["members"] += 1
+            b["correct"] += bool(m.get("answer_matches"))
 
-    meta_tag_totals = {}
-    for r in results:
-        for tag, val in (r.get("meta_tags") or {}).items():
-            vals = meta_tag_totals.setdefault(tag, [])
-            try:
-                vals.append(int(val))
-            except (TypeError, ValueError):
-                pass
+    data = {
+        "subject": subject, "accepted": len(new), "legacy_records": legacy,
+        "run_events": dict(ends),
+        "council_mean_correct": statistics.mean([r["council_n_correct"] for r in new]) if new else None,
+        "council_mean_solved": statistics.mean([r["council_n_solved"] for r in new]) if new else None,
+        "solved_vs_correct": dict(Counter((r["council_n_correct"], r["council_n_solved"]) for r in new)),
+        "member_solve_rate": {k: solved_by_member[k] / members[k] for k in members},
+        "rounds_to_accept": dict(rounds),
+        "answers_matching_by_round": {rd: b["correct"] / b["members"] if b["members"] else None
+                                      for rd, b in sorted(by_round.items())},
+        "knowledge_tags": dict(tags),
+        "trap_types": dict(traps.most_common()),
+        "failure_labels": dict(labels),
+        "hint_outcomes": {f"{h} {'solved' if s else 'not solved'}": n for (h, s), n in hints.items()},
+        "spend_total_usd": round(sum(x for x in spend if x), 4),
+        "spend_per_accepted_usd": round(statistics.mean([x for x in spend if x]), 4) if any(spend) else None,
+    }
 
-    print("\n================ EVALUATION REPORT ================\n")
-
-    print("--- Records ---")
-    print(f"  Total accepted questions: {total}")
-    print(f"  Per subject: {subjects}")
-
-    print("\n--- Acceptance Gates (accepted records should already pass) ---")
-    if council:
-        hard = sum(1 for n, _ in council if n <= 1)
-        print(f"  Council solved (mean): {mean([n for n, _ in council]):.2f} of {council[0][1]}"
-              f"   (≤1 solved: {hard}/{len(council)})")
-    if weak_scores:
-        print(f"  Mean weak score:   {mean(weak_scores):.1f}%   (gated ≤60%: {len(weak_pct)}/{len(weak_scores)})")
-    if strong_scores:
-        print(f"  Mean strong score: {mean(strong_scores):.1f}%   (gated ≥85%: {len(strong_pct)}/{len(strong_scores)})")
-    print(f"  Verifier PASS: {[r.get('verifier_verdict', '?') for r in results].count('PASS')}/{total}")
-
-    print("\n--- Efficiency ---")
-    print(f"  Mean loops to accept: {mean(loops):.2f}  (max {max(loops)})")
-
-    print("\n--- Difficulty Labels (verifier_rating) ---")
-    for d in sorted(difficulty_hist, key=lambda k: -difficulty_hist[k]):
-        print(f"  {d:14s}: {difficulty_hist[d]} ({pct(difficulty_hist[d], total):.0f}%)")
-
-    print("\n--- Archetype Distribution ---")
-    for a in sorted(archetypes):
-        print(f"  Archetype {a}: {archetypes[a]} ({pct(archetypes[a], total):.0f}%)")
-
-    if meta_tag_totals:
-        print("\n--- Meta-tag Means (1-5 scale) ---")
-        for tag in sorted(meta_tag_totals):
-            print(f"  {tag:28s}: {mean(meta_tag_totals[tag]):.2f}  (n={len(meta_tag_totals[tag])})")
-
-    print("\n===================================================\n")
+    print(f"\n================ {subject.upper()} ================")
+    print(f"Accepted (engine pipeline): {len(new)}   older-format records: {legacy}")
+    if ends:
+        print("Run events:", ", ".join(f"{k} {v}" for k, v in ends.most_common()))
+    if new:
+        print(f"Council per accepted question: mean {data['council_mean_correct']:.2f}/3 answers match the engine, "
+              f"{data['council_mean_solved']:.2f}/3 counted as solved")
+        print("  (correct, solved) pairs:", data["solved_vs_correct"])
+        print("  solve rate per member:", {k: f"{v:.0%}" for k, v in data["member_solve_rate"].items()})
+        print("Refinement rounds before acceptance:", dict(sorted(rounds.items())))
+        print("Knowledge tags:", dict(tags))
+        top = traps.most_common(1)
+        print(f"Trap types ({len(traps)} kinds):", dict(traps.most_common(8)),
+              f"— largest share {pct(top[0][1], sum(traps.values()))}" if top else "")
+        print("Why members failed:", dict(labels))
+        print("Hint outcomes:", data["hint_outcomes"])
+    if by_round:
+        print("Council answers matching the engine, by round:",
+              {rd: (f"{v:.0%}" if v is not None else "—") for rd, v in data["answers_matching_by_round"].items()})
+    if spend:
+        print(f"Spend: ${data['spend_total_usd']} total, ${data['spend_per_accepted_usd']} per accepted question")
+    return data
 
 
 def main():
-    if len(sys.argv) > 1:
-        evaluate_pipeline(sys.argv[1])
-    else:
-        evaluate_pipeline()
+    ap = argparse.ArgumentParser(description="Report on generated questions.")
+    ap.add_argument("--subject", choices=sorted(SUBJECT_CONFIGS), default=None)
+    ap.add_argument("--json", default=None, help="also write the report to this JSON file")
+    args = ap.parse_args()
+    subjects = [args.subject] if args.subject else [s for s in SUBJECT_CONFIGS
+                                                    if os.path.exists(SUBJECT_CONFIGS[s]["output_file"])]
+    if not subjects:
+        print("No outputs yet. Run: python run_groundup_final.py --subject physical")
+        return 1
+    out = {s: report(s) for s in subjects}
+    if args.json:
+        with open(args.json, "w", encoding="utf-8") as f:
+            json.dump(out, f, indent=2, ensure_ascii=False)
+        print(f"\nWrote {args.json}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

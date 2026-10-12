@@ -1,89 +1,52 @@
-from typing import Optional
+"""
+blackboard.py — the shared notebook for one question.
 
+Created right after the graph walk picks a chain. Every stage writes what it did to it
+(the inputs chosen, the engine's answer and traps, each stem, the gate result, every
+council attempt, the verifier's diagnoses, hint results, the round and retry counters),
+and the generator reads it whenever it has to retry or refine. Its history is saved
+with every attempt and every accepted question, so each decision can be traced.
+"""
 
-def _fmt_score(s) -> str:
-    """Format a solver score for display. Scores may be None when a solver call or
-    grade failed (see the blind-solve / unmeasured-gate handling in the entrypoints);
-    a None must not crash the '%.0f' formatting used in attempt summaries."""
-    return f"{s:.0f}%" if isinstance(s, (int, float)) else "n/a"
+from __future__ import annotations
 
-
-def score_summary(attempt: dict) -> str:
-    """The difficulty result of one attempt, in whichever form was recorded; empty
-    if the attempt never reached the solvers (e.g. a verifier FAIL)."""
-    if attempt.get("council_solved") is not None:
-        return f"Council={attempt['council_solved']}/{attempt.get('council_size') or '?'} solved | "
-    if attempt.get("weak_score") is not None or attempt.get("strong_score") is not None:
-        return f"Weak={_fmt_score(attempt.get('weak_score'))} | Strong={_fmt_score(attempt.get('strong_score'))} | "
-    return ""
+from datetime import datetime, timezone
 
 
 class Blackboard:
-    def __init__(self, seed: dict, archetype: str, target_profile: dict):
-        self.seed = seed
-        self.archetype = archetype
-        self.target_profile = target_profile
-        self.attempts = []
+    def __init__(self, subject: str):
+        self.subject = subject
+        self.chains: list = []          # one entry per chain tried in this run
+        self.current: dict | None = None
 
-    def record_attempt(
-        self,
-        problem: str,
-        solution: str,
-        operators_used: list,
-        verifier_result: dict,
-        weak_score: float = None,
-        strong_score: float = None,
-        council_solved: int = None,
-        council_size: int = None,
-    ):
-        """weak_score / strong_score: the older weak/strong-solver loop (run_graph_final.py).
-        council_solved / council_size: how many council members solved it (run_groundup_final.py)."""
-        self.attempts.append({
-            "attempt_number": len(self.attempts) + 1,
-            "problem": problem,
-            "solution": solution,
-            "operators_used": operators_used,
-            "verifier_verdict": verifier_result.get("verdict"),
-            "verifier_feedback": verifier_result.get("feedback_for_generator", ""),
-            "difficulty_rating": verifier_result.get("difficulty_rating", "N/A"),
-            "weak_score": weak_score,
-            "strong_score": strong_score,
-            "council_solved": council_solved,
-            "council_size": council_size,
-        })
+    # ── chains ──
+    def start_chain(self, candidate: dict) -> dict:
+        self.current = {
+            "chain": {k: v for k, v in candidate.items() if not k.startswith("_")},
+            "rounds": 0,               # refinements used (too easy, or reworded for clarity)
+            "events": [],
+        }
+        self.chains.append(self.current)
+        return self.current
 
-    def operators_tried(self) -> list:
-        seen = []
-        for a in self.attempts:
-            for op in a.get("operators_used", []):
-                if op not in seen:
-                    seen.append(op)
-        return seen
+    def note(self, stage: str, **data) -> dict:
+        """Record what a stage did on the current chain."""
+        if self.current is None:
+            raise RuntimeError("no chain started")
+        ev = {"stage": stage, "at": datetime.now(timezone.utc).isoformat(), **data}
+        self.current["events"].append(ev)
+        return ev
 
-    def last_attempt(self) -> Optional[dict]:
-        return self.attempts[-1] if self.attempts else None
+    def last(self, stage: str) -> dict | None:
+        if not self.current:
+            return None
+        for ev in reversed(self.current["events"]):
+            if ev["stage"] == stage:
+                return ev
+        return None
 
-    def context_summary(self) -> str:
-        if not self.attempts:
-            return "No previous attempts."
-        lines = []
-        for a in self.attempts:
-            lines.append(
-                f"Attempt {a['attempt_number']}: "
-                f"Verdict={a['verifier_verdict']} | "
-                f"{score_summary(a)}"
-                f"Operators={a['operators_used']} | "
-                f"Feedback='{a['verifier_feedback']}'"
-            )
-        return "\n".join(lines)
+    def tried_edges(self) -> set:
+        return {tuple(c["chain"]["edges"]) for c in self.chains}
 
     def history(self) -> list:
-        return self.attempts
-
-    def to_dict(self) -> dict:
-        return {
-            "seed_id": self.seed.get("question_index"),
-            "archetype": self.archetype,
-            "target_profile": self.target_profile,
-            "attempts": self.attempts,
-        }
+        return self.chains
