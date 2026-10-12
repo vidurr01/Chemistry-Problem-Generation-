@@ -18,7 +18,7 @@ Graph walk         the subject's knowledge graph; chains that the engine can com
    │
 Blackboard         per-question notebook every stage writes to
    │
-Inputs             generator (Gemini 2.5 Flash) proposes a scenario and a value for every
+Inputs             generator (Gemini 3.7 Flash) proposes a scenario and a value for every
                    input — or vetoes a chain it cannot make coherent
    │
 Engine             code computes the answer, the step-by-step trace, and the traps (the
@@ -31,7 +31,7 @@ Chemistry gate     extractor (DeepSeek V4 Flash) copies the stated facts into a 
    │
 Duplicate check    same engine steps and same inputs as an accepted question → new inputs
    │
-Council            GPT-OSS-120B · GLM-4.7-Flash first, in parallel; Qwen3-235B-Thinking
+Council            GPT-6 Luna · GLM-5.3-Flash first, in parallel; Qwen3.8-Flash
                    only when exactly one of them solves (otherwise it cannot change the
                    decision); closed book (question only), reasoning effort medium
    │
@@ -156,9 +156,9 @@ Each item in `results/generated_questions_*_final.json` contains `human_eval_sco
 
 | Role | Model | Does |
 |------|-------|------|
-| Generator | `google/gemini-2.5-flash` | proposes inputs (or vetoes a chain), writes stems, clarification hints, refinement choice |
+| Generator | `google/gemini-3.7-flash` | proposes inputs (or vetoes a chain), writes stems, clarification hints, refinement choice |
 | Extractor | `deepseek/deepseek-v4-flash-0731` | chemistry gate: copies stated facts into a form |
-| Council | `openai/gpt-oss-120b`, `qwen/qwen3-235b-a22b-thinking-2507`, `z-ai/glm-4.7-flash` | closed-book solves, reasoning effort medium |
+| Council | `openai/gpt-6-luna`, `qwen/qwen3.8-flash`, `z-ai/glm-5.3-flash` (GPQA Diamond ~87–90%) | closed-book solves, reasoning effort medium |
 | Mismatch verifier | `anthropic/claude-haiku-5.5` | diagnoses every council attempt against the engine's trace |
 | Solution writer | `mistralai/mistral-small-3.2-24b-instruct` | readable solution, accepted questions only |
 

@@ -175,7 +175,7 @@ def build(doc):
         ["2",    "Concept reasoner (DeepSeek-V3)",
          "Picks the most promising of six offered chains: coherent, non-circular, with a decision or "
          "trap where difficulty comes from reasoning."],
-        ["3",    "Generator (Gemini 2.5 Flash)",
+        ["3",    "Generator (Gemini 3.7 Flash)",
          "Writes the question and a reference solution, applying each step to the actual product of "
          "the previous one. On a retry it fixes only what was flagged."],
         ["4",    "Verifier (Gemini 3 Flash, two tiers)",

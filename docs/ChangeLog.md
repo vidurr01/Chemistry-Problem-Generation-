@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Council and generator swapped for stronger, cheaper models
+- `core/models.py`: council is now GPT-6 Luna (`openai/gpt-6-luna`), GLM-5.3-Flash (`z-ai/glm-5.3-flash`) and Qwen3.8-Flash (`qwen/qwen3.8-flash`), replacing GPT-OSS-120B, GLM-4.7-Flash and Qwen3-235B-Thinking. Early stop runs GPT-6 Luna and GLM-5.3-Flash first. Generator is Gemini 3.7 Flash (was Gemini 2.5 Flash).
+- Why (OpenRouter GPQA Diamond leaderboard, 2026-10-13): old council 72.7 / 52.8 / 77.8 % at $0.007 / $0.017 / $0.056 per question; new council ~87–90 / 85–91 / 88.6 % at $0.003 / $0.005–0.014 / $0.021. Generator 72.6 % at $0.060 → 93.9 % at $0.029. Family separation is unchanged (OpenAI, Z.ai, Qwen solve; Google writes; DeepSeek extracts; Anthropic verifies; Mistral writes solutions).
+- Pending: JEE calibration of the new council (`calibration/anchor_calibration.py --council --skip-weak`).
+- README, `docs/Flow.md`, `docs/pipeline_overview.html`, `tools/make_approach_pdf.py` updated.
+
 ### Council-candidate calibration
 - `calibration/anchor_calibration.py --council [--skip-weak]`: solves the 54 JEE Advanced numeric questions with the generation council's own call (`stages._solve`: same prompt, 16k token cap, reasoning effort, temperature) and reports spend per question; results go to `..._<model>_council.json`. The earlier runs capped answers at 2,500 tokens with no reasoning effort, which truncates thinking models, so they cannot compare council candidates.
 
