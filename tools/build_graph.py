@@ -1,5 +1,20 @@
 """
-Build reaction_graph.json from concept_book.json.
+Build a subject's knowledge graph from its concept book.
+
+    python tools/build_graph.py --subject organic --overwrite-organic   # knowledge/reaction_graph.json
+    python tools/build_graph.py --subject inorganic   # knowledge/reaction_graph_inorg.json
+    python tools/build_graph.py --subject physical    # knowledge/reaction_graph_physical.json
+
+All three graphs share one schema (nodes + edges) and are traversed by the same code in
+core/graph_traversal.py. Organic nodes are the hand-defined classes below; inorganic and
+physical nodes come from the rule tables in graph_rules_inorganic.py and
+graph_rules_physical.py.
+
+NOTE: the committed knowledge/reaction_graph.json was curated after it was built, and
+this script no longer reproduces it exactly. Do not rebuild organic unless you mean to
+replace that curated file.
+
+Organic strategy:
 
 Strategy:
   1. Define ~55 canonical node IDs (functional group classes).
@@ -10,10 +25,12 @@ Strategy:
   5. Report unmapped strings for manual review.
 """
 
+import argparse
 import json
 import os
 import re
-from collections import defaultdict
+import sys
+from collections import Counter, defaultdict
 
 _ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 _KG   = os.path.join(_ROOT, "knowledge")
@@ -901,15 +918,23 @@ def normalize_node(raw):
 
 # ── Build edges from TXs ──────────────────────────────────────────────────────
 
-def build_edges(txs):
-    """Group TXs by (from_node, to_node), build edge objects."""
+def build_edges(txs, normalize=None, chapter_key=None):
+    """Group TXs by (from_node, to_node), build edge objects.
+
+    normalize(raw, tx) maps a from/to string to a node id; it defaults to the organic
+    normalize_node. With chapter_key set, TXs are also grouped by their chapter, so
+    every edge carries the real chapter of the TXs behind it."""
+    if normalize is None:
+        normalize = lambda raw, tx=None: normalize_node(raw)
 
     # First pass: map all TXs
     mapped = []
     unmapped = []
     for i, tx in enumerate(txs):
-        fn = normalize_node(tx["from"])
-        tn = normalize_node(tx["to"])
+        fn = normalize(tx["from"], tx)
+        tn = normalize(tx["to"], tx)
+        if fn and tn and fn == tn:
+            fn = tn = None   # same quantity/species on both sides: not a step
         if fn and tn:
             mapped.append((fn, tn, tx, i))
         else:
@@ -927,10 +952,12 @@ def build_edges(txs):
     # Group by (from, to) pair
     groups = defaultdict(list)
     for fn, tn, tx, idx in mapped:
-        groups[(fn, tn)].append((tx, idx))
+        chapter = tx.get(chapter_key, "") if chapter_key else ""
+        groups[(fn, tn, chapter)].append((tx, idx))
 
     edges = []
-    for (fn, tn), tx_list in sorted(groups.items()):
+    used_ids = set()
+    for (fn, tn, chapter), tx_list in sorted(groups.items()):
         # Use first TX as the canonical edge; others become conditions_variants or notes
         primary_tx = tx_list[0][0]
 
@@ -940,6 +967,11 @@ def build_edges(txs):
             r = reagents[0] if reagents else ""
             return re.sub(r"[^a-zA-Z0-9]", "", r).lower()[:12]
         edge_id = f"{fn}_to_{tn}_{reagent_tag(primary_reagents)}" if primary_reagents else f"{fn}_to_{tn}"
+        base_id, n = edge_id, 2
+        while edge_id in used_ids:
+            edge_id = f"{base_id}_{n}"
+            n += 1
+        used_ids.add(edge_id)
 
         # Build conditions_variants from TXs with different conditions/reagents
         variants = {}
@@ -955,10 +987,6 @@ def build_edges(txs):
         # If multiple distinct reagent paths, encode as variants
         if len(tx_list) > 1:
             for j, (tx, idx) in enumerate(tx_list):
-                reagents_key = ", ".join(tx.get("reagents", []))[:50]
-                cond_key = tx.get("conditions", "")[:60].replace(" ", "_").lower()
-                # Use reagent or condition as variant key
-                var_key = reagents_key or cond_key or f"variant_{j}"
                 if j == 0:
                     continue  # skip first — it's the default
                 variants[f"reagent_{j}"] = {
@@ -976,7 +1004,7 @@ def build_edges(txs):
             "reagents":         primary_tx.get("reagents", []),
             "conditions":       primary_tx.get("conditions", "")[:500],
             "firing_condition": None,
-            "chapter":          primary_tx.get("conditions", "")[:30],  # placeholder
+            "chapter":          chapter or primary_tx.get("conditions", "")[:30],  # organic: set in main()
             "archetype":        sorted(archetype_set),
             "chemoselectivity": {
                 "requires_absent": [],
@@ -1065,10 +1093,10 @@ def main():
                     edge["chapter"] = n.get("chapter", "Reaction Mechanisms")
                     break
 
-    with open(os.path.join(_KG, "reaction_graph.json"), "w") as f:
+    with open(os.path.join(_KG, "reaction_graph.json"), "w", encoding="utf-8") as f:
         json.dump(graph, f, indent=2, ensure_ascii=False)
 
-    with open(os.path.join(_KG, "graph_unmapped.json"), "w") as f:
+    with open(os.path.join(_KG, "graph_unmapped.json"), "w", encoding="utf-8") as f:
         json.dump(unmapped, f, indent=2, ensure_ascii=False)
 
     print(f"\nreaction_graph.json: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges")
@@ -1081,5 +1109,71 @@ def main():
         print(f"  {cnt:3d}x  {eid}")
 
 
+# ── Inorganic / physical: same edge builder, subject rule tables ─────────────
+
+SUBJECT_FILES = {
+    # subject: (concept book, rules module, graph out, unmapped out, description)
+    "inorganic": ("concept_book_inorg.json", "graph_rules_inorganic",
+                  "reaction_graph_inorg.json", "graph_unmapped_inorg.json",
+                  "Species graph — JEE Advanced Inorganic Chemistry"),
+    "physical":  ("concept_book_physical.json", "graph_rules_physical",
+                  "reaction_graph_physical.json", "graph_unmapped_physical.json",
+                  "Quantity graph — JEE Advanced Physical Chemistry"),
+}
+
+
+def build_subject_graph(subject):
+    cb_file, rules_name, out_file, unmapped_file, description = SUBJECT_FILES[subject]
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    rules = __import__(rules_name)
+
+    with open(os.path.join(_KG, cb_file), encoding="utf-8") as f:
+        txs = json.load(f)["structural_operators"]["add_reaction_step"]["valid_transformations"]
+    print(f"Total TXs: {len(txs)}")
+    edges, unmapped = build_edges(txs, normalize=rules.normalize_node, chapter_key=rules.CHAPTER_KEY)
+    if hasattr(rules, "extra_edges"):           # e.g. inorganic salt -> ion links (synthetic)
+        extra = rules.extra_edges(edges)
+        edges += extra
+        print(f"Synthetic edges added by {rules_name}.extra_edges: {len(extra)}")
+
+    # Nodes are every species/quantity an edge touches. A node's chapter is the chapter
+    # most of its edges come from.
+    node_chapters = defaultdict(Counter)
+    for e in edges:
+        node_chapters[e["from"]][e["chapter"]] += len(e["tx_ids"])
+        node_chapters[e["to"]][e["chapter"]] += len(e["tx_ids"])
+    names = getattr(rules, "NODE_NAMES", {})
+    nodes = [{
+        "id": nid,
+        "display": names.get(nid, nid),
+        "type": "stable",
+        "can_be_start": True,
+        "can_be_end": True,
+        "chapter": counts.most_common(1)[0][0],
+    } for nid, counts in sorted(node_chapters.items())]
+
+    graph = {"version": "0.1", "description": description, "nodes": nodes, "edges": edges}
+    with open(os.path.join(_KG, out_file), "w", encoding="utf-8") as f:
+        json.dump(graph, f, indent=2, ensure_ascii=False)
+    with open(os.path.join(_KG, unmapped_file), "w", encoding="utf-8") as f:
+        json.dump(unmapped, f, indent=2, ensure_ascii=False)
+
+    print(f"\n{out_file}: {len(nodes)} nodes, {len(edges)} edges")
+    print(f"{unmapped_file}: {len(unmapped)} unmapped TXs (facts, not steps)")
+    print("Edges per chapter:", dict(Counter(e["chapter"] for e in edges).most_common()))
+
+
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description="Build a subject's knowledge graph from its concept book.")
+    ap.add_argument("--subject", choices=["organic", "inorganic", "physical"], required=True)
+    ap.add_argument("--overwrite-organic", action="store_true",
+                    help="required for --subject organic: rebuilding replaces the hand-curated "
+                         "knowledge/reaction_graph.json, which this script no longer reproduces")
+    args = ap.parse_args()
+    if args.subject == "organic":
+        if not args.overwrite_organic:
+            ap.error("--subject organic would overwrite the curated knowledge/reaction_graph.json; "
+                     "pass --overwrite-organic if that is what you want")
+        main()
+    else:
+        build_subject_graph(args.subject)

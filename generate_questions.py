@@ -3,7 +3,7 @@ generate_questions.py — batch driver for the ground-up question generator.
 
 This is a thin wrapper around `run_groundup_final.py`. That script produces at
 most ONE accepted question per invocation and appends it to
-`generated_questions_<subject>.json`. This driver runs it repeatedly so you can
+`outputs/generated_questions_<subject>.json`. This driver runs it repeatedly so you can
 ask for a set number of physical, inorganic, and organic questions in one call.
 
 Each subject's questions are produced in separate fresh subprocesses. That keeps
@@ -21,7 +21,7 @@ Usage
     # keep going even if a subject produces no accepted question for a while
     python generate_questions.py --organic 10 --max-consecutive-failures 5
 
-Launch it WITHOUT shell redirection to batch_run.log — the driver writes that log
+Launch it WITHOUT shell redirection to the log — the driver writes that log
 itself, in APPEND mode, so relaunching never overwrites an earlier run. Each run
 starts with a "RUN <timestamp> :: <args>" separator. Use --log to change the path
 or --log "" to disable. Console output still streams live as well.
@@ -29,13 +29,13 @@ or --log "" to disable. Console output still streams live as well.
 Output
 ------
 Questions are appended to (created if absent):
-    generated_questions_organic.json
-    generated_questions_inorganic.json
-    generated_questions_physical.json
+    outputs/generated_questions_organic.json
+    outputs/generated_questions_inorganic.json
+    outputs/generated_questions_physical.json
 Every attempt (accepted or not) is also logged to
-    generated_questions_<subject>_attempts.jsonl
+    outputs/generated_questions_<subject>_attempts.jsonl
 by the underlying script, and the full run console is appended to
-    batch_run.log
+    outputs/batch_run.log
 """
 
 import argparse
@@ -43,6 +43,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime
 
@@ -57,14 +58,38 @@ except (AttributeError, ValueError):
 HERE = os.path.dirname(os.path.abspath(__file__))
 ENTRYPOINT = os.path.join(HERE, "run_groundup_final.py")
 
-# Output file per subject, matching subject_config.py "output_file" values.
-OUTPUT_FILES = {
-    "organic":   os.path.join(HERE, "generated_questions_organic.json"),
-    "inorganic": os.path.join(HERE, "generated_questions_inorganic.json"),
-    "physical":  os.path.join(HERE, "generated_questions_physical.json"),
-}
+from subject_config import OUTPUT_DIR, SUBJECT_CONFIGS
+from core.llm import load_env
 
 SUBJECTS = ("organic", "inorganic", "physical")
+
+# Exit code run_groundup_final.py returns for a setup problem with this subject (missing
+# concept book / graph, or a --chapter with no chains): retrying cannot help, so the
+# driver moves on to the next subject. (Its EXIT_CONFIG_ERROR.)
+CONFIG_ERROR_EXIT_CODE = 2
+
+# Exit codes on which run_groundup_final.py stops for a reason that is not the question's
+# (its EXIT_COUNCIL_FAILED / EXIT_SAVE_FAILED). The whole batch stops then: the next run
+# would hit the same failure. The question is parked and rechecked on the next run.
+STOP_EXIT_CODES = {
+    3: "a council member failed (check OpenRouter / the API key)",
+    4: "an accepted question could not be saved (check the output file / disk)",
+}
+
+
+class SubjectSkip(Exception):
+    """A run hit a configuration error for this subject; move on to the next subject."""
+
+
+class BatchStop(Exception):
+    """A run stopped on a systemic failure; carries the subject's accepted count so far."""
+    def __init__(self, reason, accepted=0):
+        super().__init__(reason)
+        self.reason = reason
+        self.accepted = accepted
+
+# Output file per subject, read from subject_config.py so the two never drift.
+OUTPUT_FILES = {s: SUBJECT_CONFIGS[s]["output_file"] for s in SUBJECTS}
 
 # Append-only run log. Opened in main(); every run adds a separator header and its
 # lines to the end, so relaunching never clobbers an earlier run's output. The
@@ -92,16 +117,9 @@ def stamp(msg):
 
 
 def load_env_key():
-    """Mirror the .env parsing in run_groundup_final.py so we can fail early
-    with a clear message instead of after spinning up a subprocess."""
-    env_path = os.path.join(HERE, ".env")
-    if os.path.exists(env_path):
-        with open(env_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    k, v = line.split("=", 1)
-                    os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+    """Read .env the same way run_groundup_final.py does, so a missing key fails
+    here instead of after spinning up a subprocess."""
+    load_env()
     return os.environ.get("OPENROUTER_KEY", "")
 
 
@@ -142,14 +160,20 @@ def generate_one(subject, chapter, python_exe, child_timeout):
         proc = subprocess.Popen(cmd, cwd=HERE, env=env, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True, bufsize=1,
                                 encoding="utf-8", errors="replace")
-        try:
+        # Read the output on a separate thread: iterating proc.stdout here would block
+        # until the child exits, so the timeout below could never fire on a hung run.
+        def pump():
             for line in proc.stdout:
                 emit(line.rstrip("\n"))
+        reader = threading.Thread(target=pump, daemon=True)
+        reader.start()
+        try:
             rc = proc.wait(timeout=child_timeout)
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait()
             stamp(f"[warn] {subject}: run exceeded {child_timeout}s, killed. Continuing.")
+        reader.join(timeout=5)   # the pipe closes when the child exits; drain what is left
     except Exception as e:
         stamp(f"[warn] {subject}: run failed to launch: {e}")
     dt = time.time() - t0
@@ -158,6 +182,14 @@ def generate_one(subject, chapter, python_exe, child_timeout):
     produced = after > before
     stamp(f"{subject}: run finished in {dt:.0f}s "
           f"(exit={rc}, question saved: {'yes' if produced else 'no'})")
+    if rc in STOP_EXIT_CODES:
+        stamp(f"[stop] {subject}: {STOP_EXIT_CODES[rc]}; the question is parked for the next run. "
+              f"Stopping the batch.")
+        raise BatchStop(STOP_EXIT_CODES[rc])
+    if rc == CONFIG_ERROR_EXIT_CODE:
+        stamp(f"[skip] {subject}: configuration error (see the run output above); "
+              f"retrying cannot help, moving on to the next subject.")
+        raise SubjectSkip()
     if rc not in (0, None) and not produced:
         stamp(f"[warn] {subject}: exit code {rc} and no question was saved.")
     return produced
@@ -180,7 +212,13 @@ def generate_subject(subject, target, chapter, python_exe, max_consecutive_failu
     while accepted < target:
         attempt += 1
         stamp(f"--- {subject} | attempt {attempt} | accepted {accepted}/{target} ---")
-        ok = generate_one(subject, chapter, python_exe, child_timeout)
+        try:
+            ok = generate_one(subject, chapter, python_exe, child_timeout)
+        except BatchStop as stop:
+            stop.accepted = accepted
+            raise
+        except SubjectSkip:
+            break
 
         if ok:
             accepted += 1
@@ -207,9 +245,12 @@ def parse_args():
     p.add_argument("--inorganic", type=int, default=0, help="number of inorganic questions to generate")
     p.add_argument("--physical", type=int, default=0, help="number of physical questions to generate")
 
-    p.add_argument("--organic-chapter", default=None, help="chapter override for organic")
-    p.add_argument("--inorganic-chapter", default=None, help="chapter override for inorganic")
-    p.add_argument("--physical-chapter", default=None, help="chapter override for physical")
+    p.add_argument("--organic-chapter", default=None,
+                   help="fix organic to one chapter (default: each run picks a chapter by coverage)")
+    p.add_argument("--inorganic-chapter", default=None,
+                   help="fix inorganic to one chapter (default: each run picks a chapter by coverage)")
+    p.add_argument("--physical-chapter", default=None,
+                   help="fix physical to one chapter (default: each run picks a chapter by coverage)")
 
     p.add_argument("--order", default="organic,inorganic,physical",
                    help="comma-separated order in which subjects are generated")
@@ -219,7 +260,7 @@ def parse_args():
                    help="seconds before a single hung question run is killed and retried")
     p.add_argument("--python", default=sys.executable,
                    help="python executable used to run run_groundup_final.py")
-    p.add_argument("--log", default="batch_run.log",
+    p.add_argument("--log", default=os.path.join(OUTPUT_DIR, "batch_run.log"),
                    help="run log, APPENDED to (never overwritten). Empty string disables.")
     return p.parse_args()
 
@@ -275,11 +316,17 @@ def main():
 
     start = time.time()
     results = {}
+    stopped = None
     for subject in order:
-        results[subject] = generate_subject(
-            subject, targets[subject], chapters[subject],
-            args.python, args.max_consecutive_failures, args.child_timeout,
-        )
+        try:
+            results[subject] = generate_subject(
+                subject, targets[subject], chapters[subject],
+                args.python, args.max_consecutive_failures, args.child_timeout,
+            )
+        except BatchStop as stop:
+            results[subject] = stop.accepted
+            stopped = stop.reason
+            break
 
     elapsed = time.time() - start
     emit("\n" + "=" * 70)
@@ -296,9 +343,11 @@ def main():
             any_short = True
         emit(f"  {subject:<10} {got}/{want}   -> {OUTPUT_FILES[subject]}{flag}")
     emit(f"\n  elapsed: {elapsed/60:.1f} min")
+    if stopped:
+        emit(f"  batch STOPPED early: {stopped} (see the log above).")
     if _LOG is not None:
         _LOG.close()
-    return 1 if any_short else 0
+    return 1 if (any_short or stopped) else 0
 
 
 if __name__ == "__main__":

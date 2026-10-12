@@ -19,18 +19,23 @@ Weak solver   : llama3.2 via Ollama (local)
 Output: calibration_results_physical.json + printed statistics
 """
 
-import json, glob, time, random, re, statistics, os
+import glob
+import json
+import os
+import random
+import re
+import statistics
+import sys
+import time
 
 from openai import OpenAI
 
-_env_path = os.path.join(os.path.dirname(__file__), ".env")
-if os.path.exists(_env_path):
-    with open(_env_path, encoding="utf-8") as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+from core.llm import is_rate_limit, is_transient, load_env, parse_json, write_json_atomic  # noqa: E402
+
+load_env()   # repo-root .env → os.environ
 
 SAMBANOVA_KEY = os.environ.get("SAMBANOVA_KEY_1", "")
 STRONG_MODEL  = "DeepSeek-V3.2"
@@ -89,9 +94,9 @@ def sambanova_call(fn, retries=5, base_wait=15):
         try:
             return fn()
         except Exception as e:
-            if "429" in str(e) or "rate_limit" in str(e).lower():
+            if is_transient(e) and attempt < retries - 1:
                 wait = base_wait * (2 ** attempt)
-                print(f"    [rate limit] retrying in {wait}s...")
+                print(f"    [{'rate limit' if is_rate_limit(e) else type(e).__name__}] retrying in {wait}s...")
                 time.sleep(wait)
             else:
                 raise
@@ -218,7 +223,7 @@ def run_question(q, idx, total):
             response_format={"type": "json_object"},
             temperature=0.0,
         ))
-        strong_raw   = json.loads(resp.choices[0].message.content.strip())
+        strong_raw   = parse_json(resp.choices[0].message.content)
         strong_score = int(strong_raw.get("score", 0))
         strong_sol   = strong_raw.get("attempted_solution", "")[:200]
     except Exception as e:
@@ -319,8 +324,7 @@ def main():
         results.append(r)
         time.sleep(2)
 
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
+    write_json_atomic(OUT_PATH, results, indent=2)
     print(f"\n\nRaw results saved → {OUT_PATH}")
 
     strong_scores = [r["strong_score"] for r in results]
@@ -345,11 +349,11 @@ def main():
 
     floor, ceiling = recommend(ss, ws)
     if floor and ceiling:
-        print(f"\n  ── Recommended thresholds ──────────────────────────────")
+        print("\n  ── Recommended thresholds ──────────────────────────────")
         print(f"    STRONG_SCORE_FLOOR  = {floor}%")
         print(f"    WEAK_SCORE_CEILING  = {ceiling}%")
-        print(f"    (floor  = strong mean − 1σ, rounded to nearest 5)")
-        print(f"    (ceiling = weak mean + 0.5σ, rounded to nearest 5)")
+        print("    (floor  = strong mean − 1σ, rounded to nearest 5)")
+        print("    (ceiling = weak mean + 0.5σ, rounded to nearest 5)")
 
     print("\n" + "=" * 65)
     return {"strong": ss, "weak": ws, "floor": floor, "ceiling": ceiling}

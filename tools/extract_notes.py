@@ -1,110 +1,53 @@
 """
-Extraction agent: reads notes from Google Drive folders,
-uses an LLM to structure them into concept book operator format,
-and merges the result into concept_book.json.
+extract_notes.py — turn a chapter's notes (OCR text) into concept-book entries and
+merge them into knowledge/concept_book.json (organic).
+
+    python tools/extract_notes.py --notes data/notes/amines_lec1.txt --topic Amines --dry-run
+    python tools/extract_notes.py --notes data/notes/amines_lec1.txt --topic Amines
 
 HOW IT WORKS:
-1. We hardcode the raw OCR text (fetched via MCP tool in the session)
-2. We send it to DeepSeek with a structured extraction prompt
-3. DeepSeek returns JSON with new operators, transformations, fragile concepts, exceptions
-4. We merge these into the existing concept_book.json
+1. Read the notes text from --notes (plain text, e.g. OCR of handwritten notes)
+2. Send it to DeepSeek-V3.2 (SambaNova) with a structured extraction prompt
+3. The model returns JSON with new transformations, fragile concepts, exceptions, distractors
+4. Merge them into concept_book.json, skipping duplicates and malformed entries
+   (--dry-run shows what would be added and writes nothing)
 
-PYTHON CONCEPTS USED:
-- json.load / json.dump  : reading and writing JSON files
-- dict.setdefault()      : safely add to a dict key without overwriting
-- list.append()          : add items to a list
-- f-strings              : string formatting with {}
-- OpenAI SDK             : same client we use everywhere else
+After adding transformations, rebuild the organic graph only if you mean to replace the
+curated knowledge/reaction_graph.json (see tools/build_graph.py).
+
+Needs SAMBANOVA_KEY_1 in .env.
 """
 
+import argparse
 import json
 import os
+import sys
+
 from openai import OpenAI
 
+_ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+from core.llm import call_json, load_env, parse_json as _parse_json, write_json_atomic  # noqa: E402
+
 # ── Client setup ──────────────────────────────────────────────────────────────
-_env_path = os.path.join(os.path.dirname(__file__), ".env")
-if os.path.exists(_env_path):
-    with open(_env_path, encoding="utf-8") as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+load_env()
 
-client = OpenAI(
-    api_key=os.environ.get("SAMBANOVA_KEY_1", ""),
-    base_url="https://api.sambanova.ai/v1"
-)
+MODEL = "DeepSeek-V3.2"
+_CB_PATH = os.path.join(_ROOT, "knowledge", "concept_book.json")
 
-# ── Raw OCR text from Drive ───────────────────────────────────────────────────
-# This came directly from read_file_content(fileId="1seDv_oDZ2LlfpflQPNK50KSPEbgzccNG")
-# In the full agent, this would be fetched dynamically per file.
-AMINES_OCR = """
-G.M.P. Amines
-1 From Amide: R-C-NH2 + LAH → R-CH-NH2 (1°) / R-CH-NH-R (2°) / R-CH-N-R (3°)
-2 Hoffman degradation: R-CONH2 + KOH/Br2 → R-NH2 (only 1° amine)
-3 From reduction of NO2: R-NO2 → R-NH2 [Fe/HCl (best), Zn/HCl, Sn/HCl, H2/Pt, LAH]
-   Selective reduction: neutral (Fe/NH4Cl) → phenylhydroxylamine
-   Highly basic (2mol NaOH) → azobenzene
-   Excess NaOH → azoxybenzene
-4 From reduction of cyanide: R-CN + H2/Pt,Pd,Ni or LAH → R-CH2-NH2 (1° amine)
-   Isocyanide (R-NC) + LAH → R-NH-CH3 (2° amine)
-5 From Aldehyde & ketone (reductive amination):
-   R-CHO + NH3 + H2/Pt or NaBHCN → 1° amine
-   R-CHO + R-NH2 + H2/Pt → 2° amine (via imine intermediate)
-   R-CHO + R2NH + H2/Pt → 3° amine
-6 Hofmann exhaustive methylation: R-NH2 + excess CH3X → quaternary ammonium salt
-7 From alcohol: R-OH + NH3 + Al2O3 at 450°C → R-NH2 / R-NHR / R-NR2 (mixture)
-8 Ritter Reaction: alkene + HCN + H2O → amide → amine
-9 Mannich Reaction: aldehyde + ketone (with alpha-H) + NH2 → beta-amino carbonyl
-10 Schmidt Reaction: ketone + HN3 → amine (rearrangement, loss of CO)
-11 Lossen Rearrangement: hydroxamic acid → isocyanate → amine (via rearrangement)
-12 Curtius Reaction: acid chloride + NaN3 → isocyanate → amine (heat)
-13 Gabriel Phthalimide Synthesis: phthalimide + RX → N-alkylphthalimide → R-NH2 (hydrolysis)
-    NOTE: Only gives pure 1° amines. Cannot make 2° or 3°. Cannot use ArX.
 
-TESTS:
-Carbylamine Test: R-NH2 + CHCl3 + 3KOH → R-NC (isocyanide, foul smell) — ONLY for 1° amines
-Mustard Oil Test: R-NH2 + CS2 + HgCl2 → R-N=C=S (alkyl isothiocyanate, smells like mustard) — ONLY 1°
-NaNO2/HCl test:
-    1° aliphatic amine → ROH + N2 (unstable diazonium)
-    1° aromatic amine + NaNO2 + 2HCl at 0-5°C → ArN2+Cl- (stable diazonium salt)
-    2° amine → yellow oily N-nitroso compound
-    3° amine → no reaction (in acid) / rearrangement products
-Azo Dye Test: diazonium salt + beta-naphthol → azo dye (orange-red) — confirms aromatic 1° amine
-Hinsberg Test: amine + PhSO2Cl →
-    1° amine → sulphonamide soluble in base (N-H present)
-    2° amine → sulphonamide insoluble in base (no N-H)
-    3° amine → no reaction
-
-BASICITY ORDER:
-Aliphatic: 2° > 1° > 3° > NH3 (in gas phase due to steric + inductive)
-Aliphatic in water: 2° > 1° > 3° > NH3 (solvation matters)
-Aromatic: NH3 > 1° aromatic > 2° aromatic > 3° aromatic (lone pair delocalisation into ring)
-
-REARRANGEMENTS:
-Benzidine Rearrangement: hydrazobenzene + H+ → 4,4'-diaminobiphenyl (benzidine) [major product]
-Hofmann-Martius Rearrangement: N-alkylaniline salt + heat (200°C) → ortho/para alkylaniline
-Fischer-Hepp Rearrangement: N-nitroso secondary amine → para-nitroso primary amine
-
-OXIDATION:
-1° amine + KMnO4 → nitroso → nitro → carboxylic acid (over-oxidation)
-2° amine + KMnO4 → R-C=N-R (imine/ketimine)
-3° amine + KMnO4 → no reaction
-Aniline + KMnO4 → complex products (ring oxidation)
-Amine + per-acid (H2O2, mCPBA) → amine oxide (3° → N-oxide)
-"""
+def _client():
+    return OpenAI(api_key=os.environ.get("SAMBANOVA_KEY_1", ""), base_url="https://api.sambanova.ai/v1")
 
 
 # ── Extraction prompt ─────────────────────────────────────────────────────────
-# We tell the LLM exactly what format we want back.
-# This is called "structured output prompting" — you describe the JSON schema
-# you want in the prompt itself.
-
-EXTRACTION_PROMPT = f"""
+# We tell the LLM exactly what format we want back ("structured output prompting":
+# the JSON schema is described in the prompt itself). {topic} and {notes} are filled in.
+EXTRACTION_PROMPT = """
 You are an expert organic chemistry knowledge engineer.
 
-Below is OCR-extracted text from handwritten JEE Advanced organic chemistry notes on Amines.
+Below is OCR-extracted text from handwritten JEE Advanced organic chemistry notes on {topic}.
 Your job is to extract structured entries for a concept book used in a problem generation pipeline.
 
 The concept book has this structure:
@@ -130,7 +73,7 @@ III = Deep Mechanistic Reasoning (short but insight-dependent)
 IV = Comparative Ranking/GOC (rank by property)
 
 Raw notes:
-{AMINES_OCR}
+{notes}
 
 Extract ALL chemically meaningful entries. Be precise with reagents and conditions.
 For fragile concepts, identify ones that commonly trip up JEE students.
@@ -138,142 +81,99 @@ Return ONLY valid JSON, no explanation outside the JSON.
 """
 
 
-def extract_from_notes(ocr_text: str, chapter_name: str) -> dict:
+def extract_from_notes(notes_text: str, topic: str) -> dict:
     """
-    Sends OCR text to the LLM and gets back structured concept book entries.
+    Sends the notes to the LLM and gets back structured concept book entries.
 
-    Parameters:
-        ocr_text    : the raw text from Google Drive OCR
-        chapter_name: used for logging only
-
-    Returns:
-        A dict with keys: new_transformations, new_fragile_concepts,
-        new_exceptions, new_distractors
+    Returns a dict with keys: new_transformations, new_fragile_concepts,
+    new_exceptions, new_distractors
     """
-    print(f"Extracting from {chapter_name}...")
-
-    # This is the same pattern as everywhere else in the pipeline:
-    # client.chat.completions.create() sends a message to the model
-    # and returns a response object. We then parse the text content as JSON.
-    response = client.chat.completions.create(
-        model="DeepSeek-V3.2",
+    print(f"Extracting from {topic} notes ({len(notes_text)} characters)...")
+    prompt = EXTRACTION_PROMPT.format(topic=topic, notes=notes_text)
+    return call_json(lambda: _client().chat.completions.create(
+        model=MODEL,
         messages=[
             {"role": "system", "content": "You are a chemistry knowledge engineer. Output valid JSON only."},
-            {"role": "user",   "content": EXTRACTION_PROMPT}
+            {"role": "user",   "content": prompt}
         ],
         response_format={"type": "json_object"},
         temperature=0.3   # Low temperature = more deterministic, less creative
-    )
-
-    # response.choices[0].message.content is a string containing JSON
-    # json.loads() converts that string into a Python dictionary
-    return json.loads(response.choices[0].message.content.strip())
+    ), _parse_json, label="SambaNova")
 
 
-_CB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "knowledge", "concept_book.json")
-
-
-def merge_into_concept_book(extracted: dict, concept_book_path: str = _CB_PATH):
+def merge_into_concept_book(extracted: dict, concept_book_path: str = _CB_PATH, dry_run: bool = False):
     """
-    Merges extracted entries into the existing concept_book.json.
-
-    HOW MERGING WORKS:
-    - new_transformations → appended to structural_operators.add_reaction_step.valid_transformations
-    - new_fragile_concepts → appended to interpretive_operators.conceptual_fragility.concepts
-    - new_exceptions → appended to interpretive_operators.number_of_exceptions.exceptions
-    - new_distractors → appended to interpretive_operators.distractor_plausibility.distractors
+    Merges extracted entries into concept_book.json, skipping duplicates and entries
+    missing their key field:
+    - new_transformations  → structural_operators.add_reaction_step.valid_transformations  (key: from+to)
+    - new_fragile_concepts → interpretive_operators.conceptual_fragility.concepts           (key: name)
+    - new_exceptions       → interpretive_operators.number_of_exceptions.exceptions          (key: standard_case)
+    - new_distractors      → interpretive_operators.distractor_plausibility.distractors      (key: type)
+    Returns {"added": {...}, "skipped_malformed": {...}}. Writes nothing if dry_run.
     """
-    # json.load() reads a JSON file and converts it to a Python dict
-    with open(concept_book_path, "r", encoding="utf-8") as f:
+    with open(concept_book_path, encoding="utf-8") as f:
         concept_book = json.load(f)
 
-    # Count what we're adding so we can report it
-    added = {"transformations": 0, "fragile_concepts": 0, "exceptions": 0, "distractors": 0}
+    targets = {
+        "transformations": (extracted.get("new_transformations", []),
+                            concept_book["structural_operators"]["add_reaction_step"]["valid_transformations"],
+                            lambda e: (e.get("from"), e.get("to")) if e.get("from") and e.get("to") else None),
+        "fragile_concepts": (extracted.get("new_fragile_concepts", []),
+                             concept_book["interpretive_operators"]["conceptual_fragility"]["concepts"],
+                             lambda e: e.get("name") or None),
+        "exceptions": (extracted.get("new_exceptions", []),
+                       concept_book["interpretive_operators"]["number_of_exceptions"]["exceptions"],
+                       lambda e: e.get("standard_case") or None),
+        "distractors": (extracted.get("new_distractors", []),
+                        concept_book["interpretive_operators"]["distractor_plausibility"]["distractors"],
+                        lambda e: e.get("type") or None),
+    }
+    added, malformed = {}, {}
+    for name, (new_items, existing, key) in targets.items():
+        seen = {key(e) for e in existing if isinstance(e, dict)}
+        added[name] = malformed[name] = 0
+        for item in new_items or []:
+            k = key(item) if isinstance(item, dict) else None
+            if k is None:
+                malformed[name] += 1
+                continue
+            if k not in seen:
+                existing.append(item)
+                seen.add(k)
+                added[name] += 1
 
-    # --- Merge transformations ---
-    existing_txs = concept_book["structural_operators"]["add_reaction_step"]["valid_transformations"]
-    # Build a set of (from, to) pairs already in the book to avoid duplicates
-    existing_pairs = {(t["from"], t["to"]) for t in existing_txs}
-
-    for tx in extracted.get("new_transformations", []):
-        if (tx["from"], tx["to"]) not in existing_pairs:
-            existing_txs.append(tx)
-            existing_pairs.add((tx["from"], tx["to"]))
-            added["transformations"] += 1
-
-    # --- Merge fragile concepts ---
-    existing_concepts = concept_book["interpretive_operators"]["conceptual_fragility"]["concepts"]
-    existing_names = {c["name"] for c in existing_concepts}
-
-    for concept in extracted.get("new_fragile_concepts", []):
-        if concept["name"] not in existing_names:
-            existing_concepts.append(concept)
-            existing_names.add(concept["name"])
-            added["fragile_concepts"] += 1
-
-    # --- Merge exceptions ---
-    existing_exceptions = concept_book["interpretive_operators"]["number_of_exceptions"]["exceptions"]
-    existing_exc_cases = {e["standard_case"] for e in existing_exceptions}
-
-    for exc in extracted.get("new_exceptions", []):
-        if exc["standard_case"] not in existing_exc_cases:
-            existing_exceptions.append(exc)
-            existing_exc_cases.add(exc["standard_case"])
-            added["exceptions"] += 1
-
-    # --- Merge distractors ---
-    existing_distractors = concept_book["interpretive_operators"]["distractor_plausibility"]["distractors"]
-    existing_dist_types = {d["type"] for d in existing_distractors}
-
-    for dist in extracted.get("new_distractors", []):
-        if dist["type"] not in existing_dist_types:
-            existing_distractors.append(dist)
-            existing_dist_types.add(dist["type"])
-            added["distractors"] += 1
-
-    # json.dump() converts the Python dict back to JSON and writes it to the file
-    # indent=2 makes it human-readable (pretty-printed)
-    with open(concept_book_path, "w", encoding="utf-8") as f:
-        json.dump(concept_book, f, indent=2)
-
-    return added
+    if not dry_run:
+        # Atomic write, same format as the committed file (ASCII-escaped, indent 2).
+        write_json_atomic(concept_book_path, concept_book)
+    return {"added": added, "skipped_malformed": malformed}
 
 
 def main():
-    # Step 1: Extract structured entries from the Amines OCR
-    extracted = extract_from_notes(AMINES_OCR, "Amines Lec1")
+    ap = argparse.ArgumentParser(description="Extract concept-book entries from chapter notes.")
+    ap.add_argument("--notes", required=True, help="text file with the notes, e.g. data/notes/amines_lec1.txt")
+    ap.add_argument("--topic", required=True, help="chapter/topic name used in the prompt, e.g. Amines")
+    ap.add_argument("--concept-book", default=_CB_PATH, help="concept book to merge into (organic)")
+    ap.add_argument("--dry-run", action="store_true", help="show what would be added; write nothing")
+    args = ap.parse_args()
 
-    # Show what was extracted before merging
+    if not os.environ.get("SAMBANOVA_KEY_1"):
+        print("ERROR: SAMBANOVA_KEY_1 is not set in .env.")
+        return 1
+    with open(args.notes, encoding="utf-8") as f:
+        notes = f.read()
+
+    extracted = extract_from_notes(notes, args.topic)
     print("\n--- Extracted entries ---")
-    print(f"  New transformations:   {len(extracted.get('new_transformations', []))}")
-    print(f"  New fragile concepts:  {len(extracted.get('new_fragile_concepts', []))}")
-    print(f"  New exceptions:        {len(extracted.get('new_exceptions', []))}")
-    print(f"  New distractors:       {len(extracted.get('new_distractors', []))}")
+    for k in ("new_transformations", "new_fragile_concepts", "new_exceptions", "new_distractors"):
+        print(f"  {k:22s}: {len(extracted.get(k, []) or [])}")
 
-    # Step 2: Merge into concept_book.json
-    added = merge_into_concept_book(extracted)
-
-    print("\n--- Merged into concept_book.json ---")
-    print(f"  Added transformations:   {added['transformations']}")
-    print(f"  Added fragile concepts:  {added['fragile_concepts']}")
-    print(f"  Added exceptions:        {added['exceptions']}")
-    print(f"  Added distractors:       {added['distractors']}")
-
-    # Step 3: Verify final counts
-    with open(_CB_PATH, encoding="utf-8") as f:
-        cb = json.load(f)
-
-    txs   = cb["structural_operators"]["add_reaction_step"]["valid_transformations"]
-    frags = cb["interpretive_operators"]["conceptual_fragility"]["concepts"]
-    excs  = cb["interpretive_operators"]["number_of_exceptions"]["exceptions"]
-    dists = cb["interpretive_operators"]["distractor_plausibility"]["distractors"]
-
-    print(f"\n--- concept_book.json final state ---")
-    print(f"  Total transformations:  {len(txs)}")
-    print(f"  Total fragile concepts: {len(frags)}")
-    print(f"  Total exceptions:       {len(excs)}")
-    print(f"  Total distractors:      {len(dists)}")
+    result = merge_into_concept_book(extracted, args.concept_book, dry_run=args.dry_run)
+    print(f"\n--- {'Would add (dry run, nothing written)' if args.dry_run else 'Added to ' + args.concept_book} ---")
+    for k, n in result["added"].items():
+        bad = result["skipped_malformed"][k]
+        print(f"  {k:18s}: {n}" + (f"   ({bad} malformed entries skipped)" if bad else ""))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

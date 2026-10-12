@@ -17,7 +17,6 @@ Two model-dependent meta-tags (computed from solver outputs):
 """
 
 import json
-import math
 import os
 import re
 
@@ -179,15 +178,3 @@ def compute_meta_tags(
         "model_solution_length":   tag_msl,
         "distractor_plausibility": tag_dp,
     }
-
-
-def archetype_code_from_label(label: str) -> str:
-    """Convert full archetype label to code."""
-    mapping = {
-        "Long Reaction Chains": "I",
-        "Counting/Enumeration": "II",
-        "Deep Mechanistic Reasoning": "III",
-        "Comparative Ranking (GOC)": "IV",
-        "I": "I", "II": "II", "III": "III", "IV": "IV",
-    }
-    return mapping.get(label, "III")

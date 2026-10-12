@@ -1,11 +1,9 @@
 """
-run_graph.py — Graph-wired ground-up generation. Supports --subject {organic,inorganic}.
+run_graph_final.py — Graph-wired generation (older SambaNova + weak/strong design).
+Supports --subject {organic,inorganic,physical}.
 
-Physical Chemistry has no reaction graph (see Phase 0 plan — ground-up only),
-so --subject physical is rejected here; use run_groundup.py --subject physical instead.
-
-Replaces the full concept_book TX dump in the Concept Reasoner with:
-  1. get_paths() call on the reaction knowledge graph → candidate chains
+Uses the same graph traversal as run_groundup_final.py (core/graph_traversal.py):
+  1. sample_chains() on the subject's knowledge graph → candidate chains
   2. coverage.weight() scoring → highest-weight chain passed to the LLM
   3. coverage.on_acceptance() on success → diversity tracking persists
 
@@ -17,10 +15,8 @@ are now selected via --subject (see subject_config.py).
 import argparse
 import json
 import os
-import re
 import sys
 import time
-import random
 from datetime import datetime, timezone
 from openai import OpenAI
 
@@ -32,7 +28,8 @@ except (AttributeError, ValueError):
     pass
 
 from core.blackboard import Blackboard
-from core.graph_traversal import get_paths
+from core.llm import as_bool, as_number, is_rate_limit, is_transient, load_env, parse_json
+from core.graph_traversal import load_graph, sample_chains, chain_txs
 
 from subject_config import (
     get_subject_config,
@@ -42,14 +39,7 @@ from subject_config import (
 )
 
 # ── API clients ───────────────────────────────────────────────────────────────
-_env_path = os.path.join(os.path.dirname(__file__), ".env")
-if os.path.exists(_env_path):
-    with open(_env_path) as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+load_env()   # repo-root .env → os.environ
 
 SAMBANOVA_KEYS = [
     k for k in (
@@ -83,13 +73,14 @@ WEAK_CEILING = 60
 
 
 def api_call(fn, retries=3, base_wait=65):
-    """4-key rotation on 429; exponential backoff when all keys exhausted."""
+    """Key rotation on 429; exponential backoff when all keys are limited or on other
+    transient errors (5xx, timeouts, dropped connections)."""
     global _key_idx
     for attempt in range(retries * len(SAMBANOVA_KEYS)):
         try:
             return fn()
         except Exception as e:
-            if "429" in str(e) or "rate_limit" in str(e).lower():
+            if is_rate_limit(e):
                 next_idx = (_key_idx + 1) % len(SAMBANOVA_KEYS)
                 if next_idx != _key_idx:
                     _key_idx = next_idx
@@ -99,126 +90,39 @@ def api_call(fn, retries=3, base_wait=65):
                     wait = base_wait * (2 ** (attempt // len(SAMBANOVA_KEYS)))
                     print(f"    [all keys limited] waiting {wait}s...")
                     time.sleep(wait)
+            elif is_transient(e):
+                wait = 10 * (2 ** min(attempt, 4))
+                print(f"    [{type(e).__name__}] retrying in {wait}s...")
+                time.sleep(wait)
             else:
                 raise
     raise RuntimeError("SambaNova: exhausted all keys and retries")
 
 
-def parse_llm_json(content: str) -> dict:
-    """Robustly parse a JSON object from LLM output (handles ``` fences,
-    stray markdown, and leading/trailing text). Raises on failure."""
-    if isinstance(content, str):
-        text = content.strip()
-    else:
-        text = str(content).strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE).strip()
-    text = re.sub(r"\s*```$", "", text).strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        try:
-            return json.loads(text[start:end + 1])
-        except json.JSONDecodeError:
-            pass
-    raise ValueError(f"Could not parse JSON from model output: {text[:200]!r}")
+def _unique_graph_id(output_file: str) -> str:
+    """GRAPH_<UTC timestamp>, with _2, _3, ... appended if already used in output_file."""
+    taken = set()
+    if os.path.exists(output_file):
+        with open(output_file, encoding="utf-8") as f:
+            taken = {r.get("question_id") for r in json.load(f)}
+    base = f"GRAPH_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}"
+    qid, n = base, 2
+    while qid in taken:
+        qid, n = f"{base}_{n}", n + 1
+    return qid
 
 
-# ── Graph-based path sampling ──────────────────────────────────────────────────
-
-def _edge_label(edge: dict) -> str:
-    reagents = edge.get("reagents", [])
-    r = reagents[0] if reagents else "?"
-    return f"{edge['from']} →[{r}]→ {edge['to']}"
-
-
-def sample_paths(coverage, config: dict, n_options: int = 6, depth: int = 3,
-                  avoid_nodes: list | None = None) -> list:
-    """
-    Sample candidate reaction chains from the graph, scored by coverage weight.
-
-    Returns list of dicts:
-      { "idx": int, "start": str, "nodes": [str,...], "edges": [str,...],
-        "weight": float, "description": str }
-    Sorted by weight descending (highest = least recently used).
-    """
-    avoid = avoid_nodes or []
-    all_paths = []
-    start_nodes = config["start_nodes"]
-    chapter     = config["default_chapter"]
-    arch_code   = config["default_archetype_code"]
-
-    for start in start_nodes:
-        # archetype/chapter were computed above but never passed here before this fix —
-        # get_paths() silently ignored config["default_archetype_code"]/["default_chapter"]
-        # and traversed every edge regardless of tag, including edges belonging to a
-        # different chapter than the one this run is supposed to be building within.
-        result = get_paths(start, depth=depth, avoid_nodes=avoid,
-                            archetype=arch_code, chapter=chapter)
-        for p in result.get("paths", []):
-            if len(p["edges"]) < 2:
-                continue  # need at least 2 steps for a good chain
-            w = coverage.weight(arch_code, chapter, p["edges"], [])
-            all_paths.append({
-                "start":  start,
-                "nodes":  p["nodes"],
-                "edges":  p["edges"],
-                "weight": w,
-            })
-
-    if not all_paths:
-        return []
-
-    all_paths.sort(key=lambda x: (-x["weight"], random.random()))
-
-    options = []
-    with open(config["graph_path"], encoding="utf-8") as f:
-        graph = json.load(f)
-    edge_map = {e["id"]: e for e in graph["edges"]}
-
-    for i, p in enumerate(all_paths[:n_options]):
-        steps = []
-        for eid in p["edges"]:
-            e = edge_map.get(eid, {})
-            reagents = e.get("reagents", [])
-            r_str = ", ".join(reagents[:2]) if reagents else "?"
-            steps.append(f"{e.get('from','?')} → {e.get('to','?')} [{r_str}]")
-
-        p["idx"] = i
-        p["description"] = " | ".join(steps)
-        options.append(p)
-
-    return options
-
-
-def edges_to_tx_format(edge_ids: list, config: dict) -> list:
-    """Convert graph edge IDs to TX-format dicts for the generator prompt."""
-    with open(config["graph_path"], encoding="utf-8") as f:
-        graph = json.load(f)
-    edge_map = {e["id"]: e for e in graph["edges"]}
-    txs = []
-    for eid in edge_ids:
-        e = edge_map.get(eid, {})
-        txs.append({
-            "from":       e.get("from", "?"),
-            "to":         e.get("to", "?"),
-            "reagents":   e.get("reagents", []),
-            "conditions": e.get("conditions", ""),
-            "notes":      e.get("notes", ""),
-            "chapter":    e.get("chapter", config["default_chapter"]),
-        })
-    return txs
+# Robust JSON from model output (fences, prose around the object): core/llm.parse_json.
+parse_llm_json = parse_json
 
 
 # ── Pipeline functions ──────────────────────────────────────────────────────────
 
-def concept_reasoner(blackboard: Blackboard, path_options: list, config: dict) -> dict:
+def concept_reasoner(blackboard: Blackboard, path_options: list, config: dict,
+                     chapter: str = None) -> dict:
     context = blackboard.context_summary()
     tried   = blackboard.operators_tried()
-    chapter = config["default_chapter"]
+    chapter = chapter or config["default_chapter"]
     arch    = config["default_archetype"]
     code    = config["default_archetype_code"]
 
@@ -276,9 +180,9 @@ Return JSON:
 
 
 def generator(blackboard: Blackboard, selected_txs: list, chain_desc: str,
-              attempt_num: int, config: dict) -> dict:
+              attempt_num: int, config: dict, chapter: str = None) -> dict:
     last = blackboard.last_attempt()
-    chapter = config["default_chapter"]
+    chapter = chapter or config["default_chapter"]
     arch    = config["default_archetype"]
     code    = config["default_archetype_code"]
 
@@ -315,6 +219,15 @@ Chain: {chain_desc}
 
 Reaction steps to incorporate:
 {tx_detail}
+
+HOW TO USE THESE STEPS — they form ONE chain, in order (field "step"):
+- Each step is a general transformation from the concept book. Its from/to may name a
+  class or an example compound; the example is an illustration, not a requirement.
+- Carry the compound forward: apply step N+1 to the ACTUAL product of step N, not to the
+  example compound written in step N+1's entry. ("joins_previous_compound": true means the
+  entries already name the same compound; false means you must make them join.)
+- If a step cannot apply to the actual product of the step before it, choose a different
+  starting compound/system so that every step applies. Never silently skip a step.
 
 MANDATORY INTERNAL CHECKS — do these BEFORE writing the question:
 {config['mandatory_checks_block']}
@@ -380,7 +293,7 @@ Return JSON:
         response_format={"type": "json_object"},
         temperature=0.0
     ))
-    blind = json.loads(blind_resp.choices[0].message.content.strip())
+    blind = parse_llm_json(blind_resp.choices[0].message.content)
 
     compare_prompt = f"""You are an expert {role} verifier. You have already solved
 the problem independently (shown below). Now compare your solution to the candidate solution
@@ -425,7 +338,7 @@ Return JSON:
         response_format={"type": "json_object"},
         temperature=0.0
     ))
-    result = json.loads(compare_resp.choices[0].message.content.strip())
+    result = parse_llm_json(compare_resp.choices[0].message.content)
     result["independent_solution"] = blind.get("independent_solution", "")
     result["blind_formula_trace"]  = blind.get("formula_trace", [])
     result["blind_final_answer"]   = blind.get("final_answer", "")
@@ -536,7 +449,7 @@ Return JSON:
         response_format={"type": "json_object"},
         temperature=0.0
     ))
-    blind = json.loads(blind_resp.choices[0].message.content.strip())
+    blind = parse_llm_json(blind_resp.choices[0].message.content)
 
     score_prompt = f"""You are scoring a JEE Advanced chemistry problem answer.
 
@@ -570,14 +483,14 @@ Return JSON:
         response_format={"type": "json_object"},
         temperature=0.0
     ))
-    scored = json.loads(score_resp.choices[0].message.content.strip())
+    scored = parse_llm_json(score_resp.choices[0].message.content)
 
     return {
         "attempted_solution":       blind.get("attempted_solution", ""),
         "blind_final_answer":       blind.get("final_answer", ""),
         "blind_formula_trace":      blind.get("formula_trace", []),
         "score":                    scored.get("score"),
-        "reference_correct":        scored.get("reference_correct", True),
+        "reference_correct":        as_bool(scored.get("reference_correct"), default=True),
         "disagreement_explanation": scored.get("disagreement_explanation", ""),
         "reasoning":                scored.get("reasoning", ""),
     }
@@ -588,9 +501,12 @@ Return JSON:
 def parse_args():
     parser = argparse.ArgumentParser(description="Graph-wired JEE Advanced question generation.")
     parser.add_argument(
-        "--subject", choices=["organic", "inorganic"], default="organic",
-        help="Which subject's knowledge graph to use. Physical has no graph — "
-             "use run_groundup.py --subject physical instead."
+        "--subject", choices=["organic", "inorganic", "physical"], default="organic",
+        help="Which subject's knowledge graph to use."
+    )
+    parser.add_argument(
+        "--chapter", default=None,
+        help="Restrict chains to one chapter. Default: the whole graph."
     )
     return parser.parse_args()
 
@@ -605,15 +521,14 @@ def main():
         print("  OpenRouter-based entrypoint run_groundup_final.py instead.")
         return
 
-    if config["graph_path"] is None:
-        print(f"ERROR: --subject {args.subject} has no reaction graph. "
-              f"Use run_groundup.py --subject {args.subject} instead.")
-        return
-
     if not os.path.exists(config["graph_path"]):
         print(f"ERROR: {config['graph_path']} not found.")
-        print(f"Run `python3 tools/build_graph.py --subject {args.subject}` first (Phase 0).")
+        print(f"Build it first:  python tools/build_graph.py --subject {args.subject}")
         return
+
+    graph = load_graph(config["graph_path"])
+    with open(config["concept_book_path"], encoding="utf-8") as f:
+        book_txs = json.load(f)["structural_operators"]["add_reaction_step"]["valid_transformations"]
 
     MAX_RETRIES = 3
     OUTPUT_FILE = config["output_file"]
@@ -621,9 +536,10 @@ def main():
     coverage = load_coverage_for_subject(config)
     print(f"Coverage loaded ({args.subject}): {coverage.total_accepted()} questions accepted so far.")
 
-    chapter = config["default_chapter"]
     arch    = config["default_archetype"]
     code    = config["default_archetype_code"]
+    chapter = args.chapter      # None → chains from the whole graph, any chapter
+    scope_label = chapter or "all chapters (chains follow graph connections)"
 
     topic_anchor = {
         "question_index": f"GRAPH_{config['seed_id_prefix']}",
@@ -631,8 +547,8 @@ def main():
         "answer":    None,
         "archetype": arch,
         "archetype_code": code,
-        "chapter":   chapter,
-        "sub_topic": chapter,
+        "chapter":   scope_label,
+        "sub_topic": scope_label,
     }
 
     target_profile = {
@@ -644,11 +560,12 @@ def main():
     blackboard = Blackboard(topic_anchor, arch, target_profile)
 
     print("\n══════════════════════════════════════════════════════")
-    print(f" GRAPH-WIRED GENERATION [{config['display_name']}]: {chapter} / Archetype {code}")
+    print(f" GRAPH-WIRED GENERATION [{config['display_name']}]: {scope_label} / Archetype {code}")
     print("══════════════════════════════════════════════════════\n")
 
     print("Sampling candidate chains from reaction graph...")
-    path_options = sample_paths(coverage, config, n_options=6, depth=3)
+    path_options = sample_chains(graph, coverage, code, chapter, config["start_nodes"],
+                                 n_options=6, depth=3)
     if not path_options:
         print("ERROR: No paths found in reaction graph. Check graph coverage for this subject.")
         return
@@ -663,25 +580,40 @@ def main():
     for attempt in range(1, MAX_RETRIES + 2):
         print(f"── Attempt {attempt} ─────────────────────────────────")
 
-        print("Concept reasoner (RLM)...")
-        cr = concept_reasoner(blackboard, path_options, config)
-        path_idx = cr.get("selected_path_idx", 0)
+        try:
+            print("Concept reasoner (RLM)...")
+            cr = concept_reasoner(blackboard, path_options, config, chapter=scope_label)
+            try:
+                path_idx = int(cr.get("selected_path_idx", 0))
+            except (TypeError, ValueError):
+                path_idx = 0
+            if not 0 <= path_idx < len(path_options):
+                path_idx = 0
 
-        if not isinstance(path_idx, int) or path_idx >= len(path_options):
-            path_idx = 0
+            selected_path = path_options[path_idx]
+            chain_desc    = cr.get("chain_description", selected_path["description"])
+            selected_txs  = chain_txs(graph, selected_path["edges"], book_txs)
+            chain_label   = " → ".join(selected_path["chapters"]) or scope_label
 
-        selected_path = path_options[path_idx]
-        chain_desc    = cr.get("chain_description", selected_path["description"])
-        selected_txs  = edges_to_tx_format(selected_path["edges"], config)
+            print(f"  Selected Path {path_idx}: {selected_path['description']}")
+            print(f"  Chain: {chain_desc}")
 
-        print(f"  Selected Path {path_idx}: {selected_path['description']}")
-        print(f"  Chain: {chain_desc}")
+            print("Generator...")
+            gen = generator(blackboard, selected_txs, chain_desc, attempt, config, chapter=chain_label)
+            if not gen.get("problem") or not gen.get("solution"):
+                raise ValueError("generator returned no problem/solution")
 
-        print("Generator...")
-        gen = generator(blackboard, selected_txs, chain_desc, attempt, config)
-
-        print("Verifier (blind pass 1 + invariant checks pass 2)...")
-        ver = verifier(gen["problem"], gen["solution"], config)
+            print("Verifier (blind pass 1 + invariant checks pass 2)...")
+            ver = verifier(gen["problem"], gen["solution"], config)
+        except Exception as e:
+            # Malformed JSON, API error, missing field: this attempt is lost, the run is not.
+            print(f"  attempt {attempt} error: {type(e).__name__}: {e}")
+            if attempt > MAX_RETRIES:
+                print(f"\n✗ Max retries ({MAX_RETRIES}) reached without acceptance.")
+                break
+            continue
+        # The model writes the verdict; anything but a clear PASS counts as FAIL.
+        ver["verdict"] = "PASS" if str(ver.get("verdict", "")).strip().upper().startswith("PASS") else "FAIL"
         print(f"  Verdict: {ver['verdict']} | Difficulty: {ver.get('difficulty_rating','?')}")
         if ver["verdict"] == "FAIL":
             print(f"  Flaw: {ver.get('semantic_flaws','')[:120]}")
@@ -694,7 +626,7 @@ def main():
         try:
             wk_blind   = weak_solver(gen["problem"], config)
             wk_grade   = grade_answer(gen["problem"], gen["solution"], wk_blind, config)
-            weak_score = wk_grade.get("score")
+            weak_score = as_number(wk_grade.get("score"))
         except Exception as e:
             print(f"  Weak solver error: {e}")
             weak_score = None
@@ -703,8 +635,8 @@ def main():
         print("Strong solver — blind first...")
         try:
             st           = strong_solver(gen["problem"], gen["solution"], config)
-            strong_score = st.get("score")
-            ref_correct  = st.get("reference_correct", True)
+            strong_score = as_number(st.get("score"))
+            ref_correct  = as_bool(st.get("reference_correct"), default=True)
             strong_trace = st.get("attempted_solution", "")
         except Exception as e:
             print(f"  Strong solver error: {e}")
@@ -739,31 +671,26 @@ def main():
               f"ref_ok={'✓' if gate_ref_ok else '✗'}")
 
         if gate_verifier and gate_strong and gate_weak and gate_ref_ok:
-            accepted = True
-
-            meta = compute_meta_tags_for_subject(
-                config,
-                question_text    = gen["problem"],
-                archetype_code   = code,
-                solver_trace     = strong_trace,
-                fragility_weight = None,
-            )
-
-            coverage.on_acceptance(
-                archetype = code,
-                chapter   = chapter,
-                edges     = selected_path["edges"],
-                concepts  = [],
-            )
-            save_coverage(coverage, config)
-            print(f"  Coverage updated. Total accepted: {coverage.total_accepted()}")
+            # Meta-tags are labels: an error is recorded, it does not lose the question.
+            try:
+                meta, meta_error = compute_meta_tags_for_subject(
+                    config,
+                    question_text    = gen["problem"],
+                    archetype_code   = code,
+                    solver_trace     = strong_trace,
+                    fragility_weight = None,
+                ), None
+            except Exception as e:
+                meta, meta_error = None, f"{type(e).__name__}: {e}"
+                print(f"  [warn] meta-tags failed ({meta_error}); saving the question without them.")
 
             record = {
-                "question_id":       f"GRAPH_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}",
+                "question_id":       _unique_graph_id(OUTPUT_FILE),
                 "seed_id":           f"GRAPH_{config['seed_id_prefix']}",
                 "generation_mode":   "graph_wired",
                 "subject":           args.subject,
-                "chapter":           chapter,
+                "chapter":           chain_label,
+                "chapters":          selected_path["chapters"],
                 "archetype":         arch,
                 "archetype_code":    code,
                 "graph_path":        selected_path["nodes"],
@@ -779,17 +706,34 @@ def main():
                 "verifier_verdict":  ver["verdict"],
                 "verifier_difficulty": ver.get("difficulty_rating", "?"),
                 "meta_tags":         meta,
+                **({"meta_tags_error": meta_error} if meta_error else {}),
                 "attempt_history":   blackboard.history(),
                 "generated_at":      datetime.now(timezone.utc).isoformat(),
             }
 
             existing = []
             if os.path.exists(OUTPUT_FILE):
-                with open(OUTPUT_FILE) as f:
+                with open(OUTPUT_FILE, encoding="utf-8") as f:
                     existing = json.load(f)
             existing.append(record)
-            with open(OUTPUT_FILE, "w") as f:
-                json.dump(existing, f, indent=2)
+            tmp = OUTPUT_FILE + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(existing, f, indent=2, ensure_ascii=False)
+            os.replace(tmp, OUTPUT_FILE)
+            accepted = True   # only once the record is really written
+
+            # Coverage after the record, so it never counts a question that was not saved.
+            try:
+                coverage.on_acceptance(
+                    archetype = code,
+                    chapter   = chain_label,
+                    edges     = selected_path["edges"],
+                    concepts  = [],
+                )
+                save_coverage(coverage, config)
+                print(f"  Coverage updated. Total accepted: {coverage.total_accepted()}")
+            except Exception as e:
+                print(f"  [warn] question saved, but updating coverage failed: {type(e).__name__}: {e}")
 
             print(f"\n✓ ACCEPTED on attempt {attempt}")
             print(f"  Meta-tags: {meta}")

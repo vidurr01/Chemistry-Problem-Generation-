@@ -18,12 +18,14 @@ Usage:
     d = cov.to_dict()                   # persist to disk
 """
 
+from __future__ import annotations
+
 import json
 import math
 from collections import defaultdict
 from pathlib import Path
 
-_SAVE_PATH = Path(__file__).parent.parent / "coverage_state.json"
+_SAVE_PATH = Path(__file__).parent.parent / "outputs" / "coverage_state.json"
 
 
 class Coverage:
@@ -47,17 +49,19 @@ class Coverage:
         w = prod(1/(count+1)) across the 4 dimensions.
         Range: (0, 1]. Equals 1.0 only if none of the 4 have been seen before.
         """
-        w_arch    = 1.0 / (self._archetype[archetype] + 1)
-        w_chapter = 1.0 / (self._chapter[chapter] + 1)
+        # .get(), not [...]: reading a defaultdict inserts a zero entry, which would bloat
+        # the saved state with every candidate ever scored.
+        w_arch    = 1.0 / (self._archetype.get(archetype, 0) + 1)
+        w_chapter = 1.0 / (self._chapter.get(chapter, 0) + 1)
 
         # For multi-edge/multi-concept, use the minimum weight (most-seen controls)
         if edges:
-            w_edge = min(1.0 / (self._edge[e] + 1) for e in edges)
+            w_edge = min(1.0 / (self._edge.get(e, 0) + 1) for e in edges)
         else:
             w_edge = 1.0
 
         if concepts:
-            w_concept = min(1.0 / (self._concept[c] + 1) for c in concepts)
+            w_concept = min(1.0 / (self._concept.get(c, 0) + 1) for c in concepts)
         else:
             w_concept = 1.0
 
@@ -128,8 +132,13 @@ class Coverage:
         return cov
 
     def save(self, path: Path | str = _SAVE_PATH) -> None:
-        with open(path, "w", encoding="utf-8") as f:
+        """Write via a temp file so an interrupted save never corrupts the state."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
+        tmp.replace(path)
 
     @classmethod
     def load(cls, path: Path | str = _SAVE_PATH) -> "Coverage":
