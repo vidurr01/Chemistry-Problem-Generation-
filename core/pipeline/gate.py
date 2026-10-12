@@ -67,6 +67,26 @@ def _same(kind: str, expected, got) -> bool:
     return _num_eq(expected, got)
 
 
+def _squash(s: str) -> str:
+    return " ".join(str(s).replace(" ", " ").split()).lower()
+
+
+def compare_fact(stem: str, fq) -> dict:
+    """A fact question passes when the stem contains the question sentence and every
+    option exactly (whitespace and case aside). Checked in code; no extraction needed,
+    because code wrote the options."""
+    text = _squash(stem)
+    mismatches = []
+    if _squash(fq.lead) not in text:
+        mismatches.append(f"the question sentence must appear exactly: {fq.lead}")
+    for line in fq.option_lines:
+        if _squash(line) not in text:
+            mismatches.append(f"option missing or altered: {line}")
+    if re.search(r"\b(answer|correct option)\s*(is|:)\s*\(?[A-D]\)?", stem, re.IGNORECASE):
+        mismatches.append("the stem reveals the answer")
+    return {"ok": not mismatches, "unreadable": False, "mismatches": mismatches}
+
+
 def compare(spec: list, values: dict, extraction: dict, correct_option: int, constants: list) -> dict:
     """{"ok": bool, "unreadable": bool, "mismatches": [str, ...]}."""
     if not isinstance(extraction, dict) or not isinstance(extraction.get("values"), dict):

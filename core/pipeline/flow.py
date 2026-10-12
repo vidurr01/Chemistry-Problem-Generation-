@@ -62,15 +62,28 @@ def trace_text(result) -> str:
     return "\n".join(lines)
 
 
-def knowledge_hint(plan) -> str:
-    rels = [st.formula for st in plan.steps if st.formula]
+def _fact_source(cand):
+    from core.engine.physical.facts_data import BY_ID
+    return BY_ID[cand["nodes"][0]]
+
+
+def knowledge_hint(cand) -> str:
+    """The knowledge a question rests on, written by code: the chain's relations, or for a
+    fact question, true facts from the same table (solving after this tags it 'recall')."""
+    if "_fact" in cand:
+        true, _ = _fact_source(cand).statements()
+        return "Facts that may help: " + " ".join(s for s, _, _ in true[:8])
+    rels = [st.formula for st in cand["_plan"].steps if st.formula]
     return "Relations that may help: " + "; ".join(rels) + "."
 
 
-def insight_hint(plan, failed_step) -> str:
+def insight_hint(cand, failed_step) -> str:
     """Names the kind of step, never the result: written by code from the step and one
     of its listed mistakes."""
-    steps = plan.steps
+    if "_fact" in cand:
+        return (f"Judge each statement on its own against what you know about {_fact_source(cand).title}; "
+                f"check every detail of a statement, not just its general idea.")
+    steps = cand["_plan"].steps
     idx = (failed_step - 1) if isinstance(failed_step, int) and 1 <= failed_step <= len(steps) else None
     if idx is None:
         idx = max((i for i, s in enumerate(steps) if s.traps), default=len(steps) - 1)
@@ -235,7 +248,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
             kind = "genuine_difficulty"
 
         if kind == "missing_knowledge":
-            hint = knowledge_hint(plan)
+            hint = knowledge_hint(cand)
             re_ = stages.solve_with_hint(g, stem, hint)
             ok = answers.matches(result.answer, re_["final_answer"], result.kind)
             hint_log.append({"member": g["name"], "hint": "knowledge", "text": hint, "solved": ok,
@@ -247,7 +260,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
             kind = "genuine_difficulty"
 
         # genuine difficulty: always confirmed with the code-written insight hint
-        hint = insight_hint(plan, d.get("failed_step"))
+        hint = insight_hint(cand, d.get("failed_step"))
         re_ = stages.solve_with_hint(g, stem, hint)
         ok = answers.matches(result.answer, re_["final_answer"], result.kind)
         entry = {"member": g["name"], "hint": "insight", "text": hint, "solved": ok, "answer": re_["final_answer"]}
@@ -285,34 +298,75 @@ def _solved_summary(graded) -> str:
     return "\n".join(out) or "(none)"
 
 
+def _fact_stem_and_gate(adapter, cand, bb, previous=None, feedback=None):
+    """Stem for a fact question; the gate is code: question sentence and options verbatim."""
+    fq = cand["_fact"]
+    src = _fact_source(cand)
+    for attempt in range(GATE_RETRIES + 1):
+        stem = stages.write_fact_stem(adapter.config["display_name"], src.title, fq.lead, fq.option_lines,
+                                      previous=previous, feedback=feedback)
+        g = gate.compare_fact(stem, fq)
+        bb.note("gate", attempt=attempt + 1, stem=stem, ok=g["ok"], mismatches=g["mismatches"], unreadable=False)
+        if g["ok"]:
+            print(f"    gate passed (attempt {attempt + 1})")
+            return stem, None
+        print(f"    gate mismatch ({attempt + 1}/{GATE_RETRIES + 1}): {'; '.join(g['mismatches'])[:200]}")
+        previous, feedback = stem, "Fix these problems: " + "; ".join(g["mismatches"])
+    return None, "gate_failed"
+
+
+def _fact_values(cand) -> dict:
+    fq = cand["_fact"]
+    return {"source": fq.source, "mode": fq.mode, "lead": fq.lead, "options": list(fq.options),
+            "truth": list(fq.truth), "answer": fq.answer, "traps": list(fq.traps), "tx": list(fq.tx),
+            "topic": fq.topic}
+
+
+def _signature(adapter, cand, values):
+    if adapter.kind == "facts":
+        return dedup.signature(adapter.subject, [values["source"]], {"options": values["options"]})
+    return dedup.signature(adapter.subject, cand["txs"], values)
+
+
 def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
-    """Try up to MAX_CHAINS chains. Returns {"status": "accepted", "payload"} or
-    {"status": "none"}. Raises Parked."""
+    """Try up to MAX_CHAINS question ideas (chains, or fact sources for a fact adapter).
+    Returns {"status": "accepted", "payload"} or {"status": "none"}. Raises Parked."""
     rng = rng or random.Random()
+    facts = adapter.kind == "facts"
     cands = adapter.candidates(coverage, chapter, n=MAX_CHAINS * 4, exclude=bb.tried_edges())
     if not cands:
-        print("  no computable chains available")
+        print("  no question ideas available")
         return {"status": "none"}
     for chain_no, cand in enumerate(cands[:MAX_CHAINS], 1):
-        print(f"\n╔═══ CHAIN {chain_no}: {' → '.join(cand['nodes'])}  (txs {cand['txs']}) ═══╗")
+        label = f"FACT QUESTION: {cand['description']} ({cand['_fact'].mode})" if facts else \
+            f"CHAIN {chain_no}: {' → '.join(cand['nodes'])}  (txs {cand['txs']})"
+        print(f"\n╔═══ {label} ═══╗")
         bb.start_chain(cand)
-        plan = cand["_plan"]
-        spec = adapter.input_spec(plan)
-        print("  [inputs] generator proposes values...")
-        picked = _propose(adapter, cand, spec, bb, log)
-        if picked is None:
-            continue
-        values, scenario, result = picked
+        plan = cand.get("_plan")
+        if facts:
+            spec, scenario = [], ""
+            values, result = _fact_values(cand), adapter.result(cand["_fact"])
+            bb.note("inputs", values=values, answer=result.answer)
+        else:
+            spec = adapter.input_spec(plan)
+            print("  [inputs] generator proposes values...")
+            picked = _propose(adapter, cand, spec, bb, log)
+            if picked is None:
+                continue
+            values, scenario, result = picked
         print(f"  [engine] answer {answer_text(result)}; traps: {[t['id'] for t in result.traps]}")
         previous = feedback = None
         while True:
             print(f"  [stem] round {bb.current['rounds']}: writing the question...")
-            stem, why = _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng,
-                                       previous=previous, feedback=feedback)
+            if facts:
+                stem, why = _fact_stem_and_gate(adapter, cand, bb, previous=previous, feedback=feedback)
+            else:
+                stem, why = _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng,
+                                           previous=previous, feedback=feedback)
             if stem is None:
                 log({"event": why, "chain": cand["edges"]})
                 break
-            sig = dedup.signature(adapter.subject, cand["txs"], values)
+            sig = _signature(adapter, cand, values)
             dup = dedup.duplicate_of(sig)
             if dup:
                 print(f"  [dedup] same inputs as accepted question {dup}; choosing new inputs")
@@ -346,11 +400,19 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             if choice["mode"] == "reword":
                 previous, feedback = stem, "Too easy: " + choice["feedback"]
                 continue
-            picked = _propose(adapter, cand, spec, bb, log,
-                              refine={"values": values, "summary": choice["feedback"]})
-            if picked is None:
-                break
-            values, scenario, result = picked
+            if facts:
+                try:
+                    cand = adapter.rebuild(cand)
+                except EngineError:
+                    break
+                values, result = _fact_values(cand), adapter.result(cand["_fact"])
+                bb.note("inputs", values=values, answer=result.answer)
+            else:
+                picked = _propose(adapter, cand, spec, bb, log,
+                                  refine={"values": values, "summary": choice["feedback"]})
+                if picked is None:
+                    break
+                values, scenario, result = picked
             print(f"  [engine] new answer {answer_text(result)}")
             previous = feedback = None
     return {"status": "none"}

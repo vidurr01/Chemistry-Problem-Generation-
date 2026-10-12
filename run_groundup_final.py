@@ -101,6 +101,7 @@ def build_record(subject, config, payload, bb):
     record = {
         "question_id": _unique_id("GEN", _taken_ids(config, subject)),
         "generation_mode": "engine_council",
+        "question_kind": "fact" if "_fact" in cand else "chain",
         "subject": subject,
         "chapter": " → ".join(cand["chapters"]),
         "chapters": cand["chapters"],
@@ -122,6 +123,8 @@ def build_record(subject, config, payload, bb):
         "engine": {"txs": cand["txs"], "graph_edges": cand["edges"], "graph_path": cand["nodes"],
                    "scenario": payload["scenario"], "givens": payload["values"], "constants": result.constants,
                    "trace": result.trace, "traps": result.traps, "asks": result.asks},
+        **({"options": [f"({chr(65 + i)}) {o}" for i, o in enumerate(payload["values"]["options"])],
+            "fact_mode": payload["values"]["mode"]} if "_fact" in cand else {}),
         "rounds": bb.current["rounds"],
         "meta_tags": meta,
         **({"meta_tags_error": meta_error} if meta_error else {}),
@@ -179,6 +182,24 @@ def park(config, item):
     return item["pending_id"]
 
 
+def _rebuild_parked(item, chain_adapter, config, rng):
+    """(adapter, cand, plan, result) for a parked question, recomputed from its inputs."""
+    if item.get("kind") == "fact":
+        from core.engine.facts import FactQuestion
+        fa = adapter_for(item["subject"], config, rng, kind="facts")
+        v = item["values"]
+        fq = FactQuestion(source=v["source"], tx=tuple(v["tx"]), topic=v["topic"], mode=v["mode"], lead=v["lead"],
+                          options=v["options"], truth=v["truth"], answer=v["answer"], traps=v["traps"])
+        cand = {"edges": item["edges"], "nodes": item["nodes"], "chapters": item["chapters"], "txs": item["txs"],
+                "trap_ids": [], "description": "", "_fact": fq}
+        return fa, cand, None, fa.result(fq)
+    plan = chain_adapter.plan(item["txs"])
+    result = chain_adapter.compute(plan, item["values"])
+    cand = {"edges": item["edges"], "nodes": item["nodes"], "chapters": item["chapters"],
+            "txs": item["txs"], "trap_ids": item.get("trap_ids", []), "_plan": plan}
+    return chain_adapter, cand, plan, result
+
+
 def recheck_pending(subject, config, adapter, coverage, log):
     """Judge parked questions (oldest first) before generating anything new.
     Returns 'accepted', 'failed', 'save_failed' or 'empty'."""
@@ -193,20 +214,17 @@ def recheck_pending(subject, config, adapter, coverage, log):
             continue
         print(f"\n╔═══ PENDING {item['pending_id']} — judging again ═══╗")
         try:
-            plan = adapter.plan(item["txs"])
-            result = adapter.compute(plan, item["values"])
-        except EngineError as e:
+            item_adapter, cand, plan, result = _rebuild_parked(dict(item, subject=subject), adapter, config, adapter.rng)
+        except (EngineError, KeyError, TypeError) as e:
             print(f"  cannot recompute ({e}); dropping")
             pending.pop(0)
             write_json_atomic(config["pending_file"], pending, ensure_ascii=False)
             continue
-        cand = {"edges": item["edges"], "nodes": item["nodes"], "chapters": item["chapters"],
-                "txs": item["txs"], "trap_ids": item.get("trap_ids", []), "_plan": plan}
         bb = Blackboard(subject)
         bb.start_chain(cand)
         bb.current["rounds"] = item.get("rounds", 0)
         try:
-            decision = flow.judge(adapter, cand, plan, item["values"], result, item["stem"], bb, log)
+            decision = flow.judge(item_adapter, cand, plan, item["values"], result, item["stem"], bb, log)
         except flow.Parked as p:
             item["recheck_failures"] = item.get("recheck_failures", 0) + 1
             item["last_error"] = p.item.get("error")
@@ -216,7 +234,7 @@ def recheck_pending(subject, config, adapter, coverage, log):
         if decision["decision"] == "accept":
             payload = {"cand": cand, "plan": plan, "values": item["values"], "scenario": item.get("scenario", ""),
                        "result": result, "stem": item["stem"], "decision": decision,
-                       "sig": dedup.signature(subject, item["txs"], item["values"])}
+                       "sig": flow._signature(item_adapter, cand, item["values"])}
             try:
                 save_accepted(subject, config, coverage, payload, bb, log)
             except Exception as e:
@@ -240,6 +258,8 @@ def parse_args():
     ap.add_argument("--chapter", default=None,
                     help="restrict chains to one chapter of the subject's graph (default: whole graph)")
     ap.add_argument("--seed", type=int, default=None, help="random seed (chain and option order)")
+    ap.add_argument("--kind", choices=["auto", "chains", "facts"], default="auto",
+                    help="question kind; auto makes a fact (MCQ/MSQ) question in the subject's fact_share of runs")
     return ap.parse_args()
 
 
@@ -258,6 +278,17 @@ def main():
     except NotImplementedError as e:
         print(f"ERROR: {e}.")
         return EXIT_CONFIG_ERROR
+    kind = args.kind
+    if kind == "auto":
+        kind = "facts" if rng.random() < config.get("fact_share", 0.0) else "chains"
+    run_adapter = adapter
+    if kind == "facts":
+        try:
+            run_adapter = adapter_for(args.subject, config, rng, kind="facts")
+        except NotImplementedError as e:
+            print(f"ERROR: {e}.")
+            return EXIT_CONFIG_ERROR
+    print(f"Question kind this run: {kind}")
     if args.chapter and args.chapter not in adapter.graph.chapters():
         print(f"ERROR: no chapter {args.chapter!r}. Chapters: {adapter.graph.chapters()}")
         return EXIT_CONFIG_ERROR
@@ -273,12 +304,13 @@ def main():
 
     bb = Blackboard(args.subject)
     try:
-        outcome = flow.run(adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+        outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
     except flow.Parked as p:
         cand = bb.current["chain"] if bb.current else {}
         last_inputs = bb.last("inputs") or {}
         last_gate = bb.last("gate") or {}
-        pid = park(config, {"error": p.item.get("error"), "txs": cand.get("txs"), "edges": cand.get("edges"),
+        pid = park(config, {"error": p.item.get("error"), "kind": "fact" if kind == "facts" else "chain",
+                            "txs": cand.get("txs"), "edges": cand.get("edges"),
                             "nodes": cand.get("nodes"), "chapters": cand.get("chapters"),
                             "trap_ids": cand.get("trap_ids"), "values": last_inputs.get("values"),
                             "scenario": last_inputs.get("scenario"), "stem": last_gate.get("stem"),

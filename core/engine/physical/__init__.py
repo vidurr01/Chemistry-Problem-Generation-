@@ -123,6 +123,7 @@ NEW_NODE_NAMES = {
     "osmotic_pressure":    "osmotic pressure",
     "relative_lowering":   "relative lowering of vapour pressure",
     "ostwald_walker":      "Ostwald-Walker measurement",
+    "equilibrium_reaction": "equilibrium reaction (states, ΔH)",
 }
 
 

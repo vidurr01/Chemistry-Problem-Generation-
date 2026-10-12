@@ -181,8 +181,12 @@ name; the inputs left over are exactly what the question must give.
 - **Constants** (R, F, N_A, half-lives, molar volume, atomic masses) are always stated in the
   question, so a convention can never turn a right answer wrong.
 
-Physical: 262 steps across all twelve chapters; 87 concept-book entries are facts,
-classifications or plot readings and are not chain steps.
+Physical: 267 steps across all twelve chapters. Steps that cannot join a chain are asked
+on their own. The 82 entries that are facts, classifications or plot readings become
+**fact questions**: four statements built by code from category tables or true/false pools,
+asked as "one or more correct", "exactly one correct" or "exactly one incorrect", with the
+answer key as option letters. A quarter of physical runs make a fact question
+(`--kind facts|chains` forces one kind).
 
 ---
 

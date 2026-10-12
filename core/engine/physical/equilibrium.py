@@ -102,7 +102,71 @@ def _precipitates(v, dilute=True):
     return "precipitate forms" if _mixing_q(v, dilute) > v["solubility_product"] else "no precipitate"
 
 
+_CHANGES = {
+    "increase the pressure by compression": "pressure+",
+    "decrease the pressure by expansion": "pressure-",
+    "increase the temperature": "temperature+",
+    "decrease the temperature": "temperature-",
+    "add more of a reactant": "reactant+",
+    "remove some product": "product-",
+    "add more of a product": "product+",
+    "add an inert gas at constant volume": "inert_V",
+    "add an inert gas at constant pressure": "inert_P",
+    "add a catalyst": "catalyst",
+}
+
+
+def _le_chatelier(v, wrong=None):
+    """Direction an equilibrium shifts: 'forward', 'backward' or 'no shift'."""
+    from core.engine.physical.thermo import _dn_all, _dng
+    eq, dh, change = v["balanced_equation"], v["delta_h"], _CHANGES[v["change"]]
+    dn = _dn_all(eq) if wrong == "counts_condensed" else _dng(eq)
+    sign = lambda x: "forward" if x > 0 else ("backward" if x < 0 else "no shift")
+    if change == "pressure+":
+        return sign(-dn)
+    if change == "pressure-":
+        return sign(dn)
+    if change == "temperature+":
+        return sign(dh)
+    if change == "temperature-":
+        return sign(-dh)
+    if change in ("reactant+", "product-"):
+        return "forward"
+    if change == "product+":
+        return "backward"
+    if change == "inert_V":
+        return sign(dn) if wrong == "inert_like_pressure" else "no shift"
+    if change == "inert_P":
+        return "no shift" if wrong == "inert_like_pressure" else sign(dn)
+    return "no shift"
+
+
+def _le_chatelier_step(tx, changes, what):
+    return Step(
+        tx=tx, src="equilibrium_reaction", dst="direction_of_shift",
+        needs=(P("balanced_equation", "", "the equilibrium with the state of every species, e.g. "
+                 "'N2(g) + 3H2(g) -> 2NH3(g)'", kind="text"),
+               P("delta_h", "kJ mol⁻¹", "ΔH of the forward reaction", kind="real", lo=-300, hi=300),
+               P("change", "", f"the change made ({what})", kind="choice", choices=tuple(changes))),
+        answer="direction_of_shift", unit="", kind="text",
+        fn=lambda v: {"direction_of_shift": _le_chatelier(v)},
+        traps=(Trap("counts_condensed", "counts solids and liquids in Δn", lambda v: _le_chatelier(v, "counts_condensed")),
+               Trap("inert_like_pressure", "treats inert gas at constant volume like a pressure rise (or at "
+                    "constant pressure as having no effect)", lambda v: _le_chatelier(v, "inert_like_pressure")),
+               Trap("reversed", "shifts towards the side that adds to the disturbance",
+                    lambda v: {"forward": "backward", "backward": "forward"}.get(_le_chatelier(v), "forward"))),
+        formula="Le Chatelier: the shift opposes the change; pressure acts through Δn_g, temperature through the sign of ΔH",
+        asks="direction in which the equilibrium shifts (forward, backward or no shift)")
+
+
+_C = list(_CHANGES)
+
 STEPS = [
+    _le_chatelier_step(161, _C[4:7] + _C[9:], "a concentration change or a catalyst"),
+    _le_chatelier_step(162, _C[0:2] + _C[9:], "a pressure change"),
+    _le_chatelier_step(164, _C[7:9] + _C[0:1], "adding an inert gas"),
+    _le_chatelier_step(166, _C[0:4], "pressure or temperature on a gas dissolving, e.g. 'CO2(g) -> CO2(aq)'"),
+    _le_chatelier_step(167, _C[2:4], "temperature on a solid dissolving, e.g. 'KNO3(s) -> KNO3(aq)'"),
     # ── Chemical Equilibrium ──
     Step(tx=151, src="moles", dst="equilibrium_moles",
          needs=(P("balanced_equation", "", "dissociation equilibrium with one reactant, e.g. 'PCl5 -> PCl3 + Cl2'", kind="text"),
