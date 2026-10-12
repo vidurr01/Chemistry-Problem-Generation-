@@ -2,6 +2,21 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-10-13
+
+### Physical concept book: audit fixes
+First step of the engine/council redesign: every physical graph edge was checked before it becomes a computed engine step. Fixed in `knowledge/concept_book_physical.json`, then `reaction_graph_physical.json` rebuilt with `tools/build_graph.py --subject physical` (a rebuild of the unchanged book had reproduced the committed graph exactly, so only these edges changed):
+- Buffer example (moles → buffer_ratio): "0.2M HA 100mL + 0.1M NaOH 200mL" is 20 mmol of each, i.e. full neutralisation, not a buffer. Now 100 mL NaOH (20 vs 10 mmol, half-neutralised, pH = pKa).
+- Strong acid + strong base neutralisation (heat → delta_h): "-56 kJ (-13.7 kcal)" disagreed with itself; now -57.3 kJ (-13.7 kcal), also in its note.
+- ΔS = nR ln(V2/V1) (thermodynamic_process → delta_s) now states that it holds only for an isothermal ideal gas.
+- C-14 half-life: 5730 y (older texts use 5770 y); the entry says the question must state the value used. Same fix in the unmapped radiocarbon entry.
+- Molar volume 22.4 L/mol: the condition now names 1 atm, 273 K, notes the IUPAC 1 bar value (22.7 L/mol), and says the question must state the conditions used.
+- Pressure-based rate constant (partial_pressure → rate_constant): "style relations" replaced by the general relation P_A = (nP0 - Pt)/(n - 1) for A(g) → nB(g).
+- Vapour pressure: "NOT a surface phenomenon" reworded to "independent of surface area and amount of liquid".
+
+Impact: two edge ids changed with their reagent text (`heat_to_delta_h_sasbh573kjpe`, `partial_pressure_to_rate_constant_k1tlnp0papaf`); no saved question or coverage file referenced the old ids.
+
+
 ## 2026-10-12
 
 ### Chains follow graph connections across chapters
