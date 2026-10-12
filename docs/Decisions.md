@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Frontier model only where difficulty is decided: the too-easy refinement
+
+Date: 2026-10-13
+Context: to make questions tougher. The engine fixes the answer, so a stronger model can only make a question harder through its inputs (values where the usual shortcut fails) and its wording (no cue naming the method). The most targeted moment is after the council solved it, when the solvers' working shows the shortcut.
+Decision: a refiner (Gemini 3.8 Flash, 95.6 % GPQA) handles every too-easy round, reading the solvers' working. Google family, so it shares no family with the council (it must not tune questions to a council member's own blind spots) or the verifier.
+Alternatives: frontier generator on every call (harder first drafts, but a pass rises from ~₹2 to ~₹8–12); frontier council (raises the bar but makes no question harder, just accepts fewer).
+Trade-off: ~₹6 extra per refinement round. Difficulty is still capped by the engine's chemistry; harder engine steps are planned after live acceptance rates are seen.
+
 ## Council chosen for GPQA strength per rupee
 
 Date: 2026-10-13

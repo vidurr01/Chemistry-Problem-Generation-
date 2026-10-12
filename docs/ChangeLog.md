@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Frontier refiner for too-easy rounds
+- `core/models.py`: `REFINER = "google/gemini-3.8-flash"` (GPQA Diamond 95.6 %, top of OpenRouter's leaderboard at flash pricing). Spend is tracked under its own role, `refiner`.
+- When the council finds a question too easy, the refiner handles that round: `choose_refinement` (now with room to think), `propose_inputs(refine=...)` (new inputs; it now sees the solvers' working, not just a one-line summary) and `write_stem(solved=...)` / `write_fact_stem(solved=...)` (rewording without the cue that made it easy). First drafts and clarity rewording stay with the generator (Gemini 3.7 Flash).
+- Tests: the fakes answer both roles; the too-easy test checks the refiner makes 2 calls per round and the generator only the first draft.
+
 ### Council and generator swapped for stronger, cheaper models
 - `core/models.py`: council is now GPT-6 Luna (`openai/gpt-6-luna`), GLM-5.3-Flash (`z-ai/glm-5.3-flash`) and Qwen3.8-Flash (`qwen/qwen3.8-flash`), replacing GPT-OSS-120B, GLM-4.7-Flash and Qwen3-235B-Thinking. Early stop runs GPT-6 Luna and GLM-5.3-Flash first. Generator is Gemini 3.7 Flash (was Gemini 2.5 Flash).
 - Why (OpenRouter GPQA Diamond leaderboard, 2026-10-13): old council 72.7 / 52.8 / 77.8 % at $0.007 / $0.017 / $0.056 per question; new council ~87–90 / 85–91 / 88.6 % at $0.003 / $0.005–0.014 / $0.021. Generator 72.6 % at $0.060 → 93.9 % at $0.029. Family separation is unchanged (OpenAI, Z.ai, Qwen solve; Google writes; DeepSeek extracts; Anthropic verifies; Mistral writes solutions).
