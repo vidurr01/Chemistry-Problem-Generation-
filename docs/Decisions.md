@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Council chosen for GPQA strength per rupee
+
+Date: 2026-10-13
+Context: the council defines what "hard" means. The old council scored 53–78 % on GPQA Diamond (GLM-4.7-Flash at 52.8 % is barely above skilled non-experts), and its strongest member was also the most expensive per question.
+Decision: one cheap, high-GPQA model per family: GPT-6 Luna, GLM-5.3-Flash, Qwen3.8-Flash (~87–90 %), with about a third of the per-question cost. The generator moves to Gemini 3.7 Flash, which is stronger and cheaper per question. Swapped first; JEE calibration follows.
+Alternatives: keep the old council (weak bar, higher cost); frontier models in the loop (≈ 4× the pass cost); calibrate before swapping (slower; GPQA gaps of 10–35 points were large enough to act on).
+Trade-off: a stronger council will mark more questions too easy, so the acceptance rate and cost per accepted question may get worse, and harder chains may be needed. GPQA is graduate multiple choice, not JEE numericals, so the calibration run can still overturn a member.
+
 ## Council stops early when the last member cannot change the decision
 
 Date: 2026-10-13

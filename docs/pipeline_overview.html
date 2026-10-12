@@ -54,13 +54,13 @@ h1{font-size:20px;font-weight:600;margin:0 0 4px}
 <div class="st"><div class="hd"><span class="n">3</span><span class="tg code">code</span><span class="nm">Engine screens inputs</span><span class="md">RDKit · SymPy · graph</span></div><div class="ds">Organic: runs the chain on every pool molecule, keeps those where every step works, lists each one's traps. Inorganic: species fixed by the chain</div></div>
 <div class="ar">↓</div>
 
-<div class="st"><div class="hd"><span class="n">4</span><span class="tg wr">picks</span><span class="nm">Generator picks inputs</span><span class="md">gemini-2.5-flash</span></div><div class="ds">Organic: picks a molecule by ID from the screened list, reading the Blackboard. Physical: proposes numbers, then code sanity checks (e.g. &gt; 0, fractions in [0, 1])</div></div>
+<div class="st"><div class="hd"><span class="n">4</span><span class="tg wr">picks</span><span class="nm">Generator picks inputs</span><span class="md">gemini-3.7-flash</span></div><div class="ds">Organic: picks a molecule by ID from the screened list, reading the Blackboard. Physical: proposes numbers, then code sanity checks (e.g. &gt; 0, fractions in [0, 1])</div></div>
 <div class="ar">↓</div>
 
 <div class="st"><div class="hd"><span class="n">5</span><span class="tg code">code</span><span class="nm">Engine computes</span></div><div class="ds">Answer + trace + traps for the chosen inputs</div><div class="br">UNKNOWN → engine-unknown queue</div></div>
 <div class="ar">↓</div>
 
-<div class="st"><div class="hd"><span class="n">6</span><span class="tg wr">writes</span><span class="nm">Generator writes stem</span><span class="md">gemini-2.5-flash</span></div><div class="ds">Question text only, aimed at the engine's trap. Organic start name inserted from the pool</div></div>
+<div class="st"><div class="hd"><span class="n">6</span><span class="tg wr">writes</span><span class="nm">Generator writes stem</span><span class="md">gemini-3.7-flash</span></div><div class="ds">Question text only, aimed at the engine's trap. Organic start name inserted from the pool</div></div>
 <div class="ar">↓</div>
 
 <div class="st"><div class="hd"><span class="n">7</span><span class="tg ck">checks</span><span class="nm">Chemistry gate</span><span class="md">deepseek-v4-flash-0731</span></div><div class="ds">Model lists start / reagents / numbers / what's asked; code compares with the chosen inputs</div><div class="br">mismatch → back to 6 (original + 2 retries, then drop chain) · unreadable → gate-unreadable queue</div></div>
@@ -69,7 +69,7 @@ h1{font-size:20px;font-weight:600;margin:0 0 4px}
 <div class="st"><div class="hd"><span class="n">8</span><span class="tg code">code</span><span class="nm">Tier 1 duplicate check</span></div><div class="ds">Same numeric inputs as an accepted question but a different answer → fail</div></div>
 <div class="ar">↓</div>
 
-<div class="st"><div class="hd"><span class="n">9</span><span class="tg sv">solves ×2–3</span><span class="nm">Council</span><span class="md">gpt-oss-120b · glm-4.7-flash, then qwen3-235b-thinking if needed</span></div><div class="ds">Closed book (no sheet), reasoning effort medium. The two cheaper members solve first; Qwen-Thinking is called only when exactly one of them solves, the only case where it can change the decision. Returns an answer, plus a self-labelled objection if any (none / chemistry / wording)</div><div class="br">chemistry objection → code path: gate re-checks the step → engine checks the member's alternative → objection-unresolved queue if neither settles it</div></div>
+<div class="st"><div class="hd"><span class="n">9</span><span class="tg sv">solves ×2–3</span><span class="nm">Council</span><span class="md">gpt-6-luna · glm-5.3-flash, then qwen3.8-flash if needed</span></div><div class="ds">Closed book (no sheet), reasoning effort medium. The two cheaper members solve first; Qwen3.8-Flash is called only when exactly one of them solves, the only case where it can change the decision. Returns an answer, plus a self-labelled objection if any (none / chemistry / wording)</div><div class="br">chemistry objection → code path: gate re-checks the step → engine checks the member's alternative → objection-unresolved queue if neither settles it</div></div>
 <div class="ar">↓</div>
 
 <div class="st"><div class="hd"><span class="n">10</span><span class="tg ck">judges</span><span class="nm">Mismatch verifier</span><span class="md">claude-haiku-5.5</span></div><div class="ds">Reads ALL members' work against the engine's answer and trace</div><div class="br">engine / question wrong → drop chain, flag rule, engine-wrong queue · right answer, wrong reasoning → not solved · wrong answer → why: genuine / unclear wording (→ reword, back to 6) / missing knowledge / slip (counts as solved only if code confirms it, e.g. by re-evaluating the member's own expression) · wording objections judged here</div></div>

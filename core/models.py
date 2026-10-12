@@ -16,19 +16,19 @@ from core.llm import call_json, load_env, parse_json
 load_env()
 
 # ── Roster ───────────────────────────────────────────────────────────────────
-GENERATOR = "google/gemini-2.5-flash"                 # picks inputs, writes stems and clarification hints
+GENERATOR = "google/gemini-3.7-flash"                 # picks inputs, writes stems and clarification hints
 EXTRACTOR = "deepseek/deepseek-v4-flash-0731"          # chemistry gate: lists the facts a stem states
 VERIFIER = "anthropic/claude-haiku-5.5"                # mismatch verifier: reads every council attempt
 SOLUTION_WRITER = "mistralai/mistral-small-3.2-24b-instruct"   # readable solution, accepted questions only
 COUNCIL = [
-    ("gpt-oss-120b", "openai/gpt-oss-120b"),
-    ("qwen3-235b-thinking", "qwen/qwen3-235b-a22b-thinking-2507"),
-    ("glm-4.7-flash", "z-ai/glm-4.7-flash"),
+    ("gpt-6-luna", "openai/gpt-6-luna"),            # GPQA Diamond 87–90%
+    ("qwen3.8-flash", "qwen/qwen3.8-flash"),         # 88.6%
+    ("glm-5.3-flash", "z-ai/glm-5.3-flash"),         # 85–91%
 ]
 COUNCIL_REASONING_EFFORT = "medium"
 # Early stop: the two cheaper members solve first; the rest are called only when their
-# answers could still change the decision (see flow.judge). Qwen-Thinking is ~60% of a pass.
-COUNCIL_FIRST = ("gpt-oss-120b", "glm-4.7-flash")
+# answers could still change the decision (see flow.judge).
+COUNCIL_FIRST = ("gpt-6-luna", "glm-5.3-flash")
 
 ROSTER = {"generator": GENERATOR, "extractor": EXTRACTOR, "verifier": VERIFIER,
           "solution_writer": SOLUTION_WRITER, "council": [slug for _, slug in COUNCIL]}
