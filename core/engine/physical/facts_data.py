@@ -110,6 +110,7 @@ FACTS = [
     Pool("physical_equilibria", (165, 169, 343), CE, "physical equilibria",
          ("Increasing the pressure lowers the melting point of ice.",
           "Increasing the pressure raises the melting point of most metals, such as iron and copper.",
+          "Increasing the pressure lowers the melting point of gallium, which contracts on melting.",
           "At a given temperature, the vapour pressure of water does not depend on the amount of liquid present.",
           "A liquid boils when its vapour pressure equals the external pressure.",
           "When a soda bottle is opened, the pressure of CO₂ above the liquid drops and dissolved CO₂ escapes."),

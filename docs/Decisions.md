@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Concept-book audit flags entries instead of deleting them
+
+Date: 2026-10-13
+Context: the inorganic audit found wrong, duplicate, misfiled and unconfirmed entries. Graph edges, fact sources and audit notes all refer to entries by index.
+Decision: fix wrong text in place. Mark entries that must not be used with `status` (removed, moved_to_organic, duplicate) or `unverified`, and leave them where they are; the graph build skips them. Multi-step entries keep their first step, and later steps are appended as new entries. Unconfirmed claims stay in the book but are never used in a question.
+Alternatives: delete entries, which renumbers everything after them and breaks references; drop unconfirmed claims, which loses them before anyone can check them.
+Trade-off: the book carries dead entries; readers must respect the flags (`build_graph.build_edges` does).
+
 ## Answer keys come from a deterministic engine, inputs first
 
 Date: 2026-10-13

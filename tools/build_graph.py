@@ -935,8 +935,16 @@ def build_edges(txs, normalize=None, chapter_key=None, tx_nodes=None):
     # First pass: map all TXs
     mapped = []
     unmapped = []
+    skipped = 0
     for i, tx in enumerate(txs):
-        if tx_nodes is not None:
+        # Audit flags (docs/audit_*.md): removed, moved and duplicate entries, and claims
+        # that could not be verified, are kept in the book but feed neither edges nor facts.
+        if tx.get("status") or tx.get("unverified"):
+            skipped += 1
+            continue
+        if tx.get("kind") == "fact":
+            fn = tn = None
+        elif tx_nodes is not None:
             fn, tn = tx_nodes(i, tx) or (None, None)
         else:
             fn = normalize(tx["from"], tx)
@@ -956,6 +964,7 @@ def build_edges(txs, normalize=None, chapter_key=None, tx_nodes=None):
 
     print(f"Mapped:   {len(mapped)}/{len(txs)} TXs ({100*len(mapped)//len(txs)}%)")
     print(f"Unmapped: {len(unmapped)}/{len(txs)} TXs")
+    print(f"Skipped:  {skipped} TXs (audit: removed / moved / duplicate / unverified)")
 
     # Group by (from, to) pair
     groups = defaultdict(list)

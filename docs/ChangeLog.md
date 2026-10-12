@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Inorganic concept-book audit applied
+- `knowledge/concept_book_inorg.json`: approved fixes from `docs/audit_inorganic.md` (new). 44 entries with wrong chemistry corrected (e.g. NCl₃ hydrolysis gives HOCl, CCl₄ + steam gives COCl₂, zinc uranyl acetate is the Na⁺ test, isomer counts for [Ma₂b₂cd] and [M(AA)₂a₂]); every corrected equation passes `chem.check_balanced`. Leftover thinking text removed from 71 entries. Entries are never deleted, so indexes stay stable: removed, moved-to-organic and duplicate entries carry `status` (plus `duplicate_of`); 5 unconfirmed claims carry `unverified`; 4 structure facts carry `kind: "fact"`; 5 multi-step entries keep step 1 and gained later steps as new entries 904–908 (`split_from`). Each touched entry has an `audit_note`.
+- `tools/build_graph.py`: entries with `status` or `unverified` feed neither edges nor facts; `kind: "fact"` entries go to the facts list.
+- `knowledge/reaction_graph_inorg.json` rebuilt: 354 nodes, 407 edges; `graph_unmapped_inorg.json`: 489 facts. Borax is now a single node.
+- `knowledge/concept_book_physical.json` entry 165: solids that contract on melting are ice, Ga, Bi, Ge, Si (was ice, diamond, quartz, Mg₃N₂, carborundum). `facts_data.py` gained a gallium statement.
+
 ### Fact questions, Le Chatelier steps, single-step questions (physical)
 - `core/engine/facts.py` (new): fact questions built entirely by code. Facts are kept as category tables (mutually exclusive categories, so a swapped category is always false) or pools of true/false statements; a question is four statements in one of three modes (one or more correct; exactly one correct; exactly one incorrect). The key is the set of option letters; each wrong choice is a trap. `letters_of()` reads letter answers.
 - `core/engine/physical/facts_data.py` (new): 36 sources covering every physical concept-book entry that is not a computation (gas analysis, indicators, Maxwell distribution, real gases, systems and properties, second law, equilibria, acids and bases, salt solutions, buffers, mechanisms and plots, nuclear, electrolysis, cells and batteries, conductance, Raoult deviations, azeotropes, solids, crystal systems, defects, adsorption, catalysis, colloids). Entry 165's list of solids that contract on melting was not used beyond ice, gallium and bismuth (quartz in particular expands on melting).
