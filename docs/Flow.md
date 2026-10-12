@@ -18,7 +18,9 @@ The system builds JEE Advanced chemistry questions. It supports three subjects: 
 
 - Organic: `knowledge/reaction_graph.json`, functional-group class nodes. This file was curated after it was built; the script no longer reproduces it exactly.
 - Inorganic: `knowledge/reaction_graph_inorg.json`, species nodes, rules in `tools/graph_rules_inorganic.py`.
-- Physical: `knowledge/reaction_graph_physical.json`, physical-quantity nodes, rules in `tools/graph_rules_physical.py`.
+- Physical: `knowledge/reaction_graph_physical.json`, physical-quantity nodes. Its edges come from the physical engine (`core/engine/physical/`): `tools/graph_rules_physical.py` exposes `tx_nodes()`, which returns the two nodes a computed entry connects, so the graph holds exactly the entries the engine can compute; the rest are listed in `graph_unmapped_physical.json` as facts.
+
+The engine (`core/engine/`) turns a chain plus concrete inputs into the answer, a step-by-step trace and the traps. `plan_chain()` decides which inputs come from the previous step and which the question must state; `run_chain()` computes. `core/engine/physical/` defines the steps, their topics and the bridges between topics; `can_follow()` and `chain_steps()` let the walk keep only chains that link up and stay coherent. It is not yet called by the generation loop.
 
 ## Phase 1: calibration
 

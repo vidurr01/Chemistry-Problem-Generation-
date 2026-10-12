@@ -4,6 +4,21 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Physical chemistry engine (new)
+First part of the engine/council redesign: every computable physical concept-book entry is now a deterministic computation, so a physical question's answer key comes from code instead of a model.
+- `core/engine/base.py`: `Step` (one concept-book entry as a computation between two graph nodes: inputs, answer field, traps, constants the question must state), `plan_chain()` (wires each step's outputs into the next step's inputs by name; every other input is a "given" the question states; refuses chains whose steps share nothing), `run_chain()` (answer, step-by-step trace, and traps: each typical mistake is run through the rest of the chain, so a trap is the final answer a student making that mistake would write), `answers_match()` (purely relative 1% tolerance), `assign_steps()` / `roles_consistent()` (pick one entry per graph edge so the chain links up and no value is reused as a different substance).
+- `core/engine/chem.py`: formula parser (brackets, hydrates, ionic charges with `^`), equation parsing and balance check, redox balancing via SymPy nullspace, JEE atomic masses, physical constants with the wording a question uses to state them.
+- `core/engine/physical/`: 262 steps over all 12 chapters (stoichiometry, atomic structure, gaseous state, thermodynamics and thermochemistry, chemical and ionic equilibrium, kinetics and nuclear chemistry, electrochemistry, dilute solutions, solid state, surface chemistry). 87 entries are facts, classifications or plot readings and stay out (they become fact questions later).
+- Coherence rules so a chain is one problem, not just computable: quantities that only shared a name were split (rate-increase factor vs rate constant; ΔT vs osmotic pressure vs vapour-pressure lowering; total vs per-mole entropy; gas-phase vs electrolyte degree of dissociation), role tags (a NaOH amount from a titration cannot become a dissociating gas; a softener mass cannot become sodium azide), roles carried through substance-preserving steps, and topic bridges (chains cross chapters only where the quantity means the same on both sides; nuclear entries are their own topic).
+- `tests/test_engine_physical.py`: 41 tests against textbook results (e.g. 98% H2SO4 at 1.84 g/mL is 18.4 M, U-238 → Pb-206 is 8α + 6β, Hess's law gives ΔfH(CH4) = −74.8 kJ, 10⁻⁸ M HCl has pH 6.98), plus checks that every sampled chain links and plans.
+
+### Physical graph built from the engine
+`tools/build_graph.py` takes an optional `tx_nodes(index, tx)` from a subject's rules; `tools/graph_rules_physical.py` provides it from the engine, so the physical graph has an edge exactly for each entry the engine computes (198 edges, 173 nodes; was 147/119). A step that keeps the same quantity (dilution, Boyle's law, K manipulations) is now a self-loop edge instead of being dropped.
+
+### Chain walk
+`core/graph_traversal.py`: `get_paths()` may take a self-loop edge once per path, accepts `can_follow(prev_edge, edge)` to prune the walk, and de-duplicates paths by edges instead of nodes (two different reactions between the same two nodes are two chains). `sample_chains()` passes `can_follow` through and accepts `validate(edges)`. Callers that pass neither behave as before.
+
+
 ### Physical concept book: audit fixes
 First step of the engine/council redesign: every physical graph edge was checked before it becomes a computed engine step. Fixed in `knowledge/concept_book_physical.json`, then `reaction_graph_physical.json` rebuilt with `tools/build_graph.py --subject physical` (a rebuild of the unchanged book had reproduced the committed graph exactly, so only these edges changed):
 - Buffer example (moles → buffer_ratio): "0.2M HA 100mL + 0.1M NaOH 200mL" is 20 mmol of each, i.e. full neutralisation, not a buffer. Now 100 mL NaOH (20 vs 10 mmol, half-neutralised, pH = pKa).
