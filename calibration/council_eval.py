@@ -56,7 +56,7 @@ if not OPENROUTER_KEY:
     print("ERROR: OPENROUTER_KEY not in .env"); sys.exit(1)
 
 # The generation council, imported so the two can never drift apart.
-from run_groundup_final import COUNCIL  # noqa: E402
+from core.models import COUNCIL  # noqa: E402
 
 ADV_DIR   = os.path.join(_ROOT, "data", "jee_advanced")
 # JEE Mains data is not bundled with the repo; pass its path with --mains-file.

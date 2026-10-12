@@ -10,6 +10,10 @@ Each accepted question increments four independent counters:
 Sampling weight for each candidate = product of 1/(count+1) across all 4 counters.
 Higher weight = less previously seen = should be prioritised.
 
+A fifth counter, trap, counts the trap types (engine trap ids) of accepted questions;
+trap_weight() gives the same inverse-frequency factor for a candidate's trap types, so
+the walk keeps steering towards trap types that are still rare.
+
 Usage:
     cov = Coverage()                    # fresh session
     cov = Coverage.from_dict(d)         # resume from saved state
@@ -34,6 +38,7 @@ class Coverage:
         self._chapter:   dict[str, int] = defaultdict(int)
         self._edge:      dict[str, int] = defaultdict(int)
         self._concept:   dict[str, int] = defaultdict(int)
+        self._trap:      dict[str, int] = defaultdict(int)
 
     # ── Weight ─────────────────────────────────────────────────────────────────
 
@@ -67,6 +72,13 @@ class Coverage:
 
         return w_arch * w_chapter * w_edge * w_concept
 
+    def trap_weight(self, traps: list[str]) -> float:
+        """Inverse-frequency factor for a candidate's trap types: the rarest trap type
+        decides (a chain offering one unseen trap type is preferred), 1.0 if none."""
+        if not traps:
+            return 1.0
+        return max(1.0 / (self._trap.get(t, 0) + 1) for t in traps)
+
     def log_weight(
         self,
         archetype: str,
@@ -86,14 +98,17 @@ class Coverage:
         chapter: str,
         edges: list[str],
         concepts: list[str],
+        traps: list[str] | None = None,
     ) -> None:
-        """Increment all 4 counters. Call after a question passes 3-gate."""
+        """Increment the counters for one accepted question."""
         self._archetype[archetype] += 1
         self._chapter[chapter]     += 1
         for e in edges:
             self._edge[e] += 1
         for c in concepts:
             self._concept[c] += 1
+        for t in traps or []:
+            self._trap[t] += 1
 
     # ── Introspection ──────────────────────────────────────────────────────────
 
@@ -106,6 +121,7 @@ class Coverage:
             "chapter":   top(self._chapter,   n),
             "edge":      top(self._edge,       n),
             "concept":   top(self._concept,    n),
+            "trap":      top(self._trap,       n),
         }
 
     def total_accepted(self) -> int:
@@ -120,6 +136,7 @@ class Coverage:
             "chapter":   dict(self._chapter),
             "edge":      dict(self._edge),
             "concept":   dict(self._concept),
+            "trap":      dict(self._trap),
         }
 
     @classmethod
@@ -129,6 +146,7 @@ class Coverage:
         cov._chapter.update(d.get("chapter", {}))
         cov._edge.update(d.get("edge", {}))
         cov._concept.update(d.get("concept", {}))
+        cov._trap.update(d.get("trap", {}))
         return cov
 
     def save(self, path: Path | str = _SAVE_PATH) -> None:

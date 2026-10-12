@@ -1,87 +1,65 @@
 # JEE Advanced Chemistry Question Generator
 
-A pipeline that **synthesises** JEE-Advanced-style chemistry questions with LLMs and
-**validates** each one before it enters the dataset. Validation is deliberately
-adversarial: no model grades or clears its own output, the solvers work **blind** (they
-never see the answer key), the verifier commits its own answer before it is shown the
-candidate, and a **deterministic gate** catches whole classes of error with no model in
-the loop. Supports **organic, inorganic, physical**.
+A pipeline that builds JEE-Advanced-style chemistry questions and **measures** how hard
+each one is before it enters the dataset. The answer to every question comes from a
+**deterministic chemistry engine**, never from a model; models only pick inputs, write
+the question, read it back, solve it as students would, and explain their failures. A
+question is kept when strong models **fail it for chemistry reasons** that a targeted
+hint confirms. Subjects: **physical** (wired end to end), **inorganic** and **organic**
+(engines being built).
 
 ---
 
-## What actually runs
-
-The recommended entrypoint is **`run_groundup_final.py`** (OpenRouter-backed). It is the
-path that carries the current architecture below. `run_graph_final.py` is the older
-graph-wired path and is **not** yet on the new roster (see [Two entrypoints](#two-entrypoints)).
-
-### The generation loop (`run_groundup_final.py`)
+## The generation loop (`run_groundup_final.py`)
 
 ```
-Pending recheck   questions parked by an earlier council failure are rechecked first
-                  (council only — the verifier already passed them)
+Graph walk         the subject's knowledge graph; chains that the engine can compute and
+                   that stay one coherent problem; least-used edges and rare trap types first
    │
-   ▼
-Graph traversal   (core/graph_traversal.py, same for all 3 subjects)
-                  BFS over the subject's WHOLE knowledge graph → multi-step chains that
-                  follow node connections, across chapters; ranked by coverage weight
-                  (least-used edges first); --chapter restricts them to one chapter
+Blackboard         per-question notebook every stage writes to
    │
-   ▼
-Concept-reasoner  (DeepSeek-V3)     picks one chain; its steps are concept-book entries
+Inputs             generator (Gemini 2.5 Flash) proposes a scenario and a value for every
+                   input — or vetoes a chain it cannot make coherent
    │
-   ▼
-Generator         (Gemini 2.5 Flash)  writes the question + a reference solution
+Engine             code computes the answer, the step-by-step trace, and the traps (the
+                   wrong final answers that typical mistakes lead to)
    │
-   ▼
-Verifier, two tiers, core/verifier.py (Gemini 3 Flash; verdict assembled in code)
-   ├─ first   extract the candidate's final answer (one narrow call)
-   ├─ Tier 1  deterministic, numeric answers only: hash the numeric inputs + formula
-   │          signature; hard-FAIL if an ACCEPTED question with the same inputs has a
-   │          different answer (> 1 %)
-   └─ Tier 2  one narrow call per check:
-              a) solve the problem BLIND (candidate solution withheld), commit an answer
-              b) compare the two answers.  Disagreement (or no answer) => FAIL, stop here
-              c) structural check: arithmetic, out-of-regime formulas, impossible
-                 results, non-uniqueness, non-circularity
-              d) rate difficulty
+Stem               generator writes the question around those exact inputs
    │
-   ▼
-Council of 3 solvers, run in PARALLEL, each BLIND (no answer key) and closed-book:
-   Llama-3.3-70B   ·   Mistral-Large   ·   Gemma-3-27B
-   each one blind-solves, then Grader (GPT-4o) judges its answer against the reference
-   all three must answer; if one call fails the question is PARKED and the run stops
+Chemistry gate     extractor (DeepSeek V4 Flash) copies the stated facts into a form;
+                   code checks every value, constant and the asked quantity
    │
-   ▼
-Gate:  verifier PASS  ·  answer key not flagged wrong by 2+ graders  ·  at most 1 of 3 solved
-   ├─ 2 or 3 solved  => too easy => refine for reasoning complexity
-   ├─ key flagged    => refine with the graders' reasons
-   ├─ gate passes    => save to outputs/generated_questions_<subject>.json (+ 6 meta-tags),
-   │                    copy to results/ with empty human-eval slots
-   └─ verifier FAIL  => record on blackboard => REFINE IN PLACE
+Duplicate check    same engine steps and same inputs as an accepted question → new inputs
+   │
+Council            GPT-OSS-120B · Qwen3-235B-Thinking · GLM-4.7-Flash, in parallel,
+                   closed book (question only), reasoning effort medium
+   │
+Mismatch verifier  Claude Haiku 5.5 reads every attempt against the engine's trace:
+                   correct / wrong (genuine, unclear wording, missing knowledge, slip) /
+                   reference wrong
+   │
+Grading            code: answer within 1% of the engine's; a slip counts as solved only if
+                   the member's own arithmetic, re-evaluated in code, gives the answer
+   │
+   ├─ 2+ solved      too easy → new inputs or reworded (at most 3 rounds per chain)
+   ├─ reference wrong / unsettled objection → review queue, next chain
+   └─ ≤1 solved      hint tests on each failed member:
+                      clarification hint solves → reworded, judged again
+                      knowledge hint solves     → accepted, tagged "recall"
+                      insight hint (written by code) → difficulty confirmed → accepted
+   │
+Accept             record + readable solution (Mistral Small 3.2) + coverage + results/
 ```
 
-Refine-in-place caps live at the top of `main()`: `MAX_LINEAGES = 3` fresh ideas,
-`MAX_ITERS = 4` total generate-check iterations, `VERIFIER_FAIL_MAX = 2` (one refine pass
-per idea before it is abandoned).
+**Commitments enforced in code**
 
-**Two design commitments enforced in code:**
-
-1. **No producer clears itself.** Concept-reasoner (DeepSeek), generator (Gemini 2.5 Flash),
-   verifier (Gemini 3 Flash), grader (GPT-4o), council (Meta, Mistral, Google). The
-   generator and verifier are both Google models now, but different versions, and neither
-   solves nor grades its own output.
-2. **The verdict is answer-driven and assembled in code.** The verifier solves the problem
-   without seeing the candidate solution, then a wrong reference answer FAILs immediately
-   even if the candidate's own reasoning looks consistent. The model never writes the
-   PASS/FAIL string; the code does, from discrete booleans.
-
-### Closed-book solving
-
-The council members run **closed-book**. They are handed a knowledge sheet — the
-concept-book entries behind the chapter's graph edges, plus the chain's own steps — and
-instructed to use only that and not their pretrained memory, citing the index of each item
-used. See `build_knowledge_sheet()`.
+1. **The answer key is computed.** The engine works from the inputs the question states;
+   the gate proves the stem states exactly those inputs. No model writes or approves a key.
+2. **No model checks its own family's work.** Gemini writes, DeepSeek extracts, OpenAI/Qwen/
+   Z.ai solve, Claude diagnoses, Mistral writes the solution text.
+3. **Facts are never overwritten by judgements.** Each council member's record keeps the
+   raw `answer_matches` beside the verifier's label and `counts_as_solved`; a question keeps
+   `council_n_correct` beside `council_n_solved`.
 
 ---
 
@@ -89,51 +67,47 @@ used. See `build_knowledge_sheet()`.
 
 **Prereqs:** Python 3.9+, an [OpenRouter](https://openrouter.ai/) key.
 
-Everything else in the repo needs more than that:
-
-| Script | Needs |
-|--------|-------|
-| `run_groundup_final.py`, `generate_questions.py`, `calibration/anchor_calibration.py`, `calibration/council_eval.py` | `OPENROUTER_KEY` |
-| `run_graph_final.py` | `SAMBANOVA_KEY_1`…`_5` (at least one) **and** a local [Ollama](https://ollama.com/) server with `llama3.2` pulled (`ollama pull llama3.2`), for its weak solver |
-| `calibration/calibrate_thresholds*.py` | `SAMBANOVA_KEY_1` **and** Ollama with `llama3.2` |
-| `calibration/calibrate_solver_metatags.py`, `tools/extract_notes.py` | `SAMBANOVA_KEY_1`… |
-| `tools/make_approach_pdf.py` | `reportlab` (in `requirements.txt`) |
-
 ```bash
 pip install -r requirements.txt
 cp .env.example .env         # then put your key in it:  OPENROUTER_KEY=...
-                             # (Windows PowerShell: Copy-Item .env.example .env)
 ```
 
 `.env` is **gitignored** — never commit keys.
 
 **Generate one question:**
 ```bash
-python run_groundup_final.py --subject organic
-python run_groundup_final.py --subject inorganic
-python run_groundup_final.py --subject physical --chapter "Chemical Kinetics"   # optional: one chapter only
+python run_groundup_final.py --subject physical
+python run_groundup_final.py --subject physical --chapter "Chemical Kinetics & Nuclear Chemistry"
 ```
-Each invocation attempts **one** accepted question and appends it to
-`outputs/generated_questions_<subject>.json`, with every attempt (pass or fail) logged to
-`outputs/generated_questions_<subject>_attempts.jsonl`.
 
-**Generate many, across subjects:** `generate_questions.py` runs the entrypoint once per
-question in a fresh subprocess.
+**Generate several, with a spending cap:**
 ```bash
-python generate_questions.py --organic 5 --inorganic 5 --physical 10
+python generate_questions.py --physical 5 --max-spend 2.00
 ```
-It takes a target count per subject, resumes from the current accepted counts, kills and
-retries a hung question after `--child-timeout` seconds, and moves on from a subject after
-`--max-consecutive-failures` runs in a row accept nothing. It appends the full run console
-to `outputs/batch_run.log`, never overwriting, and each run gets a `RUN <timestamp>` separator.
-Launch it without shell redirection to that log.
+
+Each run prints what it spent (as OpenRouter reports it). The batch driver appends the full
+console to `outputs/batch_run.log`, retries a subject until its target is met or
+`--max-consecutive-failures` runs in a row accept nothing, and stops at `--max-spend`.
+
+**Review:**
+```bash
+python tools/evaluate.py --subject physical       # acceptance, solved vs correct, traps, spend
+python tools/results.py queue                     # items code could not settle
+python tools/results.py pending                   # questions awaiting a human score
+```
+
+**Tests (no API calls):**
+```bash
+python -m unittest tests.test_engine_physical tests.test_pipeline_offline
+```
 
 ---
 
 ## Curated Question Datasets
 
-The final question sets are in `results/`. Every question in them was generated and accepted by
-`run_groundup_final.py`. On each acceptance the question is written to `outputs/` (the raw run log)
+The final question sets are in `results/`. The 27 questions below were generated and accepted by
+the pipeline as it was before the engine redesign (model-written keys, Mains-level council); new
+acceptances are added with the engine fields described above. On each acceptance the question is written to `outputs/` (the raw run log)
 and also copied into `results/generated_questions_<subject>_final.json` with empty human-eval
 slots (`human_eval_score`, `human_eval_level`, `human_eval_rationale`). Existing results and their
 scores are never overwritten. Manage the review with `tools/results.py`:
@@ -177,33 +151,53 @@ Each item in `results/generated_questions_*_final.json` contains `human_eval_sco
 
 ---
 
-## Models (live roster, all via OpenRouter)
+## Models (all via OpenRouter)
 
-| Role | Model | Family | Why |
-|------|-------|--------|-----|
-| Concept-reasoner | `deepseek/deepseek-chat-v3-0324` | DeepSeek | selects reaction/formula steps |
-| Generator | `google/gemini-2.5-flash` | Google | writes question + reference solution (cheaper than the verifier) |
-| **Verifier** (Tier 2) | `google/gemini-3-flash-preview` | Google | blind-solves, then answer-first checks (≠ generator version) |
-| **Grader** | `openai/gpt-4o` | OpenAI | scores council answers (≠ council, ≠ generator) |
-| Council solver 1 | `meta-llama/llama-3.3-70b-instruct` | Meta | blind, Mains-level |
-| Council solver 2 | `mistralai/mistral-large-2407` | Mistral | blind, Mains-level |
-| Council solver 3 | `google/gemma-3-27b-it` | Google | blind, Mains-level |
+| Role | Model | Does |
+|------|-------|------|
+| Generator | `google/gemini-2.5-flash` | proposes inputs (or vetoes a chain), writes stems, clarification hints, refinement choice |
+| Extractor | `deepseek/deepseek-v4-flash-0731` | chemistry gate: copies stated facts into a form |
+| Council | `openai/gpt-oss-120b`, `qwen/qwen3-235b-a22b-thinking-2507`, `z-ai/glm-4.7-flash` | closed-book solves, reasoning effort medium |
+| Mismatch verifier | `anthropic/claude-haiku-5.5` | diagnoses every council attempt against the engine's trace |
+| Solution writer | `mistralai/mistral-small-3.2-24b-instruct` | readable solution, accepted questions only |
 
-The council replaced the earlier single weak solver plus single strong solver. The count of
-council members that solve a question is the difficulty signal: **2 or 3 solved means too
-easy** (refine), **0 or 1 solved means hard enough** (accept if the verifier passed).
-All three members must work. If any member's solve or grade call fails, the run stops
-at once (exit code 3) and the question, which already passed the verifier, is parked in
-`outputs/pending_questions_<subject>.json` — neither accepted nor rejected.
-`generate_questions.py` then stops the whole batch. The next run for that subject rechecks
-parked questions first (council only), before generating anything new: accepted if all
-three work and at most one solves; dropped and logged (`pending_too_easy` /
-`pending_reference_wrong`) if the recheck gives a real non-acceptance; kept, and the run
-stops again, if a member fails again. An API outage therefore cannot produce accepted
-questions. (Each call still retries 429/503 with backoff before it counts as failed.)
+The roster lives in `core/models.py`.
 
-Model assignments live at the top of `run_groundup_final.py`. The verifier model lives in
-`core/verifier.py` and is the authoritative value. Change them there.
+---
+
+## The engine (`core/engine/`)
+
+Every computable concept-book entry is a **step**: a computation between two graph nodes
+with its inputs, its answer, the constants a question must state, and the typical mistakes
+a student makes at that step. Chaining steps wires each step's outputs into the next by
+name; the inputs left over are exactly what the question must give.
+
+- **Traps** are computed, not described: each mistake's wrong value is run through the rest
+  of the chain, so a trap is the final answer a student making that mistake would write.
+- **Coherence**: steps link only through the same quantity (a rate-increase factor is not a
+  rate constant; ΔT is not an osmotic pressure), role tags keep one substance through a chain
+  (a titration's NaOH cannot become a dissociating gas), and chains cross chapters only along
+  bridges where the quantity means the same thing.
+- **Constants** (R, F, N_A, half-lives, molar volume, atomic masses) are always stated in the
+  question, so a convention can never turn a right answer wrong.
+
+Physical: 262 steps across all twelve chapters; 87 concept-book entries are facts,
+classifications or plot readings and are not chain steps.
+
+---
+
+## Gates and review
+
+- **Chemistry gate** — a model only copies; code compares every stated value (within 0.1%),
+  the asked quantity (picked from shuffled options) and every constant. A mismatch rewrites
+  the stem (original + 2 retries); an unreadable form goes to a review queue.
+- **Duplicate check** — a signature of the engine steps and every input; an accepted question
+  with the same signature is the same question.
+- **Review queues** — `outputs/queue_<reason>_<subject>.json` for `engine_unknown`,
+  `gate_unreadable`, `engine_wrong` and `objection_unresolved`; list with
+  `python tools/results.py queue`, clear a reviewed item with `dismiss`.
+- **Parking** — all three council members must be measured; if a call fails the question is
+  parked in `outputs/pending_questions_<subject>.json` (exit 3) and judged first on the next run.
 
 ---
 
@@ -232,9 +226,8 @@ items blind. Generated items are solved more often, so **generation lands around
 Intermediate, with a measured gap to Advanced.** That gap is the honest, reportable
 finding, not a bug to hide.
 
-> The 0-100 thresholds `STRONG_FLOOR = 85` and `WEAK_CEILING = 60` from this calibration
-> are used only by `run_graph_final.py`. `run_groundup_final.py` gates on the council
-> solve-count instead.
+> The 0-100 thresholds this calibration once produced belonged to the earlier
+> weak/strong-solver loop, which has been removed; generation now gates on the council.
 
 **Caveats:** n = 54 is a numeric-only subset. MCQ and MSQ are excluded because the dataset
 lacks option text, and 19 figure-dependent items were dropped as unsolvable text-only. The
@@ -243,28 +236,17 @@ generation solvers. Re-run it with the current council models before comparing d
 
 ---
 
-## Two entrypoints
-
-| Entrypoint | Knowledge | Provider | Architecture |
-|------------|-----------|----------|--------------|
-| `run_groundup_final.py` | knowledge graph (all 3 subjects) | OpenRouter | **current**: answer-first 2-tier verifier, 3-model parallel council, per-role models, closed-book |
-| `run_graph_final.py` | knowledge graph (all 3 subjects) | SambaNova | **older**: blind strong solver + None-safe gates, single-model (DeepSeek-V3.2), not on the new roster |
-
-Both use the same graph traversal, so every step of a chain is a real edge in the
-subject's graph (prevents invented chemistry). `run_graph_final.py` has not been migrated
-to the diversified roster or the two-tier verifier, and its SambaNova keys may be
-unfunded. Prefer `run_groundup_final.py`.
-
 ### Knowledge graphs
 
 Each subject has one graph with the same schema, built from its concept book by
-`tools/build_graph.py`, and traversed by the same code:
+`tools/build_graph.py`, and traversed by the same code. The physical graph's edges are
+generated from the physical engine, so every edge is a computation the engine can do:
 
 | Subject | Graph file | Nodes are | Size |
 |---------|-----------|-----------|------|
 | Organic | `knowledge/reaction_graph.json` | functional-group classes (alkene, alcohol, …) | 57 nodes / 199 edges |
 | Inorganic | `knowledge/reaction_graph_inorg.json` | chemical species (K₂Cr₂O₇, CaO, …) | 363 nodes / 415 edges |
-| Physical | `knowledge/reaction_graph_physical.json` | physical quantities (moles, rate constant, …) | 119 nodes / 147 edges |
+| Physical | `knowledge/reaction_graph_physical.json` | physical quantities (moles, rate constant, …) | 173 nodes / 198 edges |
 
 An edge is one concept-book transformation (reaction, or formula step for physical). A
 chain is a walk through the graph: each step starts at the node where the previous one
@@ -306,46 +288,35 @@ rebuild organic without `--overwrite-organic`.
 ## Repository layout
 
 ```
-run_groundup_final.py    ← recommended entrypoint (OpenRouter, current architecture)
-run_graph_final.py       ← graph-wired entrypoint (SambaNova, older)
-generate_questions.py    ← batch driver: N questions per subject
-subject_config.py        ← per-subject paths/prompts/defaults (source of truth)
-requirements.txt / .env.example
+run_groundup_final.py    ← generate one question (engine-first pipeline)
+generate_questions.py    ← batch driver: N questions per subject, spending cap
+subject_config.py        ← per-subject paths/defaults (source of truth)
 core/
-  verifier.py            ← two-tier verifier: deterministic dedup + answer-first LLM checks
-  blackboard.py          ← shared attempt history (enables refine-in-place); None-safe scores
-  coverage.py            ← inverse-frequency diversity tracker
-  meta_tags.py           ← 6-axis difficulty labels (z-scored within archetype)
-  graph_traversal.py     ← knowledge-graph traversal + chain sampling (all subjects)
-  llm.py                 ← model-call helpers: transient-error retries, JSON calls
-knowledge/               ← per-subject concept books + knowledge graphs + orders/tests
-data/
-  jee_advanced/          ← JEE Advanced papers 2012-2025 (read-only inputs)
-  seeds/                 ← seed corpora + meta_tag_norm_stats_{inorganic,physical}.json
-  chapterwise/           ← per-chapter concept maps (concepts, estimated weightage) — reference
-  notes/                 ← chapter notes (OCR text) for tools/extract_notes.py
-calibration/
-  anchor_calibration.py  ← blind solve-rate on REAL JEE Advanced (the anchor)
-  council_eval.py        ← council solve-rate on real Advanced / Mains (--mains-file)
-  calibrate_thresholds*.py ← OLD threshold derivation (self-scoring; see calibration note)
-  calibrate_solver_metatags.py ← meta-tag norm stats (`--subject`)
-tools/
-  extract_notes.py       ← chapter notes → concept-book entries (`--notes FILE --topic NAME [--dry-run]`)
-  build_graph.py         ← concept book → knowledge graph (`--subject`)
-  graph_rules_inorganic.py, graph_rules_physical.py ← node rules for the two newer graphs
-  evaluate.py            ← summary report over any generated_questions_*.json
-  results.py             ← review of results/: promote, pending, score, reject
-  make_approach_pdf.py   ← writes docs/QuestionGen_Approach.pdf
-results/                 ← final question sets with human-eval slots (+ rejected.json); filled on acceptance
-outputs/                 ← live run output (appended on every run): generated_questions_<subject>.json, coverage_state_<subject>.json,
-                           pending_questions_<subject>.json, *_attempts.jsonl, verifier_seen_inputs.json, batch_run.log
+  engine/                ← deterministic engines: base (steps, chains, traps), chem (formulas,
+                           equations, constants), physical/ (262 steps, topics, bridges)
+  pipeline/              ← flow (decisions), stages (model calls), gate, adapters, queues
+  models.py              ← model roster, OpenRouter call helper, spend tracking
+  answers.py             ← reading and comparing final answers; safe arithmetic
+  dedup.py               ← duplicate check on exact engine inputs
+  blackboard.py          ← per-question notebook
+  coverage.py            ← inverse-frequency diversity (edges, chapters, trap types)
+  meta_tags.py           ← 6-axis difficulty labels
+  graph_traversal.py     ← knowledge-graph walk + chain sampling (all subjects)
+  llm.py                 ← .env, JSON parsing, retries, atomic writes
+knowledge/               ← concept books, knowledge graphs, orders/tests
+data/                    ← JEE Advanced papers, seeds + norm stats, chapter maps, notes
+calibration/             ← anchor solve rates, council eval, meta-tag norm stats
+tools/                   ← extract_notes, build_graph (+ rules), evaluate, results, make_approach_pdf
+tests/                   ← engine tests (textbook answers) and offline pipeline runs
+results/                 ← final question sets with human-eval slots (+ rejected.json)
+outputs/                 ← run output: accepted questions, attempt logs, queues, coverage,
+                           pending, duplicate store, batch_run.log
 docs/
-  pipeline_overview.html ← live architecture diagram
+  pipeline_overview.html ← architecture page
   ChangeLog.md / Decisions.md / Flow.md
 ```
 
-All scripts resolve paths from their own location, so they can be run from any working
-directory, and every script reads `.env` from the repo root.
+All scripts resolve paths from their own location and read `.env` from the repo root.
 
 ### Reference data (not read by the pipeline)
 
@@ -373,72 +344,11 @@ save accepted questions with `meta_tags: null` and a `meta_tags_error`. Organic 
 | `concept_book_physical.json` | Physical concept book (348 transforms incl. formulas) |
 | `reaction_graph.json` | Organic reaction graph (57 nodes / 199 edges) |
 | `reaction_graph_inorg.json` | Inorganic species graph (363 nodes / 415 edges, 22 of them salt → ion links) |
-| `reaction_graph_physical.json` | Physical quantity graph (119 nodes / 147 edges) |
+| `reaction_graph_physical.json` | Physical quantity graph (173 nodes / 198 edges), generated from the physical engine |
 | `graph_unmapped*.json` | Concept-book entries left out of each graph (facts, not steps) |
 | `reaction_orders.json` | 14 ordering dimensions (acidity, nucleophilicity, …) with JEE traps |
 | `node_labels.json` | display names and example compounds for organic graph nodes (`core/graph_traversal.py`) |
 | `molecule_constructor.json`, `qualitative_tests.json` | reference data (organic node templates; Tollens, Fehling's, iodoform, … test results); not read by the pipeline |
-
----
-
-## Verification (`core/verifier.py`) — details
-
-**Tier 1 — deterministic comparison, numeric answers only.** One extraction call reads the
-candidate's final answer; `parse_numeric_answers()` turns it into numbers ("2.08 × 10⁹ years",
-"Ea = 293.95 kJ/mol, t = 10.4 s") or decides it is not numeric (a compound name such as
-2-methylbut-2-ene, whose digits are locants). For numeric answers, `check_duplicate_inputs()`
-hashes the problem's numeric inputs + formula signature and compares it, read-only, with the
-ACCEPTED questions stored in `outputs/verifier_seen_inputs.json` (gitignored). If an attempt
-shares the hash of an accepted question but its answer differs by more than 1% (per part),
-it hard-FAILs — at least one must be wrong, and no LLM is needed to know that. Non-numeric
-answers skip Tier 1 and are judged by Tier 2 alone. Only acceptance writes to the
-store (`record_accepted_inputs()`, with the question id), so a rejected attempt's wrong
-answer can never block the corrected refine of the same numbers. Entries without a question
-id (written by the old store-every-attempt code) are ignored. This was written to catch a real bug where two identical U-Pb dating
-questions produced two different ages, both stamped PASS by the previous mock verifier.
-
-**Tier 2 — answer-first checks (Gemini 3 Flash), one narrow call each.** The verdict is
-assembled in code from discrete results, not written by the model.
-
-1. `_extract_candidate_answer` reads the candidate solution and returns only its answer
-   (this also feeds Tier 1, which runs next).
-2. `_blind_solve` solves the problem with the candidate solution withheld and commits a
-   final answer.
-3. `_answers_equivalent` compares the two answers. If they disagree, the candidate's
-   reference solution is not trustworthy, so the item FAILs and the later calls are skipped.
-4. `_structural_check` looks only for arithmetic errors, out-of-regime formula use,
-   physically impossible results, non-uniqueness, and non-circularity.
-5. `_rate_difficulty` runs only on a clean PASS.
-
-This replaced a single `_judge` call that saw the candidate solution and returned the
-verdict itself. That call would pass a tidy but wrong solution. Splitting the work into
-short single-purpose prompts is where a small model drifts least, and moving the PASS/FAIL
-decision into code removes the "looks fine" failure mode.
-
-The verifier is the **binding quality gate**. A circular or inconsistent chain that a
-solver still "solves" is rejected here. The FAIL feedback names both the independent answer
-and the candidate answer, so the generator can correct its key on the refine pass.
-
----
-
-## Known limitations (honest status)
-
-- **Generation reaches Intermediate, not Advanced.** Measured against the anchor, though the
-  anchor now uses different solver models than generation, so the gap is less precisely
-  quantified.
-- **Graph nodes are coarse.** Organic and physical nodes are classes (alkene, moles), so
-  consecutive steps connect by class, not by exact compound; the generator still has to
-  pick concrete compounds and data that make the chain work, and the verifier catches
-  chains it cannot. Inorganic nodes are exact species but cover only the reaction entries
-  (about half the inorganic concept book).
-- **The generator (Gemini 2.5 Flash) and verifier (Gemini 3 Flash) are both Google models.**
-  Different versions, and neither grades its own output, but family separation is weaker
-  than the earlier roster.
-- **The anchor is numeric-only (n = 54)** and blind-solves with models that are no longer
-  in the generation loop.
-- **`run_graph_final.py` is not migrated** to the current verifier and council.
-- **Provenance typing and an RDKit-level deterministic chemistry checker are not built.**
-  Future work.
 
 ---
 

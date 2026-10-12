@@ -1,6 +1,6 @@
 """
 subject_config.py — single source of truth for subject-specific settings used by
-run_groundup_final.py and run_graph_final.py.
+run_groundup_final.py.
 
 Add a new subject by adding one entry to SUBJECT_CONFIGS. No other file should
 need subject-specific branching beyond reading fields off this config via --subject.

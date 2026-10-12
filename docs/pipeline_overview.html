@@ -5,430 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pipeline Overview</title>
 <style>
-  :root {
-    --paper:      #f1f4f2;
-    --surface:    #ffffff;
-    --ink:        #17222c;
-    --ink-soft:   #4a5862;
-    --ink-faint:  #6f7d85;
-    --line:       #d6ddd8;
-    --accent:     #0f6e72;
-    --accent-2:   #0c4a4d;
-    --accent-bg:  #e4efee;
-    --gate:       #a86a12;
-    --pass:       #2f7d55;
-    --reject:     #b23b3b;
-    --plate:      #f7f8f6;
-    --plate-line: #cfd7d1;
-
-    --font-sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-    --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
-
-    --maxw: 880px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --paper:     #0f151a;
-      --surface:   #161f27;
-      --ink:       #e7ede9;
-      --ink-soft:  #a3b0b5;
-      --ink-faint: #7a888e;
-      --line:      #29343c;
-      --accent:    #4fb6ba;
-      --accent-2:  #7fd0d3;
-      --accent-bg: #142c30;
-      --gate:      #d6a24a;
-      --pass:      #5bb582;
-      --reject:    #db7d7d;
-    }
-  }
-  :root[data-theme="light"] {
-    --paper:#f1f4f2; --surface:#ffffff; --ink:#17222c; --ink-soft:#4a5862; --ink-faint:#6f7d85;
-    --line:#d6ddd8; --accent:#0f6e72; --accent-2:#0c4a4d; --accent-bg:#e4efee;
-    --gate:#a86a12; --pass:#2f7d55; --reject:#b23b3b;
-  }
-  :root[data-theme="dark"] {
-    --paper:#0f151a; --surface:#161f27; --ink:#e7ede9; --ink-soft:#a3b0b5; --ink-faint:#7a888e;
-    --line:#29343c; --accent:#4fb6ba; --accent-2:#7fd0d3; --accent-bg:#142c30;
-    --gate:#d6a24a; --pass:#5bb582; --reject:#db7d7d;
-  }
-
-  * { box-sizing: border-box; }
-
-  /* Diagram text must use the font Mermaid measured its boxes with (themeVariables.fontFamily);
-     the inherited monospace <pre> font is wider and spills past the boxes. */
-  pre.mermaid, pre.mermaid svg text { font-family: system-ui, sans-serif; }
-
-  body { margin: 0; }
-
-  .wrap {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--font-sans);
-    line-height: 1.6;
-    padding: clamp(1.5rem, 4vw, 4rem) 1.25rem 5rem;
-  }
-
-  .col { max-width: var(--maxw); margin: 0 auto; }
-
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 0.75rem;
-  }
-
-  h1 {
-    font-size: clamp(1.9rem, 4.5vw, 2.9rem);
-    line-height: 1.08;
-    letter-spacing: -0.015em;
-    font-weight: 640;
-    text-wrap: balance;
-    margin: 0 0 1rem;
-  }
-
-  .lede {
-    font-size: 1.12rem;
-    color: var(--ink-soft);
-    max-width: 62ch;
-    margin: 0 0 0.5rem;
-  }
-
-  h2 {
-    font-size: 1.42rem;
-    letter-spacing: -0.01em;
-    font-weight: 620;
-    text-wrap: balance;
-    margin: 3.5rem 0 0.4rem;
-  }
-
-  .sec-num {
-    font-family: var(--font-mono);
-    color: var(--accent);
-    font-size: 0.9em;
-    margin-right: 0.5em;
-  }
-
-  h2 + .sub { color: var(--ink-soft); margin: 0 0 1.5rem; max-width: 60ch; }
-
-  p { max-width: 66ch; }
-
-  code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
-  p code, li code {
-    background: var(--accent-bg);
-    color: var(--accent-2);
-    padding: 0.08em 0.36em;
-    border-radius: 3px;
-  }
-
-  hr.rule {
-    border: 0;
-    border-top: 1px solid var(--line);
-    margin: 1.25rem 0 0;
-  }
-
-  /* ── Diagram plate — a figure with its own committed light ground ── */
-  .plate {
-    background: var(--plate);
-    border: 1px solid var(--plate-line);
-    border-radius: 10px;
-    padding: 1.5rem 1rem;
-    margin: 1.25rem 0 0.75rem;
-    overflow-x: auto;
-    box-shadow: 0 1px 2px rgba(20,30,25,0.04);
-  }
-  .plate pre.mermaid { margin: 0; display: flex; justify-content: center; min-width: 520px; }
-  .caption {
-    font-size: 0.82rem;
-    color: var(--ink-faint);
-    font-family: var(--font-mono);
-    letter-spacing: 0.02em;
-    margin: 0.35rem 0 0;
-  }
-
-  /* ── Legend / component key ── */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 0.85rem;
-    margin: 1.25rem 0 0;
-  }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    padding: 0.95rem 1rem 1.05rem;
-  }
-  .card h3 {
-    font-size: 0.98rem;
-    margin: 0 0 0.15rem;
-    font-weight: 620;
-  }
-  .card .tag {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.04em;
-    color: var(--accent-2);
-    background: var(--accent-bg);
-    padding: 0.12em 0.5em;
-    border-radius: 4px;
-    margin-bottom: 0.55rem;
-  }
-  .card p { font-size: 0.9rem; color: var(--ink-soft); margin: 0; max-width: none; }
-
-  /* ── Two-path compare ── */
-  .paths { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-top: 1.25rem; }
-  @media (max-width: 620px) { .paths { grid-template-columns: 1fr; } }
-  .path { border: 1px solid var(--line); border-radius: 9px; padding: 1rem 1.1rem; background: var(--surface); }
-  .path h3 { margin: 0 0 0.5rem; font-size: 1rem; }
-  .path .lbl { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
-  .path.graph .lbl { color: var(--accent); }
-  .path.ground .lbl { color: var(--gate); }
-  .path ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
-  .path li { font-size: 0.9rem; color: var(--ink-soft); margin: 0.25rem 0; }
-
-  .legend-swatches { display: flex; flex-wrap: wrap; gap: 1.1rem; margin: 1rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
-  .sw { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .dot { width: 0.85rem; height: 0.85rem; border-radius: 3px; border: 1px solid rgba(0,0,0,0.15); }
-
-  .note {
-    margin-top: 1rem;
-    border-left: 3px solid var(--accent);
-    background: var(--accent-bg);
-    padding: 0.8rem 1rem;
-    border-radius: 0 7px 7px 0;
-    font-size: 0.92rem;
-    color: var(--ink-soft);
-  }
-  .note strong { color: var(--ink); }
-
-  .out-record {
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    padding: 1rem 1.15rem;
-    margin-top: 1.25rem;
-    overflow-x: auto;
-    line-height: 1.5;
-    color: var(--ink-soft);
-  }
-  .out-record .k { color: var(--accent-2); }
-  @media (prefers-color-scheme: dark) { .out-record .k { color: var(--accent-2); } }
-
-  footer.foot {
-    margin-top: 3.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--line);
-    font-size: 0.82rem;
-    color: var(--ink-faint);
-    font-family: var(--font-mono);
-  }
+:root{--bg:#faf9f6;--card:#ffffff;--bd:#d6d3ca;--tx:#1f1e1c;--tx2:#5f5e5a;--tx3:#888780;
+--code-bg:#f1efe8;--code-tx:#444441;--wr-bg:#eeedfe;--wr-tx:#3c3489;--sv-bg:#e1f5ee;--sv-tx:#085041;--ck-bg:#faeeda;--ck-tx:#633806;--lp-bd:#378add;--lp-tx:#0c447c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1a;--card:#262624;--bd:#444441;--tx:#f1efe8;--tx2:#b4b2a9;--tx3:#888780;
+--code-bg:#2c2c2a;--code-tx:#d3d1c7;--wr-bg:#26215c;--wr-tx:#cecbf6;--sv-bg:#04342c;--sv-tx:#9fe1cb;--ck-bg:#412402;--ck-tx:#fac775;--lp-bd:#85b7eb;--lp-tx:#b5d4f4}}
+:root[data-theme="dark"]{--bg:#1c1c1a;--card:#262624;--bd:#444441;--tx:#f1efe8;--tx2:#b4b2a9;--tx3:#888780;
+--code-bg:#2c2c2a;--code-tx:#d3d1c7;--wr-bg:#26215c;--wr-tx:#cecbf6;--sv-bg:#04342c;--sv-tx:#9fe1cb;--ck-bg:#412402;--ck-tx:#fac775;--lp-bd:#85b7eb;--lp-tx:#b5d4f4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:20px;font-weight:600;margin:0 0 4px}
+.sub{color:var(--tx2);font-size:13px;margin:0 0 16px}
+.lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.st{border:1px solid var(--bd);border-radius:12px;padding:10px 14px;background:var(--card)}
+.loop{border:1.5px solid var(--lp-bd);border-radius:14px;padding:10px;margin:0}
+.loop>.lt{font-size:12px;color:var(--lp-tx);font-weight:600;margin:0 0 8px 4px}
+.hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.n{font-size:12px;color:var(--tx3);min-width:18px;font-weight:600}
+.nm{font-weight:600}
+.md{font-size:12px;color:var(--tx2);font-family:ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+.ds{font-size:13px;color:var(--tx2);margin-top:4px}
+.br{font-size:12px;color:var(--tx2);margin-top:4px}
+.tg{font-size:11px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.code{background:var(--code-bg);color:var(--code-tx)}
+.wr{background:var(--wr-bg);color:var(--wr-tx)}
+.sv{background:var(--sv-bg);color:var(--sv-tx)}
+.ck{background:var(--ck-bg);color:var(--ck-tx)}
+.lpk{border:1px solid var(--lp-bd);color:var(--lp-tx)}
+.ar{text-align:center;color:var(--tx3);font-size:18px;line-height:24px}
+.rm{margin-top:20px;font-size:13px;color:var(--tx2)}
+.rm b{color:var(--tx)}
 </style>
 </head>
 <body>
-<div class="wrap">
-<div class="col">
+<main>
+<h1>Pipeline overview</h1>
+<p class="sub">How one question is made. The answer key always comes from the engine; every decision is made in code. Status: physical is wired end to end; the inorganic and organic engines are being built.</p>
+<div class="lg"><span class="tg code">code</span><span class="tg wr">model writes / picks</span><span class="tg sv">model solves</span><span class="tg ck">model checks / judges</span><span class="tg lpk">refinement loop</span></div>
 
-  <p class="eyebrow">Architecture · Prahlada</p>
-  <h1>How a chemistry question gets made</h1>
-  <p class="lede">Prahlada synthesises JEE&nbsp;Advanced chemistry problems with LLMs, then puts every candidate through a validation loop before it is allowed into the dataset. This is the shape of that pipeline, start to finish, for someone seeing it for the first time.</p>
+<div class="st"><div class="hd"><span class="n">1</span><span class="tg code">code</span><span class="nm">Graph walk</span></div><div class="ds">Picks a chain, weighted by coverage of edges, chapters and trap types</div></div>
+<div class="ar">↓</div>
 
-  <h2><span class="sec-num">01</span>The shape at a glance</h2>
-  <p class="sub">Three phases. The first two are built once and committed to the repository. The third is the one you run, over and over, to produce questions.</p>
+<div class="st"><div class="hd"><span class="n">2</span><span class="tg code">code</span><span class="nm">Blackboard</span><span class="md">core/blackboard.py</span></div><div class="ds">Shared notebook for this question, created right after the walk. Every later stage writes back; input picking and the generator read it on each round</div><div class="br">Holds: chain, candidate molecules + traps, chosen inputs, engine answer + trace, each stem, gate results, council work, verifier diagnoses, hint results, counters</div></div>
+<div class="ar">↓</div>
 
-  <div class="plate">
-<pre class="mermaid">
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'system-ui, sans-serif','fontSize':'13px','primaryColor':'#eaf2f1','primaryTextColor':'#17222c','primaryBorderColor':'#0f6e72','lineColor':'#6b7680','clusterBkg':'#eef2ef','clusterBorder':'#cfd7d1'}}}%%
-flowchart LR
-  subgraph P0["PHASE 0 · KNOWLEDGE — committed"]
-    direction TB
-    PDF["Teacher notes"] --> CB["concept books<br/>organic 657 · inorganic 904 · physical 348 transforms"]
-    CB --> RG["knowledge graphs (build_graph.py)<br/>organic 57/199 · inorganic 363/415 · physical 119/147<br/>nodes / edges"]
-  end
-  subgraph P1["PHASE 1 · CALIBRATION — committed"]
-    direction TB
-    JEE["JEE Advanced<br/>papers 2012–2025"] --> AN["anchor: blind solve rates<br/>on 54 real numeric items"]
-    JEE --> NS["meta-tag norm stats<br/>per subject · per archetype"]
-  end
-  subgraph P2["PHASE 2 · GENERATION — you run this"]
-    direction TB
-    LP["generation loop"] --> OUT["outputs/ + results/<br/>validated question records"]
-  end
-  P0 --> P2
-  P1 --> P2
-  classDef default fill:#eef3f1,stroke:#0f6e72,color:#17222c;
-  style P0 fill:#e7ede9,stroke:#cfd7d1,color:#17222c;
-  style P1 fill:#e7ede9,stroke:#cfd7d1,color:#17222c;
-  style P2 fill:#e7ede9,stroke:#cfd7d1,color:#17222c;
-</pre>
-  </div>
-  <p class="caption">fig. 1 — phase overview · knowledge and calibration feed the generation loop</p>
+<div class="loop"><div class="lt">Refinement loop: max 3 rounds (too easy → back to 3 for new inputs, or to 6 for rewording; inorganic: rewording only)</div>
 
-  <p><strong>Phase&nbsp;0</strong> turns teacher notes into structured chemistry: a <em>concept book</em> of transformations per subject, and from it a <em>knowledge graph</em> per subject — functional-group classes for organic, chemical species for inorganic, physical quantities for physical. Every edge is one concept-book transformation. <strong>Phase&nbsp;1</strong> measures how hard real exam questions are for the models (the anchor) and sets the baselines for the difficulty tags. <strong>Phase&nbsp;2</strong> is the loop below.</p>
+<div class="st"><div class="hd"><span class="n">3</span><span class="tg code">code</span><span class="nm">Engine screens inputs</span><span class="md">RDKit · SymPy · graph</span></div><div class="ds">Organic: runs the chain on every pool molecule, keeps those where every step works, lists each one's traps. Inorganic: species fixed by the chain</div></div>
+<div class="ar">↓</div>
 
-  <h2><span class="sec-num">02</span>Inside the generation loop</h2>
-  <p class="sub">One run accepts at most one question: up to three fresh ideas (lineages) and four generate-and-check iterations in total. A candidate is gated by a two-tier verifier and then by a council of three solvers that work <em>blind</em> (they never see the reference). On a miss the failure is fed back and the question is repaired in place.</p>
+<div class="st"><div class="hd"><span class="n">4</span><span class="tg wr">picks</span><span class="nm">Generator picks inputs</span><span class="md">gemini-2.5-flash</span></div><div class="ds">Organic: picks a molecule by ID from the screened list, reading the Blackboard. Physical: proposes numbers, then code sanity checks (e.g. &gt; 0, fractions in [0, 1])</div></div>
+<div class="ar">↓</div>
 
-  <div class="plate">
-<pre class="mermaid">
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'system-ui, sans-serif','fontSize':'13px','primaryColor':'#eaf2f1','primaryTextColor':'#17222c','primaryBorderColor':'#0f6e72','lineColor':'#6b7680'}}}%%
-flowchart TD
-  PEND{"Parked questions<br/>for this subject?"}
-  PEND -->|"yes"| RECHK["Recheck the oldest:<br/>council only (verifier already passed)"]
-  PEND -->|"no"| GT["Graph traversal · same for all subjects<br/>BFS → multi-step chains in the chapter,<br/>ranked by coverage weight"]
-  GT --> CR["Concept reasoner · DeepSeek-V3<br/>picks one chain"]
-  CR --> GEN["Generator · Gemini 2.5 Flash<br/>writes question + reference solution"]
-  GEN --> VER["Verifier (2-tier) · Gemini 3 Flash<br/>T1 duplicate numeric inputs vs accepted (no LLM)<br/>T2 blind-solve → compare answers → structural check"]
-  VER -->|"FAIL"| RF["Refine in place<br/>(one refine per idea, then a new idea)"]
-  VER -->|"PASS"| CO["Council · Llama 3.3 70B · Mistral Large · Gemma 3 27B<br/>each solves BLIND, closed-book · GPT-4o grades each"]
-  RECHK --> CO
-  CO -->|"a member's call fails"| PARK["Park the question in<br/>outputs/pending_questions_[subject].json<br/>stop the run (exit 3)"]
-  CO --> G{"Gate<br/>verifier PASS · key not flagged by 2+ graders<br/>· at most 1 of 3 solved"}
-  G -->|"2+ solved · or key flagged"| RF
-  RF --> GEN
-  G -->|"pass"| ACC["Save: record → outputs/generated_questions_[subject].json<br/>then coverage · dedup store · results/ (human-eval slots) · log"]
-  classDef default fill:#eef3f1,stroke:#0f6e72,color:#17222c;
-  classDef gate fill:#f6ead2,stroke:#a86a12,color:#5c3b0a;
-  classDef out  fill:#e3eeed,stroke:#0f6e72,color:#0c4a4d;
-  classDef stop fill:#f6e2e2,stroke:#b23b3b,color:#5c1a1a;
-  class PEND,G gate;
-  class ACC out;
-  class PARK stop;
-</pre>
-  </div>
-  <p class="caption">fig. 2 — the Phase 2 loop (run_groundup_final.py) · at most one accepted question per run</p>
+<div class="st"><div class="hd"><span class="n">5</span><span class="tg code">code</span><span class="nm">Engine computes</span></div><div class="ds">Answer + trace + traps for the chosen inputs</div><div class="br">UNKNOWN → engine-unknown queue</div></div>
+<div class="ar">↓</div>
 
-  <div class="legend-swatches">
-    <span class="sw"><span class="dot" style="background:#eaf2f1"></span>pipeline stage</span>
-    <span class="sw"><span class="dot" style="background:#f6ead2"></span>decision / gate</span>
-    <span class="sw"><span class="dot" style="background:#e3eeed"></span>output</span>
-    <span class="sw"><span class="dot" style="background:#f6e2e2"></span>stop</span>
-  </div>
+<div class="st"><div class="hd"><span class="n">6</span><span class="tg wr">writes</span><span class="nm">Generator writes stem</span><span class="md">gemini-2.5-flash</span></div><div class="ds">Question text only, aimed at the engine's trap. Organic start name inserted from the pool</div></div>
+<div class="ar">↓</div>
 
-  <h2><span class="sec-num">03</span>What each stage does</h2>
-  <p class="sub">Read fig.&nbsp;2 top to bottom. Every box is one of these.</p>
+<div class="st"><div class="hd"><span class="n">7</span><span class="tg ck">checks</span><span class="nm">Chemistry gate</span><span class="md">deepseek-v4-flash-0731</span></div><div class="ds">Model lists start / reagents / numbers / what's asked; code compares with the chosen inputs</div><div class="br">mismatch → back to 6 (original + 2 retries, then drop chain) · unreadable → gate-unreadable queue</div></div>
+<div class="ar">↓</div>
 
-  <div class="grid">
-    <div class="card">
-      <h3>Pending recheck</h3>
-      <span class="tag">recheck_pending()</span>
-      <p>A question whose council check failed for an API reason is parked, not lost. The next run of that subject rechecks it before making anything new: accepted, dropped (too easy / wrong key), or parked again.</p>
-    </div>
-    <div class="card">
-      <h3>Graph traversal</h3>
-      <span class="tag">core/graph_traversal.py</span>
-      <p>BFS over the subject's graph produces chains where every step is a real concept-book transformation. Chains inside the chapter come first; if there are too few, chains that start in the chapter top them up. Steps are joined on the same compound wherever the data allows.</p>
-    </div>
-    <div class="card">
-      <h3>Coverage</h3>
-      <span class="tag">core/coverage.py</span>
-      <p>Inverse-frequency counters (archetype · chapter · edge · concept). Chains through rarely used edges rank higher, so the question set stays diverse.</p>
-    </div>
-    <div class="card">
-      <h3>Concept reasoner</h3>
-      <span class="tag">DeepSeek-V3</span>
-      <p>Picks the most promising of the offered chains — coherent, non-circular, with a decision or trap where difficulty comes from reasoning rather than obscurity.</p>
-    </div>
-    <div class="card">
-      <h3>Generator</h3>
-      <span class="tag">Gemini 2.5 Flash</span>
-      <p>Writes the question and a reference solution, carrying each step's actual product into the next step. On a retry it <em>refines in place</em> — fixing only what was flagged.</p>
-    </div>
-    <div class="card">
-      <h3>Verifier — two-tier</h3>
-      <span class="tag">deterministic + Gemini 3 Flash</span>
-      <p><b>Tier 1</b> (no LLM): for numeric answers, hard-fails if an accepted question with the same inputs has a different answer. <b>Tier 2</b>: blind-solves with the candidate withheld, compares the answers, then checks arithmetic, regime of validity, uniqueness and circularity. The verdict is assembled in code.</p>
-    </div>
-    <div class="card">
-      <h3>Council</h3>
-      <span class="tag">Llama · Mistral · Gemma · blind</span>
-      <p>Three Mains-level models from different families solve in parallel, <em>blind</em> and <em>closed-book</em> (only the chapter's concept-book entries). How many solve it is the difficulty signal: 2 or 3 → too easy, 0 or 1 → hard enough. All three must answer.</p>
-    </div>
-    <div class="card">
-      <h3>Grader</h3>
-      <span class="tag">GPT-4o</span>
-      <p>Judges each council answer against the construction steps and the reference, with discrete true/false calls. If two or more graders say the reference answer itself is wrong, the question is refined.</p>
-    </div>
-    <div class="card">
-      <h3>Save &amp; results</h3>
-      <span class="tag">save_accepted()</span>
-      <p>The record is written first, atomically; only then coverage, the dedup store, the copy into <code>results/</code> with empty human-eval slots, and the attempt log. Six difficulty meta-tags label the item.</p>
-    </div>
-    <div class="card">
-      <h3>Blackboard</h3>
-      <span class="tag">core/blackboard.py</span>
-      <p>The shared working memory. Carries the full attempt history — verdicts, council results, feedback — so each retry can see what failed before.</p>
-    </div>
-  </div>
+<div class="st"><div class="hd"><span class="n">8</span><span class="tg code">code</span><span class="nm">Tier 1 duplicate check</span></div><div class="ds">Same numeric inputs as an accepted question but a different answer → fail</div></div>
+<div class="ar">↓</div>
 
-  <h2><span class="sec-num">04</span>The two entry points</h2>
-  <p class="sub">Both take their chains from the same graph traversal. What differs is how a candidate is checked.</p>
+<div class="st"><div class="hd"><span class="n">9</span><span class="tg sv">solves ×3</span><span class="nm">Council</span><span class="md">gpt-oss-120b · qwen3-235b-thinking · glm-4.7-flash</span></div><div class="ds">Closed book (no sheet), reasoning effort medium. Returns an answer, plus a self-labelled objection if any (none / chemistry / wording)</div><div class="br">chemistry objection → code path: gate re-checks the step → engine checks the member's alternative → objection-unresolved queue if neither settles it</div></div>
+<div class="ar">↓</div>
 
-  <div class="paths">
-    <div class="path graph">
-      <span class="lbl">current</span>
-      <h3>run_groundup_final.py</h3>
-      <ul>
-        <li>OpenRouter, one model per role</li>
-        <li>Answer-first two-tier verifier + three-model council</li>
-        <li>Pending queue, results/ review, batch driver (generate_questions.py)</li>
-      </ul>
-    </div>
-    <div class="path ground">
-      <span class="lbl">older</span>
-      <h3>run_graph_final.py</h3>
-      <ul>
-        <li>SambaNova DeepSeek-V3.2 for every role + a local Ollama llama3.2 weak solver</li>
-        <li>Gate: verifier PASS · strong ≥ 85 · weak ≤ 60</li>
-        <li>Kept for comparison; prefer the current entry point</li>
-      </ul>
-    </div>
-  </div>
+<div class="st"><div class="hd"><span class="n">10</span><span class="tg ck">judges</span><span class="nm">Mismatch verifier</span><span class="md">claude-haiku-5.5</span></div><div class="ds">Reads ALL members' work against the engine's answer and trace</div><div class="br">engine / question wrong → drop chain, flag rule, engine-wrong queue · right answer, wrong reasoning → not solved · wrong answer → why: genuine / unclear wording (→ reword, back to 6) / missing knowledge / slip (counts as solved only if code confirms it, e.g. by re-evaluating the member's own expression) · wording objections judged here</div></div>
+<div class="ar">↓</div>
 
-  <h2><span class="sec-num">05</span>What comes out</h2>
-  <p class="sub">Each accepted question is appended to <code>outputs/generated_questions_[subject].json</code> as one record and copied into <code>results/</code> for human review.</p>
+<div class="st"><div class="hd"><span class="n">11</span><span class="tg code">code</span><span class="nm">Grade + solve count</span></div><div class="ds">Final answers compared with the engine's (numbers within 1%, canonical SMILES, normalised formulas). Stores both council_n_correct (raw match) and council_n_solved (after 10's labels)</div><div class="br">council_n_solved ≥ 2 → too easy → refine (loop) · 0 or 1 → continue</div></div>
+<div class="ar">↓</div>
 
-  <div class="out-record">
-{<br>
-&nbsp;&nbsp;<span class="k">"question_id"</span>: "GEN_20261011T181924",  <span class="k">"generation_mode"</span>: "graph_council",<br>
-&nbsp;&nbsp;<span class="k">"subject"</span>: "physical",  <span class="k">"chapter"</span>: "Chemical Kinetics &amp; Nuclear Chemistry",<br>
-&nbsp;&nbsp;<span class="k">"question"</span>: "…",  <span class="k">"solution"</span>: "…",<br>
-&nbsp;&nbsp;<span class="k">"graph_path"</span>: ["reaction_rate", "rate_law", "rate_constant", "activation_energy"],<br>
-&nbsp;&nbsp;<span class="k">"council_n_solved"</span>: 1,  <span class="k">"council_size"</span>: 3,  <span class="k">"reference_correct"</span>: true,<br>
-&nbsp;&nbsp;<span class="k">"verifier_verdict"</span>: "PASS",  <span class="k">"meta_tags"</span>: { … 6 axes … },<br>
-&nbsp;&nbsp;<span class="k">"council_detail"</span>: { …each member's blind answer and grade… },<br>
-&nbsp;&nbsp;<span class="k">"attempt_history"</span>: [ …every attempt, verbatim… ]<br>
-}
-  </div>
-
-  <h2><span class="sec-num">06</span>How hard is "hard"? — the anchor</h2>
-  <p class="sub">Generation makes questions; calibration measures where they sit, with the same blind protocol.</p>
-
-  <p><code>calibration/anchor_calibration.py</code> blind-solves <strong>54 real JEE Advanced numeric questions</strong> (2021–2025) with a strong and a weak model and grades each answer by deterministic match against the official key — no self-scoring, no model bias.</p>
-
-  <div class="out-record">
-STRONG gpt-oss-120b: <span class="k">50%</span> solved (27/54) · weak llama-3.2-3b: <span class="k">7%</span> (4/54)<br>
-STRONG qwen3-235b:   <span class="k">37%</span> solved (20/54) · weak llama-3.2-3b: <span class="k">6%</span> (3/54)
-  </div>
-
-  <div class="note">
-    <strong>What the anchor is for.</strong> Even a strong reasoning model solves only about half of real Advanced numeric questions blind — that is the difficulty yardstick generated items are compared against.
-  </div>
-
-  <footer class="foot">
-    Current build · concept reasoner DeepSeek-V3 · generator Gemini 2.5 Flash · verifier Gemini 3 Flash (2-tier) · council Llama 3.3 70B · Mistral Large 2407 · Gemma 3 27B · grader GPT-4o · knowledge graphs for organic, inorganic and physical
-  </footer>
-
+<div class="st"><div class="hd"><span class="n">12</span><span class="tg sv">solves again</span><span class="nm">Hint re-solve</span><span class="md">failed council members</span></div><div class="ds">Hint picked by 10's label. Missing knowledge → knowledge hint (the fact/formula); solves → tag recall. Genuine → insight hint written by CODE from the engine's trap rule (names the kind of step, never the result), always run; solves → confirmed. Unclear wording → clarification hint; solves → reword, back through 6 (counts as a round)</div><div class="br">Still fails after the insight hint → verifier re-reads that attempt: genuine / second hard step → accept · unclear wording → reword · engine wrong → drop and flag</div></div>
 </div>
-</div>
+<div class="ar">↓</div>
 
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({ startOnLoad: true, flowchart: { htmlLabels: false } });</script>
+<div class="st"><div class="hd"><span class="n">13</span><span class="tg code">code</span><span class="nm">Accept</span></div><div class="ds">Save with tags (recall / closed book, trap type), update coverage (incl. trap type), copy to results/</div></div>
+<div class="ar">↓</div>
+
+<div class="st"><div class="hd"><span class="n">14</span><span class="tg wr">writes</span><span class="nm">Solution writer</span><span class="md">mistral-small-3.2-24b</span></div><div class="ds">Accepted questions only: turns the engine trace into a readable worked solution for review in results/</div></div>
+
+<p class="rm"><b>Caps:</b> 3 refinement rounds per chain (then drop it, small walk penalty on its edges) · 3 chains per run · gate: original + 2 retries. <b>Queues:</b> separate files per reason under outputs/. <b>Trap diversity:</b> trap type is one more coverage counter in the walk (gentle, always on).</p>
+</main>
 </body>
 </html>

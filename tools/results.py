@@ -23,6 +23,13 @@ Commands
     python tools/results.py reject <question_id> --reason "..."
         Remove a question from results/ and record it in results/rejected.json so
         `promote` never re-adds it.
+
+    python tools/results.py queue [--subject S] [--reason R]
+        List the review queues (engine_unknown, gate_unreadable, engine_wrong,
+        objection_unresolved): items the pipeline could not settle in code.
+
+    python tools/results.py dismiss <reason> <subject> <item_id> --note "..."
+        Remove one queue item after reviewing it (the note is printed for the log).
 """
 
 import argparse
@@ -149,6 +156,25 @@ def reject(question_id, reason):
     print(f"Rejected {question_id}" + (f" (removed from {subject} results)" if found else ""))
 
 
+def queue_list(subjects, reasons):
+    from core.pipeline import queues
+    n = 0
+    for reason in reasons:
+        for subject in subjects:
+            for item in queues.load(reason, subject):
+                n += 1
+                what = item.get("stem") or item.get("error") or item.get("objection") or ""
+                print(f"  {reason:<21} {subject:<10} {item['id']}  {' '.join(str(what).split())[:90]}")
+    print(f"{n} item(s) in the review queues.")
+
+
+def queue_dismiss(reason, subject, item_id, note):
+    from core.pipeline import queues
+    if not queues.remove(reason, subject, item_id):
+        sys.exit(f"ERROR: {item_id} not found in queue {reason} ({subject}).")
+    print(f"Dismissed {item_id} from {reason} ({subject}): {note}")
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -173,6 +199,17 @@ def main():
     p.add_argument("question_id")
     p.add_argument("--reason", required=True)
 
+    from core.pipeline.queues import REASONS
+    p = sub.add_parser("queue", help="list the review queues")
+    p.add_argument("--subject", choices=SUBJECTS)
+    p.add_argument("--reason", choices=REASONS)
+
+    p = sub.add_parser("dismiss", help="remove one reviewed item from a queue")
+    p.add_argument("reason", choices=REASONS)
+    p.add_argument("subject", choices=SUBJECTS)
+    p.add_argument("item_id")
+    p.add_argument("--note", required=True)
+
     args = ap.parse_args()
     subjects = (args.subject,) if getattr(args, "subject", None) else SUBJECTS
     if args.cmd == "promote":
@@ -183,6 +220,10 @@ def main():
         score(args.question_id, args.value, args.rationale)
     elif args.cmd == "reject":
         reject(args.question_id, args.reason)
+    elif args.cmd == "queue":
+        queue_list(subjects, (args.reason,) if args.reason else REASONS)
+    elif args.cmd == "dismiss":
+        queue_dismiss(args.reason, args.subject, args.item_id, args.note)
 
 
 if __name__ == "__main__":
