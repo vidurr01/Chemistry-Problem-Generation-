@@ -139,7 +139,8 @@ def _ask_options(plan, rng):
     return shuffled, shuffled.index(final_asks) + 1
 
 
-def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previous=None, feedback=None):
+def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previous=None, feedback=None,
+                   solved=None):
     """Write the stem and pass the gate. Returns (stem, None) or (None, reason)."""
     plan = cand["_plan"]
     traps = [t["desc"] for t in result.traps]
@@ -147,7 +148,7 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
     for attempt in range(GATE_RETRIES + 1):
         stem = stages.write_stem(adapter.config["display_name"], scenario, adapter.chain_text(plan), spec,
                                  values, result.constants, result.asks, result.unit, traps,
-                                 previous=previous, feedback=feedback)
+                                 previous=previous, feedback=feedback, solved=solved)
         ext = stages.gate_extract(stem, spec, options, result.constants)
         g = gate.compare(spec, values, ext, correct, result.constants)
         bb.note("gate", attempt=attempt + 1, stem=stem, ok=g["ok"], mismatches=g["mismatches"],
@@ -314,13 +315,13 @@ def _solved_summary(graded) -> str:
     return "\n".join(out) or "(none)"
 
 
-def _fact_stem_and_gate(adapter, cand, bb, previous=None, feedback=None):
+def _fact_stem_and_gate(adapter, cand, bb, previous=None, feedback=None, solved=None):
     """Stem for a fact question; the gate is code: question sentence and options verbatim."""
     fq = cand["_fact"]
     src = _fact_source(cand)
     for attempt in range(GATE_RETRIES + 1):
         stem = stages.write_fact_stem(adapter.config["display_name"], src.title, fq.lead, fq.option_lines,
-                                      previous=previous, feedback=feedback)
+                                      previous=previous, feedback=feedback, solved=solved)
         g = gate.compare_fact(stem, fq)
         bb.note("gate", attempt=attempt + 1, stem=stem, ok=g["ok"], mismatches=g["mismatches"], unreadable=False)
         if g["ok"]:
@@ -371,14 +372,15 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 continue
             values, scenario, result = picked
         print(f"  [engine] answer {answer_text(result)}; traps: {[t['id'] for t in result.traps]}")
-        previous = feedback = None
+        previous = feedback = solved = None
         while True:
             print(f"  [stem] round {bb.current['rounds']}: writing the question...")
             if facts:
-                stem, why = _fact_stem_and_gate(adapter, cand, bb, previous=previous, feedback=feedback)
+                stem, why = _fact_stem_and_gate(adapter, cand, bb, previous=previous, feedback=feedback,
+                                                solved=solved)
             else:
                 stem, why = _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng,
-                                           previous=previous, feedback=feedback)
+                                           previous=previous, feedback=feedback, solved=solved)
             if stem is None:
                 log({"event": why, "chain": cand["edges"]})
                 break
@@ -408,13 +410,14 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             bb.current["rounds"] += 1
             if decision["decision"] == "reword":
                 print("  [refine] rewording for clarity")
-                previous, feedback = stem, decision["feedback"]
+                previous, feedback, solved = stem, decision["feedback"], None
                 continue
-            choice = stages.choose_refinement(stem, _solved_summary(decision["graded"]), adapter.refine_modes)
+            solved = _solved_summary(decision["graded"])
+            choice = stages.choose_refinement(stem, solved, adapter.refine_modes)
             bb.note("refine", **choice)
             print(f"  [refine] too easy → {choice['mode']}: {choice['feedback'][:140]}")
             if choice["mode"] == "reword":
-                previous, feedback = stem, "Too easy: " + choice["feedback"]
+                previous, feedback = stem, "Too easy: " + choice["feedback"]     # refiner rewrites (solved set)
                 continue
             if facts:
                 try:
@@ -425,10 +428,10 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 bb.note("inputs", values=values, answer=result.answer)
             else:
                 picked = _propose(adapter, cand, spec, bb, log,
-                                  refine={"values": values, "summary": choice["feedback"]})
+                                  refine={"values": values, "summary": choice["feedback"], "working": solved})
                 if picked is None:
                     break
                 values, scenario, result = picked
             print(f"  [engine] new answer {answer_text(result)}")
-            previous = feedback = None
+            previous = feedback = solved = None
     return {"status": "none"}

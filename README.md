@@ -42,7 +42,8 @@ Mismatch verifier  Claude Haiku 5.5 reads every attempt against the engine's tra
 Grading            code: answer within 1% of the engine's; a slip counts as solved only if
                    the member's own arithmetic, re-evaluated in code, gives the answer
    │
-   ├─ 2+ solved      too easy → new inputs or reworded (at most 3 rounds per chain)
+   ├─ 2+ solved      too easy → refiner (Gemini 3.8 Flash) reads how they solved it →
+   │                 new inputs or reworded (at most 3 rounds per chain)
    ├─ reference wrong / unsettled objection → review queue, next chain
    └─ ≤1 solved      hint tests on each failed member:
                       clarification hint solves → reworded, judged again
@@ -156,7 +157,8 @@ Each item in `results/generated_questions_*_final.json` contains `human_eval_sco
 
 | Role | Model | Does |
 |------|-------|------|
-| Generator | `google/gemini-3.7-flash` | proposes inputs (or vetoes a chain), writes stems, clarification hints, refinement choice |
+| Generator | `google/gemini-3.7-flash` | proposes inputs (or vetoes a chain), writes stems, clarification hints |
+| Refiner | `google/gemini-3.8-flash` (GPQA Diamond 95.6 %) | too easy only: reads the solvers' working, chooses new inputs or rewording, and does it |
 | Extractor | `deepseek/deepseek-v4-flash-0731` | chemistry gate: copies stated facts into a form |
 | Council | `openai/gpt-6-luna`, `qwen/qwen3.8-flash`, `z-ai/glm-5.3-flash` (GPQA Diamond ~87–90%) | closed-book solves, reasoning effort medium |
 | Mismatch verifier | `anthropic/claude-haiku-5.5` | diagnoses every council attempt against the engine's trace |

@@ -61,9 +61,12 @@ def propose_inputs(subject_name: str, chain_text: str, spec: list, *, refine: di
         refine_block = f"""
 This chain was already used for a question the solvers found TOO EASY.
 Previous values: {json.dumps(refine.get("values"), ensure_ascii=False)}
-How the solvers handled it: {refine.get("summary", "")}
-Choose NEW values or a new scenario so the chemistry is harder to get right (a trap that
-actually bites, a less obvious system), not just bigger or messier numbers.
+What to change: {refine.get("summary", "")}
+How the solvers got it right:
+{refine.get("working") or "(not available)"}
+Find the shortcut or standard route they relied on, and choose NEW values or a new scenario
+where that route gives the wrong answer (a trap that actually bites, a less obvious system),
+not just bigger or messier numbers.
 """
     error_block = ""
     if errors:
@@ -90,7 +93,8 @@ Return JSON:
   "reason": "why not, if not coherent",
   "scenario": "one sentence describing the system",
   "values": {{"<input key>": <value>, ...}}}}"""
-    out = models.ask_json("generator", models.GENERATOR,
+    role, model = ("refiner", models.REFINER) if refine else ("generator", models.GENERATOR)
+    out = models.ask_json(role, model,
                           "You design chemistry problems. Output JSON only.", prompt,
                           max_tokens=3000, temperature=0.8)
     out["coherent"] = as_bool(out.get("coherent"), default=False)
@@ -130,7 +134,9 @@ def coerce_values(spec: list, raw: dict) -> tuple:
 
 def write_stem(subject_name: str, scenario: str, chain_text: str, spec: list, values: dict,
                constants: list, asks: str, unit: str, traps: list, *, previous: str | None = None,
-               feedback: str | None = None) -> str:
+               feedback: str | None = None, solved: str | None = None) -> str:
+    """With `solved` (the council found the previous version too easy), the refiner rewrites
+    it, seeing how the solvers got it right; otherwise the generator writes."""
     given_lines = "\n".join(
         f"- {s['desc']}: {_fmt_value(values[s['key']])}{(' ' + s['unit']) if s.get('unit') else ''}"
         for s in spec)
@@ -143,6 +149,12 @@ REWRITE this earlier version of the question. Keep every value exactly as listed
 Earlier version:
 {previous}
 What must change: {feedback}
+"""
+        if solved:
+            redo += f"""
+How strong students solved the earlier version (remove what made this easy: a cue that names
+the method, a spelled-out step, an obvious framing; keep it fair and unambiguous):
+{solved}
 """
     prompt = f"""Write one JEE Advanced {subject_name} question.
 
@@ -167,7 +179,8 @@ Rules: no intermediate results, no hints, no answer; one question (no parts); te
 no multiple-choice options; do not add data that is not listed.
 {redo}
 Return JSON: {{"stem": "the full question text"}}"""
-    out = models.ask_json("generator", models.GENERATOR,
+    role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
+    out = models.ask_json(role, model,
                           "You write rigorous chemistry exam questions. Output JSON only.", prompt,
                           max_tokens=2500, temperature=0.6)
     stem = str(out.get("stem") or "").strip()
@@ -177,11 +190,14 @@ Return JSON: {{"stem": "the full question text"}}"""
 
 
 def write_fact_stem(subject_name: str, title: str, lead: str, option_lines: list, *,
-                    previous: str | None = None, feedback: str | None = None) -> str:
+                    previous: str | None = None, feedback: str | None = None,
+                    solved: str | None = None) -> str:
     """A fact (MCQ/MSQ) question: the generator may add one sentence of context; the
     question sentence and the four options must appear exactly as given."""
     opts = "\n".join(option_lines)
     redo = f"\nREWRITE this earlier version:\n{previous}\nWhat must change: {feedback}\n" if previous else ""
+    if solved:
+        redo += f"\nHow strong students solved it (remove the context cue that made it easy):\n{solved}\n"
     prompt = f"""Write one JEE Advanced {subject_name} multiple-choice question about {title}.
 
 You may begin with at most one short sentence of context. Then copy this question sentence
@@ -194,7 +210,8 @@ Then copy these four options EXACTLY, each on its own line, with their letters:
 Do not add, remove, reorder or reword any option. Do not reveal the answer.
 {redo}
 Return JSON: {{"stem": "the full question text"}}"""
-    out = models.ask_json("generator", models.GENERATOR,
+    role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
+    out = models.ask_json(role, model,
                           "You write rigorous chemistry exam questions. Output JSON only.", prompt,
                           max_tokens=1500, temperature=0.4)
     stem = str(out.get("stem") or "").strip()
@@ -393,9 +410,9 @@ Decide what to change for the next version:
   cue, a step spelled out).
 
 Return JSON: {{"mode": "new_inputs" or "reword", "feedback": "one or two sentences on what to change"}}"""
-    out = models.ask_json("generator", models.GENERATOR,
+    out = models.ask_json("refiner", models.REFINER,
                           "You design hard but fair chemistry questions. Output JSON only.", prompt,
-                          max_tokens=500, temperature=0.4)
+                          max_tokens=1500, temperature=0.4)
     mode = out.get("mode") if out.get("mode") in modes else modes[0]
     return {"mode": mode, "feedback": str(out.get("feedback") or "")[:600]}
 

@@ -2,7 +2,7 @@
 Model roster and the one call helper every pipeline stage uses.
 
 Every role goes through OpenRouter. No model checks output from its own family:
-Gemini writes, DeepSeek extracts, the council (OpenAI, Qwen, Z.ai) solves, Claude
+Gemini writes and refines, DeepSeek extracts, the council (OpenAI, Qwen, Z.ai) solves, Claude
 diagnoses, Mistral writes the readable solution after acceptance.
 """
 
@@ -17,6 +17,7 @@ load_env()
 
 # ── Roster ───────────────────────────────────────────────────────────────────
 GENERATOR = "google/gemini-3.7-flash"                 # picks inputs, writes stems and clarification hints
+REFINER = "google/gemini-3.8-flash"                   # too easy: reads the solvers' working, redesigns inputs or rewrites
 EXTRACTOR = "deepseek/deepseek-v4-flash-0731"          # chemistry gate: lists the facts a stem states
 VERIFIER = "anthropic/claude-haiku-5.5"                # mismatch verifier: reads every council attempt
 SOLUTION_WRITER = "mistralai/mistral-small-3.2-24b-instruct"   # readable solution, accepted questions only
@@ -30,7 +31,7 @@ COUNCIL_REASONING_EFFORT = "medium"
 # answers could still change the decision (see flow.judge).
 COUNCIL_FIRST = ("gpt-6-luna", "glm-5.3-flash")
 
-ROSTER = {"generator": GENERATOR, "extractor": EXTRACTOR, "verifier": VERIFIER,
+ROSTER = {"generator": GENERATOR, "refiner": REFINER, "extractor": EXTRACTOR, "verifier": VERIFIER,
           "solution_writer": SOLUTION_WRITER, "council": [slug for _, slug in COUNCIL]}
 
 

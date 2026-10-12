@@ -32,15 +32,15 @@ class FakeModels:
 
     def __call__(self, role, model, system, user, **kw):
         self.calls.append(role)
-        if role == "generator" and "invent a concrete" in user:
+        if role in ("generator", "refiner") and "invent a concrete" in user:
             return {"coherent": True, "scenario": "carbon dioxide gas",
                     "values": {"s0.mass": 4.4, "s0.molar_mass": 44}}
-        if role == "generator" and "Write one JEE" in user:
+        if role in ("generator", "refiner") and "Write one JEE" in user:
             return {"stem": "4.4 g of CO2 (molar mass 44 g mol⁻¹) is collected. Taking the molar volume "
                             "at 1 atm and 273 K as 22.4 L, find the volume of the gas in L."}
-        if role == "generator" and "too easy" in user:
+        if role in ("generator", "refiner") and "too easy" in user:
             return {"mode": self.refine_mode, "feedback": "hide the molar volume cue"}
-        if role == "generator" and "misread" in user:
+        if role in ("generator", "refiner") and "misread" in user:
             return {"hint": "The volume is asked at 1 atm and 273 K."}
         if role == "extractor":
             section = user.split("What does the question ask for?")[1].split("3) For each constant")[0]
@@ -126,11 +126,11 @@ class FakeFactModels:
 
     def __call__(self, role, model, system, user, **kw):
         self.calls.append(role)
-        if role == "generator" and "multiple-choice question" in user:
+        if role in ("generator", "refiner") and "multiple-choice question" in user:
             lead = user.split("copy this question sentence\nEXACTLY:\n")[1].split("\n")[0]
             opts = user.split("with their letters:\n")[1].split("\n\nDo not add")[0]
             return {"stem": f"Consider the following.\n{lead}\n{opts}"}
-        if role == "generator" and "too easy" in user:
+        if role in ("generator", "refiner") and "too easy" in user:
             return {"mode": "new_inputs", "feedback": "use other statements"}
         if role == "council":
             return {"working": "checked each statement", "final_answer": self.member_letters[model](self.key),
@@ -184,6 +184,9 @@ class PipelineOffline(_Env, unittest.TestCase):
         self.assertEqual(self._records(), [])
         # original + 3 refinements; both cheaper members solve each time, so Qwen is never called
         self.assertEqual(fake.calls.count("council"), 2 * 4)
+        # each too-easy round: the refiner chooses and rewrites; the first draft is the generator's
+        self.assertEqual(fake.calls.count("refiner"), 3 * 2)
+        self.assertEqual(fake.calls.count("generator"), 2)              # inputs + first stem
 
     def test_early_stop_skips_decider_when_both_first_members_fail(self):
         slugs = [s for _, s in models.COUNCIL]
