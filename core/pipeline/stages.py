@@ -176,6 +176,33 @@ Return JSON: {{"stem": "the full question text"}}"""
     return stem
 
 
+def write_fact_stem(subject_name: str, title: str, lead: str, option_lines: list, *,
+                    previous: str | None = None, feedback: str | None = None) -> str:
+    """A fact (MCQ/MSQ) question: the generator may add one sentence of context; the
+    question sentence and the four options must appear exactly as given."""
+    opts = "\n".join(option_lines)
+    redo = f"\nREWRITE this earlier version:\n{previous}\nWhat must change: {feedback}\n" if previous else ""
+    prompt = f"""Write one JEE Advanced {subject_name} multiple-choice question about {title}.
+
+You may begin with at most one short sentence of context. Then copy this question sentence
+EXACTLY:
+{lead}
+
+Then copy these four options EXACTLY, each on its own line, with their letters:
+{opts}
+
+Do not add, remove, reorder or reword any option. Do not reveal the answer.
+{redo}
+Return JSON: {{"stem": "the full question text"}}"""
+    out = models.ask_json("generator", models.GENERATOR,
+                          "You write rigorous chemistry exam questions. Output JSON only.", prompt,
+                          max_tokens=1500, temperature=0.4)
+    stem = str(out.get("stem") or "").strip()
+    if not stem:
+        raise ValueError("generator returned an empty stem")
+    return stem
+
+
 # ── 3. Gate ──────────────────────────────────────────────────────────────────
 
 def gate_extract(stem: str, spec: list, ask_options: list, constants: list) -> dict:

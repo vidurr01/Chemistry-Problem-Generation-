@@ -121,6 +121,7 @@ CHECK 6 — DIFFICULTY LEVER VALIDITY: note (don't fail) any decorative conditio
         "pending_file":      os.path.join(OUTPUT_DIR, "pending_questions_physical.json"),
         "default_chapter":   "Chemical Kinetics & Nuclear Chemistry",
         "default_archetype": "Multi-Formulae",
+        "fact_share": 0.25,      # share of runs that make a fact (MCQ/MSQ) question instead of a chain
         "default_archetype_code": "I",
         "seed_id_prefix":    "PHYS",
 

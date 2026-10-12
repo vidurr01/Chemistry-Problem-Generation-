@@ -74,6 +74,22 @@ Decision: the signature is the subject, the engine steps and every given value; 
 Alternatives: drop Tier 1 entirely.
 Trade-off: two different wordings of the same inputs are caught; two different inputs that make the same question are not.
 
+## Fact questions are built by code, in a fixed share of runs
+
+Date: 2026-10-13
+Context: about a quarter of the physical concept book is facts, classifications and plot readings that no computation covers, and a free-text answer to them cannot be graded reliably in code.
+Decision: facts become MCQ/MSQ questions whose four statements and answer letters are built by code from category tables or true/false statement pools; the generator only adds a lead-in, and the gate checks in code that the question and options appear verbatim. A fixed 25% of physical runs make a fact question (the user's choice); coverage picks the source.
+Alternatives: free answers normalised against synonyms (some correct wordings marked wrong); letting coverage alone decide the mix (the share drifts).
+Trade-off: statements are hand-written data that must be unambiguous; a category table is only used where categories are mutually exclusive.
+
+## Steps that cannot join a chain are asked alone
+
+Date: 2026-10-13
+Context: 38 physical engine steps have no step that can follow or precede them coherently (Bohr radius, Carnot efficiency, Le Chatelier); with a two-step minimum they would never be asked.
+Decision: such steps are offered as single-step questions at half the coverage weight of multi-step chains; the council decides whether each is hard enough like any other question.
+Alternatives: leave them out (unused knowledge); force them into chains (incoherent problems).
+Trade-off: more questions are rejected as too easy, which costs council calls.
+
 ## Use a single per-subject config file
 
 Date: 2026-09-01

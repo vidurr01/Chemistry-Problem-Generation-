@@ -65,7 +65,7 @@ class FakeModels:
         raise AssertionError(f"unexpected call: {role}")
 
 
-class PipelineOffline(unittest.TestCase):
+class _Env:
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
         cfg = entry.get_subject_config("physical")
@@ -102,9 +102,10 @@ class PipelineOffline(unittest.TestCase):
                 "description": "", "_steps": plan.steps, "_plan": plan}
         return [] if tuple(cand["edges"]) in exclude else [cand]
 
-    def _run(self, fake):
+    def _run(self, fake, kind="chains"):
         with mock.patch.object(models, "ask_json", fake), \
-                mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "physical", "--seed", "1"]):
+                mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "physical", "--seed", "1",
+                                                "--kind", kind]):
             return entry.main()
 
     def _records(self):
@@ -113,6 +114,38 @@ class PipelineOffline(unittest.TestCase):
         with open(self.cfg["output_file"], encoding="utf-8") as f:
             return json.load(f)
 
+
+
+class FakeFactModels:
+    """Fact questions: the generator copies the options; members answer with letters taken
+    from the key that the engine stored (read back from the stem's TRUE/FALSE trace)."""
+
+    def __init__(self, member_letters):
+        self.member_letters = member_letters      # slug -> function(answer_letters) -> reply
+        self.calls = []
+
+    def __call__(self, role, model, system, user, **kw):
+        self.calls.append(role)
+        if role == "generator" and "multiple-choice question" in user:
+            lead = user.split("copy this question sentence\nEXACTLY:\n")[1].split("\n")[0]
+            opts = user.split("with their letters:\n")[1].split("\n\nDo not add")[0]
+            return {"stem": f"Consider the following.\n{lead}\n{opts}"}
+        if role == "generator" and "too easy" in user:
+            return {"mode": "new_inputs", "feedback": "use other statements"}
+        if role == "council":
+            return {"working": "checked each statement", "final_answer": self.member_letters[model](self.key),
+                    "unit": "", "objection": None}
+        if role == "verifier":
+            from core.engine.facts import letters_of
+            ans = letters_of(re.search(r"STUDENT'S FINAL ANSWER: (.*)", user).group(1))
+            return {"verdict": "correct"} if ans == self.key else \
+                {"verdict": "wrong", "failure_type": "genuine_difficulty", "failed_step": 1}
+        if role == "solution_writer":
+            return {"solution": "Each statement checked."}
+        raise AssertionError(f"unexpected call: {role}")
+
+
+class PipelineOffline(_Env, unittest.TestCase):
     def test_accepts_when_failures_are_confirmed(self):
         slugs = [s for _, s in models.COUNCIL]
         fake = FakeModels(
@@ -162,6 +195,42 @@ class PipelineOffline(unittest.TestCase):
         self.assertEqual(len(self._records()), 1)
         with open(self.cfg["pending_file"], encoding="utf-8") as f:
             self.assertEqual(json.load(f), [])
+
+
+
+class FactQuestions(_Env, unittest.TestCase):
+    def _fixed_candidates(self, *a, **k):          # facts use the real candidate builder
+        raise AssertionError("not used")
+
+    def setUp(self):
+        super().setUp()
+        self.patches[5].stop()                      # restore the real PhysicalAdapter.candidates (unused here)
+        from core.pipeline import adapters as ad
+        real = ad.PhysicalFactsAdapter.result
+
+        def capture(fq, _real=real):
+            self.fake.key = fq.answer
+            return _real(fq)
+        self.cap = mock.patch.object(ad.PhysicalFactsAdapter, "result", staticmethod(capture))
+        self.cap.start()
+
+    def tearDown(self):
+        self.cap.stop()
+        self.patches[5].start()
+        super().tearDown()
+
+    def test_fact_question_accepted_with_letters(self):
+        slugs = [s for _, s in models.COUNCIL]
+        wrong = lambda key: "ABCD".replace(key[0], "")[0]          # a single wrong letter
+        self.fake = FakeFactModels({slugs[0]: lambda key: " and ".join(key), slugs[1]: wrong, slugs[2]: wrong})
+        self.assertEqual(self._run(self.fake, kind="facts"), 0)
+        recs = self._records()
+        self.assertEqual(len(recs), 1)
+        r = recs[0]
+        self.assertEqual(r["question_kind"], "fact")
+        self.assertEqual(len(r["options"]), 4)
+        self.assertEqual(r["council_n_solved"], 1)
+        self.assertNotIn("extractor", self.fake.calls)                  # the fact gate is code only
 
 
 class GateCompare(unittest.TestCase):

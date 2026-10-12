@@ -84,6 +84,9 @@ def matches(engine_answer, member_answer, kind: str = "real") -> bool:
     formulas/labels after normalisation; anything unreadable does not match."""
     if member_answer is None:
         return False
+    if kind == "letters":
+        from core.engine.facts import letters_of
+        return bool(engine_answer) and letters_of(member_answer) == "".join(sorted(engine_answer))
     if isinstance(engine_answer, (int, float)) and not isinstance(engine_answer, bool):
         value = parse_numeric_answer(member_answer)
         return value is not None and answers_match(float(engine_answer), value)

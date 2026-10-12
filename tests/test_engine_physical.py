@@ -215,6 +215,41 @@ class Equilibrium(Close):
                        s0__common_ion="anion", s0__common_ion_concentration=0.1), 1.658e-6)
 
 
+class LeChatelier(unittest.TestCase):
+    def shift(self, tx, eq, dh, change):
+        return run([tx], s0__balanced_equation=eq, s0__delta_h=dh, s0__change=change).answer
+
+    def test_rules(self):
+        self.assertEqual(self.shift(162, "N2(g) + 3H2(g) -> 2NH3(g)", -92.4, "increase the pressure by compression"), "forward")
+        self.assertEqual(self.shift(162, "CaCO3(s) -> CaO(s) + CO2(g)", 178, "increase the pressure by compression"), "backward")
+        self.assertEqual(self.shift(162, "H2(g) + I2(g) -> 2HI(g)", -10, "increase the pressure by compression"), "no shift")
+        self.assertEqual(self.shift(164, "PCl5(g) -> PCl3(g) + Cl2(g)", 92, "add an inert gas at constant pressure"), "forward")
+        self.assertEqual(self.shift(164, "PCl5(g) -> PCl3(g) + Cl2(g)", 92, "add an inert gas at constant volume"), "no shift")
+        self.assertEqual(self.shift(167, "KNO3(s) -> KNO3(aq)", 35, "increase the temperature"), "forward")
+
+
+class Facts(unittest.TestCase):
+    def test_every_source_builds_every_mode_with_a_consistent_key(self):
+        import random
+        from core.engine.facts import LETTERS, MODES, build
+        from core.engine.physical.facts_data import FACTS
+        rng = random.Random(0)
+        for src in FACTS:
+            for mode in MODES:
+                q = build(src, mode, rng)
+                self.assertEqual(len(q.options), 4)
+                want = [LETTERS[i] for i, t in enumerate(q.truth) if (not t if mode == "mcq_incorrect" else t)]
+                self.assertEqual(q.answer, "".join(want), (src.id, mode))
+                if mode != "msq":
+                    self.assertEqual(len(q.answer), 1)
+
+    def test_letters(self):
+        from core.engine.facts import letters_of
+        self.assertEqual(letters_of("A and C"), "AC")
+        self.assertEqual(letters_of("(b), (d)"), "BD")
+        self.assertEqual(letters_of("None"), "")
+
+
 class Kinetics(Close):
     def test_rate_constants(self):
         self.close(run([205], s0__initial_concentration=1, s0__concentration=0.25, s0__time=100), 0.01386)
