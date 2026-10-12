@@ -4,6 +4,9 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Council-candidate calibration
+- `calibration/anchor_calibration.py --council [--skip-weak]`: solves the 54 JEE Advanced numeric questions with the generation council's own call (`stages._solve`: same prompt, 16k token cap, reasoning effort, temperature) and reports spend per question; results go to `..._<model>_council.json`. The earlier runs capped answers at 2,500 tokens with no reasoning effort, which truncates thinking models, so they cannot compare council candidates.
+
 ### Early-stop council
 - `core/models.py`: `COUNCIL_FIRST` (GPT-OSS-120B, GLM-4.7-Flash). `stages.council_solve(stem, names)` solves a named subset.
 - `core/pipeline/flow.py` `judge()`: the first two members solve and are verified and graded; Qwen3-235B-Thinking is called only when it could change the decision (exactly one of the first two solved). The accept / too-easy decision is unchanged. At live OpenRouter prices (Qwen-Thinking $0.45 / $3.50 per M tokens) Qwen is ~60% of a pass, so the saving is roughly a third of council spend.

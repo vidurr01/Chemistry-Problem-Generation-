@@ -68,10 +68,14 @@ YEARS      = range(2021, 2026)
 OUT_PATH   = None   # set in main() from the strong model
 
 
+COUNCIL_MODE = False   # --council: solve exactly as a council member does in generation
+
+
 def results_path(strong_model: str) -> str:
-    """calibration/anchor_calibration_results_<model>.json, e.g. ..._gpt_oss_120b.json"""
+    """calibration/anchor_calibration_results_<model>.json, e.g. ..._gpt_oss_120b.json
+    (with --council: ..._<model>_council.json)"""
     tag = re.sub(r"[^a-z0-9]+", "_", strong_model.split("/")[-1].lower()).strip("_")
-    return os.path.join(_HERE, f"anchor_calibration_results_{tag}.json")
+    return os.path.join(_HERE, f"anchor_calibration_results_{tag}{'_council' if COUNCIL_MODE else ''}.json")
 
 def openrouter_client():
     return OpenAI(api_key=OPENROUTER_KEY, base_url="https://openrouter.ai/api/v1")
@@ -155,6 +159,13 @@ Return JSON:
 }}"""
 
 def solve_strong(q):
+    if COUNCIL_MODE:
+        # The generation council's own call: same prompt, token cap (16k), reasoning
+        # effort and temperature, so thinking models are not cut off and candidates are
+        # compared exactly as they would be used. Cost goes to models.SPEND.
+        from core.pipeline import stages
+        return stages._solve(STRONG_MODEL, q["question_text"] +
+                             "\n\n(The answer is a single numerical value.)")
     return call_json(lambda: openrouter_client().chat.completions.create(
         model=STRONG_MODEL,
         messages=[{"role": "system", "content": "You are an expert chemist. Output JSON only."},
@@ -180,6 +191,17 @@ def graded_correct(model_ans, ref: float) -> bool:
     if a is None:
         return False
     return abs(a - ref) <= max(0.1, 0.01 * abs(ref))   # 1% relative or 0.1 absolute
+
+
+class _Skip(Exception):
+    pass
+
+
+def _spend():
+    if not COUNCIL_MODE:
+        return None
+    from core import models
+    return models.SPEND.summary()
 
 
 # ── run ───────────────────────────────────────────────────────────────────────
@@ -209,7 +231,13 @@ def main():
     ap = argparse.ArgumentParser(description="Blind solve-rate of two models on real JEE Advanced numeric questions.")
     ap.add_argument("--strong", default=STRONG_MODEL, help="OpenRouter slug of the strong model")
     ap.add_argument("--weak", default=WEAK_MODEL, help="OpenRouter slug of the weak model")
+    ap.add_argument("--council", action="store_true",
+                    help="solve with the generation council's settings (16k tokens, reasoning effort) "
+                         "and report cost; use this to compare council candidates")
+    ap.add_argument("--skip-weak", action="store_true", help="do not run the weak model")
     args = ap.parse_args()
+    global COUNCIL_MODE
+    COUNCIL_MODE = args.council
     STRONG_MODEL, WEAK_MODEL = args.strong, args.weak
     OUT_PATH = results_path(STRONG_MODEL)
     qs = load_numeric_questions()
@@ -230,9 +258,13 @@ def main():
         except Exception as e:
             print(f"    strong error: {e}")
         try:
+            if args.skip_weak:
+                raise _Skip()
             w = solve_weak(q)
             rec["weak_answer"] = w.get("final_answer")
             rec["weak_correct"] = graded_correct(w.get("final_answer"), q["correct_answer"])
+        except _Skip:
+            pass
         except Exception as e:
             print(f"    weak error: {e}")
         print(f"    strong={rec['strong_answer']} {'✓' if rec['strong_correct'] else '✗'}"
@@ -241,11 +273,16 @@ def main():
 
         # checkpoint after every question
         write_json_atomic(OUT_PATH, {"generated_at": datetime.now(timezone.utc).isoformat(),
-                       "strong_model": STRONG_MODEL, "weak_model": WEAK_MODEL,
+                       "strong_model": STRONG_MODEL, "weak_model": None if args.skip_weak else WEAK_MODEL,
+                       "council_settings": COUNCIL_MODE, "spend": _spend(),
                        "n": len(records), "records": records,
                        "summary": summarize(records)}, indent=2, ensure_ascii=False)
 
     s = summarize(records)
+    sp_ = _spend()
+    if sp_:
+        print(f"\nSpend: ${sp_['total_cost_usd']:.4f}  "
+              f"(${sp_['total_cost_usd'] / max(1, len(records)):.5f} per question)")
     print("\n" + "=" * 60)
     print("SOLVE RATES (numeric Advanced, 2021-2025, blind)")
     print("=" * 60)
