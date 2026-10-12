@@ -16,6 +16,15 @@ First step of the engine/council redesign: every physical graph edge was checked
 
 Impact: two edge ids changed with their reagent text (`heat_to_delta_h_sasbh573kjpe`, `partial_pressure_to_rate_constant_k1tlnp0papaf`); no saved question or coverage file referenced the old ids.
 
+### Physical concept book: entries outside the graph
+The 155 physical entries the graph build leaves out (`graph_unmapped_physical.json`) were audited too, since they are being brought into the pipeline. Fixed in `knowledge/concept_book_physical.json`:
+- H2O2 as oxidant: the half-reaction was unbalanced; now "H2O2 + 2H+ + 2e- -> 2H2O".
+- Le Chatelier note: "never fully restores original Q" was wrong (Q returns to K); now "never restores the original concentrations".
+- Nuclear stability: "n/p > 1.5 unstable" contradicted its own example (stable Pb-208 has n/p 1.54); now states that n/p rises to about 1.5 for the heaviest stable nuclei.
+- "Kraft temperature" corrected to "Krafft temperature".
+
+Impact: these entries are not graph edges, so the rebuilt graph is unchanged.
+
 
 ## 2026-10-12
 
