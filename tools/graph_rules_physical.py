@@ -372,6 +372,24 @@ _DENSITY_BY_CHAPTER = {"Gaseous State": "gas_density", "Solid State": "crystal_d
 NODE_NAMES.setdefault("crystal_density", "crystal density")
 
 
+# The physical engine decides the edges: every entry it computes is an edge between the
+# nodes its step declares; every other entry (a fact, a classification, a plot reading)
+# stays out of the graph and is listed in graph_unmapped_physical.json.
+import os as _os
+import sys as _sys
+
+_sys.path.insert(0, _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..")))
+from core.engine.physical import NEW_NODE_NAMES as _ENGINE_NODES, edge_nodes as _edge_nodes  # noqa: E402
+
+for _k, _v in _ENGINE_NODES.items():
+    NODE_NAMES.setdefault(_k, _v)
+
+
+def tx_nodes(index, tx):
+    """(from, to) nodes of concept-book entry `index`, or None if the engine does not compute it."""
+    return _edge_nodes(index)
+
+
 def normalize_node(raw, tx=None):
     """Map a raw from/to string to a canonical node id, or None if it is not a quantity."""
     raw = (raw or "").strip()

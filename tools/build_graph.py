@@ -918,12 +918,17 @@ def normalize_node(raw):
 
 # ── Build edges from TXs ──────────────────────────────────────────────────────
 
-def build_edges(txs, normalize=None, chapter_key=None):
+def build_edges(txs, normalize=None, chapter_key=None, tx_nodes=None):
     """Group TXs by (from_node, to_node), build edge objects.
 
     normalize(raw, tx) maps a from/to string to a node id; it defaults to the organic
     normalize_node. With chapter_key set, TXs are also grouped by their chapter, so
-    every edge carries the real chapter of the TXs behind it."""
+    every edge carries the real chapter of the TXs behind it.
+
+    tx_nodes(index, tx), when given, decides both nodes of a TX instead (or returns None
+    to leave the TX out). The physical graph uses it: its edges are exactly the entries
+    the physical engine can compute, and a step that keeps the same quantity (a
+    dilution, Boyle's law) is a real step there, so it stays as a self-loop."""
     if normalize is None:
         normalize = lambda raw, tx=None: normalize_node(raw)
 
@@ -931,10 +936,13 @@ def build_edges(txs, normalize=None, chapter_key=None):
     mapped = []
     unmapped = []
     for i, tx in enumerate(txs):
-        fn = normalize(tx["from"], tx)
-        tn = normalize(tx["to"], tx)
-        if fn and tn and fn == tn:
-            fn = tn = None   # same quantity/species on both sides: not a step
+        if tx_nodes is not None:
+            fn, tn = tx_nodes(i, tx) or (None, None)
+        else:
+            fn = normalize(tx["from"], tx)
+            tn = normalize(tx["to"], tx)
+            if fn and tn and fn == tn:
+                fn = tn = None   # same quantity/species on both sides: not a step
         if fn and tn:
             mapped.append((fn, tn, tx, i))
         else:
@@ -1130,7 +1138,8 @@ def build_subject_graph(subject):
     with open(os.path.join(_KG, cb_file), encoding="utf-8") as f:
         txs = json.load(f)["structural_operators"]["add_reaction_step"]["valid_transformations"]
     print(f"Total TXs: {len(txs)}")
-    edges, unmapped = build_edges(txs, normalize=rules.normalize_node, chapter_key=rules.CHAPTER_KEY)
+    edges, unmapped = build_edges(txs, normalize=rules.normalize_node, chapter_key=rules.CHAPTER_KEY,
+                                  tx_nodes=getattr(rules, "tx_nodes", None))
     if hasattr(rules, "extra_edges"):           # e.g. inorganic salt -> ion links (synthetic)
         extra = rules.extra_edges(edges)
         edges += extra

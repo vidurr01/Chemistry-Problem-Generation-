@@ -2,6 +2,38 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Answer keys come from a deterministic engine, inputs first
+
+Date: 2026-10-13
+Context: model-written answer keys were the main source of wrong questions; the verifier and council could only catch some of them, and a model judging another model's key reintroduces the bias the blind design was meant to remove.
+Decision: each subject gets an engine that computes the answer, the worked trace and the traps from the question's inputs. The inputs are fixed first (graph walk plus pool molecules or proposed numbers), the engine computes, and only then is the stem written; a gate checks the stem states exactly those inputs. Question-first stays available as a comparison if inputs-first underperforms.
+Alternatives: question-first (a model reads the facts back out of free text for the engine) — a misreading silently produces a key for a different question; model-computed keys — no deterministic ground truth.
+Trade-off: questions are limited to chemistry the engine can compute, so every graph edge needs an implemented step; much more code per subject.
+
+## The physical graph is defined by the engine
+
+Date: 2026-10-13
+Context: the graph walk must never produce a chain the engine cannot compute ("no UNKNOWN").
+Decision: physical graph edges are generated from the engine's steps (each step declares its two nodes); concept-book entries without a step are facts and stay out of the graph.
+Alternatives: keep the hand-written raw-name table and check computability at run time — chains would be picked and then discarded.
+Trade-off: adding an entry to the graph now means implementing it in the engine first.
+
+## Chains must be coherent, not just computable
+
+Date: 2026-10-13
+Context: wiring steps by quantity name alone produced chains such as "mass of Na2CO3 softener → volume of N2 from sodium azide" — each step correct, no sensible question containing them.
+Decision: three code rules (distinct names for different quantities, role tags carried along substance-preserving steps, cross-chapter links only along listed bridges) plus a generator veto when picking inputs.
+Alternatives: generator veto only (many wasted walks, a model decides); single-chapter chains (coherent but loses cross-chapter questions).
+Trade-off: role tags and bridges are hand-maintained; untagged values still fit any input, so the veto remains the last line.
+
+## Traps are wrong answers run through the rest of the chain
+
+Date: 2026-10-13
+Context: a trap is only useful if it is the answer a student who made that mistake would actually write.
+Decision: each step lists typical mistakes as alternative computations; the engine runs each mistaken value through all later steps unchanged and keeps it only if the final answer differs by more than 1%.
+Alternatives: traps as text descriptions written by the generator — not checkable.
+Trade-off: trap coverage depends on the mistakes listed per step.
+
 ## Use a single per-subject config file
 
 Date: 2026-09-01

@@ -103,6 +103,7 @@ class KnowledgeGraph:
         chapter: str | None = None,
         avoid_nodes: list[str] | None = None,
         chapter_scope: str = "all",
+        can_follow=None,
     ) -> dict:
         """
         BFS from start_node up to `depth` steps. Returns all reachable paths.
@@ -114,6 +115,12 @@ class KnowledgeGraph:
                           "start": only the first edge must (the chain starts in the
                           chapter and may continue into neighbouring chapters)
           avoid_nodes   — never traverse through these node ids
+          can_follow    — can_follow(prev_edge, edge): only extend a path with an edge
+                          that can follow the path's last edge (the physical engine uses
+                          this so every chain is computable)
+
+        A self-loop edge (from == to, e.g. a dilution: molarity -> molarity) may be taken
+        once per path; otherwise no node is visited twice.
 
         Returns { "start": str, "paths": [ { "nodes": [...], "edges": [...] } ] },
         longest first, at most 50.
@@ -141,8 +148,14 @@ class KnowledgeGraph:
                         and chap not in e.get("chapter", "").lower():
                     continue
                 next_node = e["to"]
-                if next_node in path_nodes or next_node in avoid:
+                if next_node == node:
+                    if e["id"] in path_edges:
+                        continue   # a self-loop at most once
+                elif next_node in path_nodes or next_node in avoid:
                     continue   # no cycles, no banned nodes
+                if can_follow is not None and path_edges \
+                        and not can_follow(self.edge_map[path_edges[-1]], e):
+                    continue
                 expanded = True
                 queue.append((next_node, path_nodes + [next_node], path_edges + [e["id"]]))
 
@@ -151,7 +164,7 @@ class KnowledgeGraph:
 
         seen, unique = set(), []
         for p in sorted(paths, key=lambda x: -len(x["edges"])):
-            key = "→".join(p["nodes"])
+            key = "→".join(p["edges"])
             if key not in seen:
                 seen.add(key)
                 unique.append(p)
@@ -216,7 +229,8 @@ def load_graph(path: str | None = None) -> KnowledgeGraph:
 
 def sample_chains(graph: KnowledgeGraph, coverage, archetype: str, chapter: str | None = None,
                   start_nodes: list | None = None, n_options: int = 6, depth: int = 3,
-                  min_steps: int = 2, avoid_nodes: list | None = None) -> list:
+                  min_steps: int = 2, avoid_nodes: list | None = None, can_follow=None,
+                  validate=None) -> list:
     """
     Candidate chains for one question, highest coverage weight first (ties shuffled).
 
@@ -228,6 +242,9 @@ def sample_chains(graph: KnowledgeGraph, coverage, archetype: str, chapter: str 
     fewer than `n_options`, it tops up with chains that START in the chapter and continue
     into neighbouring chapters (in-chapter chains win ties).
 
+    can_follow(prev_edge, edge) prunes the walk (see KnowledgeGraph.get_paths), and
+    validate(edges) -> bool drops whole chains a subject's engine cannot compute.
+
     Returns [ { "idx", "start", "nodes", "edges", "chapters", "weight", "scope", "description" } ].
     """
     starts = start_nodes or graph.start_nodes()
@@ -237,10 +254,13 @@ def sample_chains(graph: KnowledgeGraph, coverage, archetype: str, chapter: str 
         for start in starts:
             result = graph.get_paths(start, depth=depth, archetype=archetype, chapter=chapter,
                                      avoid_nodes=avoid_nodes,
-                                     chapter_scope=scope if chapter else "all")
+                                     chapter_scope=scope if chapter else "all",
+                                     can_follow=can_follow)
             for p in result.get("paths", []):
                 key = tuple(p["edges"])
                 if len(p["edges"]) < min_steps or key in seen:
+                    continue
+                if validate is not None and not validate([graph.edge_map[e] for e in p["edges"]]):
                     continue
                 seen.add(key)
                 found.append({
