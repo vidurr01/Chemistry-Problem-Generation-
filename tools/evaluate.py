@@ -1,17 +1,17 @@
 """
 evaluate.py — audit pipeline output (generated_questions*.json).
 
-Reads the current record schema produced by run_graph*.py / run_groundup*.py:
-
-  question_id, seed_id, generation_mode, subject, chapter, archetype,
-  archetype_code, question, solution, operators_applied, chain_description,
-  loops_run, strong_score, weak_score, verifier_verdict, verifier_difficulty,
-  meta_tags, attempt_history, generated_at
+Reads both record schemas:
+  run_groundup_final.py : council_n_solved, council_size, iters_run, ...
+  run_graph_final.py    : strong_score, weak_score, loops_run, ...
+plus the shared fields (subject, archetype_code, verifier_verdict,
+verifier_difficulty, meta_tags).
 
 Usage:
-    python -X utf8 tools/evaluate.py [generated_questions_<subject>.json]
+    python -X utf8 tools/evaluate.py [path/to/generated_questions_<subject>.json]
 
-Default input is generated_questions.json (the legacy archive output path).
+Relative paths resolve against the repo root. Default input is
+outputs/generated_questions_organic.json.
 """
 
 import json
@@ -30,10 +30,10 @@ def pct(x, total):
     return (x / total * 100.0) if total else 0.0
 
 
-def evaluate_pipeline(output_file: str = "generated_questions.json"):
+def evaluate_pipeline(output_file: str = os.path.join("outputs", "generated_questions_organic.json")):
     path = output_file
     if not os.path.isabs(path):
-        path = os.path.join(TARGET, path)
+        path = os.path.normpath(os.path.join(TARGET, path))
     if not os.path.exists(path):
         print(f"ERROR: {path} not found.")
         print("Run an entrypoint first (run_graph_final.py / run_groundup_final.py).")
@@ -48,9 +48,11 @@ def evaluate_pipeline(output_file: str = "generated_questions.json"):
         print("No results to evaluate.")
         return
 
-    strong_scores = [r["strong_score"] for r in results]
-    weak_scores   = [r["weak_score"]   for r in results]
-    loops         = [r.get("loops_run", 1) for r in results]
+    strong_scores = [r["strong_score"] for r in results if r.get("strong_score") is not None]
+    weak_scores   = [r["weak_score"]   for r in results if r.get("weak_score") is not None]
+    council       = [(r["council_n_solved"], r.get("council_size", 3))
+                     for r in results if r.get("council_n_solved") is not None]
+    loops         = [r.get("iters_run", r.get("loops_run", 1)) for r in results]
 
     strong_pct = [s for s in strong_scores if s >= 85]
     weak_pct   = [w for w in weak_scores   if w <= 60]
@@ -81,13 +83,19 @@ def evaluate_pipeline(output_file: str = "generated_questions.json"):
 
     print("\n================ EVALUATION REPORT ================\n")
 
-    print(f"--- Records ---")
+    print("--- Records ---")
     print(f"  Total accepted questions: {total}")
     print(f"  Per subject: {subjects}")
 
     print("\n--- Acceptance Gates (accepted records should already pass) ---")
-    print(f"  Mean weak score:   {mean(weak_scores):.1f}%   (gated ≤60%: {len(weak_pct)}/{total})")
-    print(f"  Mean strong score: {mean(strong_scores):.1f}%   (gated ≥85%: {len(strong_pct)}/{total})")
+    if council:
+        hard = sum(1 for n, _ in council if n <= 1)
+        print(f"  Council solved (mean): {mean([n for n, _ in council]):.2f} of {council[0][1]}"
+              f"   (≤1 solved: {hard}/{len(council)})")
+    if weak_scores:
+        print(f"  Mean weak score:   {mean(weak_scores):.1f}%   (gated ≤60%: {len(weak_pct)}/{len(weak_scores)})")
+    if strong_scores:
+        print(f"  Mean strong score: {mean(strong_scores):.1f}%   (gated ≥85%: {len(strong_pct)}/{len(strong_scores)})")
     print(f"  Verifier PASS: {[r.get('verifier_verdict', '?') for r in results].count('PASS')}/{total}")
 
     print("\n--- Efficiency ---")

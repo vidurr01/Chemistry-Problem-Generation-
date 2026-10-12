@@ -6,9 +6,9 @@ through two models BLIND (no answer key shown), grade each model's answer agains
 official key, and report solve-rate distributions. This tells you where real Advanced
 questions sit for each model — the baseline your generated items get compared against.
 
-Design choices for this run (kept deliberately simple for the deadline):
-  * Strong model : openai/gpt-oss-120b             (OpenRouter, reasoning-grade)
-  * Weak model   : meta-llama/llama-3.2-3b-instruct (OpenRouter, genuine 3B floor)
+Design choices (kept deliberately simple):
+  * Strong model : --strong, default openai/gpt-oss-120b      (OpenRouter, reasoning-grade)
+  * Weak model   : --weak,   default meta-llama/llama-3.2-3b-instruct (OpenRouter, 3B floor)
   * Subset       : the last 5 years (2021-2025), NUMERIC-answer questions only.
       MCQ/MSQ option text is NOT present in the dataset, so a blind solver cannot map
       its answer to a letter — numeric (NAT/Numerical) questions need no options and
@@ -19,15 +19,17 @@ Design choices for this run (kept deliberately simple for the deadline):
 Blind == the model never sees correct_answer or solution_summary. That is the whole point:
 a model that is shown the answer cannot tell you whether the question was solvable.
 
-Output: calibration/anchor_calibration_results.json  (checkpointed after every question).
+Output: calibration/anchor_calibration_results_<strong model>.json, checkpointed after every
+question. Each strong model gets its own file, so runs never overwrite each other:
+    python calibration/anchor_calibration.py
+    python calibration/anchor_calibration.py --strong qwen/qwen3-235b-a22b-2507
 """
 
+import argparse
 import json
-import glob
 import os
 import re
 import sys
-import time
 from datetime import datetime, timezone
 from openai import OpenAI
 
@@ -39,15 +41,12 @@ except (AttributeError, ValueError):
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
 
-# ── env ─────────────────────────────────────────────────────────────────────
-_env_path = os.path.join(_ROOT, ".env")
-if os.path.exists(_env_path):
-    with open(_env_path, encoding="utf-8") as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+from core.llm import call_json, load_env, parse_json, write_json_atomic  # noqa: E402
+
+load_env()   # repo-root .env → os.environ
 
 OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY", "")
 if not OPENROUTER_KEY:
@@ -58,51 +57,24 @@ if not OPENROUTER_KEY:
 # provider.) openai/gpt-oss-120b is reasoning-tuned, so a FAILURE means the question is
 # genuinely hard, not that the solver isn't expert enough — which is what makes it a
 # trustworthy expert-ceiling probe.
-STRONG_MODEL = "qwen/qwen3-235b-a22b-2507"        # OpenRouter — matches the generation strong solver
+STRONG_MODEL = "openai/gpt-oss-120b"               # default; override with --strong
 # Weak solver via OpenRouter, NOT local Ollama: Ollama's llama3.2 returns an empty JSON
 # object ("{}") under response_format=json_object, so every answer came back None — a
 # broken solver, not a genuine failure. The hosted llama-3.2-3b actually attempts it.
-WEAK_MODEL   = "meta-llama/llama-3.2-3b-instruct"  # OpenRouter (3B)
+WEAK_MODEL   = "meta-llama/llama-3.2-3b-instruct"  # OpenRouter (3B); override with --weak
 
-JEE_DIR    = "/Users/admin/Downloads/data/jee_advanced"
+JEE_DIR    = os.path.join(_ROOT, "data", "jee_advanced")
 YEARS      = range(2021, 2026)
-OUT_PATH   = os.path.join(_HERE, "anchor_calibration_results.json")
+OUT_PATH   = None   # set in main() from the strong model
+
+
+def results_path(strong_model: str) -> str:
+    """calibration/anchor_calibration_results_<model>.json, e.g. ..._gpt_oss_120b.json"""
+    tag = re.sub(r"[^a-z0-9]+", "_", strong_model.split("/")[-1].lower()).strip("_")
+    return os.path.join(_HERE, f"anchor_calibration_results_{tag}.json")
 
 def openrouter_client():
     return OpenAI(api_key=OPENROUTER_KEY, base_url="https://openrouter.ai/api/v1")
-
-def strong_call(fn, retries=6, base_wait=8):
-    """Exponential backoff on 429/503 for OpenRouter."""
-    for attempt in range(retries):
-        try:
-            return fn()
-        except Exception as e:
-            msg = str(e)
-            if "429" in msg or "rate" in msg.lower() or "503" in msg:
-                wait = base_wait * (2 ** attempt)
-                print(f"      [rate limit] waiting {wait}s ({attempt+1}/{retries})...")
-                time.sleep(wait)
-            else:
-                raise
-    raise RuntimeError("OpenRouter: max retries exceeded")
-
-
-def parse_json(content: str) -> dict:
-    text = (content or "").strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE).strip()
-    text = re.sub(r"\s*```$", "", text).strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-    s, e = text.find("{"), text.rfind("}")
-    if s != -1 and e > s:
-        try:
-            return json.loads(text[s:e + 1])
-        except json.JSONDecodeError:
-            pass
-    return {}
-
 
 # ── data ──────────────────────────────────────────────────────────────────────
 _NUM_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
@@ -141,7 +113,8 @@ def load_numeric_questions():
         fp = os.path.join(JEE_DIR, f"{y}.json")
         if not os.path.exists(fp):
             continue
-        data = json.load(open(fp, encoding="utf-8"))
+        with open(fp, encoding="utf-8") as f:
+            data = json.load(f)
         for q in data.get("questions", []):
             ca = q.get("correct_answer")
             if ca is None or "[Image" in str(ca):
@@ -182,26 +155,24 @@ Return JSON:
 }}"""
 
 def solve_strong(q):
-    resp = strong_call(lambda: openrouter_client().chat.completions.create(
+    return call_json(lambda: openrouter_client().chat.completions.create(
         model=STRONG_MODEL,
         messages=[{"role": "system", "content": "You are an expert chemist. Output JSON only."},
                   {"role": "user", "content": blind_prompt(q, True)}],
         response_format={"type": "json_object"},
         temperature=0.0,
         max_tokens=2500,   # reasoning model needs room before the JSON
-    ))
-    return parse_json(resp.choices[0].message.content)
+    ), parse_json, retries=6, base_wait=8, label="OpenRouter")
 
 def solve_weak(q):
-    resp = strong_call(lambda: openrouter_client().chat.completions.create(
+    return call_json(lambda: openrouter_client().chat.completions.create(
         model=WEAK_MODEL,
         messages=[{"role": "system", "content": "You are a chemistry undergraduate. Output JSON only."},
                   {"role": "user", "content": blind_prompt(q, False)}],
         response_format={"type": "json_object"},
         temperature=0.0,
         max_tokens=1200,
-    ))
-    return parse_json(resp.choices[0].message.content)
+    ), parse_json, retries=6, base_wait=8, label="OpenRouter")
 
 
 def graded_correct(model_ans, ref: float) -> bool:
@@ -234,6 +205,13 @@ def summarize(records):
     return out
 
 def main():
+    global STRONG_MODEL, WEAK_MODEL, OUT_PATH
+    ap = argparse.ArgumentParser(description="Blind solve-rate of two models on real JEE Advanced numeric questions.")
+    ap.add_argument("--strong", default=STRONG_MODEL, help="OpenRouter slug of the strong model")
+    ap.add_argument("--weak", default=WEAK_MODEL, help="OpenRouter slug of the weak model")
+    args = ap.parse_args()
+    STRONG_MODEL, WEAK_MODEL = args.strong, args.weak
+    OUT_PATH = results_path(STRONG_MODEL)
     qs = load_numeric_questions()
     print(f"Loaded {len(qs)} numeric Advanced questions (2021-2025).")
     print(f"Strong: {STRONG_MODEL} (OpenRouter)  |  Weak: {WEAK_MODEL} (OpenRouter)\n")
@@ -262,19 +240,18 @@ def main():
         records.append(rec)
 
         # checkpoint after every question
-        with open(OUT_PATH, "w", encoding="utf-8") as f:
-            json.dump({"generated_at": datetime.now(timezone.utc).isoformat(),
+        write_json_atomic(OUT_PATH, {"generated_at": datetime.now(timezone.utc).isoformat(),
                        "strong_model": STRONG_MODEL, "weak_model": WEAK_MODEL,
                        "n": len(records), "records": records,
-                       "summary": summarize(records)}, f, indent=2, ensure_ascii=False)
+                       "summary": summarize(records)}, indent=2, ensure_ascii=False)
 
     s = summarize(records)
     print("\n" + "=" * 60)
     print("SOLVE RATES (numeric Advanced, 2021-2025, blind)")
     print("=" * 60)
     sc, sn, sp = s["overall"]["strong"]; wc, wn, wp = s["overall"]["weak"]
-    print(f"  STRONG (405B): {sc}/{sn} = {sp:.1f}%")
-    print(f"  WEAK (llama3.2): {wc}/{wn} = {wp:.1f}%")
+    print(f"  STRONG ({STRONG_MODEL}): {sc}/{sn} = {sp:.1f}%")
+    print(f"  WEAK   ({WEAK_MODEL}): {wc}/{wn} = {wp:.1f}%")
     print("\n  by year:")
     for y, v in s["by_year"].items():
         print(f"    {y}: strong {v['strong'][2]:.0f}% ({v['strong'][0]}/{v['strong'][1]})   "

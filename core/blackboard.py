@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 
 
@@ -7,6 +6,16 @@ def _fmt_score(s) -> str:
     grade failed (see the blind-solve / unmeasured-gate handling in the entrypoints);
     a None must not crash the '%.0f' formatting used in attempt summaries."""
     return f"{s:.0f}%" if isinstance(s, (int, float)) else "n/a"
+
+
+def score_summary(attempt: dict) -> str:
+    """The difficulty result of one attempt, in whichever form was recorded; empty
+    if the attempt never reached the solvers (e.g. a verifier FAIL)."""
+    if attempt.get("council_solved") is not None:
+        return f"Council={attempt['council_solved']}/{attempt.get('council_size') or '?'} solved | "
+    if attempt.get("weak_score") is not None or attempt.get("strong_score") is not None:
+        return f"Weak={_fmt_score(attempt.get('weak_score'))} | Strong={_fmt_score(attempt.get('strong_score'))} | "
+    return ""
 
 
 class Blackboard:
@@ -22,9 +31,13 @@ class Blackboard:
         solution: str,
         operators_used: list,
         verifier_result: dict,
-        weak_score: float,
-        strong_score: float,
+        weak_score: float = None,
+        strong_score: float = None,
+        council_solved: int = None,
+        council_size: int = None,
     ):
+        """weak_score / strong_score: the older weak/strong-solver loop (run_graph_final.py).
+        council_solved / council_size: how many council members solved it (run_groundup_final.py)."""
         self.attempts.append({
             "attempt_number": len(self.attempts) + 1,
             "problem": problem,
@@ -35,6 +48,8 @@ class Blackboard:
             "difficulty_rating": verifier_result.get("difficulty_rating", "N/A"),
             "weak_score": weak_score,
             "strong_score": strong_score,
+            "council_solved": council_solved,
+            "council_size": council_size,
         })
 
     def operators_tried(self) -> list:
@@ -56,8 +71,7 @@ class Blackboard:
             lines.append(
                 f"Attempt {a['attempt_number']}: "
                 f"Verdict={a['verifier_verdict']} | "
-                f"Weak={_fmt_score(a['weak_score'])} | "
-                f"Strong={_fmt_score(a['strong_score'])} | "
+                f"{score_summary(a)}"
                 f"Operators={a['operators_used']} | "
                 f"Feedback='{a['verifier_feedback']}'"
             )
