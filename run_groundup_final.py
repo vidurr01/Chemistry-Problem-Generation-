@@ -115,6 +115,8 @@ def build_record(subject, config, payload, bb):
         "tags": {"knowledge": "recall" if decision.get("recall") else "closed_book", "trap_types": trap_types},
         "council_n_correct": decision["n_correct"],
         "council_n_solved": decision["n_solved"],
+        "council_n_called": len(graded),
+        "council_skipped": decision.get("skipped", []),
         "council": [{k: g.get(k) for k in ("name", "model", "final_answer", "unit", "answer_matches", "counts_as_solved",
                                            "verdict", "failure_type", "slip_confirmed", "objection", "diagnosis",
                                            "working")}
@@ -165,7 +167,8 @@ def save_accepted(subject, config, coverage, payload, bb, log):
     after("results/", promote)
     after("the attempt log", lambda: log({"event": "accepted", "question_id": record["question_id"]}))
     print(f"\n✓ ACCEPTED {record['question_id']} — answer {record['answer_text']}; "
-          f"council {record['council_n_solved']}/3 solved ({record['council_n_correct']}/3 matched); "
+          f"council {record['council_n_solved']}/{record['council_n_called']} solved "
+          f"({record['council_n_correct']}/{record['council_n_called']} matched); "
           f"tags {record['tags']}")
     print("=" * 60 + "\n" + record["question"] + "\n" + "=" * 60)
     return record

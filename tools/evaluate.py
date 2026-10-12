@@ -91,6 +91,8 @@ def report(subject: str) -> dict:
         "council_mean_correct": statistics.mean([r["council_n_correct"] for r in new]) if new else None,
         "council_mean_solved": statistics.mean([r["council_n_solved"] for r in new]) if new else None,
         "solved_vs_correct": dict(Counter((r["council_n_correct"], r["council_n_solved"]) for r in new)),
+        "members_called": dict(Counter(r.get("council_n_called", 3) for r in new)),
+        "members_skipped": dict(Counter(n for r in new for n in r.get("council_skipped", []))),
         "member_solve_rate": {k: solved_by_member[k] / members[k] for k in members},
         "rounds_to_accept": dict(rounds),
         "answers_matching_by_round": {rd: b["correct"] / b["members"] if b["members"] else None
@@ -108,8 +110,10 @@ def report(subject: str) -> dict:
     if ends:
         print("Run events:", ", ".join(f"{k} {v}" for k, v in ends.most_common()))
     if new:
-        print(f"Council per accepted question: mean {data['council_mean_correct']:.2f}/3 answers match the engine, "
-              f"{data['council_mean_solved']:.2f}/3 counted as solved")
+        print(f"Council per accepted question: mean {data['council_mean_correct']:.2f} answers match the engine, "
+              f"{data['council_mean_solved']:.2f} counted as solved")
+        print("  members called per question:", data["members_called"],
+              "— skipped (could not change the decision):", data["members_skipped"])
         print("  (correct, solved) pairs:", data["solved_vs_correct"])
         print("  solve rate per member:", {k: f"{v:.0%}" for k, v in data["member_solve_rate"].items()})
         print("Refinement rounds before acceptance:", dict(sorted(rounds.items())))

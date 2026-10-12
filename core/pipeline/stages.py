@@ -5,7 +5,7 @@ data; every decision that follows (accept, retry, queue) is made in code by flow
     propose_inputs      generator: concrete values for the chain's givens, or a veto
     write_stem          generator: the question text around fixed inputs
     gate_extract        extractor: the facts a stem states, read back into a form
-    council_solve       council: three closed-book solves in parallel
+    council_solve       council: closed-book solves in parallel (all members, or a named subset)
     verify_member       verifier: one member's attempt against the engine's trace
     clarification_hint  generator: a plain restatement of an unclear part
     solve_with_hint     council member: re-solve with a hint appended
@@ -280,9 +280,11 @@ def _solve(slug: str, stem: str, hint: str | None = None) -> dict:
             "unit": str(out.get("unit") or ""), "objection": objection}
 
 
-def council_solve(stem: str) -> list:
-    """All three members, in parallel. Raises CouncilMemberFailed on the first failure:
-    every member must be measured, so a partial council is never judged."""
+def council_solve(stem: str, names=None) -> list:
+    """The named members (default: all), in parallel, in roster order. Raises
+    CouncilMemberFailed on the first failure: every member called must be measured, so a
+    partial result is never judged."""
+    roster = [(n, s) for n, s in models.COUNCIL if names is None or n in names]
     done = queue.Queue()
 
     def run(i, name, slug):
@@ -291,13 +293,13 @@ def council_solve(stem: str) -> list:
         except Exception as e:                                   # noqa: BLE001
             done.put((i, None, f"{type(e).__name__}: {str(e)[:160]}"))
 
-    for i, (name, slug) in enumerate(models.COUNCIL):
+    for i, (name, slug) in enumerate(roster):
         threading.Thread(target=run, args=(i, name, slug), daemon=True).start()
-    members = [None] * len(models.COUNCIL)
-    for _ in models.COUNCIL:
+    members = [None] * len(roster)
+    for _ in roster:
         i, rec, err = done.get()
         if err:
-            raise CouncilMemberFailed(f"{models.COUNCIL[i][0]}: {err}")
+            raise CouncilMemberFailed(f"{roster[i][0]}: {err}")
         members[i] = rec
     return members
 

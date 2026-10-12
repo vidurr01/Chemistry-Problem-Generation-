@@ -31,8 +31,9 @@ Chemistry gate     extractor (DeepSeek V4 Flash) copies the stated facts into a 
    │
 Duplicate check    same engine steps and same inputs as an accepted question → new inputs
    │
-Council            GPT-OSS-120B · Qwen3-235B-Thinking · GLM-4.7-Flash, in parallel,
-                   closed book (question only), reasoning effort medium
+Council            GPT-OSS-120B · GLM-4.7-Flash first, in parallel; Qwen3-235B-Thinking
+                   only when exactly one of them solves (otherwise it cannot change the
+                   decision); closed book (question only), reasoning effort medium
    │
 Mismatch verifier  Claude Haiku 5.5 reads every attempt against the engine's trace:
                    correct / wrong (genuine, unclear wording, missing knowledge, slip) /
@@ -200,7 +201,7 @@ answer key as option letters. A quarter of physical runs make a fact question
 - **Review queues** — `outputs/queue_<reason>_<subject>.json` for `engine_unknown`,
   `gate_unreadable`, `engine_wrong` and `objection_unresolved`; list with
   `python tools/results.py queue`, clear a reviewed item with `dismiss`.
-- **Parking** — all three council members must be measured; if a call fails the question is
+- **Parking** — every council member called must be measured; if a call fails the question is
   parked in `outputs/pending_questions_<subject>.json` (exit 3) and judged first on the next run.
 
 ---

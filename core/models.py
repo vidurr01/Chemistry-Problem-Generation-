@@ -26,6 +26,9 @@ COUNCIL = [
     ("glm-4.7-flash", "z-ai/glm-4.7-flash"),
 ]
 COUNCIL_REASONING_EFFORT = "medium"
+# Early stop: the two cheaper members solve first; the rest are called only when their
+# answers could still change the decision (see flow.judge). Qwen-Thinking is ~60% of a pass.
+COUNCIL_FIRST = ("gpt-oss-120b", "glm-4.7-flash")
 
 ROSTER = {"generator": GENERATOR, "extractor": EXTRACTOR, "verifier": VERIFIER,
           "solution_writer": SOLUTION_WRITER, "council": [slug for _, slug in COUNCIL]}

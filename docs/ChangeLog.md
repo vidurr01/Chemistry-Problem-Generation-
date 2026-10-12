@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Early-stop council
+- `core/models.py`: `COUNCIL_FIRST` (GPT-OSS-120B, GLM-4.7-Flash). `stages.council_solve(stem, names)` solves a named subset.
+- `core/pipeline/flow.py` `judge()`: the first two members solve and are verified and graded; Qwen3-235B-Thinking is called only when it could change the decision (exactly one of the first two solved). The accept / too-easy decision is unchanged. At live OpenRouter prices (Qwen-Thinking $0.45 / $3.50 per M tokens) Qwen is ~60% of a pass, so the saving is roughly a third of council spend.
+- Records gain `council_n_called` and `council_skipped`; `tools/evaluate.py` reports members called and skipped. The verifier still reads every attempt (Haiku 5.5 is ~4% of a pass).
+- Tests: Qwen skipped when both first members solve or both fail; called when they split (54 tests).
+
 ### Inorganic concept-book audit applied
 - `knowledge/concept_book_inorg.json`: approved fixes from `docs/audit_inorganic.md` (new). 44 entries with wrong chemistry corrected (e.g. NCl₃ hydrolysis gives HOCl, CCl₄ + steam gives COCl₂, zinc uranyl acetate is the Na⁺ test, isomer counts for [Ma₂b₂cd] and [M(AA)₂a₂]); every corrected equation passes `chem.check_balanced`. Leftover thinking text removed from 71 entries. Entries are never deleted, so indexes stay stable: removed, moved-to-organic and duplicate entries carry `status` (plus `duplicate_of`); 5 unconfirmed claims carry `unverified`; 4 structure facts carry `kind: "fact"`; 5 multi-step entries keep step 1 and gained later steps as new entries 904–908 (`split_from`). Each touched entry has an `audit_note`.
 - `tools/build_graph.py`: entries with `status` or `unverified` feed neither edges nor facts; `kind: "fact"` entries go to the facts list.

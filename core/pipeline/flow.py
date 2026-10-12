@@ -22,7 +22,7 @@ import concurrent.futures as cf
 import json
 import random
 
-from core import answers, dedup
+from core import answers, dedup, models
 from core.engine.base import EngineError, round_sig
 from core.pipeline import gate, queues, stages
 from core.pipeline.stages import CouncilMemberFailed
@@ -187,15 +187,30 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
     """Council → verifier → grading → hint tests. Returns one of:
        {"decision": "accept", ...} | {"decision": "too_easy", ...} | {"decision": "reword", "feedback"}
        | {"decision": "drop", "reason"}.  Raises Parked if a council call fails."""
-    try:
-        members = stages.council_solve(stem)
-    except CouncilMemberFailed as e:
-        raise Parked({"error": str(e)})
     rtext, atext = trace_text(result), answer_text(result)
-    with cf.ThreadPoolExecutor(max_workers=len(members)) as ex:
-        diags = list(ex.map(lambda m: stages.verify_member(stem, rtext, atext, m), members))
-    graded = [{**m, "diagnosis": d, **_grade(result, m, d)} for m, d in zip(members, diags)]
-    bb.note("council", members=graded)
+
+    def solve_and_grade(names):
+        try:
+            members = stages.council_solve(stem, names)
+        except CouncilMemberFailed as e:
+            raise Parked({"error": str(e)})
+        with cf.ThreadPoolExecutor(max_workers=len(members)) as ex:
+            diags = list(ex.map(lambda m: stages.verify_member(stem, rtext, atext, m), members))
+        return [{**m, "diagnosis": d, **_grade(result, m, d)} for m, d in zip(members, diags)]
+
+    # Early stop: the cheaper members solve first. The rest are called only if their answers
+    # could still change the decision (too easy at TOO_EASY_IF_SOLVED_GE solved), so the
+    # accept / too-easy outcome is the same as with the full council.
+    graded = solve_and_grade(models.COUNCIL_FIRST)
+    rest = [n for n, _ in models.COUNCIL if n not in models.COUNCIL_FIRST]
+    n_first = sum(g["counts_as_solved"] for g in graded)
+    if rest and n_first < TOO_EASY_IF_SOLVED_GE <= n_first + len(rest):
+        graded += solve_and_grade(rest)
+        skipped = []
+    else:
+        skipped = rest
+        print(f"    council: {n_first}/{len(graded)} solved; {', '.join(rest)} cannot change the decision, not called")
+    bb.note("council", members=graded, skipped=skipped)
     for g in graded:
         tag = "solved" if g["counts_as_solved"] else ("correct-but-not-counted" if g["answer_matches"] else "failed")
         print(f"    [{g['name']}] {g['final_answer']} {g['unit']} → {tag}"
@@ -220,9 +235,10 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
     n_correct = sum(g["answer_matches"] for g in graded)
     n_solved = sum(g["counts_as_solved"] for g in graded)
-    print(f"    council: {n_correct}/3 answers match, {n_solved}/3 count as solved")
+    print(f"    council: {n_correct}/{len(graded)} answers match, {n_solved}/{len(graded)} count as solved")
     if n_solved >= TOO_EASY_IF_SOLVED_GE:
-        return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved}
+        return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
+                "skipped": skipped}
 
     # hint tests on every member that did not solve
     recall, hint_log = False, []
@@ -287,7 +303,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
     bb.note("hints", tests=hint_log)
     return {"decision": "accept", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
-            "recall": recall, "hints": hint_log}
+            "recall": recall, "hints": hint_log, "skipped": skipped}
 
 
 def _solved_summary(graded) -> str:
@@ -373,7 +389,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 bb.note("duplicate", of=dup)
                 decision = {"decision": "too_easy", "graded": []}
             else:
-                print("  [council] three closed-book solves...")
+                print("  [council] closed-book solves (cheaper members first)...")
                 decision = judge(adapter, cand, plan, values, result, stem, bb, log)
             log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"],
                  "stem": stem, "answer": round_sig(result.answer), "reason": decision.get("reason"),
