@@ -300,10 +300,22 @@ Return JSON:
   "objection": null or {{"type": "chemistry" or "wording", "detail": "what is wrong"}}}}"""
 
 
+BLANK_RETRIES = 2
+
+
 def _solve(slug: str, stem: str, hint: str | None = None) -> dict:
-    out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint),
-                          max_tokens=COUNCIL_MAX_TOKENS, temperature=0.2,
-                          reasoning_effort=models.COUNCIL_REASONING_EFFORT)
+    """One closed-book attempt. A blank reply (no final answer and no working) is a failed
+    call, not a wrong answer: it is asked again, and still blank raises (the question parks)."""
+    for attempt in range(BLANK_RETRIES + 1):
+        out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint),
+                              max_tokens=COUNCIL_MAX_TOKENS, temperature=0.2,
+                              reasoning_effort=models.COUNCIL_REASONING_EFFORT)
+        blank = out.get("final_answer") in (None, "") and not str(out.get("working") or "").strip()
+        if not blank:
+            break
+        print(f"    [council] {slug} sent a blank reply — asking again ({attempt + 1}/{BLANK_RETRIES})")
+    else:
+        raise ValueError(f"{slug} sent {BLANK_RETRIES + 1} blank replies")
     obj = out.get("objection")
     if isinstance(obj, dict) and obj.get("type") in ("chemistry", "wording"):
         objection = {"type": obj["type"], "detail": str(obj.get("detail", ""))[:1000]}

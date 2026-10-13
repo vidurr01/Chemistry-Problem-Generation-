@@ -21,6 +21,7 @@ from __future__ import annotations
 import concurrent.futures as cf
 import json
 import random
+import re
 
 from core import answers, dedup, models
 from core.engine.base import EngineError, round_sig
@@ -174,9 +175,26 @@ def _is_numeric(result) -> bool:
     return isinstance(result.answer, (int, float)) and not isinstance(result.answer, bool)
 
 
+def _eval_expression(expr):
+    """Value of the member's set-up arithmetic. Verifiers often write a chain such as
+    'exp(-(156070)/(8.314*550)) = exp(-34.13) ≈ 1.5e-15'; the first segment that is plain
+    arithmetic is the set-up. None if no segment evaluates."""
+    if expr is None:
+        return None
+    for seg in re.split(r"=|≈|≅|~|→", str(expr)):
+        seg = seg.strip()
+        if not seg:
+            continue
+        try:
+            return answers.safe_eval(seg)
+        except (ValueError, ZeroDivisionError, OverflowError, SyntaxError, TypeError):
+            continue
+    return None
+
+
 def _text_match(result, final_answer, diag):
     """(matches, decided_by) for a final answer; diag is the verifier's diagnosis or None."""
-    if answers.matches(result.answer, final_answer, result.kind):
+    if answers.matches(result.answer, final_answer, result.kind, getattr(result, "tolerance", 0.01)):
         return True, "code"
     if _is_numeric(result) or result.kind == "letters" or final_answer is None:
         return False, "code"
@@ -202,11 +220,9 @@ def _grade(result, member, diag) -> dict:
         solved = True
     elif not match and diag.get("failure_type") == "slip" or (not match and diag["verdict"] == "correct"):
         expr = diag.get("member_expression")
-        try:
-            slip_confirmed = expr is not None and isinstance(result.answer, (int, float)) and \
-                answers.matches(result.answer, answers.safe_eval(expr))
-        except (ValueError, ZeroDivisionError, OverflowError, SyntaxError, TypeError):
-            slip_confirmed = False
+        value = _eval_expression(expr)
+        slip_confirmed = value is not None and _is_numeric(result) and \
+            answers.matches(result.answer, value, result.kind, getattr(result, "tolerance", 0.01))
         solved = bool(slip_confirmed)
     return {"answer_matches": match, "match_by": match_by, "verdict": diag["verdict"],
             "failure_type": diag.get("failure_type"), "slip_confirmed": slip_confirmed, "counts_as_solved": solved}

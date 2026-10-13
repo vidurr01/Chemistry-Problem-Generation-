@@ -4,6 +4,16 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Third live run: rounding tolerance, blank replies, slip expressions, LaTeX JSON
+- Run: a kinetics chain (rate law → k → Eₐ → fraction above Eₐ) was too easy for three rounds; round 3 was accepted with 1/3 solved, wrongly. Cost $0.0875 for four rounds (refiner 41 %, council 25 %, generator 20 %, verifier 12 %). The question (GEN_20261013T135458) is rejected.
+- Why it was wrong: Qwen3.8-Flash sent a blank reply, graded as a failure; GLM-5.3-Flash was off 3 % only because the answer is e^(−34.1) (rounding the exponent by 0.03 moves it 3 %), and the slip check could not read the verifier's "a = b ≈ c" expression.
+- `core/engine/base.py`: `ChainResult.tolerance`. `rounding_tolerance()` re-runs the chain with every intermediate rounded to 3 significant figures; if that moves the answer more than 1 %, the tolerance is 1.5× that shift (max 10 %). Traps inside the tolerance are dropped. `answers.matches(..., rel_tol)` and grading use it.
+- `flow._eval_expression()`: the slip check evaluates the first plain-arithmetic segment of an expression written as a chain of = / ≈.
+- `stages._solve()`: a blank reply (no answer, no working) is asked again twice; still blank raises, so the question parks instead of being graded.
+- `core/llm.parse_json()`: invalid JSON escapes from LaTeX (\Delta, \ce) are repaired; valid escapes are kept.
+- Refiner suggestions the engine cannot express yet (modified Arrhenius k = A·Tᵐ·e^(−Eₐ/RT); following a reaction by total pressure in a rigid vessel) are noted for the planned harder-engine work.
+- Tests: 64.
+
 ### Out of credits stops cleanly
 - `run_groundup_final.py`: an OpenRouter 402 (no credits) ends the run with `EXIT_NO_CREDITS` (5) and a message instead of a traceback; a council 402 parks the question as before. `generate_questions.py` stops the batch on exit 5.
 - Found in the second live run, which also queued its first `engine_wrong` item (an over-determined thermodynamics chain, see Decisions / pending engine fix).

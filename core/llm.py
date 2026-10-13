@@ -68,7 +68,14 @@ def parse_json(content) -> dict:
         block = _first_json_object(text)
         if not block:
             raise ValueError(f"Could not parse JSON from model output: {text[:200]!r}")
-        obj = json.loads(block)
+        try:
+            obj = json.loads(block)
+        except json.JSONDecodeError as e:
+            if "escape" not in str(e):
+                raise
+            # LaTeX inside a JSON string (\ce, \text, \Delta) is not a valid JSON escape
+            # keep valid escapes (\" \\ \n \u...) as they are; double any other backslash
+            obj = json.loads(re.sub(r'\\(["\\/bfnrtu])|\\', lambda m: m.group(0) if m.group(1) else "\\\\", block))
     if isinstance(obj, list):
         obj = next((x for x in obj if isinstance(x, dict)), None)
     if not isinstance(obj, dict):
