@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### JEE Mains calibration set; ladder candidates
+- `data/jee_mains/` (new): 24 JEE Main papers, 2020–2026, same schema as the Advanced set. Eight 2024–2026 numerical items whose structure or scheme is not in the text carry `exclude_reason`.
+- `anchor_calibration.py --set mains [--years]` (default 2024–2026, the papers least likely to be in training data; numerical "NAT" items only). Mains answers are integers, so the grader rounds the model's answer to the nearest integer for that set. Results files get a `_mains` suffix.
+- Results (council settings): Mains n = 47 — GLM-5.3-Flash 87 %, GPT-6 Luna 96 %; Advanced n = 49 — GLM 71 %, Luna 92 %. MiniMax M3 on Advanced: 36/49 with 10 unanswered, $0.53 — not stronger than Luna, not used.
+
 ### Calibration set cleaned; council calibrated on real JEE Advanced
 - `data/jee_advanced/2023.json`, `2024.json`: answer keys checked against published solutions. Eight keys corrected (e.g. U-238 age 13.5 → 143, monolayer area 2.5 → 2500, pentaerythritol ketal 8 → 18) and one transcription fixed ("dimethylchlorosilane" → "dimethyldichlorosilane"); each record keeps `key_correction` / `text_correction` with the old value, sources and date. Five items carry `exclude_reason` (missing paragraph text, a missing plot, a disputed or unconfirmed key) and are skipped by both calibration loaders.
 - `core/answers.numeric_value()`: one reader for final answers — safe arithmetic first (so "11/51" is 0.216, not 51), then labels, units and × 10ⁿ. Used by `calibration/anchor_calibration.py` and `calibration/council_eval.py`.

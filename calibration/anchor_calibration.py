@@ -64,7 +64,9 @@ STRONG_MODEL = "openai/gpt-oss-120b"               # default; override with --st
 WEAK_MODEL   = "meta-llama/llama-3.2-3b-instruct"  # OpenRouter (3B); override with --weak
 
 JEE_DIR    = os.path.join(_ROOT, "data", "jee_advanced")
+MAINS_DIR  = os.path.join(_ROOT, "data", "jee_mains")
 YEARS      = range(2021, 2026)
+QSET       = "advanced"     # --set: "advanced" (data/jee_advanced/<year>.json) or "mains"
 OUT_PATH   = None   # set in main() from the strong model
 
 
@@ -75,7 +77,8 @@ def results_path(strong_model: str) -> str:
     """calibration/anchor_calibration_results_<model>.json, e.g. ..._gpt_oss_120b.json
     (with --council: ..._<model>_council.json)"""
     tag = re.sub(r"[^a-z0-9]+", "_", strong_model.split("/")[-1].lower()).strip("_")
-    return os.path.join(_HERE, f"anchor_calibration_results_{tag}{'_council' if COUNCIL_MODE else ''}.json")
+    mains = "_mains" if QSET == "mains" else ""
+    return os.path.join(_HERE, f"anchor_calibration_results_{tag}{mains}{'_council' if COUNCIL_MODE else ''}.json")
 
 def openrouter_client():
     return OpenAI(api_key=OPENROUTER_KEY, base_url="https://openrouter.ai/api/v1")
@@ -111,15 +114,27 @@ _FIG_REF = re.compile(
     re.IGNORECASE,
 )
 
+def _question_files():
+    """(year, path) of every file in the chosen set. Mains has one file per shift
+    (e.g. 22Jan2025_Morning.json); its year comes from the questions themselves."""
+    if QSET == "mains":
+        import glob
+        return [(None, fp) for fp in sorted(glob.glob(os.path.join(MAINS_DIR, "*.json")))]
+    return [(y, os.path.join(JEE_DIR, f"{y}.json")) for y in YEARS]
+
+
 def load_numeric_questions():
     out = []
-    for y in YEARS:
-        fp = os.path.join(JEE_DIR, f"{y}.json")
+    for y, fp in _question_files():
         if not os.path.exists(fp):
             continue
         with open(fp, encoding="utf-8") as f:
             data = json.load(f)
         for q in data.get("questions", []):
+            if QSET == "mains":
+                y = q.get("year")
+                if y not in YEARS or q.get("question_type") != "NAT":
+                    continue
             ca = q.get("correct_answer")
             if ca is None or "[Image" in str(ca):
                 continue
@@ -193,6 +208,8 @@ def graded_correct(model_ans, ref: float) -> bool:
     a = numeric_value(model_ans)
     if a is None:
         return False
+    if QSET == "mains" and float(ref).is_integer():
+        return round(a) == round(ref)    # JEE Mains numerical answers are rounded to the nearest integer
     return abs(a - ref) <= max(0.1, 0.01 * abs(ref))   # 1% relative or 0.1 absolute
 
 
@@ -259,6 +276,10 @@ def main():
     global STRONG_MODEL, WEAK_MODEL, OUT_PATH
     ap = argparse.ArgumentParser(description="Blind solve-rate of two models on real JEE Advanced numeric questions.")
     ap.add_argument("--strong", default=STRONG_MODEL, help="OpenRouter slug of the strong model")
+    ap.add_argument("--set", dest="qset", choices=["advanced", "mains"], default="advanced",
+                    help="question set: JEE Advanced numerics (default) or JEE Mains numerical (NAT) items")
+    ap.add_argument("--years", default=None,
+                    help="comma-separated years (default 2021-2025 for advanced, 2024-2026 for mains)")
     ap.add_argument("--weak", default=WEAK_MODEL, help="OpenRouter slug of the weak model")
     ap.add_argument("--council", action="store_true",
                     help="solve with the generation council's settings (16k tokens, reasoning effort) "
@@ -269,8 +290,13 @@ def main():
                     help="re-score the saved answers in this model's results file with the current "
                          "answer keys and grader (no API calls); excluded questions are dropped")
     args = ap.parse_args()
-    global COUNCIL_MODE
+    global COUNCIL_MODE, QSET, YEARS
     COUNCIL_MODE = args.council
+    QSET = args.qset
+    if args.years:
+        YEARS = [int(y) for y in args.years.split(",")]
+    elif QSET == "mains":
+        YEARS = [2024, 2025, 2026]       # recent papers: least likely to be in training data
     STRONG_MODEL, WEAK_MODEL = args.strong, args.weak
     OUT_PATH = results_path(STRONG_MODEL)
     if args.regrade:
