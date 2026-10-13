@@ -265,14 +265,39 @@ class Grading(unittest.TestCase):
         from types import SimpleNamespace
         return SimpleNamespace(answer=answer, kind=kind)
 
-    def test_text_answer_falls_back_to_verifier(self):
+    def test_text_answers_matched_by_code(self):
         from core.pipeline import flow
         g = flow._grade(self._res("precipitate forms", "text"), {"final_answer": "Yes"}, {"verdict": "correct"})
-        self.assertTrue(g["answer_matches"])
-        self.assertTrue(g["counts_as_solved"])
-        self.assertEqual(g["match_by"], "verifier")
-        g = flow._grade(self._res("precipitate forms", "text"), {"final_answer": "No"}, {"verdict": "wrong"})
-        self.assertFalse(g["counts_as_solved"])
+        self.assertEqual((g["answer_matches"], g["counts_as_solved"], g["match_by"]), (True, True, "code"))
+        g = flow._grade(self._res("forward", "text"), {"final_answer": "backward"},
+                        {"verdict": "correct", "answer_equivalent": True})     # code decides, not the verifier
+        self.assertEqual((g["answer_matches"], g["match_by"]), (False, "code"))
+
+    def test_verifier_field_decides_what_code_cannot(self):
+        from core.pipeline import flow
+        r = self._res("ion 1 precipitates first", "text")
+        g = flow._grade(r, {"final_answer": "Cl⁻ first"}, {"verdict": "correct", "answer_equivalent": True})
+        self.assertEqual((g["answer_matches"], g["counts_as_solved"], g["match_by"]), (True, True, "verifier"))
+        g = flow._grade(r, {"final_answer": "Br⁻ first"}, {"verdict": "wrong", "answer_equivalent": False})
+        self.assertEqual((g["answer_matches"], g["match_by"]), (False, "verifier"))
+
+    def test_text_answer_shapes(self):
+        from core.answers import text_answers_match as m
+        cases = [
+            ("precipitate forms", "Yes, AgCl precipitates", True), ("precipitate forms", "No", False),
+            ("no precipitate", "No precipitate will form since Q < Ksp", True),
+            ("forward", "shifts to the right", True), ("forward", "towards the reactants", False),
+            ("no shift", "no effect on the equilibrium", True), ("backward", "reverse direction", True),
+            ("isotopes", "They are isotopes", True), ("isobars", "isotones", False),
+            ("Th-234", "²³⁴₉₀Th", True), ("Th-234", "234Th", True), ("Th-234", "Pa-234", False),
+            ("CH2O", "CH₂O", True), ("CH2O", "C6H12O6", False), ("AgCl", "AgCl(s)", True),
+            ("1s2 2s2 2p6", "1s²2s²2p⁶", True), ("3d", "3d orbital", True), ("3d", "4f", False),
+            ("not allowed", "Not possible: l must be less than n", True),
+            ("2H2 + O2 -> 2H2O", "4H2 + 2O2 -> 4H2O", True), ("2H2 + O2 -> 2H2O", "H2 + O2 -> H2O2", False),
+        ]
+        for engine, member, want in cases:
+            self.assertEqual(m(engine, member), want, (engine, member))
+        self.assertIsNone(m("ion 1 precipitates first", "chloride first"))
 
     def test_numbers_stay_code_matched(self):
         from core.pipeline import flow

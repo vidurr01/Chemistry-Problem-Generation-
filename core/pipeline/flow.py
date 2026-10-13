@@ -170,18 +170,29 @@ def _is_numeric(result) -> bool:
     return isinstance(result.answer, (int, float)) and not isinstance(result.answer, bool)
 
 
+def _text_match(result, final_answer, diag):
+    """(matches, decided_by) for a final answer; diag is the verifier's diagnosis or None."""
+    if answers.matches(result.answer, final_answer, result.kind):
+        return True, "code"
+    if _is_numeric(result) or result.kind == "letters" or final_answer is None:
+        return False, "code"
+    decided = answers.text_answers_match(result.answer, final_answer)
+    if decided is not None or diag is None:
+        return bool(decided), "code"
+    eq = diag.get("answer_equivalent")
+    if eq is None:                                   # older reply without the field
+        eq = diag.get("verdict") in ("correct", "right_answer_wrong_reasoning")
+    return bool(eq), "verifier"
+
+
 def _grade(result, member, diag) -> dict:
     """Facts and judgement for one member, both kept (answer_matches is never overwritten).
 
-    Numbers are matched by code only. A non-numeric answer (a formula, "forward", "precipitate
-    forms") can be phrased many correct ways ("Yes", "AgCl(s) precipitates"), so when the code
-    comparison fails it falls back to the verifier, which has the reference: verdict "correct"
-    or "right_answer_wrong_reasoning" means the answer matches. match_by records which decided."""
-    match = answers.matches(result.answer, member.get("final_answer"), result.kind)
-    match_by = "code"
-    if not match and not _is_numeric(result) and result.kind != "letters" and \
-            diag["verdict"] in ("correct", "right_answer_wrong_reasoning"):
-        match, match_by = True, "verifier"
+    Numbers and option letters are matched by code only. A non-numeric answer is compared by
+    code where its shape allows (formulas by element counts, nuclides, configurations, balanced
+    equations, categories such as forward/backward or yes/no with synonyms); when code cannot
+    tell, the verifier's narrow answer_equivalent field decides. match_by records which."""
+    match, match_by = _text_match(result, member.get("final_answer"), diag)
     solved, slip_confirmed = False, None
     if match and diag["verdict"] == "correct":
         solved = True
@@ -198,14 +209,14 @@ def _grade(result, member, diag) -> dict:
 
 
 def _hint_solved(result, re_, stem, rtext, atext, hint):
-    """Did the member solve it after the hint? Code match for numbers; for a non-numeric
-    answer that code cannot match, the verifier decides (returns its diagnosis too)."""
-    if answers.matches(result.answer, re_["final_answer"], result.kind):
-        return True, None
-    if _is_numeric(result) or result.kind == "letters":
-        return False, None
+    """Did the member solve it after the hint? Same rule as grading: code where it can decide,
+    otherwise the verifier's answer_equivalent (returns that diagnosis too)."""
+    ok, _ = _text_match(result, re_["final_answer"], None)
+    if ok or _is_numeric(result) or result.kind == "letters" or \
+            answers.text_answers_match(result.answer, re_["final_answer"]) is not None:
+        return ok, None
     d = stages.verify_member(stem, rtext, atext, re_, after_hint=hint)
-    return d["verdict"] == "correct", d
+    return _text_match(result, re_["final_answer"], d)[0], d
 
 
 def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:

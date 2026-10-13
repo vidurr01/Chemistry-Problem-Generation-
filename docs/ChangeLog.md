@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Non-numeric answers: code first, then a narrow verifier field
+- `core/answers.py` `text_answers_match()`: code comparison by answer shape — formulas by element counts (CH₂O ≠ C₆H₁₂O₆), nuclides by symbol and mass number (²³⁴₉₀Th = Th-234), electronic configurations, balanced equations up to a common factor, orbital labels and "not allowed", and categories with synonyms and yes/no (forward / backward / no shift; precipitate forms / no precipitate; isotopes / isobars / isotones / isodiaphers). Returns None when it cannot tell.
+- `stages.verify_member()` adds `answer_equivalent`: does the final answer state the same result, ignoring working and notation. Grading (`flow._text_match`) uses code when it decides, else this field (no extra call); the verdict stays a judgement of the reasoning. Hint re-solves use the same rule.
+- Tests: 21 answer-shape cases and both decision paths (59 tests).
+
 ### First live run (smoke test) and the bugs it found
 - All 8 models answer with valid JSON (ping cost $0.0003). One physical run cost $0.011 (generator 70 %, verifier 17 %, council 9 %).
 - Bug: non-numeric answers were matched by exact text, so "Yes" to "determine whether a precipitate forms" counted as wrong although the verifier judged it correct; the question (GEN_20261012T235813) was accepted as hard. Rejected with `tools/results.py reject`.

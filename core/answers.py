@@ -91,8 +91,130 @@ def matches(engine_answer, member_answer, kind: str = "real") -> bool:
         value = parse_numeric_answer(member_answer)
         return value is not None and answers_match(float(engine_answer), value)
     if isinstance(engine_answer, str):
-        return normalise_text(engine_answer) == normalise_text(member_answer)
+        return normalise_text(engine_answer) == normalise_text(member_answer) or \
+            text_answers_match(engine_answer, member_answer) is True
     return answers_match(engine_answer, member_answer)
+
+
+# ── Non-numeric answers ──────────────────────────────────────────────────────
+# The engine's text answers come in a few shapes; each is compared exactly by code.
+# text_answers_match returns True / False when code can decide, None when it cannot
+# (then the verifier's answer_equivalent field decides; see flow._grade).
+
+_SUBS = str.maketrans("₀₁₂₃₄₅₆₇₈₉₊₋", "0123456789+-")
+
+# category -> (patterns that mean it); checked in order, negations first
+_CATEGORIES = {
+    "direction": [
+        ("no shift", r"\bno (net )?(shift|change|effect)\b|\bunaffected\b|\bunchanged\b|\bdoes(n't| not) shift\b|"
+                     r"\bremains? (the same|unchanged)\b|\bneither\b|\bno direction\b"),
+        ("backward", r"\bbackward|\breverse|\bleft\b|\btowards? (the )?reactants?\b|\breactant side\b"),
+        ("forward", r"\bforward|\bright\b|\btowards? (the )?products?\b|\bproduct side\b"),
+    ],
+    "precipitation": [
+        ("no precipitate", r"^no\b|\bno precipitat|\bnot? (form|precipitat)|\bdoes(n't| not) (form|precipitat)|"
+                           r"\bwill not\b|\bwon't\b|\bremains? (clear|in solution)\b|\bunsaturated\b"),
+        ("precipitate forms", r"^yes\b|\bprecipitat(e|es|ion) (forms?|occurs?|will form)\b|\bprecipitates\b|"
+                              r"\bwill precipitate\b|\bforms?\b"),
+    ],
+    "relation": [
+        ("none of these", r"\bnone\b|\bno (such )?relation\b|\bneither\b"),
+        ("isodiaphers", r"\bisodiapher"),
+        ("isotones", r"\bisotone"),
+        ("isobars", r"\bisobar"),
+        ("isotopes", r"\bisotope"),
+    ],
+}
+_CATEGORY_OF = {label: cat for cat, rules in _CATEGORIES.items() for label, _ in rules}
+
+
+def _category(cat: str, text: str):
+    t = " ".join(str(text).lower().split())
+    for label, pattern in _CATEGORIES[cat]:
+        if re.search(pattern, t):
+            return label
+    return None
+
+
+def _formula(text: str):
+    from core.engine.chem import parse_formula
+    s = str(text).translate(_SUBS).translate(_SUPERSCRIPTS).strip().rstrip(".")
+    s = re.sub(r"\((s|l|g|aq)\)", "", s)           # state labels
+    s = s.replace("·", ".").replace(" ", "")
+    m = re.match(r"^(.*?)([+-]\d*|\d*[+-])$", s)      # trailing charge: SO4^2- / SO42- / Fe3+
+    try:
+        if m and m.group(2) and not s.startswith(("+", "-")):
+            counts, charge = parse_formula(m.group(1).rstrip("^") + "^" + m.group(2))
+        else:
+            counts, charge = parse_formula(s)
+    except Exception:  # noqa: BLE001
+        return None
+    return (tuple(sorted(counts.items())), charge)
+
+
+def _nuclide(text: str):
+    """(symbol, A) from 'Th-234', '234Th', '²³⁴₉₀Th', 'thorium-234 (Th-234)'."""
+    from core.engine.chem import SYMBOLS
+    raw = str(text)
+    sup = re.findall(r"[⁰¹²³⁴⁵⁶⁷⁸⁹]+", raw)
+    t = raw.translate(_SUPERSCRIPTS).translate(_SUBS)
+    syms = [s for s in re.findall(r"[A-Z][a-z]?", t) if s in SYMBOLS]
+    if not syms:
+        return None
+    if sup:                                           # superscript = mass number
+        return syms[-1], int(sup[-1].translate(_SUPERSCRIPTS))
+    nums = [int(n) for n in re.findall(r"\d+", t)]
+    return (syms[-1], max(nums)) if nums else None
+
+
+def _config(text: str):
+    t = str(text).translate(_SUPERSCRIPTS).translate(_SUBS)
+    t = re.sub(r"[\s,]", "", t)
+    return t if re.fullmatch(r"(\[[A-Z][a-z]?\])?(\d[spdf]\d+)+", t) else None
+
+
+def _equation(text: str):
+    from core.engine.chem import parse_equation
+    try:
+        r, p = parse_equation(str(text).translate(_SUBS).translate(_SUPERSCRIPTS))
+    except Exception:  # noqa: BLE001
+        return None
+    coeffs = [c for c, _ in r + p]
+    g = math.gcd(*[int(round(c)) for c in coeffs]) if all(float(c).is_integer() for c in coeffs) else 1
+    norm = lambda side: tuple(sorted((_formula(f) or f, c / g) for c, f in side))
+    return norm(r), norm(p)
+
+
+def text_answers_match(engine_answer: str, member_answer):
+    """True / False when code can compare these two non-numeric answers, else None."""
+    e = str(engine_answer).strip()
+    cat = _CATEGORY_OF.get(e)
+    if cat:
+        got = _category(cat, member_answer)
+        return None if got is None else got == e
+    if e == "not allowed":
+        t = str(member_answer).lower()
+        if re.search(r"not (allowed|possible|valid|exist)|\binvalid\b|\bimpossible\b|no such", t):
+            return True
+        return False if re.search(r"\b\d[spdfg]\b", t) else None
+    if re.fullmatch(r"\d[spdfg]", e):                 # orbital label, e.g. '3d'
+        found = re.findall(r"\b(\d)\s*([spdfg])\b", str(member_answer).lower())
+        return None if not found else (e in {a + b for a, b in found} and len(set(found)) == 1)
+    if re.fullmatch(r"[A-Z][a-z]?-\d+", e):           # nuclide, e.g. 'Th-234'
+        sym, a = e.split("-")
+        got = _nuclide(member_answer)
+        return None if got is None else got == (sym, int(a))
+    if "->" in e or "→" in e:
+        a, b = _equation(e), _equation(member_answer)
+        return None if a is None or b is None else a == b
+    if _config(e):
+        got = _config(member_answer)
+        return None if got is None else got == _config(e)
+    fe = _formula(e)
+    if fe is not None:
+        fm = _formula(member_answer)
+        return None if fm is None else fm == fe
+    return None
 
 
 # ── Safe arithmetic for confirming slips ─────────────────────────────────────

@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Non-numeric answers are matched by code first, then by one narrow verifier field
+
+Date: 2026-10-13
+Context: the first live run graded "Yes" to "does a precipitate form?" as wrong by exact text match and accepted a solved question as hard. 23 physical steps give text answers (formulas, nuclides, directions, relations).
+Decision: compare by answer shape in code (element counts, nuclide symbol and mass number, configurations, equations, synonym categories); when code cannot tell, use an `answer_equivalent` field added to the existing verifier call, asked narrowly (same result, ignoring working and notation). Code's answer is final when it gives one.
+Alternatives: verifier verdict alone (mixes "same answer" with "sound reasoning"); a separate cheap matcher model (an extra call per member, little gain since the verifier already has the reference).
+Trade-off: the synonym tables are hand-written and can miss phrasings (then the verifier decides); a confident code mismatch is not second-guessed.
+
 ## Frontier model only where difficulty is decided: the too-easy refinement
 
 Date: 2026-10-13
