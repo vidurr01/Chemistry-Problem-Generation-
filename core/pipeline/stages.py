@@ -22,7 +22,7 @@ import threading
 from core import models
 from core.llm import as_bool, as_number
 
-COUNCIL_MAX_TOKENS = 16000
+COUNCIL_MAX_TOKENS = 32000      # thinking models can reason past 16k on hard questions; empty replies otherwise
 
 
 class CouncilMemberFailed(RuntimeError):
@@ -304,14 +304,35 @@ Return JSON:
 BLANK_RETRIES = 2
 
 
+_ANSWER_KEYS = ("final_answer", "answer", "final", "result", "value", "final_value")
+_WORKING_KEYS = ("working", "solution", "steps", "reasoning", "explanation", "work")
+
+
+def _first(out: dict, keys):
+    for k in keys:
+        v = out.get(k)
+        if v not in (None, "") and not (isinstance(v, str) and not v.strip()):
+            return v
+    return None
+
+
 def _solve(slug: str, stem: str, hint: str | None = None) -> dict:
-    """One closed-book attempt. A blank reply (no final answer and no working) is a failed
-    call, not a wrong answer: it is asked again, and still blank raises (the question parks)."""
+    """One closed-book attempt. Some models answer {"answer": 100.1} instead of the requested
+    keys, or put their working only in the reasoning trace; both are read. A reply with no
+    answer and no working at all is a failed call, not a wrong answer: it is asked again,
+    and still blank raises (the question parks)."""
     for attempt in range(BLANK_RETRIES + 1):
         out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint),
                               max_tokens=COUNCIL_MAX_TOKENS, temperature=0.2,
                               reasoning_effort=models.COUNCIL_REASONING_EFFORT)
-        blank = out.get("final_answer") in (None, "") and not str(out.get("working") or "").strip()
+        answer = _first(out, _ANSWER_KEYS)
+        working = _first(out, _WORKING_KEYS)
+        if isinstance(working, (dict, list)):
+            working = json.dumps(working, ensure_ascii=False)
+        if not working and out.get("_reasoning"):
+            working = "(from the model's reasoning trace)\n" + out["_reasoning"]
+        out = {**out, "final_answer": answer, "working": working or ""}
+        blank = answer is None and not str(working or "").strip()
         if not blank:
             break
         print(f"    [council] {slug} sent a blank reply — asking again ({attempt + 1}/{BLANK_RETRIES})")
