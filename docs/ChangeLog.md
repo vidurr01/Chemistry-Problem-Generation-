@@ -2,6 +2,15 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-10-14
+
+### Calibration set cleaned; council calibrated on real JEE Advanced
+- `data/jee_advanced/2023.json`, `2024.json`: answer keys checked against published solutions. Eight keys corrected (e.g. U-238 age 13.5 → 143, monolayer area 2.5 → 2500, pentaerythritol ketal 8 → 18) and one transcription fixed ("dimethylchlorosilane" → "dimethyldichlorosilane"); each record keeps `key_correction` / `text_correction` with the old value, sources and date. Five items carry `exclude_reason` (missing paragraph text, a missing plot, a disputed or unconfirmed key) and are skipped by both calibration loaders.
+- `core/answers.numeric_value()`: one reader for final answers — safe arithmetic first (so "11/51" is 0.216, not 51), then labels, units and × 10ⁿ. Used by `calibration/anchor_calibration.py` and `calibration/council_eval.py`.
+- `anchor_calibration.py --regrade`: re-scores a saved results file with the current keys and grader, no API calls.
+- Council results (n = 49, council settings): GPT-6 Luna 45/49 (92 %), Qwen3.8-Flash 44/49 (90 %), GLM-5.3-Flash 35/49 (71 %); older runs re-scored: GPT-OSS-120B 30/49 (61 %), Qwen3-235B 23/49 (47 %). Members solving each question: 3 → 33, 2 → 12, 1 → 1, 0 → 3. Calibration cost $0.31.
+- README and the approach PDF text updated with these figures.
+
 ## 2026-10-13
 
 ### Fixes from reviewing the third question: fragile asks, solution text, trap labels

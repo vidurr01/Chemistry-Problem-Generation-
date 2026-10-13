@@ -213,9 +213,10 @@ def build(doc):
     ], [0.26, 0.37, 0.37], doc))
     s += [Sp(6)]
     s.append(B(
-        "The yardstick comes from <b>calibration/anchor_calibration.py</b>: on 54 real JEE Advanced "
-        "numeric questions (2021–2025), gpt-oss-120b solves 50% blind and qwen3-235b 37%, while "
-        "llama-3.2-3b solves 6–7%."
+        "The yardstick comes from <b>calibration/anchor_calibration.py</b>: on 49 real JEE Advanced "
+        "numeric questions (2021–2025, keys checked against published solutions), the council solves "
+        "71–92% blind (gpt-6-luna 92%, qwen3.8-flash 90%, glm-5.3-flash 71%), gpt-oss-120b 61%, "
+        "qwen3-235b 47% and llama-3.2-3b 8%."
     ))
     s += [Sp(12)]
 

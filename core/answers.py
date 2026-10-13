@@ -225,6 +225,22 @@ def text_answers_match(engine_answer: str, member_answer):
     return None
 
 
+def numeric_value(text):
+    """The number a final answer states, or None: '0.216', '11/51', 'ln(4)/2', 'P = 143',
+    '143.3 K', '2.5 × 10⁻²⁰ m²'. Arithmetic is evaluated safely first (so a fraction is not
+    misread as its denominator), then labelled or unit-bearing answers are parsed."""
+    if text is None or isinstance(text, bool):
+        return None
+    if isinstance(text, (int, float)):
+        return float(text)
+    s = str(text).strip().translate(_SUPERSCRIPTS)
+    try:
+        return float(safe_eval(s))
+    except (ValueError, ZeroDivisionError, OverflowError, SyntaxError, TypeError):
+        pass
+    return parse_numeric_answer(s)
+
+
 # ── Safe arithmetic for confirming slips ─────────────────────────────────────
 
 _OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,

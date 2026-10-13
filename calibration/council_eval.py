@@ -80,7 +80,8 @@ def is_numeric(ca):
     return ca is not None and re.fullmatch(r"-?\d+(\.\d+)?", str(ca).strip()) is not None
 
 def graded_correct(ans, key):
-    a = to_float(ans)
+    from core.answers import numeric_value     # reads fractions (11/51) and x 10^n correctly
+    a = numeric_value(ans)
     if a is None: return False
     return abs(a - key) <= max(0.1, 0.01 * abs(key))
 
@@ -100,6 +101,7 @@ def load_advanced(years):
             ca = q.get("correct_answer")
             if not is_numeric(ca) or "[Image" in str(ca): continue
             if _FIG.search(q.get("question_text", "")): continue
+            if q.get("exclude_reason"): continue      # cleaned out of the calibration set
             out.append({"id": q.get("id"), "year": y,
                         "topic": (q.get("topic","") or "?").split("-")[0].strip(),
                         "question_text": q["question_text"], "answer": float(str(ca).strip())})
