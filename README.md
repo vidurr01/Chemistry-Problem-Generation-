@@ -220,26 +220,33 @@ python calibration/anchor_calibration.py
 It blind-solves real JEE Advanced questions (no answer key) and grades against the
 **official key** with deterministic numeric matching. `--strong` / `--weak` choose the models
 (defaults: `openai/gpt-oss-120b`, `meta-llama/llama-3.2-3b-instruct`); each strong model's run is
-saved to its own `calibration/anchor_calibration_results_<model>.json`. Current results,
-**n = 54** numeric items, 2021–2025:
+saved to its own `calibration/anchor_calibration_results_<model>.json`. `--council` solves with
+the generation council's own call (same prompt, token cap and reasoning effort), `--workers N`
+runs questions in parallel, and `--regrade` re-scores saved answers with the current keys and
+grader without calling any model. Answers are read with `core.answers.numeric_value`
+(fractions such as 11/51, × 10ⁿ, labels and units).
 
-| Run (results file) | Strong solver | Strong solve rate | Weak (`llama-3.2-3b`) solve rate |
-|--------------------|---------------|-------------------|----------------------------------|
-| `…_gpt_oss_120b.json` | `gpt-oss-120b` | **50 %** (27/54) | **7 %** (4/54) |
-| `…_qwen3_235b_a22b_2507.json` | `qwen3-235b-a22b-2507` | **37 %** (20/54) | **6 %** (3/54) |
+The question set is the 2021–2025 numeric items. Its answer keys were checked against
+published solutions on 2026-10-14: eight keys were corrected and one transcription fixed
+(each change keeps `was` / `now` / `sources` in the question record), and five items are
+excluded via `exclude_reason` (missing paragraph text, a missing plot, or a disputed key).
+Current results, **n = 49**:
 
-**What it means:** a strong reasoning model solves only *half* of real Advanced numeric
-items blind. Generated items are solved more often, so **generation lands around
-Intermediate, with a measured gap to Advanced.** That gap is the honest, reportable
-finding, not a bug to hide.
+| Results file | Solver | Solve rate |
+|--------------|--------|------------|
+| `…_gpt_6_luna_council.json` | `gpt-6-luna` (council) | **92 %** (45/49) |
+| `…_qwen3_8_flash_council.json` | `qwen3.8-flash` (council) | **90 %** (44/49) |
+| `…_glm_5_3_flash_council.json` | `glm-5.3-flash` (council) | **71 %** (35/49) |
+| `…_gpt_oss_120b.json` | `gpt-oss-120b` | 61 % (30/49) |
+| `…_qwen3_235b_a22b_2507.json` | `qwen3-235b-a22b-2507` | 47 % (23/49) |
+| (weak baseline in the last two files) | `llama-3.2-3b` | 8 % (4/49) |
 
-> The 0-100 thresholds this calibration once produced belonged to the earlier
-> weak/strong-solver loop, which has been removed; generation now gates on the council.
+Council members solving each question: 3 of 3 for 33 questions, 2 of 3 for 12, 1 of 3 for 1,
+0 of 3 for 3. So "too easy at 2 or more solved" would accept 4 of the 49 real Advanced
+questions (8 %), and "too easy only at 3 of 3" would accept 16 (33 %).
 
-**Caveats:** n = 54 is a numeric-only subset. MCQ and MSQ are excluded because the dataset
-lacks option text, and 19 figure-dependent items were dropped as unsolvable text-only. The
-anchor still blind-solves with `gpt-oss-120b` and `llama-3.2-3b`, which are no longer the
-generation solvers. Re-run it with the current council models before comparing directly.
+**Caveats:** n = 49 is a numeric-only subset (MCQ and MSQ lack option text in the dataset;
+figure-dependent items are dropped), so each rate is roughly ±7 points.
 
 ---
 

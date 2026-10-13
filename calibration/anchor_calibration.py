@@ -127,6 +127,8 @@ def load_numeric_questions():
                 continue
             if not q.get("question_text"):
                 continue
+            if q.get("exclude_reason"):
+                continue   # cleaned out: missing text, missing figure or disputed key
             if _FIG_REF.search(q["question_text"]):
                 continue   # figure/scheme-dependent — not solvable text-only
             topic = (q.get("topic", "") or "?").split("-")[0].split("Chemistry")[0].strip() or "?"
@@ -187,7 +189,8 @@ def solve_weak(q):
 
 
 def graded_correct(model_ans, ref: float) -> bool:
-    a = to_float(model_ans)
+    from core.answers import numeric_value
+    a = numeric_value(model_ans)
     if a is None:
         return False
     return abs(a - ref) <= max(0.1, 0.01 * abs(ref))   # 1% relative or 0.1 absolute
@@ -195,6 +198,32 @@ def graded_correct(model_ans, ref: float) -> bool:
 
 class _Skip(Exception):
     pass
+
+
+def regrade(path):
+    """Re-score a results file with the current dataset (keys, exclusions) and grader."""
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    qs = {q["id"]: q for q in load_numeric_questions()}
+    kept, changed = [], 0
+    for r in data["records"]:
+        q = qs.get(r["id"])
+        if q is None:
+            continue                                   # excluded or no longer numeric
+        before = (r["strong_correct"], r.get("weak_correct"))
+        r["correct_answer"] = q["correct_answer"]
+        if r.get("strong_answer") is not None:
+            r["strong_correct"] = graded_correct(r["strong_answer"], q["correct_answer"])
+        if r.get("weak_answer") is not None:
+            r["weak_correct"] = graded_correct(r["weak_answer"], q["correct_answer"])
+        changed += before != (r["strong_correct"], r.get("weak_correct"))
+        kept.append(r)
+    data.update(records=kept, n=len(kept), summary=summarize(kept),
+                regraded_at=datetime.now(timezone.utc).isoformat())
+    write_json_atomic(path, data, indent=2, ensure_ascii=False)
+    s = data["summary"]["overall"]["strong"]
+    print(f"{os.path.basename(path)}: {len(data['records'])} questions kept, {changed} grades changed; "
+          f"strong {s[0]}/{s[1]} = {s[2]:.1f}%")
 
 
 def _spend():
@@ -236,11 +265,16 @@ def main():
                          "and report cost; use this to compare council candidates")
     ap.add_argument("--skip-weak", action="store_true", help="do not run the weak model")
     ap.add_argument("--workers", type=int, default=1, help="questions solved in parallel (default 1)")
+    ap.add_argument("--regrade", action="store_true",
+                    help="re-score the saved answers in this model's results file with the current "
+                         "answer keys and grader (no API calls); excluded questions are dropped")
     args = ap.parse_args()
     global COUNCIL_MODE
     COUNCIL_MODE = args.council
     STRONG_MODEL, WEAK_MODEL = args.strong, args.weak
     OUT_PATH = results_path(STRONG_MODEL)
+    if args.regrade:
+        return regrade(OUT_PATH)
     qs = load_numeric_questions()
     print(f"Loaded {len(qs)} numeric Advanced questions (2021-2025).")
     print(f"Strong: {STRONG_MODEL} (OpenRouter)  |  Weak: {WEAK_MODEL} (OpenRouter)\n")
