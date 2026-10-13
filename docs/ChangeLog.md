@@ -4,6 +4,10 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Out of credits stops cleanly
+- `run_groundup_final.py`: an OpenRouter 402 (no credits) ends the run with `EXIT_NO_CREDITS` (5) and a message instead of a traceback; a council 402 parks the question as before. `generate_questions.py` stops the batch on exit 5.
+- Found in the second live run, which also queued its first `engine_wrong` item (an over-determined thermodynamics chain, see Decisions / pending engine fix).
+
 ### Stems state the answer format for non-numeric answers
 - `core/engine/physical/__init__.py` `ANSWER_FORMATS`: one instruction per text-answer step (all 23): allowed options for categories ("Answer yes or no."; "Answer with exactly one of: forward, backward, no shift."; isotopes / isobars / …), and a form for formulas, nuclides (symbol and mass number), orbitals, configurations and balanced equations.
 - `PhysicalAdapter.answer_format()`; `write_stem(answer_format=…)` ends the stem with it; `flow._stem_and_gate` fails the gate in code if it is not copied exactly.

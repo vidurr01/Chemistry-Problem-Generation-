@@ -75,6 +75,7 @@ CONFIG_ERROR_EXIT_CODE = 2
 STOP_EXIT_CODES = {
     3: "a council member failed (check OpenRouter / the API key)",
     4: "an accepted question could not be saved (check the output file / disk)",
+    5: "OpenRouter is out of credits (add credits or raise the key's limit)",
 }
 
 

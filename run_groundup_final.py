@@ -42,6 +42,17 @@ from subject_config import (compute_meta_tags_for_subject, get_subject_config, l
 EXIT_CONFIG_ERROR = 2
 EXIT_COUNCIL_FAILED = 3
 EXIT_SAVE_FAILED = 4
+EXIT_NO_CREDITS = 5        # OpenRouter refused a call for lack of credits (HTTP 402)
+
+
+def _out_of_credits(err) -> bool:
+    return getattr(err, "status_code", None) == 402 or "Error code: 402" in str(err)
+
+
+def _credits_message():
+    print("\n✗ OpenRouter is out of credits (HTTP 402). Add credits at https://openrouter.ai/settings/credits "
+          "or raise the key's limit, then run again.")
+    print(f"Spend this run: ${models.SPEND.total_cost:.4f}")
 
 
 def _read(path, default):
@@ -308,7 +319,13 @@ def main():
     bb = Blackboard(args.subject)
     try:
         outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
-    except flow.Parked as p:
+    except Exception as e:
+        if not isinstance(e, flow.Parked) and _out_of_credits(e):
+            _credits_message()
+            return EXIT_NO_CREDITS
+        if not isinstance(e, flow.Parked):
+            raise
+        p = e
         cand = bb.current["chain"] if bb.current else {}
         last_inputs = bb.last("inputs") or {}
         last_gate = bb.last("gate") or {}
@@ -318,6 +335,10 @@ def main():
                             "trap_ids": cand.get("trap_ids"), "values": last_inputs.get("values"),
                             "scenario": last_inputs.get("scenario"), "stem": last_gate.get("stem"),
                             "rounds": bb.current["rounds"] if bb.current else 0})
+        if _out_of_credits(p.item.get("error")):
+            print(f"\n✗ Question parked as {pid}; it is judged first on the next run.")
+            _credits_message()
+            return EXIT_NO_CREDITS
         print(f"\n✗ A council call failed ({p.item.get('error')}). Question parked as {pid}; "
               f"it is judged first on the next run.")
         print(f"Spend this run: ${models.SPEND.total_cost:.4f}")
