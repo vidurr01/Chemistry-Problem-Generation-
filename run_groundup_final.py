@@ -117,7 +117,7 @@ def build_record(subject, config, payload, bb):
         "council_n_solved": decision["n_solved"],
         "council_n_called": len(graded),
         "council_skipped": decision.get("skipped", []),
-        "council": [{k: g.get(k) for k in ("name", "model", "final_answer", "unit", "answer_matches", "counts_as_solved",
+        "council": [{k: g.get(k) for k in ("name", "model", "final_answer", "unit", "answer_matches", "match_by", "counts_as_solved",
                                            "verdict", "failure_type", "slip_confirmed", "objection", "diagnosis",
                                            "working")}
                     for g in graded],
