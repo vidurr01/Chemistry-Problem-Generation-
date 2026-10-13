@@ -235,6 +235,7 @@ def main():
                     help="solve with the generation council's settings (16k tokens, reasoning effort) "
                          "and report cost; use this to compare council candidates")
     ap.add_argument("--skip-weak", action="store_true", help="do not run the weak model")
+    ap.add_argument("--workers", type=int, default=1, help="questions solved in parallel (default 1)")
     args = ap.parse_args()
     global COUNCIL_MODE
     COUNCIL_MODE = args.council
@@ -244,9 +245,12 @@ def main():
     print(f"Loaded {len(qs)} numeric Advanced questions (2021-2025).")
     print(f"Strong: {STRONG_MODEL} (OpenRouter)  |  Weak: {WEAK_MODEL} (OpenRouter)\n")
 
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    lock = threading.Lock()
     records = []
-    for i, q in enumerate(qs, 1):
-        print(f"[{i}/{len(qs)}] {q['id']} | {q['topic']} | ans={q['correct_answer']}")
+
+    def one(i, q):
         rec = {"id": q["id"], "year": q["year"], "topic": q["topic"],
                "question_type": q["question_type"], "correct_answer": q["correct_answer"],
                "strong_answer": None, "weak_answer": None,
@@ -267,16 +271,22 @@ def main():
             pass
         except Exception as e:
             print(f"    weak error: {e}")
-        print(f"    strong={rec['strong_answer']} {'✓' if rec['strong_correct'] else '✗'}"
-              f"   weak={rec['weak_answer']} {'✓' if rec['weak_correct'] else '✗'}")
-        records.append(rec)
+        with lock:
+            print(f"[{i}/{len(qs)}] {q['id']} | {q['topic']} | ans={q['correct_answer']}"
+                  f"   strong={rec['strong_answer']} {'✓' if rec['strong_correct'] else '✗'}"
+                  f"   weak={rec['weak_answer']} {'✓' if rec['weak_correct'] else '✗'}")
+            records.append(rec)
+            # checkpoint after every question
+            write_json_atomic(OUT_PATH, {"generated_at": datetime.now(timezone.utc).isoformat(),
+                           "strong_model": STRONG_MODEL, "weak_model": None if args.skip_weak else WEAK_MODEL,
+                           "council_settings": COUNCIL_MODE, "spend": _spend(),
+                           "n": len(records), "records": records,
+                           "summary": summarize(records)}, indent=2, ensure_ascii=False)
 
-        # checkpoint after every question
-        write_json_atomic(OUT_PATH, {"generated_at": datetime.now(timezone.utc).isoformat(),
-                       "strong_model": STRONG_MODEL, "weak_model": None if args.skip_weak else WEAK_MODEL,
-                       "council_settings": COUNCIL_MODE, "spend": _spend(),
-                       "n": len(records), "records": records,
-                       "summary": summarize(records)}, indent=2, ensure_ascii=False)
+    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as ex:
+        list(ex.map(lambda iq: one(*iq), enumerate(qs, 1)))
+    order = {q["id"]: n for n, q in enumerate(qs)}
+    records.sort(key=lambda r: order[r["id"]])
 
     s = summarize(records)
     sp_ = _spend()

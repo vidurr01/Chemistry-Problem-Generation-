@@ -401,6 +401,19 @@ class SmokeTest3(unittest.TestCase):
         self.assertTrue(txt.endswith("Final answer: 1.5e-15"))
         self.assertEqual(_solution_text(" plain text "), "plain text")
 
+    def test_answer_under_another_key_is_read(self):
+        """Qwen3.8-Flash replied {"answer": 100.1} with its working only in the reasoning trace."""
+        from core.pipeline import stages
+        with mock.patch.object(models, "ask_json",
+                               lambda *a, **k: {"answer": 100.1, "_reasoning": "k = ... so 100.1"}):
+            out = stages._solve("qwen/qwen3.8-flash", "stem")
+        self.assertEqual(out["final_answer"], 100.1)
+        self.assertIn("reasoning trace", out["working"])
+        with mock.patch.object(models, "ask_json",
+                               lambda *a, **k: {"solution": "steps", "result": "2.24", "unit": "L"}):
+            out = stages._solve("x/y", "stem")
+        self.assertEqual((out["final_answer"], out["working"]), ("2.24", "steps"))
+
     def test_json_with_latex_backslashes(self):
         from core.llm import parse_json
         self.assertEqual(parse_json(r'x {"stem": "\Delta G for \ce{H2O}", "n": 1} y'),

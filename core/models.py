@@ -100,6 +100,12 @@ def ask_json(role: str, model: str, system: str, user: str, *, max_tokens: int =
         )
         holder["usage"] = getattr(resp, "usage", None)
         SPEND.add(role, holder["usage"])
+        msg = resp.choices[0].message if getattr(resp, "choices", None) else None
+        holder["reasoning"] = (getattr(msg, "reasoning", None)
+                               or (getattr(msg, "model_extra", None) or {}).get("reasoning")) if msg else None
         return resp
 
-    return call_json(create, parse_json, label=role)
+    out = call_json(create, parse_json, label=role)
+    if holder.get("reasoning") and isinstance(out, dict):
+        out["_reasoning"] = str(holder["reasoning"])        # the model's thinking, when the provider returns it
+    return out
