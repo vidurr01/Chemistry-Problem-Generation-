@@ -28,8 +28,17 @@ class CouncilMemberFailed(RuntimeError):
     """A council member's call failed after retries; the question is parked, not judged."""
 
 
+_SUP = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻")
+
+
 def _fmt_value(v):
-    return json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else str(v)
+    """Values as an exam would print them: 4e-05 -> '4 × 10⁻⁵', 0.0591 stays."""
+    if isinstance(v, (dict, list)):
+        return json.dumps(v, ensure_ascii=False)
+    if isinstance(v, float) and v != 0 and (abs(v) < 1e-3 or abs(v) >= 1e5):
+        mant, exp = f"{v:.4g}".split("e") if "e" in f"{v:.4g}" else (f"{v:.4g}", "0")
+        return f"{mant} × 10{str(int(exp)).translate(_SUP)}"
+    return str(v)
 
 
 def _spec_lines(spec: list) -> str:
@@ -176,7 +185,10 @@ the question does not give them away):
 {trap_lines}
 
 Rules: no intermediate results, no hints, no answer; one question (no parts); text only;
-no multiple-choice options; do not add data that is not listed.
+no multiple-choice options; do not add data that is not listed. The descriptions above are
+internal labels: write natural exam prose and never copy them or template symbols (A, B, x, y,
+AxBy) into the question; a subscript is stated by writing the actual formula (AgCl states
+x = 1, y = 1). Write powers of ten as × 10ⁿ.
 {redo}
 Return JSON: {{"stem": "the full question text"}}"""
     role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
@@ -246,7 +258,8 @@ QUESTION:
 
 1) For each field, give the value the question states for it, or null if the question does
 not state it. Copy numbers as written (convert "×10^" notation to e-notation); do not
-compute anything.
+compute anything. A subscript or count that the question states by writing a formula counts
+as stated (AgCl gives 1 and 1; Ca3(PO4)2 gives 3 and 2).
 {chr(10).join(fields)}
 
 2) What does the question ask for? Pick the number of the option:

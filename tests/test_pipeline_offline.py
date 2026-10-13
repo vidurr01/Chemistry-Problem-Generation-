@@ -259,6 +259,35 @@ class FactQuestions(_Env, unittest.TestCase):
         self.assertNotIn("extractor", self.fake.calls)                  # the fact gate is code only
 
 
+class Grading(unittest.TestCase):
+    """Smoke test 1: 'Yes' to 'determine whether a precipitate forms' was graded as a failure."""
+    def _res(self, answer, kind):
+        from types import SimpleNamespace
+        return SimpleNamespace(answer=answer, kind=kind)
+
+    def test_text_answer_falls_back_to_verifier(self):
+        from core.pipeline import flow
+        g = flow._grade(self._res("precipitate forms", "text"), {"final_answer": "Yes"}, {"verdict": "correct"})
+        self.assertTrue(g["answer_matches"])
+        self.assertTrue(g["counts_as_solved"])
+        self.assertEqual(g["match_by"], "verifier")
+        g = flow._grade(self._res("precipitate forms", "text"), {"final_answer": "No"}, {"verdict": "wrong"})
+        self.assertFalse(g["counts_as_solved"])
+
+    def test_numbers_stay_code_matched(self):
+        from core.pipeline import flow
+        g = flow._grade(self._res(2.24, "positive"), {"final_answer": "3.1"}, {"verdict": "correct"})
+        self.assertFalse(g["answer_matches"])
+        self.assertEqual(g["match_by"], "code")
+
+    def test_value_formatting(self):
+        from core.pipeline.stages import _fmt_value
+        self.assertEqual(_fmt_value(4e-05), "4 × 10⁻⁵")
+        self.assertEqual(_fmt_value(1.725e-10), "1.725 × 10⁻¹⁰")
+        self.assertEqual(_fmt_value(0.0591), "0.0591")
+        self.assertEqual(_fmt_value(100.0), "100.0")
+
+
 class GateCompare(unittest.TestCase):
     SPEC = [{"key": "s0.mass", "desc": "mass", "unit": "g", "kind": "positive"},
             {"key": "s0.eq", "desc": "equation", "unit": "", "kind": "text"}]
