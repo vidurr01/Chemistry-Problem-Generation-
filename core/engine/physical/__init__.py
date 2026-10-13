@@ -153,3 +153,27 @@ def can_follow(edge_a: dict, edge_b: dict) -> bool:
 def chain_steps(edges: list, rng=None):
     """One engine step per edge such that the chain links up, or None."""
     return assign_steps([edge_steps(e) for e in edges], rng, BRIDGES)
+
+
+# ── Answer instructions for non-numeric answers ──────────────────────────────
+# The stem ends with this sentence (copied exactly; the gate checks it in code), so solvers
+# answer in a form code can compare. Keyed by the tx of the chain's final step.
+_DIRECTION = "Answer with exactly one of: forward, backward, no shift."
+_NUCLIDE = "Give the product nuclide as element symbol and mass number (for example, C-14)."
+ANSWER_FORMATS = {
+    **{tx: _DIRECTION for tx in (161, 162, 164, 166, 167)},
+    157: "Answer with exactly one of: forward, backward, at equilibrium.",
+    194: "Answer yes or no.",
+    198: "Name the ion that precipitates first.",
+    83: "Answer with exactly one of: isotopes, isobars, isotones, isodiaphers, none of these.",
+    76: "Give the orbital in the form nl (for example, 2p), or write 'not allowed'.",
+    326: "Give the orbital in the form nl (for example, 2p).",
+    **{tx: _NUCLIDE for tx in (219, 220, 221, 222, 225)},
+    7: "Give the empirical formula.",
+    8: "Give the molecular formula.",
+    29: "Give the molecular formula.",
+    279: "Give the formula of the compound.",
+    13: "Give the formula of the limiting reagent.",
+    32: "Write the balanced equation with the smallest whole-number coefficients.",
+    81: "Write the electronic configuration subshell by subshell (for example, 1s² 2s² 2p⁶ …).",
+}

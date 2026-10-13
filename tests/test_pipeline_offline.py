@@ -298,6 +298,20 @@ class Grading(unittest.TestCase):
         for engine, member, want in cases:
             self.assertEqual(m(engine, member), want, (engine, member))
         self.assertIsNone(m("ion 1 precipitates first", "chloride first"))
+        self.assertTrue(m("at equilibrium", "The system is already at equilibrium"))
+        self.assertTrue(m("at equilibrium", "no net reaction"))
+        self.assertIsNone(m("forward", "the system at equilibrium shifts forward"))     # ambiguous -> verifier
+        self.assertFalse(m("precipitate forms", "No precipitate forms"))
+
+    def test_every_text_step_has_an_answer_format(self):
+        from types import SimpleNamespace
+        from core.engine.physical import ANSWER_FORMATS, STEPS
+        from core.pipeline.adapters import PhysicalAdapter
+        text_steps = {tx for tx, st in STEPS.items() if st.kind == "text"}
+        self.assertEqual(text_steps - set(ANSWER_FORMATS), set())
+        fmt = PhysicalAdapter.answer_format(SimpleNamespace(answer="forward", trace=[{"tx": 161}]))
+        self.assertEqual(fmt, "Answer with exactly one of: forward, backward, no shift.")
+        self.assertIsNone(PhysicalAdapter.answer_format(SimpleNamespace(answer=2.24, trace=[{"tx": 4}])))
 
     def test_numbers_stay_code_matched(self):
         from core.pipeline import flow

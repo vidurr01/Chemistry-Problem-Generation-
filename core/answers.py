@@ -106,8 +106,8 @@ _SUBS = str.maketrans("₀₁₂₃₄₅₆₇₈₉₊₋", "0123456789+-")
 # category -> (patterns that mean it); checked in order, negations first
 _CATEGORIES = {
     "direction": [
-        ("no shift", r"\bno (net )?(shift|change|effect)\b|\bunaffected\b|\bunchanged\b|\bdoes(n't| not) shift\b|"
-                     r"\bremains? (the same|unchanged)\b|\bneither\b|\bno direction\b"),
+        ("no shift", r"\bno (net )?(shift|change|effect|reaction)\b|\bunaffected\b|\bunchanged\b|\bdoes(n't| not) shift\b|"
+                     r"\bremains? (the same|unchanged)\b|\bneither\b|\bno direction\b|\b(at|in) equilibrium\b"),
         ("backward", r"\bbackward|\breverse|\bleft\b|\btowards? (the )?reactants?\b|\breactant side\b"),
         ("forward", r"\bforward|\bright\b|\btowards? (the )?products?\b|\bproduct side\b"),
     ],
@@ -126,14 +126,22 @@ _CATEGORIES = {
     ],
 }
 _CATEGORY_OF = {label: cat for cat, rules in _CATEGORIES.items() for label, _ in rules}
+_CATEGORY_OF["at equilibrium"] = "direction"
+_SAME = {"at equilibrium": "no shift"}       # engine labels that mean the same outcome
+
+
+_FIRST_MATCH = {"precipitation"}     # negation patterns come first and win ("no precipitate forms")
 
 
 def _category(cat: str, text: str):
+    """The category an answer names. Precipitation: first rule that matches (negations first).
+    Directions and relations: exactly one category must match, else None (ambiguous, e.g.
+    'the system at equilibrium shifts forward')."""
     t = " ".join(str(text).lower().split())
-    for label, pattern in _CATEGORIES[cat]:
-        if re.search(pattern, t):
-            return label
-    return None
+    hits = [label for label, pattern in _CATEGORIES[cat] if re.search(pattern, t)]
+    if cat in _FIRST_MATCH:
+        return hits[0] if hits else None
+    return hits[0] if len(hits) == 1 else None
 
 
 def _formula(text: str):
@@ -191,7 +199,7 @@ def text_answers_match(engine_answer: str, member_answer):
     cat = _CATEGORY_OF.get(e)
     if cat:
         got = _category(cat, member_answer)
-        return None if got is None else got == e
+        return None if got is None else got == _SAME.get(e, e)
     if e == "not allowed":
         t = str(member_answer).lower()
         if re.search(r"not (allowed|possible|valid|exist)|\binvalid\b|\bimpossible\b|no such", t):
