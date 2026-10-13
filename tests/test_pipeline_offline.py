@@ -364,6 +364,43 @@ class SmokeTest3(unittest.TestCase):
             with self.assertRaises(ValueError):
                 stages._solve("x/y", "stem")
 
+    def test_fragile_answer_asks_the_previous_step(self):
+        from core.pipeline import flow
+        from core.blackboard import Blackboard
+        plan = self.ad.plan([205, 213, 215])
+        values = {"s0.initial_concentration": 0.06, "s0.concentration": 0.015, "s0.time": 2400.0,
+                  "s1.T1": 430.0, "s1.k2": 0.00402, "s1.T2": 450.0, "s2.T": 550.0}
+        cand = {"edges": ["a", "b", "c"], "nodes": ["rate_law", "k", "Ea", "fraction"], "chapters": ["Kinetics"],
+                "txs": [205, 213, 215], "trap_ids": [], "weight": 1.0, "description": "", "_plan": plan,
+                "_steps": plan.steps}
+        bb = Blackboard("physical")
+        bb.start_chain(cand)
+        cand2, vals2, r2 = flow._stable_ask(self.ad, cand, values, self.ad.compute(plan, values), bb)
+        self.assertEqual(cand2["txs"], [205, 213])
+        self.assertEqual(r2.trace[-1]["dst"], "activation_energy")
+        self.assertAlmostEqual(r2.answer, 156.1, places=0)
+        self.assertNotIn("s2.T", vals2)
+        self.assertLessEqual(r2.tolerance, flow.FRAGILE_TOL)
+        self.assertEqual(len(cand2["edges"]), 2)
+        self.assertEqual(len(cand2["nodes"]), 3)
+
+    def test_shared_trap_descriptions_name_the_step(self):
+        r = self.ad.compute(self.ad.plan([205, 213, 215]), {
+            "s0.initial_concentration": 0.06, "s0.concentration": 0.015, "s0.time": 2400.0,
+            "s1.T1": 430.0, "s1.k2": 0.00402, "s1.T2": 450.0, "s2.T": 550.0})
+        descs = [t["desc"] for t in r.traps]
+        self.assertEqual(len(descs), len(set(descs)))
+        self.assertTrue(any("activation energy" in d for d in descs))
+
+    def test_solution_structure_is_flattened(self):
+        from core.pipeline.stages import _solution_text
+        txt = _solution_text({"step1": {"description": "Find k.", "calculation": "k = ln4/2400"},
+                              "final_answer": "1.5e-15"})
+        self.assertEqual(txt.splitlines()[0], "Step 1:")
+        self.assertIn("k = ln4/2400", txt)
+        self.assertTrue(txt.endswith("Final answer: 1.5e-15"))
+        self.assertEqual(_solution_text(" plain text "), "plain text")
+
     def test_json_with_latex_backslashes(self):
         from core.llm import parse_json
         self.assertEqual(parse_json(r'x {"stem": "\Delta G for \ce{H2O}", "n": 1} y'),

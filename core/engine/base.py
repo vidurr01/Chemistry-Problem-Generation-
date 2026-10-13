@@ -434,6 +434,12 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
             seen.add(key)
             traps.append({"id": t.id, "desc": t.desc, "step": i, "tx": st.tx,
                           "wrong_answer": round_sig(final)})
+    # two steps can make the same kind of mistake ("uses log₁₀ without 2.303" when finding k,
+    # and again when finding Eₐ): name the step so the descriptions stay distinct
+    descs = [t["desc"] for t in traps]
+    for t in traps:
+        if descs.count(t["desc"]) > 1:
+            t["desc"] = f"{t['desc']}, when finding the {plan.steps[t['step']].asks}"
 
     return ChainResult(answer=round_sig(answer), unit=a_unit, kind=a_kind,
                        asks=a_asks, trace=trace, traps=traps, constants=constants, tolerance=tol)

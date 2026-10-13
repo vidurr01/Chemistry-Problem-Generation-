@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Fixes from reviewing the third question: fragile asks, solution text, trap labels
+- `flow._stable_ask()`: when a numeric answer's rounding tolerance is above 2 % (`FRAGILE_TOL`), the chain drops its last step and asks the previous result with the same inputs (run 3: e^(−Eₐ/RT) = 1.5 × 10⁻¹⁵ becomes "activation energy" = 156 kJ mol⁻¹), as a JEE paper would. Applied after the first inputs and after every refinement; noted on the Blackboard as `shortened`.
+- `stages.write_solution()` asks for one plain-text string; `_solution_text()` flattens a structure (`{"step1": {...}}`) into numbered lines if one comes back anyway.
+- `base.run_chain()`: when two steps of a chain share a trap description, each names its step ("uses log₁₀ without 2.303, when finding the activation energy"). Trap ids for the same mistake unified (`log10`, `forgets_2303` → `log10_without_2303` in kinetics), so coverage counts one trap type.
+- Tests: 67.
+
 ### Third live run: rounding tolerance, blank replies, slip expressions, LaTeX JSON
 - Run: a kinetics chain (rate law → k → Eₐ → fraction above Eₐ) was too easy for three rounds; round 3 was accepted with 1/3 solved, wrongly. Cost $0.0875 for four rounds (refiner 41 %, council 25 %, generator 20 %, verifier 12 %). The question (GEN_20261013T135458) is rejected.
 - Why it was wrong: Qwen3.8-Flash sent a blank reply, graded as a failure; GLM-5.3-Flash was off 3 % only because the answer is e^(−34.1) (rounding the exponent by 0.03 moves it 3 %), and the slip check could not read the verifier's "a = b ≈ c" expression.

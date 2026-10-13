@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## Ask a stable quantity, not one rounding can move
+
+Date: 2026-10-13
+Context: run 3 asked the fraction of molecules above Eₐ, e^(−34.1) = 1.5 × 10⁻¹⁵; rounding the intermediates to 3 significant figures moves it by ~1.5 %, so a careful solver can be "wrong" by rounding alone, and no exam asks such a number.
+Decision: if the engine's rounding tolerance for the answer exceeds 2 %, drop the chain's last step and ask the previous step's result (here Eₐ) with the same inputs; repeat if still fragile.
+Alternatives: keep the question and rely on the wider tolerance (grades fairly, but the question stays unlike an exam); ask log₁₀ of the quantity (needs a separate absolute tolerance on logs); drop such chains (loses otherwise good chains).
+Trade-off: the question becomes one step shorter, so possibly easier; the dropped step is recorded on the Blackboard.
+
 ## Non-numeric answers are matched by code first, then by one narrow verifier field
 
 Date: 2026-10-13

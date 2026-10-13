@@ -129,6 +129,34 @@ def _propose(adapter, cand, spec, bb, log, refine=None):
     return None
 
 
+FRAGILE_TOL = 0.02     # an answer that rounding moves by more than this is not asked
+
+
+def _stable_ask(adapter, cand, values, result, bb):
+    """A JEE paper never asks for a number like e^(−34.1) = 1.5 × 10⁻¹⁵, which rounding the
+    intermediates moves by several per cent; it asks the quantity before it (here Eₐ). While
+    the answer's rounding tolerance exceeds FRAGILE_TOL, drop the chain's last step and ask
+    the previous step's result with the same inputs. Returns (cand, values, result)."""
+    while _is_numeric(result) and result.tolerance > FRAGILE_TOL and len(cand["txs"]) > 1:
+        txs = cand["txs"][:-1]
+        try:
+            plan = adapter.plan(txs)
+            vals = {s["key"]: values[s["key"]] for s in adapter.input_spec(plan)}
+            new = adapter.compute(plan, vals)
+        except (KeyError, EngineError):
+            break
+        print(f"  [engine] {answer_text(result)} moves ±{result.tolerance:.1%} with rounding; "
+              f"asking the {plan.steps[-1].asks} instead")
+        bb.note("shortened", dropped_tx=cand["txs"][-1], tolerance=result.tolerance)
+        steps = plan.steps
+        cand = {**cand, "txs": txs, "edges": cand["edges"][:-1], "nodes": cand["nodes"][:-1],
+                "_plan": plan, "_steps": steps,
+                "trap_ids": sorted({t.id for s in steps for t in s.traps}),
+                "description": " → ".join(f"{s.asks} [{s.formula}]" for s in steps)}
+        values, result = vals, new
+    return cand, values, result
+
+
 def _ask_options(plan, rng):
     final = plan.steps[-1]
     final_asks = (final.final[3] if final.final else final.asks)
@@ -428,6 +456,8 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             if picked is None:
                 continue
             values, scenario, result = picked
+            cand, values, result = _stable_ask(adapter, cand, values, result, bb)
+            plan, spec = cand["_plan"], adapter.input_spec(cand["_plan"])
         print(f"  [engine] answer {answer_text(result)}; traps: {[t['id'] for t in result.traps]}")
         previous = feedback = solved = None
         while True:
@@ -489,6 +519,8 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 if picked is None:
                     break
                 values, scenario, result = picked
+                cand, values, result = _stable_ask(adapter, cand, values, result, bb)
+                plan, spec = cand["_plan"], adapter.input_spec(cand["_plan"])
             print(f"  [engine] new answer {answer_text(result)}")
             previous = feedback = solved = None
     return {"status": "none"}
