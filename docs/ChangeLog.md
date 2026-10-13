@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### First live run (smoke test) and the bugs it found
+- All 8 models answer with valid JSON (ping cost $0.0003). One physical run cost $0.011 (generator 70 %, verifier 17 %, council 9 %).
+- Bug: non-numeric answers were matched by exact text, so "Yes" to "determine whether a precipitate forms" counted as wrong although the verifier judged it correct; the question (GEN_20261012T235813) was accepted as hard. Rejected with `tools/results.py reject`.
+- Fix (`core/pipeline/flow.py`): a non-numeric answer that code cannot match falls back to the verifier's verdict (`match_by: "verifier"` in the record); numbers stay code-matched. Hint re-solves use the same rule, and an insight re-check that says "correct" now counts as solved instead of "still wrong".
+- Stems: values print as exam notation (4 × 10⁻⁵, not 4e-05); the generator is told not to copy internal labels or template symbols (AxBy, x, y) and that writing the formula states its subscripts; the extractor counts formula subscripts as stated.
+- Tests: grading of text and numeric answers, value formatting (57 tests).
+
 ### Frontier refiner for too-easy rounds
 - `core/models.py`: `REFINER = "google/gemini-3.8-flash"` (GPQA Diamond 95.6 %, top of OpenRouter's leaderboard at flash pricing). Spend is tracked under its own role, `refiner`.
 - When the council finds a question too easy, the refiner handles that round: `choose_refinement` (now with room to think), `propose_inputs(refine=...)` (new inputs; it now sees the solvers' working, not just a one-line summary) and `write_stem(solved=...)` / `write_fact_stem(solved=...)` (rewording without the cue that made it easy). First drafts and clarity rewording stay with the generator (Gemini 3.7 Flash).
