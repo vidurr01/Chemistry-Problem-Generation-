@@ -177,7 +177,7 @@ STEPS = [
                 P("k2", "s⁻¹", "k₂ of B → C", lo=1e-6, hi=10)),
          answer="time_elapsed", unit="s", kind="positive",
          fn=lambda v: {"time_elapsed": ln(v["rate_constant"] / v["k2"]) / _nz(v["rate_constant"] - v["k2"])},
-         traps=(Trap("log10", "uses log₁₀ without 2.303", lambda v: log10(v["rate_constant"] / v["k2"]) / _nz(v["rate_constant"] - v["k2"])),),
+         traps=(Trap("log10_without_2303", "uses log₁₀ without 2.303", lambda v: log10(v["rate_constant"] / v["k2"]) / _nz(v["rate_constant"] - v["k2"])),),
          formula="t_max = ln(k₁/k₂)/(k₁ − k₂)", asks="time at which [B] is maximum (s)"),
     Step(tx=213, src="rate_constant", dst="activation_energy",
          needs=(P("rate_constant", "", "rate constant k₁ at T₁", lo=1e-8, hi=10),
@@ -187,7 +187,7 @@ STEPS = [
          answer="activation_energy", unit="kJ mol⁻¹", kind="positive",
          fn=lambda v: {"activation_energy": C.R_J * ln(v["k2"] / v["rate_constant"])
                        * v["T1"] * v["T2"] / _nz(v["T2"] - v["T1"]) / 1000},
-         traps=(Trap("forgets_2303", "uses log₁₀ without 2.303",
+         traps=(Trap("log10_without_2303", "uses log₁₀ without 2.303",
                      lambda v: C.R_J * log10(v["k2"] / v["rate_constant"]) * v["T1"] * v["T2"] / _nz(v["T2"] - v["T1"]) / 1000),),
          constants=(const("R_J"),), formula="log(k₂/k₁) = (E_a/2.303R)(1/T₁ − 1/T₂)", asks="activation energy (kJ mol⁻¹)"),
     Step(tx=214, src="temperature", dst="rate_factor",

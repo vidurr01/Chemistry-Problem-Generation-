@@ -15,6 +15,7 @@ data; every decision that follows (accept, retry, queue) is made in code by flow
 from __future__ import annotations
 
 import json
+import re
 import queue
 import threading
 
@@ -486,8 +487,35 @@ EXACT COMPUTATION (follow it; do not change any number):
 FINAL ANSWER: {answer_text}
 
 Explain each step in words, show the substitution, and end with the final answer.
-Return JSON: {{"solution": "..."}}"""
+The solution is ONE plain-text string: numbered steps separated by line breaks, no nested
+JSON, no LaTeX. Return JSON: {{"solution": "1. ...\\n2. ...\\nFinal answer: ..."}}"""
     out = models.ask_json("solution_writer", models.SOLUTION_WRITER,
                           "You write clear chemistry solutions. Output JSON only.", prompt,
                           max_tokens=3000, temperature=0.3)
-    return str(out.get("solution") or "").strip()
+    return _solution_text(out.get("solution"))
+
+
+def _solution_text(sol) -> str:
+    """Readable text from whatever the writer returned: a string as is; a dict or list of
+    steps (e.g. {"step1": {"description": ..., "calculation": ...}}) flattened into lines."""
+    if isinstance(sol, str):
+        return sol.strip()
+    lines = []
+
+    def walk(x, depth=0):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if isinstance(v, (dict, list)):
+                    if re.match(r"(?i)step\s*\d+|^\d+$", str(k)):
+                        lines.append(f"Step {re.sub(r'(?i)step\s*', '', str(k))}:")
+                    walk(v, depth + 1)
+                elif v not in (None, ""):
+                    label = "Final answer: " if str(k).lower().startswith("final") else ""
+                    lines.append(f"{'  ' * depth}{label}{v}")
+        elif isinstance(x, list):
+            for v in x:
+                walk(v, depth)
+        elif x not in (None, ""):
+            lines.append(f"{'  ' * depth}{x}")
+    walk(sol)
+    return "\n".join(lines).strip()
