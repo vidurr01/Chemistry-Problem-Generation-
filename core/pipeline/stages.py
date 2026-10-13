@@ -365,6 +365,10 @@ STUDENT'S WORKING:
 STUDENT'S FINAL ANSWER: {member.get("final_answer")} {member.get("unit", "")}
 {objection}
 Judge:
+- "answer_equivalent": true if the student's FINAL ANSWER states the same result as the
+  intended answer, ignoring the working, wording, notation and formatting (e.g. "Yes" to
+  "does a precipitate form?" equals "precipitate forms"; "shifts to the right" equals
+  "forward"; "²³⁴₉₀Th" equals "Th-234"); false if it states a different result or none.
 - "verdict": "correct" (right answer by sound reasoning), "right_answer_wrong_reasoning"
   (right answer reached by a wrong or lucky route), "wrong", or "reference_wrong" (the
   reference solution or the problem itself is actually wrong, so the student is not at fault).
@@ -382,8 +386,8 @@ Judge:
 - "objection_assessment": "valid", "invalid" or "unsure" if the student objected, else null.
 - "reasoning": two or three sentences.
 
-Return JSON with exactly these keys: verdict, failure_type, failed_step, member_expression,
-ambiguous_text, clarification, missing_fact, objection_assessment, reasoning."""
+Return JSON with exactly these keys: answer_equivalent, verdict, failure_type, failed_step,
+member_expression, ambiguous_text, clarification, missing_fact, objection_assessment, reasoning."""
     out = models.ask_json("verifier", models.VERIFIER,
                           "You are a meticulous chemistry examiner. Output JSON only.", prompt,
                           max_tokens=2000, temperature=0.0)
@@ -392,7 +396,9 @@ ambiguous_text, clarification, missing_fact, objection_assessment, reasoning."""
     if verdict == "wrong" and failure is None:
         failure = "genuine_difficulty"
     step = as_number(out.get("failed_step"))
-    return {"verdict": verdict, "failure_type": failure if verdict == "wrong" else None,
+    eq = out.get("answer_equivalent")
+    return {"answer_equivalent": as_bool(eq, default=None) if eq is not None else None,
+            "verdict": verdict, "failure_type": failure if verdict == "wrong" else None,
             "failed_step": int(step) if step is not None else None,
             "member_expression": out.get("member_expression"),
             "ambiguous_text": out.get("ambiguous_text"), "clarification": out.get("clarification"),
