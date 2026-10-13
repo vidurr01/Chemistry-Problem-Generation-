@@ -143,7 +143,8 @@ def coerce_values(spec: list, raw: dict) -> tuple:
 
 def write_stem(subject_name: str, scenario: str, chain_text: str, spec: list, values: dict,
                constants: list, asks: str, unit: str, traps: list, *, previous: str | None = None,
-               feedback: str | None = None, solved: str | None = None) -> str:
+               feedback: str | None = None, solved: str | None = None,
+               answer_format: str | None = None) -> str:
     """With `solved` (the council found the previous version too easy), the refiner rewrites
     it, seeing how the solvers got it right; otherwise the generator writes."""
     given_lines = "\n".join(
@@ -165,6 +166,8 @@ How strong students solved the earlier version (remove what made this easy: a cu
 the method, a spelled-out step, an obvious framing; keep it fair and unambiguous):
 {solved}
 """
+    answer_rule = (f"\nEnd the question with this sentence, copied exactly:\n{answer_format}"
+                   if answer_format else "")
     prompt = f"""Write one JEE Advanced {subject_name} question.
 
 Scenario: {scenario}
@@ -178,7 +181,7 @@ student would read naturally:
 It must state these constants (copy them as written):
 {const_lines}
 
-It must ask for exactly one thing: {asks}{(' in ' + unit) if unit else ''}.
+It must ask for exactly one thing: {asks}{(' in ' + unit) if unit else ''}.{answer_rule}
 
 Typical mistakes a strong student could make here (do not warn about them; just make sure
 the question does not give them away):

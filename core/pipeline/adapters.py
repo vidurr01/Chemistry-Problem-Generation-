@@ -103,6 +103,14 @@ class PhysicalAdapter:
         return run_chain(plan, values)
 
     @staticmethod
+    def answer_format(result):
+        """The answer instruction the stem must end with, for a non-numeric answer, or None."""
+        from core.engine.physical import ANSWER_FORMATS
+        if isinstance(result.answer, (int, float)) and not isinstance(result.answer, bool):
+            return None
+        return ANSWER_FORMATS.get(result.trace[-1]["tx"]) if result.trace else None
+
+    @staticmethod
     def chain_text(plan) -> str:
         return "\n".join(f"Step {i + 1}: {st.asks} — {st.formula}" for i, st in enumerate(plan.steps))
 

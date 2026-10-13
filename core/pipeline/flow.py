@@ -145,12 +145,16 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
     plan = cand["_plan"]
     traps = [t["desc"] for t in result.traps]
     options, correct = _ask_options(plan, rng)
+    fmt = adapter.answer_format(result) if hasattr(adapter, "answer_format") else None
     for attempt in range(GATE_RETRIES + 1):
         stem = stages.write_stem(adapter.config["display_name"], scenario, adapter.chain_text(plan), spec,
                                  values, result.constants, result.asks, result.unit, traps,
-                                 previous=previous, feedback=feedback, solved=solved)
+                                 previous=previous, feedback=feedback, solved=solved, answer_format=fmt)
         ext = stages.gate_extract(stem, spec, options, result.constants)
         g = gate.compare(spec, values, ext, correct, result.constants)
+        if fmt and " ".join(fmt.split()) not in " ".join(stem.split()):
+            g = {**g, "ok": False, "unreadable": False,
+                 "mismatches": g["mismatches"] + [f"the question must end with this sentence, copied exactly: {fmt}"]}
         bb.note("gate", attempt=attempt + 1, stem=stem, ok=g["ok"], mismatches=g["mismatches"],
                 unreadable=g["unreadable"])
         if g["ok"]:

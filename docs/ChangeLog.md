@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-13
 
+### Stems state the answer format for non-numeric answers
+- `core/engine/physical/__init__.py` `ANSWER_FORMATS`: one instruction per text-answer step (all 23): allowed options for categories ("Answer yes or no."; "Answer with exactly one of: forward, backward, no shift."; isotopes / isobars / …), and a form for formulas, nuclides (symbol and mass number), orbitals, configurations and balanced equations.
+- `PhysicalAdapter.answer_format()`; `write_stem(answer_format=…)` ends the stem with it; `flow._stem_and_gate` fails the gate in code if it is not copied exactly.
+- Matcher: "at equilibrium" (step 157) counts as "no shift"; for directions and nuclide relations exactly one category must match, otherwise the verifier decides ("the system at equilibrium shifts forward" is ambiguous).
+- Tests: every text step has a format; new matcher cases (60 tests).
+
 ### Non-numeric answers: code first, then a narrow verifier field
 - `core/answers.py` `text_answers_match()`: code comparison by answer shape — formulas by element counts (CH₂O ≠ C₆H₁₂O₆), nuclides by symbol and mass number (²³⁴₉₀Th = Th-234), electronic configurations, balanced equations up to a common factor, orbital labels and "not allowed", and categories with synonyms and yes/no (forward / backward / no shift; precipitate forms / no precipitate; isotopes / isobars / isotones / isodiaphers). Returns None when it cannot tell.
 - `stages.verify_member()` adds `answer_equivalent`: does the final answer state the same result, ignoring working and notation. Grading (`flow._text_match`) uses code when it decides, else this field (no extra call); the verdict stays a judgement of the reasoning. Hint re-solves use the same rule.
