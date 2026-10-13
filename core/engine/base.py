@@ -342,6 +342,7 @@ class ChainResult:
     trace: list           # per step: {"tx", "formula", "inputs", "outputs"}
     traps: list           # {"id", "desc", "step", "tx", "wrong_answer"}
     constants: list
+    tolerance: float = 0.01   # relative; wider when rounding intermediates moves the answer
 
 
 def _resolve(plan: ChainPlan, i: int, prev_out: dict, values: dict) -> dict:
@@ -408,6 +409,7 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
     a_field, a_unit, a_kind, a_asks = last.final or (last.answer, last.unit, last.kind, last.asks)
     answer = out[a_field]
     check_kind(a_kind, answer)
+    tol = rounding_tolerance(plan, values, a_field, answer)
 
     traps, seen = [], set()
     for i, st in enumerate(plan.steps):
@@ -424,8 +426,8 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
                 check_kind(a_kind, final)
             except _TRAP_ERRORS:
                 continue
-            if answers_match(final, answer):
-                continue                   # this mistake happens not to change the answer
+            if answers_match(final, answer, rel_tol=tol):
+                continue                   # this mistake does not change the answer beyond rounding
             key = (t.id, repr(round_sig(final)))
             if key in seen:
                 continue
@@ -434,7 +436,30 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
                           "wrong_answer": round_sig(final)})
 
     return ChainResult(answer=round_sig(answer), unit=a_unit, kind=a_kind,
-                       asks=a_asks, trace=trace, traps=traps, constants=constants)
+                       asks=a_asks, trace=trace, traps=traps, constants=constants, tolerance=tol)
+
+
+ROUNDING_SIG = 3          # a student carries about three significant figures between steps
+MAX_TOLERANCE = 0.10
+
+
+def rounding_tolerance(plan: ChainPlan, values: dict, a_field: str, answer) -> float:
+    """Relative tolerance for a numeric answer. Re-run the chain the way a careful student
+    would, rounding every intermediate result to ROUNDING_SIG significant figures; if that
+    alone moves the answer by more than 1% (e.g. e^(-34.1), where rounding the exponent by
+    0.03 shifts the answer 3%), widen the tolerance to 1.5x that shift, capped at 10%."""
+    if isinstance(answer, bool) or not isinstance(answer, (int, float)) or answer == 0:
+        return 0.01
+    try:
+        prev: dict = {}
+        for i in range(len(plan.steps)):
+            _, out = _run_step(plan, i, prev, values)
+            prev = round_sig({k: x for k, x in out.items() if k != "_constants"}, ROUNDING_SIG)
+        shifted = prev[a_field]
+        dev = abs(float(shifted) - float(answer)) / abs(float(answer))
+    except Exception:  # noqa: BLE001 - a rounded path that fails just keeps the default
+        return 0.01
+    return min(MAX_TOLERANCE, max(0.01, 1.5 * dev))
 
 
 # ── Answers ──────────────────────────────────────────────────────────────────

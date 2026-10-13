@@ -391,5 +391,811 @@
       }
     ],
     "generated_at": "2026-10-12T23:58:13.732700+00:00"
+  },
+  {
+    "question_id": "GEN_20261013T135458",
+    "generation_mode": "engine_council",
+    "question_kind": "chain",
+    "subject": "physical",
+    "chapter": "Chemical Kinetics & Nuclear Chemistry",
+    "chapters": [
+      "Chemical Kinetics & Nuclear Chemistry"
+    ],
+    "archetype": "Multi-Formulae",
+    "archetype_code": "I",
+    "question": "The gas-phase thermal decomposition of di-tert-butyl peroxide (DTBP) into ethane and acetone in a rigid vessel follows first-order kinetics. When the reaction is carried out at 430.0 K, the concentration of DTBP decreases from an initial concentration of 0.06 mol L⁻¹ to 0.015 mol L⁻¹ after an elapsed time of 2400.0 s. At 450.0 K, the rate constant of the reaction is 0.00402 s⁻¹.\n\nGiven: R = 8.314 J K⁻¹ mol⁻¹\n\nCalculate the fraction of molecules with energy ≥ E_a at a temperature of 550.0 K.",
+    "answer": 1.507e-15,
+    "unit": "",
+    "answer_text": "1.507e-15",
+    "solution": "{'step1': {'description': 'First, we calculate the rate constant (k) at 430.0 K using the first-order kinetics formula: kt = ln([R]₀/[R]), where [R]₀ is the initial concentration and [R] is the concentration after time t.', 'substitution': 'Given [R]₀ = 0.06 mol L⁻¹, [R] = 0.015 mol L⁻¹, and t = 2400.0 s, we substitute these values into the formula: k * 2400.0 = ln(0.06 / 0.015).', 'calculation': 'k = ln(4) / 2400.0 = 0.0005776 s⁻¹'}, 'step2': {'description': 'Next, we use the two-temperature method to find the activation energy (E_a) using the formula: log(k₂/k₁) = (E_a/2.303R)(1/T₁ − 1/T₂), where k₁ and k₂ are the rate constants at temperatures T₁ and T₂, respectively.', 'substitution': 'Given k₁ = 0.0005776 s⁻¹, T₁ = 430.0 K, k₂ = 0.00402 s⁻¹, T₂ = 450.0 K, and R = 8.314 J K⁻¹ mol⁻¹, we substitute these values into the formula: log(0.00402 / 0.0005776) = (E_a / (2.303 * 8.314)) * (1/430.0 - 1/450.0).', 'calculation': 'E_a = (log(7) * 2.303 * 8.314) / (1/430.0 - 1/450.0) = 156.1 kJ mol⁻¹'}, 'step3': {'description': 'Finally, we calculate the fraction of molecules with energy ≥ E_a at 550.0 K using the formula: fraction = e^(−E_a/RT), where R is the gas constant and T is the temperature.', 'substitution': 'Given E_a = 156.1 kJ mol⁻¹, R = 8.314 J K⁻¹ mol⁻¹, and T = 550.0 K, we substitute these values into the formula: fraction = e^(−156100 / (8.314 * 550.0)).', 'calculation': 'fraction = e^(−156100 / 4572.7) = 1.507e-15'}, 'final_answer': '1.507e-15'}",
+    "tags": {
+      "knowledge": "closed_book",
+      "trap_types": [
+        "forgets_2303",
+        "log10_without_2303",
+        "uses_order_0",
+        "uses_power_of_10"
+      ]
+    },
+    "council_n_correct": 1,
+    "council_n_solved": 1,
+    "council_n_called": 3,
+    "council_skipped": [],
+    "council": [
+      {
+        "name": "gpt-6-luna",
+        "model": "openai/gpt-6-luna",
+        "final_answer": "1.51e-15",
+        "unit": "",
+        "answer_matches": true,
+        "match_by": "code",
+        "counts_as_solved": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "slip_confirmed": null,
+        "objection": null,
+        "diagnosis": {
+          "answer_equivalent": true,
+          "verdict": "correct",
+          "failure_type": null,
+          "failed_step": null,
+          "member_expression": null,
+          "ambiguous_text": null,
+          "clarification": null,
+          "missing_fact": null,
+          "objection_assessment": null,
+          "reasoning": "The student correctly found k₄₃₀ = ln(4)/2400 ≈ 5.776×10⁻⁴ s⁻¹ and used the two-temperature Arrhenius relation to get Eₐ ≈ 156 kJ/mol, matching the reference. Evaluating exp(−Eₐ/RT) at 550 K with that Eₐ gives ≈1.51×10⁻¹⁵, which agrees with the reference's 1.507×10⁻¹⁵ to three significant figures."
+        },
+        "working": "For first-order decomposition, ln([DTBP]₀/[DTBP]ₜ) = k₄₃₀t. Thus k₄₃₀ = ln(0.060/0.015)/2400.0 = 5.7762 × 10⁻⁴ s⁻¹.\n\nUsing the Arrhenius equation at 430.0 K and 450.0 K, ln(k₄₅₀/k₄₃₀) = (Eₐ/R)(1/430.0 − 1/450.0). Therefore Eₐ = 8.314 × ln(0.00402/(5.7762 × 10⁻⁴))/(1/430.0 − 1/450.0) = 1.561 × 10⁵ J mol⁻¹.\n\nUsing the usual Boltzmann/Arrhenius estimate for the fraction with energy at least Eₐ, f = exp(−Eₐ/RT). At 550.0 K, f = exp[−(1.561 × 10⁵)/(8.314 × 550.0)] ≈ 1.51 × 10⁻¹⁵."
+      },
+      {
+        "name": "glm-5.3-flash",
+        "model": "z-ai/glm-5.3-flash",
+        "final_answer": "1.55e-15",
+        "unit": "",
+        "answer_matches": false,
+        "match_by": "code",
+        "counts_as_solved": false,
+        "verdict": "wrong",
+        "failure_type": "slip",
+        "slip_confirmed": false,
+        "objection": null,
+        "diagnosis": {
+          "answer_equivalent": false,
+          "verdict": "wrong",
+          "failure_type": "slip",
+          "failed_step": 2,
+          "member_expression": "exp(-(8.314*1.940/1.0336e-4)/(8.314*550)) = exp(-156070/4572.7) ≈ exp(-34.13)",
+          "ambiguous_text": null,
+          "clarification": null,
+          "missing_fact": null,
+          "objection_assessment": null,
+          "reasoning": "The student's method is correct: k = ln4/2400, the two-point Arrhenius equation, then exp(-Ea/RT) at 550 K. The error is arithmetic. Their own inputs give Ea = 8.314×1.940/1.0336×10⁻⁴ ≈ 1.561×10⁵ J/mol, not 1.559×10⁵, and this propagates into an exponent of about −34.13 and a final value near 1.5×10⁻¹⁵ rather than 1.55×10⁻¹⁵. The final answer 1.55e-15 therefore differs from the intended 1.507e-15 at the third significant figure."
+        },
+        "working": "k1 at 430 K: first-order, k = ln(C0/C)/t = ln(0.06/0.015)/2400 = ln4/2400 = 5.776e-4 s^-1. Arrhenius: ln(k2/k1) = (Ea/R)(1/T1 - 1/T2); ln(0.00402/5.776e-4) = ln(6.958) = 1.940. (1/430 - 1/450) = 1.0336e-4 K^-1. Ea = 8.314*1.940/1.0336e-4 = 1.559e5 J/mol. Fraction with E >= Ea at 550 K: f = exp(-Ea/RT) = exp(-155900/(8.314*550)) = exp(-34.11) = 1.55e-15."
+      },
+      {
+        "name": "qwen3.8-flash",
+        "model": "qwen/qwen3.8-flash",
+        "final_answer": null,
+        "unit": "",
+        "answer_matches": false,
+        "match_by": "code",
+        "counts_as_solved": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "slip_confirmed": null,
+        "objection": null,
+        "diagnosis": {
+          "answer_equivalent": false,
+          "verdict": "wrong",
+          "failure_type": "genuine_difficulty",
+          "failed_step": null,
+          "member_expression": null,
+          "ambiguous_text": null,
+          "clarification": null,
+          "missing_fact": null,
+          "objection_assessment": null,
+          "reasoning": "The student provided no working and no final answer, so there is nothing to show where or why they went wrong. The reference chain checks out: k = ln(4)/2400 ≈ 5.78×10⁻⁴ s⁻¹, Eₐ ≈ 156 kJ/mol from the two-temperature Arrhenius form, and e^(−Eₐ/RT) at 550 K ≈ 1.5×10⁻¹⁵. The failure type is a default guess because the attempt is blank."
+        },
+        "working": ""
+      }
+    ],
+    "hint_tests": [
+      {
+        "member": "glm-5.3-flash",
+        "hint": "insight",
+        "text": "Look again at the step where you work out the activation energy (kJ mol⁻¹). A common mistake there: uses log₁₀ without 2.303.",
+        "solved": false,
+        "answer": "1.46e-15",
+        "recheck": {
+          "answer_equivalent": false,
+          "verdict": "wrong",
+          "failure_type": "slip",
+          "failed_step": 3,
+          "member_expression": "exp(-156100/(8.314*550)) = exp(-34.14) ≈ 1.49e-15 (the student wrote exp(-34.16), a miscalculated exponent)",
+          "ambiguous_text": null,
+          "clarification": null,
+          "missing_fact": null,
+          "objection_assessment": null,
+          "reasoning": "Steps 1 and 2 are correct: the student used ln(4)/2400 for k1 and the ln form of the Arrhenius equation, giving Ea ≈ 156.1 kJ/mol, matching the reference. In step 3, the exponent 156100/(8.314×550) is about 34.14, not the 34.16 the student used, so the final value 1.46e-15 is off from the reference 1.507e-15."
+        }
+      },
+      {
+        "member": "qwen3.8-flash",
+        "hint": "insight",
+        "text": "Look again at the step where you work out the fraction of molecules with energy ≥ E_a. A common mistake there: uses 10^(−Ea/RT).",
+        "solved": true,
+        "answer": "1.51e-15"
+      }
+    ],
+    "engine": {
+      "txs": [
+        205,
+        213,
+        215
+      ],
+      "graph_edges": [
+        "rate_law_to_rate_constant_ktr0r",
+        "rate_constant_to_activation_energy_logk2k1ea230",
+        "activation_energy_to_fraction_above_ea_eeartfractio"
+      ],
+      "graph_path": [
+        "rate_law",
+        "rate_constant",
+        "activation_energy",
+        "fraction_above_ea"
+      ],
+      "scenario": "The gas-phase thermal decomposition of di-tert-butyl peroxide (DTBP) into ethane and acetone in a rigid vessel follows first-order kinetics.",
+      "givens": {
+        "s0.initial_concentration": 0.06,
+        "s0.concentration": 0.015,
+        "s0.time": 2400.0,
+        "s1.T1": 430.0,
+        "s1.k2": 0.00402,
+        "s1.T2": 450.0,
+        "s2.T": 550.0
+      },
+      "constants": [
+        "R = 8.314 J K⁻¹ mol⁻¹"
+      ],
+      "trace": [
+        {
+          "tx": 205,
+          "src": "rate_law",
+          "dst": "rate_constant",
+          "formula": "kt = ln([R]₀/[R])",
+          "inputs": {
+            "initial_concentration": 0.06,
+            "concentration": 0.015,
+            "time": 2400
+          },
+          "outputs": {
+            "rate_constant": 0.0005776
+          }
+        },
+        {
+          "tx": 213,
+          "src": "rate_constant",
+          "dst": "activation_energy",
+          "formula": "log(k₂/k₁) = (E_a/2.303R)(1/T₁ − 1/T₂)",
+          "inputs": {
+            "rate_constant": 0.0005776,
+            "T1": 430,
+            "k2": 0.00402,
+            "T2": 450
+          },
+          "outputs": {
+            "activation_energy": 156.1
+          }
+        },
+        {
+          "tx": 215,
+          "src": "activation_energy",
+          "dst": "fraction_above_ea",
+          "formula": "fraction = e^(−E_a/RT)",
+          "inputs": {
+            "activation_energy": 156.1,
+            "T": 550
+          },
+          "outputs": {
+            "fraction_above_ea": 1.507e-15
+          }
+        }
+      ],
+      "traps": [
+        {
+          "id": "uses_order_0",
+          "desc": "uses the order-0 integrated rate law",
+          "step": 0,
+          "tx": 205,
+          "wrong_answer": 9.809e-42
+        },
+        {
+          "id": "log10_without_2303",
+          "desc": "uses log₁₀ without 2.303",
+          "step": 0,
+          "tx": 205,
+          "wrong_answer": 6.405e-22
+        },
+        {
+          "id": "forgets_2303",
+          "desc": "uses log₁₀ without 2.303",
+          "step": 1,
+          "tx": 213,
+          "wrong_answer": 3.656e-07
+        },
+        {
+          "id": "uses_power_of_10",
+          "desc": "uses 10^(−Ea/RT)",
+          "step": 2,
+          "tx": 215,
+          "wrong_answer": 7.44e-35
+        }
+      ],
+      "asks": "fraction of molecules with energy ≥ E_a"
+    },
+    "rounds": 3,
+    "meta_tags": {
+      "question_length_scope": 5,
+      "semantic_obfuscation": 5,
+      "conceptual_fragility": 3,
+      "number_of_exceptions": 3,
+      "model_solution_length": 5,
+      "distractor_plausibility": 3
+    },
+    "models": {
+      "generator": "google/gemini-3.7-flash",
+      "refiner": "google/gemini-3.8-flash",
+      "extractor": "deepseek/deepseek-v4-flash-0731",
+      "verifier": "anthropic/claude-haiku-5.5",
+      "solution_writer": "mistralai/mistral-small-3.2-24b-instruct",
+      "council": [
+        "openai/gpt-6-luna",
+        "qwen/qwen3.8-flash",
+        "z-ai/glm-5.3-flash"
+      ]
+    },
+    "spend": {
+      "total_cost_usd": 0.08754,
+      "by_role": {
+        "generator": {
+          "calls": 5,
+          "prompt_tokens": 2699,
+          "completion_tokens": 4238,
+          "cost": 0.01791675
+        },
+        "extractor": {
+          "calls": 4,
+          "prompt_tokens": 2342,
+          "completion_tokens": 2465,
+          "cost": 0.00089068
+        },
+        "council": {
+          "calls": 13,
+          "prompt_tokens": 4219,
+          "completion_tokens": 47590,
+          "cost": 0.02226398
+        },
+        "verifier": {
+          "calls": 13,
+          "prompt_tokens": 20508,
+          "completion_tokens": 16370,
+          "cost": 0.0102358
+        },
+        "refiner": {
+          "calls": 7,
+          "prompt_tokens": 7259,
+          "completion_tokens": 8163,
+          "cost": 0.0360555
+        },
+        "solution_writer": {
+          "calls": 1,
+          "prompt_tokens": 493,
+          "completion_tokens": 702,
+          "cost": 0.000177375
+        }
+      }
+    },
+    "blackboard": [
+      {
+        "chain": {
+          "edges": [
+            "rate_law_to_rate_constant_ktr0r",
+            "rate_constant_to_activation_energy_logk2k1ea230",
+            "activation_energy_to_fraction_above_ea_eeartfractio"
+          ],
+          "nodes": [
+            "rate_law",
+            "rate_constant",
+            "activation_energy",
+            "fraction_above_ea"
+          ],
+          "chapters": [
+            "Chemical Kinetics & Nuclear Chemistry"
+          ],
+          "txs": [
+            205,
+            213,
+            215
+          ],
+          "trap_ids": [
+            "forgets_2303",
+            "log10_without_2303",
+            "uses_order_0",
+            "uses_order_2",
+            "uses_power_of_10"
+          ],
+          "weight": 1.0,
+          "description": "rate constant of the first-order reaction [kt = ln([R]₀/[R])] → activation energy (kJ mol⁻¹) [log(k₂/k₁) = (E_a/2.303R)(1/T₁ − 1/T₂)] → fraction of molecules with energy ≥ E_a [fraction = e^(−E_a/RT)]"
+        },
+        "rounds": 3,
+        "events": [
+          {
+            "stage": "inputs",
+            "at": "2026-10-13T13:40:18.125874+00:00",
+            "values": {
+              "s0.initial_concentration": 0.5,
+              "s0.concentration": 0.2,
+              "s0.time": 1800.0,
+              "s1.T1": 300.0,
+              "s1.k2": 0.00624,
+              "s1.T2": 320.0,
+              "s2.T": 600.0
+            },
+            "scenario": "The first-order thermal decomposition of dinitrogen pentoxide (N2O5) is monitored in a closed vessel to determine its rate constants at different temperatures, activation energy, and the fraction of activated molecules.",
+            "answer": 1.962e-09
+          },
+          {
+            "stage": "gate",
+            "at": "2026-10-13T13:40:30.881704+00:00",
+            "attempt": 1,
+            "stem": "The thermal decomposition of dinitrogen pentoxide (N2O5) in a closed vessel follows first-order kinetics. At 300.0 K, an initial concentration of 0.5 mol L⁻¹ decreases to a concentration of 0.2 mol L⁻¹ after a time elapsed of 1800.0 s. When the reaction is carried out at temperature 320.0 K, the rate constant is 0.00624 s⁻¹. Given that R = 8.314 J K⁻¹ mol⁻¹, calculate the fraction of molecules with energy ≥ E_a at temperature 600.0 K.",
+            "ok": true,
+            "mismatches": [],
+            "unreadable": false
+          },
+          {
+            "stage": "council",
+            "at": "2026-10-13T13:41:08.464510+00:00",
+            "members": [
+              {
+                "name": "gpt-6-luna",
+                "model": "openai/gpt-6-luna",
+                "working": "For first-order decomposition, ln([N₂O₅]₀/[N₂O₅]ₜ) = k₃₀₀t. Thus k₃₀₀ = ln(0.5/0.2)/1800.0 = 5.0905 × 10⁻⁴ s⁻¹. Using the two-temperature Arrhenius equation, ln(k₃₂₀/k₃₀₀) = (Eₐ/R)(1/300.0 − 1/320.0), so Eₐ = R ln(0.00624/(5.0905 × 10⁻⁴))/(1/300.0 − 1/320.0) ≈ 1.00015 × 10⁵ J mol⁻¹. In the usual Arrhenius approximation, the fraction with energy at least Eₐ is exp(−Eₐ/RT). At 600.0 K this is exp[−(1.00015 × 10⁵)/(8.314 × 600.0)] ≈ 1.96 × 10⁻⁹.",
+                "final_answer": "1.96e-9",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student correctly computed k₃₀₀ = ln(2.5)/1800 ≈ 5.09 × 10⁻⁴ s⁻¹ and used the two-temperature Arrhenius equation to get Eₐ ≈ 1.00 × 10⁵ J mol⁻¹, which matches the reference's Eₐ = 100 (kJ mol⁻¹). Applying exp(−Eₐ/RT) at 600 K gives ≈ 1.962 × 10⁻⁹, which agrees with the intended answer to the precision reported (1.96 × 10⁻⁹)."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              },
+              {
+                "name": "glm-5.3-flash",
+                "model": "z-ai/glm-5.3-flash",
+                "working": "Step 1: k1 from first-order kinetics: k1 = (1/t)ln(C0/C) = (1/1800)ln(0.5/0.2) = ln(2.5)/1800 = 0.9163/1800 = 5.091×10⁻⁴ s⁻¹.\nStep 2: Arrhenius: ln(k2/k1) = (Ea/R)(1/T1 − 1/T2). ln(0.00624/5.091×10⁻⁴) = ln(12.26) = 2.506. (1/300 − 1/320) = 2.0833×10⁻⁴ K⁻¹. Ea = 2.506×8.314/2.0833×10⁻⁴ ≈ 1.0005×10⁵ J/mol ≈ 100 kJ/mol.\nStep 3: Fraction with E ≥ Ea at 600 K: f = e^(−Ea/RT) = e^(−100050/(8.314×600)) = e^(−20.05) ≈ 1.96×10⁻⁹.",
+                "final_answer": "1.96e-9",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student correctly computed k1 = ln(2.5)/1800 ≈ 5.091×10⁻⁴ s⁻¹ and used the two-point Arrhenius relation to get Ea ≈ 1.00×10⁵ J/mol, matching the reference's 100 kJ/mol. The final fraction e^(−Ea/RT) at 600 K gives ≈1.96×10⁻⁹, which agrees with the intended 1.962×10⁻⁹ to the precision given."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              }
+            ],
+            "skipped": [
+              "qwen3.8-flash"
+            ]
+          },
+          {
+            "stage": "refine",
+            "at": "2026-10-13T13:41:14.832041+00:00",
+            "mode": "new_inputs",
+            "feedback": "Incorporate a modified Arrhenius model with a non-zero temperature exponent (k = A * T^m * exp(-E_a / RT)) or frame the fraction via Maxwell-Boltzmann energy distribution in 3D translational/vibrational degrees of freedom, where the naive f = exp(-E_a / RT) fails."
+          },
+          {
+            "stage": "inputs",
+            "at": "2026-10-13T13:41:29.940241+00:00",
+            "values": {
+              "s0.initial_concentration": 0.8,
+              "s0.concentration": 0.2,
+              "s0.time": 2400.0,
+              "s1.T1": 410.0,
+              "s1.k2": 0.00479,
+              "s1.T2": 430.0,
+              "s2.T": 750.0
+            },
+            "scenario": "The first-order gas-phase thermal decomposition of di-tert-butyl peroxide into acetone and ethane is monitored in a closed vessel at elevated temperatures.",
+            "answer": 1.593e-11
+          },
+          {
+            "stage": "gate",
+            "at": "2026-10-13T13:41:45.176051+00:00",
+            "attempt": 1,
+            "stem": "The first-order gas-phase thermal decomposition of di-tert-butyl peroxide into acetone and ethane is monitored in a closed vessel. At a temperature of 410.0 K, the initial concentration of di-tert-butyl peroxide is 0.8 mol L⁻¹, which decreases to a concentration of 0.2 mol L⁻¹ after a time elapsed of 2400.0 s. When the reaction is carried out at a temperature of 430.0 K, the rate constant is 0.00479 s⁻¹. Given R = 8.314 J K⁻¹ mol⁻¹, determine the fraction of molecules with energy ≥ E_a at a temperature of 750.0 K.",
+            "ok": true,
+            "mismatches": [],
+            "unreadable": false
+          },
+          {
+            "stage": "council",
+            "at": "2026-10-13T13:44:19.810350+00:00",
+            "members": [
+              {
+                "name": "gpt-6-luna",
+                "model": "openai/gpt-6-luna",
+                "working": "For a first-order decomposition, ln([A]0/[A]t) = k1 t. Thus k1 = ln(0.8/0.2)/2400.0 = ln(4)/2400.0 = 5.7762 × 10^-4 s^-1 at 410.0 K.\nUsing the Arrhenius equation at 410.0 K and 430.0 K, ln(k430/k410) = (Ea/R)(1/410.0 - 1/430.0). Therefore Ea = R ln(0.00479/(5.7762 × 10^-4))/(1/410.0 - 1/430.0) ≈ 1.550 × 10^5 J mol^-1.\nThe Boltzmann/Arrhenius estimate for the fraction with energy at least Ea at 750.0 K is exp(-Ea/(RT)) = exp[-(1.550 × 10^5)/(8.314 × 750.0)] ≈ 1.59 × 10^-11.",
+                "final_answer": "1.59e-11",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student correctly found k = ln(4)/2400 = 5.776×10⁻⁴ s⁻¹ and used the two-temperature Arrhenius relation to get Ea ≈ 1.55×10⁵ J/mol, matching the reference's 155 kJ/mol. Substituting into exp(−Ea/RT) at 750 K gives 1.59×10⁻¹¹, which agrees with the reference's 1.593×10⁻¹¹ to the precision reported, with the difference attributable to rounding of Ea."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              },
+              {
+                "name": "glm-5.3-flash",
+                "model": "z-ai/glm-5.3-flash",
+                "working": "k1 = ln(0.8/0.2)/2400 = ln4/2400 = 5.776×10⁻⁴ s⁻¹. Arrhenius: ln(k2/k1) = (Ea/R)(1/T1 − 1/T2). k2/k1 = 0.00479/5.776×10⁻⁴ = 8.292, ln = 2.115. 1/410 − 1/430 = 1.1347×10⁻⁴ K⁻¹. Ea = 8.314×2.115/1.1347×10⁻⁴ ≈ 1.549×10⁵ J/mol. Fraction at 750 K = e^(−Ea/RT) = e^(−154900/(8.314×750)) = e^(−24.83) ≈ 1.49×10⁻¹¹.",
+                "final_answer": "1.49e-11",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": false,
+                  "verdict": "wrong",
+                  "failure_type": "slip",
+                  "failed_step": 3,
+                  "member_expression": "exp(-155000/(8.314*750)) = exp(-24.86) ≈ 1.593e-11",
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student's rate constant, Arrhenius setup, and activation energy (about 1.549×10⁵ J/mol, matching the reference 155 kJ/mol within rounding) are all correct. The error is in the final exponentiation: e^(-24.83) is about 1.63×10⁻¹¹, not 1.49×10⁻¹¹ (1.49×10⁻¹¹ corresponds to an exponent of about -24.93), so the final answer is off by about 6%."
+                },
+                "answer_matches": false,
+                "match_by": "code",
+                "verdict": "wrong",
+                "failure_type": "slip",
+                "slip_confirmed": false,
+                "counts_as_solved": false
+              },
+              {
+                "name": "qwen3.8-flash",
+                "model": "qwen/qwen3.8-flash",
+                "working": "",
+                "final_answer": "1.59 × 10^-11",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student's final answer, 1.59 × 10^-11, matches the reference value of 1.593 × 10^-11 when rounded to three significant figures. The student shows no working, so the method cannot be checked directly. I verified the reference chain independently: k ≈ 5.776 × 10^-4 s^-1, Ea ≈ 155 kJ/mol, and exp(-Ea/RT) ≈ 1.59 × 10^-11 at 750 K, so the answer is consistent with sound reasoning."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              }
+            ],
+            "skipped": []
+          },
+          {
+            "stage": "refine",
+            "at": "2026-10-13T13:44:25.331457+00:00",
+            "mode": "new_inputs",
+            "feedback": "Instead of directly providing reactant concentrations, monitor the gas-phase decomposition via total system pressure over time, requiring students to derive reactant partial pressures from stoichiometry before computing rate constants."
+          },
+          {
+            "stage": "inputs",
+            "at": "2026-10-13T13:44:40.508780+00:00",
+            "values": {
+              "s0.initial_concentration": 0.04,
+              "s0.concentration": 0.01,
+              "s0.time": 1800.0,
+              "s1.T1": 500.0,
+              "s1.k2": 0.00281,
+              "s1.T2": 520.0,
+              "s2.T": 650.0
+            },
+            "scenario": "The first-order gas-phase thermal decomposition of di-tert-butyl peroxide into acetone and ethane is monitored in a closed vessel at constant volume to determine rate parameters and the fraction of active molecules.",
+            "answer": 5.722e-12
+          },
+          {
+            "stage": "gate",
+            "at": "2026-10-13T13:44:54.806749+00:00",
+            "attempt": 1,
+            "stem": "The first-order gas-phase thermal decomposition of di-tert-butyl peroxide into acetone and ethane is carried out in a closed vessel at constant volume. At a temperature of 500.0 K, the initial concentration of 0.04 mol L⁻¹ decreases to a concentration of 0.01 mol L⁻¹ after a time elapsed of 1800.0 s. At a temperature of 520.0 K, the decomposition exhibits a rate constant of 0.00281 s⁻¹. Given R = 8.314 J K⁻¹ mol⁻¹, calculate the fraction of molecules with energy ≥ E_a at a temperature of 650.0 K.",
+            "ok": true,
+            "mismatches": [],
+            "unreadable": false
+          },
+          {
+            "stage": "council",
+            "at": "2026-10-13T13:48:31.431246+00:00",
+            "members": [
+              {
+                "name": "gpt-6-luna",
+                "model": "openai/gpt-6-luna",
+                "working": "For a first-order reaction, k = (1/t) ln([A]₀/[A]). At 500.0 K, k₅₀₀ = ln(0.04/0.01)/1800.0 = 7.7016 × 10⁻⁴ s⁻¹.\nUsing the Arrhenius equation at 500.0 K and 520.0 K:\nln(k₅₂₀/k₅₀₀) = (Eₐ/R)(1/500.0 − 1/520.0).\nThus Eₐ = (8.314)(ln(0.00281/(7.7016 × 10⁻⁴)))/(1/500.0 − 1/520.0) ≈ 1.3989 × 10⁵ J mol⁻¹.\nUsing the usual Arrhenius/Boltzmann approximation, the fraction with energy at least Eₐ is exp(−Eₐ/RT). At 650.0 K this is exp(−1.3989 × 10⁵/(8.314 × 650.0)) ≈ 5.72 × 10⁻¹².",
+                "final_answer": "5.72e-12",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student correctly computed k = ln(4)/1800 ≈ 7.70 × 10⁻⁴ s⁻¹ and used the two-temperature Arrhenius relation to obtain Eₐ ≈ 1.399 × 10⁵ J mol⁻¹, matching the reference's 139.9 kJ mol⁻¹. Applying exp(−Eₐ/RT) at 650 K gives 5.72 × 10⁻¹², which matches the intended answer, and the method is sound."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              },
+              {
+                "name": "glm-5.3-flash",
+                "model": "z-ai/glm-5.3-flash",
+                "working": "First-order kinetics at 500 K: k1 = ln(C0/C)/t = ln(0.04/0.01)/1800 = ln4/1800 = 7.702e-4 s⁻¹. Arrhenius: ln(k2/k1) = (Ea/R)(1/T1 − 1/T2). ln(0.00281/7.702e-4) = ln(3.6487) = 1.2942. 1/500 − 1/520 = 7.6923e-5 K⁻¹. Ea = 8.314 × 1.2942 / 7.6923e-5 ≈ 1.398e5 J/mol. Fraction at 650 K: f = e^(−Ea/RT) = e^(−139830/(8.314×650)) = e^(−25.87) ≈ 5.8e-12.",
+                "final_answer": "5.8e-12",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": false,
+                  "verdict": "wrong",
+                  "failure_type": "slip",
+                  "failed_step": 2,
+                  "member_expression": "exp(-139830/(8.314*650))",
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The method is correct: k1 = ln4/1800 and the two-point Arrhenius equation are both set up properly. The student mis-evaluated ln(3.6487) as 1.2942 when it is about 1.2863, which gives Ea ≈ 139.0 kJ/mol rather than 139.9 kJ/mol. The resulting fraction is 5.8e-12, which does not match the reference 5.722e-12 at the reported precision."
+                },
+                "answer_matches": false,
+                "match_by": "code",
+                "verdict": "wrong",
+                "failure_type": "slip",
+                "slip_confirmed": false,
+                "counts_as_solved": false
+              },
+              {
+                "name": "qwen3.8-flash",
+                "model": "qwen/qwen3.8-flash",
+                "working": "For a first-order reaction at 500.0 K: k_500 = (1/t) ln([A]_0/[A]) = (1/1800.0 s) ln(0.04/0.01) = ln(4)/1800.0 = 7.7016e-4 s^-1. Given k_520 = 0.00281 s^-1. Use Arrhenius: ln(k_520/k_500) = (E_a/R)(1/500.0 - 1/520.0). k_520/k_500 = 0.00281/7.7016e-4 = 3.64858, so ln(k_520/k_500) = 1.29434. Also 1/500 - 1/520 = 1/13000 K^-1. Therefore E_a/R = 13000 × 1.29434 = 1.68264e4 K, and E_a = 8.314 × 1.68264e4 = 1.39895e5 J mol^-1. The fraction of molecules with energy >= E_a at 650.0 K is f = exp(-E_a/(R T)) = exp(-(E_a/R)/650.0) = exp(-16826.38/650.0) = exp(-25.8867) = 5.72e-12.",
+                "final_answer": 5.72e-12,
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student correctly computed k = ln(4)/1800 = 7.70e-4 s⁻¹, then used the two-point Arrhenius equation to get E_a/R ≈ 16826 K (E_a ≈ 139.9 kJ/mol), matching the reference. The final fraction exp(-16826/650) = 5.72e-12 agrees with the reference 5.722e-12 to the precision given (the student simply rounded to three significant figures)."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              }
+            ],
+            "skipped": []
+          },
+          {
+            "stage": "refine",
+            "at": "2026-10-13T13:48:50.802160+00:00",
+            "mode": "new_inputs",
+            "feedback": "Monitor the reaction via total pressure in a rigid vessel instead of directly giving concentration, requiring the student to apply gas stoichiometry (1 mole of DTBP yields 3 moles of gas) to extract the rate constant."
+          },
+          {
+            "stage": "inputs",
+            "at": "2026-10-13T13:49:08.272946+00:00",
+            "values": {
+              "s0.initial_concentration": 0.06,
+              "s0.concentration": 0.015,
+              "s0.time": 2400.0,
+              "s1.T1": 430.0,
+              "s1.k2": 0.00402,
+              "s1.T2": 450.0,
+              "s2.T": 550.0
+            },
+            "scenario": "The gas-phase thermal decomposition of di-tert-butyl peroxide (DTBP) into ethane and acetone in a rigid vessel follows first-order kinetics.",
+            "answer": 1.507e-15
+          },
+          {
+            "stage": "gate",
+            "at": "2026-10-13T13:49:28.481533+00:00",
+            "attempt": 1,
+            "stem": "The gas-phase thermal decomposition of di-tert-butyl peroxide (DTBP) into ethane and acetone in a rigid vessel follows first-order kinetics. When the reaction is carried out at 430.0 K, the concentration of DTBP decreases from an initial concentration of 0.06 mol L⁻¹ to 0.015 mol L⁻¹ after an elapsed time of 2400.0 s. At 450.0 K, the rate constant of the reaction is 0.00402 s⁻¹.\n\nGiven: R = 8.314 J K⁻¹ mol⁻¹\n\nCalculate the fraction of molecules with energy ≥ E_a at a temperature of 550.0 K.",
+            "ok": true,
+            "mismatches": [],
+            "unreadable": false
+          },
+          {
+            "stage": "council",
+            "at": "2026-10-13T13:52:32.517442+00:00",
+            "members": [
+              {
+                "name": "gpt-6-luna",
+                "model": "openai/gpt-6-luna",
+                "working": "For first-order decomposition, ln([DTBP]₀/[DTBP]ₜ) = k₄₃₀t. Thus k₄₃₀ = ln(0.060/0.015)/2400.0 = 5.7762 × 10⁻⁴ s⁻¹.\n\nUsing the Arrhenius equation at 430.0 K and 450.0 K, ln(k₄₅₀/k₄₃₀) = (Eₐ/R)(1/430.0 − 1/450.0). Therefore Eₐ = 8.314 × ln(0.00402/(5.7762 × 10⁻⁴))/(1/430.0 − 1/450.0) = 1.561 × 10⁵ J mol⁻¹.\n\nUsing the usual Boltzmann/Arrhenius estimate for the fraction with energy at least Eₐ, f = exp(−Eₐ/RT). At 550.0 K, f = exp[−(1.561 × 10⁵)/(8.314 × 550.0)] ≈ 1.51 × 10⁻¹⁵.",
+                "final_answer": "1.51e-15",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student correctly found k₄₃₀ = ln(4)/2400 ≈ 5.776×10⁻⁴ s⁻¹ and used the two-temperature Arrhenius relation to get Eₐ ≈ 156 kJ/mol, matching the reference. Evaluating exp(−Eₐ/RT) at 550 K with that Eₐ gives ≈1.51×10⁻¹⁵, which agrees with the reference's 1.507×10⁻¹⁵ to three significant figures."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              },
+              {
+                "name": "glm-5.3-flash",
+                "model": "z-ai/glm-5.3-flash",
+                "working": "k1 at 430 K: first-order, k = ln(C0/C)/t = ln(0.06/0.015)/2400 = ln4/2400 = 5.776e-4 s^-1. Arrhenius: ln(k2/k1) = (Ea/R)(1/T1 - 1/T2); ln(0.00402/5.776e-4) = ln(6.958) = 1.940. (1/430 - 1/450) = 1.0336e-4 K^-1. Ea = 8.314*1.940/1.0336e-4 = 1.559e5 J/mol. Fraction with E >= Ea at 550 K: f = exp(-Ea/RT) = exp(-155900/(8.314*550)) = exp(-34.11) = 1.55e-15.",
+                "final_answer": "1.55e-15",
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": false,
+                  "verdict": "wrong",
+                  "failure_type": "slip",
+                  "failed_step": 2,
+                  "member_expression": "exp(-(8.314*1.940/1.0336e-4)/(8.314*550)) = exp(-156070/4572.7) ≈ exp(-34.13)",
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student's method is correct: k = ln4/2400, the two-point Arrhenius equation, then exp(-Ea/RT) at 550 K. The error is arithmetic. Their own inputs give Ea = 8.314×1.940/1.0336×10⁻⁴ ≈ 1.561×10⁵ J/mol, not 1.559×10⁵, and this propagates into an exponent of about −34.13 and a final value near 1.5×10⁻¹⁵ rather than 1.55×10⁻¹⁵. The final answer 1.55e-15 therefore differs from the intended 1.507e-15 at the third significant figure."
+                },
+                "answer_matches": false,
+                "match_by": "code",
+                "verdict": "wrong",
+                "failure_type": "slip",
+                "slip_confirmed": false,
+                "counts_as_solved": false
+              },
+              {
+                "name": "qwen3.8-flash",
+                "model": "qwen/qwen3.8-flash",
+                "working": "",
+                "final_answer": null,
+                "unit": "",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": false,
+                  "verdict": "wrong",
+                  "failure_type": "genuine_difficulty",
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student provided no working and no final answer, so there is nothing to show where or why they went wrong. The reference chain checks out: k = ln(4)/2400 ≈ 5.78×10⁻⁴ s⁻¹, Eₐ ≈ 156 kJ/mol from the two-temperature Arrhenius form, and e^(−Eₐ/RT) at 550 K ≈ 1.5×10⁻¹⁵. The failure type is a default guess because the attempt is blank."
+                },
+                "answer_matches": false,
+                "match_by": "code",
+                "verdict": "wrong",
+                "failure_type": "genuine_difficulty",
+                "slip_confirmed": null,
+                "counts_as_solved": false
+              }
+            ],
+            "skipped": []
+          },
+          {
+            "stage": "hints",
+            "at": "2026-10-13T13:54:19.824619+00:00",
+            "tests": [
+              {
+                "member": "glm-5.3-flash",
+                "hint": "insight",
+                "text": "Look again at the step where you work out the activation energy (kJ mol⁻¹). A common mistake there: uses log₁₀ without 2.303.",
+                "solved": false,
+                "answer": "1.46e-15",
+                "recheck": {
+                  "answer_equivalent": false,
+                  "verdict": "wrong",
+                  "failure_type": "slip",
+                  "failed_step": 3,
+                  "member_expression": "exp(-156100/(8.314*550)) = exp(-34.14) ≈ 1.49e-15 (the student wrote exp(-34.16), a miscalculated exponent)",
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "Steps 1 and 2 are correct: the student used ln(4)/2400 for k1 and the ln form of the Arrhenius equation, giving Ea ≈ 156.1 kJ/mol, matching the reference. In step 3, the exponent 156100/(8.314×550) is about 34.14, not the 34.16 the student used, so the final value 1.46e-15 is off from the reference 1.507e-15."
+                }
+              },
+              {
+                "member": "qwen3.8-flash",
+                "hint": "insight",
+                "text": "Look again at the step where you work out the fraction of molecules with energy ≥ E_a. A common mistake there: uses 10^(−Ea/RT).",
+                "solved": true,
+                "answer": "1.51e-15"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "generated_at": "2026-10-13T13:54:58.782445+00:00"
   }
 ]

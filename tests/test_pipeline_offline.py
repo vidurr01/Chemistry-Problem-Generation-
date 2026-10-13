@@ -327,6 +327,50 @@ class Grading(unittest.TestCase):
         self.assertEqual(_fmt_value(100.0), "100.0")
 
 
+class SmokeTest3(unittest.TestCase):
+    """Smoke test 3 accepted a question 2/3 members really solved: a blank reply counted as a
+    failure, and an answer off only by rounding e^(-34.1) counted as wrong."""
+
+    def setUp(self):
+        self.ad = adapters.PhysicalAdapter(entry.get_subject_config("physical"))
+
+    def test_tolerance_widens_only_when_rounding_moves_the_answer(self):
+        from core import answers
+        r = self.ad.compute(self.ad.plan([205, 213, 215]), {
+            "s0.initial_concentration": 0.06, "s0.concentration": 0.015, "s0.time": 2400.0,
+            "s1.T1": 430.0, "s1.k2": 0.00402, "s1.T2": 450.0, "s2.T": 550.0})
+        self.assertGreater(r.tolerance, 0.015)
+        self.assertLessEqual(r.tolerance, 0.10)
+        self.assertTrue(answers.matches(r.answer, "1.51e-15", r.kind, r.tolerance))
+        for t in r.traps:                                   # no trap inside the tolerance
+            self.assertFalse(answers.matches(r.answer, str(t["wrong_answer"]), r.kind, r.tolerance))
+        r2 = self.ad.compute(self.ad.plan(CHAIN), {"s0.mass": 4.4, "s0.molar_mass": 44})
+        self.assertEqual(r2.tolerance, 0.01)
+
+    def test_slip_expression_chain(self):
+        from core.pipeline import flow
+        v = flow._eval_expression("exp(-(8.314*1.940/1.0336e-4)/(8.314*550)) = exp(-156070/4572.7) ≈ exp(-34.13)")
+        self.assertAlmostEqual(v / 1.5109e-15, 1.0, places=3)
+        self.assertIsNone(flow._eval_expression("the student used the wrong value"))
+
+    def test_blank_council_reply_is_asked_again(self):
+        from core.pipeline import stages
+        replies = iter([{"working": "", "final_answer": None},
+                        {"working": "k = ...", "final_answer": "2.24", "unit": "L"}])
+        with mock.patch.object(models, "ask_json", lambda *a, **k: next(replies)):
+            out = stages._solve("x/y", "stem")
+        self.assertEqual(out["final_answer"], "2.24")
+        with mock.patch.object(models, "ask_json", lambda *a, **k: {"working": "", "final_answer": None}):
+            with self.assertRaises(ValueError):
+                stages._solve("x/y", "stem")
+
+    def test_json_with_latex_backslashes(self):
+        from core.llm import parse_json
+        self.assertEqual(parse_json(r'x {"stem": "\Delta G for \ce{H2O}", "n": 1} y'),
+                         {"stem": r"\Delta G for \ce{H2O}", "n": 1})
+        self.assertEqual(parse_json(r'{"q": "keep \"this\" and \\ that"}')["q"], 'keep "this" and \\ that')
+
+
 class GateCompare(unittest.TestCase):
     SPEC = [{"key": "s0.mass", "desc": "mass", "unit": "g", "kind": "positive"},
             {"key": "s0.eq", "desc": "equation", "unit": "", "kind": "text"}]
