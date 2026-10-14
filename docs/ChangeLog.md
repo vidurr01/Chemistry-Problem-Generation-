@@ -4,6 +4,14 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Answer form fixed at the source; complete decision table
+- `answers.answer_spec / spec_instruction / format_ok`: each solver gets the exact form of its final answer — a JSON number in the asked unit, one of the listed options (parsed from the answer instruction), or option letters. `stages._repair_format()`: a reply that breaks the form gets one short request to restate the same answer (it must not re-solve); the raw answer is kept (`raw_final_answer`, `format_repaired`). Grading falls back to the verifier's `answer_equivalent` only if the repair fails too.
+- Numeric stems must end with "Give the answer in <unit>." (`flow._answer_instruction`), checked verbatim by the gate like the option instructions.
+- Decision table: within tolerance by a wrong method (run 5: −190.28 vs −192.2 kJ mol⁻¹ by linear extrapolation) or by wrong reasoning is not solved; within tolerance with only a slip is solved.
+- `_fmt_value` always writes scientific notation correctly (0.00035 was printed "0.00035 × 10⁰").
+- Run 5 accepted GEN_20261014T021446 as advanced (cell EMF and dE/dT → ΔH, Kirchhoff with ΔCp, ΔG = ΔH − TΔS); Llama 3.3 failed conceptually, GLM solved. Cost $0.036.
+- Tests: `AnswerSpec`, `GeneratedVariants` (many writings of correct answers match; every trap value does not; units by stated unit), decision-table rows (85 tests).
+
 ### Answer matching audited end to end
 - Numeric answers in the pipeline now use `answers.numeric_value` (it was only in calibration): fractions (11/51), expressions (ln(4)/2), × 10ⁿ in every form. Superscript exponents are read as powers (1.51×10⁻¹⁵ was being read as 1.51 × (10 − 15)).
 - A number in another unit than the one asked is converted using the unit the member STATED (`answers.convert_unit`: length, volume, mass, amount, concentration, time, energy, pressure, potential, charge, conductance), so 156100 J mol⁻¹ matches 156.1 kJ mol⁻¹ but 156100 "kJ mol⁻¹" (the not-converted trap) does not.

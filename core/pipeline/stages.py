@@ -19,7 +19,7 @@ import re
 import queue
 import threading
 
-from core import models
+from core import answers, models
 from core.llm import as_bool, as_number
 
 COUNCIL_MAX_TOKENS = 32000      # thinking models can reason past 16k on hard questions; empty replies otherwise
@@ -37,7 +37,8 @@ def _fmt_value(v):
     if isinstance(v, (dict, list)):
         return json.dumps(v, ensure_ascii=False)
     if isinstance(v, float) and v != 0 and (abs(v) < 1e-3 or abs(v) >= 1e5):
-        mant, exp = f"{v:.4g}".split("e") if "e" in f"{v:.4g}" else (f"{v:.4g}", "0")
+        mant, exp = f"{v:.3e}".split("e")              # always scientific: 0.00035 -> 3.500e-04
+        mant = mant.rstrip("0").rstrip(".")
         return f"{mant} × 10{str(int(exp)).translate(_SUP)}"
     return str(v)
 
@@ -302,8 +303,11 @@ Return JSON: {{"values": {{"<field>": <value or null>, ...}}, "asked": <option n
 _COUNCIL_SYSTEM = "You are a strong JEE Advanced chemistry student. Output JSON only."
 
 
-def _council_prompt(stem: str, hint: str | None = None) -> str:
+def _council_prompt(stem: str, hint: str | None = None, spec: dict | None = None) -> str:
     hint_block = f"\nA teacher adds this hint:\n{hint}\n" if hint else ""
+    answer_lines = answers.spec_instruction(spec) if spec else (
+        '"final_answer": "only the final value (a number, formula or name), without the unit",\n'
+        '"unit": "the unit of your final answer, or empty"')
     return f"""Solve this problem. Work it out fully yourself.
 
 PROBLEM:
@@ -312,11 +316,10 @@ PROBLEM:
 If you believe the problem itself is flawed (impossible, contradictory, missing data, or
 wrong chemistry), you may object — but still give your best answer.
 
-Return JSON:
-{{"working": "your full step-by-step solution",
-  "final_answer": "only the final value (a number, formula or name), without the unit",
-  "unit": "the unit of your final answer, or empty",
-  "objection": null or {{"type": "chemistry" or "wording", "detail": "what is wrong"}}}}"""
+Return JSON with exactly these keys:
+"working": your full step-by-step solution,
+{answer_lines},
+"objection": null, or {{"type": "chemistry" or "wording", "detail": "what is wrong"}}."""
 
 
 BLANK_RETRIES = 2
@@ -334,13 +337,38 @@ def _first(out: dict, keys):
     return None
 
 
-def _solve(slug: str, stem: str, hint: str | None = None) -> dict:
+def _repair_format(slug: str, stem: str, out: dict, spec: dict) -> dict | None:
+    """The solver's final answer breaks the spec (e.g. "about 29.8 L", "11/51", "Yes, it
+    forms", or missing with the working present). Ask it, cheaply, to restate the SAME answer
+    in the required form; it must not re-solve. Returns {"final_answer", "unit"} or None."""
+    prompt = f"""You solved this problem:
+{stem}
+
+The end of your solution:
+{str(out.get("working") or "")[-1500:]}
+
+Your final answer was: {json.dumps(out.get("final_answer"), ensure_ascii=False)} (unit: {out.get("unit") or "none"})
+
+Restate the SAME final answer in exactly this form. Do not solve again and do not change the
+answer; only rewrite it (convert the unit if a different one is required).
+{answers.spec_instruction(spec)}
+Return JSON with the keys "final_answer" and "unit"."""
+    try:
+        r = models.ask_json("council", slug, "Output JSON only.", prompt, max_tokens=1500,
+                            temperature=0.0, reasoning_effort="low")
+    except Exception:                                            # noqa: BLE001 - grading falls back
+        return None
+    ans = _first(r, _ANSWER_KEYS)
+    return {"final_answer": ans, "unit": str(r.get("unit") or "")} if answers.format_ok(spec, ans) else None
+
+
+def _solve(slug: str, stem: str, hint: str | None = None, spec: dict | None = None) -> dict:
     """One closed-book attempt. Some models answer {"answer": 100.1} instead of the requested
     keys, or put their working only in the reasoning trace; both are read. A reply with no
     answer and no working at all is a failed call, not a wrong answer: it is asked again,
     and still blank raises (the question parks)."""
     for attempt in range(BLANK_RETRIES + 1):
-        out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint),
+        out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint, spec),
                               max_tokens=COUNCIL_MAX_TOKENS, temperature=0.2,
                               reasoning_effort=models.COUNCIL_REASONING_EFFORT)
         answer = _first(out, _ANSWER_KEYS)
@@ -361,11 +389,18 @@ def _solve(slug: str, stem: str, hint: str | None = None) -> dict:
         objection = {"type": obj["type"], "detail": str(obj.get("detail", ""))[:1000]}
     else:
         objection = None
-    return {"working": str(out.get("working", ""))[:20000], "final_answer": out.get("final_answer"),
-            "unit": str(out.get("unit") or ""), "objection": objection}
+    rec = {"working": str(out.get("working", ""))[:20000], "final_answer": out.get("final_answer"),
+           "unit": str(out.get("unit") or ""), "objection": objection}
+    if spec and not answers.format_ok(spec, rec["final_answer"]):
+        fixed = _repair_format(slug, stem, out, spec)
+        if fixed is not None:
+            print(f"    [council] {slug}: answer {rec['final_answer']!r} restated as {fixed['final_answer']!r}")
+            rec.update(raw_final_answer=rec["final_answer"], raw_unit=rec["unit"], **fixed)
+        rec["format_repaired"] = fixed is not None
+    return rec
 
 
-def council_solve(stem: str, names=None) -> list:
+def council_solve(stem: str, names=None, spec: dict | None = None) -> list:
     """The named members (default: all), in parallel, in roster order. Raises
     CouncilMemberFailed on the first failure: every member called must be measured, so a
     partial result is never judged."""
@@ -374,7 +409,7 @@ def council_solve(stem: str, names=None) -> list:
 
     def run(i, name, slug):
         try:
-            done.put((i, {"name": name, "model": slug, **_solve(slug, stem)}, None))
+            done.put((i, {"name": name, "model": slug, **_solve(slug, stem, spec=spec)}, None))
         except Exception as e:                                   # noqa: BLE001
             done.put((i, None, f"{type(e).__name__}: {str(e)[:160]}"))
 
@@ -389,9 +424,9 @@ def council_solve(stem: str, names=None) -> list:
     return members
 
 
-def solve_with_hint(member: dict, stem: str, hint: str) -> dict:
+def solve_with_hint(member: dict, stem: str, hint: str, spec: dict | None = None) -> dict:
     try:
-        return {"name": member["name"], "model": member["model"], **_solve(member["model"], stem, hint)}
+        return {"name": member["name"], "model": member["model"], **_solve(member["model"], stem, hint, spec)}
     except Exception as e:                                       # noqa: BLE001
         raise CouncilMemberFailed(f"{member['name']} (hint re-solve): {type(e).__name__}: {str(e)[:160]}")
 
