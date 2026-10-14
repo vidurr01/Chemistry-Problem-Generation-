@@ -90,10 +90,18 @@ class Spend:
 SPEND = Spend()
 
 
+# Output caps for models whose context window is smaller than a call's default cap
+# (prompt + max_tokens must fit; Phi-4 has 16k in total and does not think at length).
+MAX_OUTPUT_TOKENS = {"microsoft/phi-4": 8000, "meta-llama/llama-4-scout": 8000}
+# Models whose providers refuse JSON mode: asked for JSON in the prompt only (parse_json reads it).
+NO_JSON_MODE = {"meta-llama/llama-4-scout"}
+
+
 def ask_json(role: str, model: str, system: str, user: str, *, max_tokens: int = 4000,
              temperature: float = 0.2, reasoning_effort: str | None = None) -> dict:
     """One chat call that must return a JSON object. Transient errors and unusable
     replies are retried (core.llm.call_json); token use and cost go to SPEND[role]."""
+    max_tokens = min(max_tokens, MAX_OUTPUT_TOKENS.get(model, max_tokens))
     extra = {"usage": {"include": True}}
     if reasoning_effort:
         extra["reasoning"] = {"effort": reasoning_effort}
@@ -103,10 +111,10 @@ def ask_json(role: str, model: str, system: str, user: str, *, max_tokens: int =
         resp = _client().chat.completions.create(
             model=model,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-            response_format={"type": "json_object"},
             temperature=temperature,
             max_tokens=max_tokens,
             extra_body=extra,
+            **({} if model in NO_JSON_MODE else {"response_format": {"type": "json_object"}}),
         )
         holder["usage"] = getattr(resp, "usage", None)
         SPEND.add(role, holder["usage"])
