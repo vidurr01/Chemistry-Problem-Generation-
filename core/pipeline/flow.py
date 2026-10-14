@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import concurrent.futures as cf
 import json
+import math
 import random
 import re
 
@@ -257,6 +258,37 @@ def _numeric_match(result, final_answer, unit):
     return False
 
 
+_NUM_TOKEN = re.compile(r"(?<![A-Za-z_])\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
+
+
+def _numbers(text):
+    out = []
+    for t in _NUM_TOKEN.findall(str(text or "")):
+        try:
+            out.append(float(t))
+        except ValueError:
+            pass
+    return out
+
+
+def _grounded(expr, working, allowed_missing: int = 1) -> bool:
+    """Is the verifier's slip expression really the member's own set-up? Every number in it
+    must appear in the member's working (within 0.5 %), except powers of ten (unit
+    conversions) and at most `allowed_missing` substituted value (the number the member
+    miscopied, replaced by the given value). Stops a verifier that writes the correct formula
+    itself from "confirming" a slip the member never had (run 7: 0.2915 kJ for 307.4 kJ)."""
+    have = _numbers(working)
+    if not have:
+        return False
+    missing = 0
+    for x in _numbers(expr):
+        if x == 0 or (x > 0 and abs(math.log10(x) - round(math.log10(x))) < 1e-9):
+            continue                                   # 1, 10, 1000, 1e-3 ... unit factors
+        if not any(abs(x - h) <= 0.005 * max(abs(x), abs(h)) for h in have):
+            missing += 1
+    return missing <= allowed_missing
+
+
 def _text_match(result, final_answer, diag, unit=""):
     """(matches, decided_by) for a final answer; diag is the verifier's diagnosis or None.
     Code decides whenever it can read the answer; only when it cannot (an answer phrased in
@@ -299,7 +331,8 @@ def _grade(result, member, diag) -> dict:
         expr = diag.get("member_expression")
         value = _eval_expression(expr)
         slip_confirmed = value is not None and _is_numeric(result) and \
-            answers.matches(result.answer, value, result.kind, getattr(result, "tolerance", 0.01))
+            answers.matches(result.answer, value, result.kind, getattr(result, "tolerance", 0.01)) and \
+            _grounded(expr, member.get("working", ""))
         solved = bool(slip_confirmed)
     return {"answer_matches": match, "match_by": match_by, "verdict": diag["verdict"],
             "failure_type": diag.get("failure_type"), "slip_confirmed": slip_confirmed, "counts_as_solved": solved}

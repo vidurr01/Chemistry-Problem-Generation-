@@ -36,5 +36,86 @@
       "objection_assessment": "valid",
       "reasoning": "The problem gives three constraints (ΔG° at 400 K, K at 500 K, and a constant ΔS°) under a constant-ΔH° assumption, which over-determines the system. The reference fixes ΔH° from the van't Hoff relation and ignores the stated ΔS°, while the student shows that the data are mutually inconsistent (ΔG°(400 K) would be 5.75 kJ/mol, not 5.0). Because the problem itself is inconsistent, the student's objection is valid and their choice of K(500 K) with ΔS° gives a defensible answer of 447.9 K."
     }
+  },
+  {
+    "id": "ENG_20261014T041636_2",
+    "reason": "engine_wrong",
+    "queued_at": "2026-10-14T04:16:36.565390+00:00",
+    "chain": [
+      "delta_T_to_molar_mass_m2kxw2x1000t",
+      "molar_mass_to_effusion_rate_grahamr1r2sq",
+      "effusion_rate_to_separation_factor_fn1n2finaln1"
+    ],
+    "txs": [
+      264,
+      95,
+      96
+    ],
+    "values": {
+      "s0.delta_T": 1.024,
+      "s0.constant": 5.12,
+      "s0.solute_mass": 6.4,
+      "s0.solvent_mass": 125.0,
+      "s1.molar_mass_2": 16.0,
+      "s2.stages": 6
+    },
+    "stem": "An equimolar gaseous mixture containing methane (molar mass 16.0 g mol⁻¹) and the vapor of an unknown volatile non-electrolyte solute is introduced into a separation apparatus operating over 6 effusion stages. In a separate determination, a solution prepared by dissolving 6.4 g of this solute in 125.0 g of benzene exhibited a freezing point depression of 1.024 K. Given that the cryoscopic constant of benzene is 5.12 K kg mol⁻¹, calculate the overall separation factor for methane relative to the solute vapor achieved across the cascade.",
+    "engine_answer": "0.0002441",
+    "member": "gpt-6-luna",
+    "member_answer": 4096,
+    "diagnosis": {
+      "answer_equivalent": false,
+      "verdict": "reference_wrong",
+      "failure_type": null,
+      "failed_step": null,
+      "member_expression": null,
+      "ambiguous_text": null,
+      "clarification": null,
+      "missing_fact": null,
+      "objection_assessment": null,
+      "reasoning": "The student correctly finds M = 256 g/mol and the single-stage Graham ratio √(256/16) = 4, so methane is enriched 4× per stage. Over 6 stages this gives 4⁶ = 4096 for methane relative to the solute, which matches the problem's wording. The reference instead computes 0.25⁶ = 0.0002441, which is the solute-to-methane ratio, so its convention contradicts the phrase 'methane relative to the solute vapor'."
+    }
+  },
+  {
+    "id": "ENG_20261014T051911_3",
+    "reason": "engine_wrong",
+    "queued_at": "2026-10-14T05:19:11.578379+00:00",
+    "chain": [
+      "equilibrium_constant_to_gas_state_oneconcentra",
+      "gas_state_to_gas_state_boyleslawp1v",
+      "gas_state_to_entropy_change_sncvlnt2t1nr"
+    ],
+    "txs": [
+      170,
+      84,
+      125
+    ],
+    "values": {
+      "s0.Kp_solid_decomposition": 0.28,
+      "s0.K2": 0.21,
+      "s1.V": 5.0,
+      "s1.new_volume": 12.5,
+      "s2.n": 0.284,
+      "s2.gas_type": "diatomic",
+      "s2.T": 300.0,
+      "s2.new_temperature": 480.0,
+      "s2.new_volume": 12.5
+    },
+    "stem": "In an evacuated container of initial volume 5.0 L maintained at an initial temperature 300.0 K, excess solid ammonium hydrosulfide and excess solid ammonium chloride simultaneously undergo decomposition according to the equilibria: NH₄HS(s) ⇌ NH₃(g) + H₂S(g) with K_p = 0.28 atm², and NH₄Cl(s) ⇌ NH₃(g) + HCl(g) with K_p = 0.21 atm². The resulting gaseous mixture is subsequently transferred to a separate chamber where an amount of ideal gas of 0.284 mol is isolated. This sample, behaving as a diatomic gas, is subjected to a thermodynamic process that brings it to a final temperature of 480.0 K and a final volume of 12.5 L (with the same T and amount for the initial state of the expansion). Taking R = 8.314 J K⁻¹ mol⁻¹ and assuming ideal behavior, determine the entropy change of the gas (J K⁻¹). Give the answer in J K⁻¹.",
+    "engine_answer": "2.774 J K⁻¹",
+    "member": "llama-3.3-70b",
+    "member_answer": 4.848,
+    "diagnosis": {
+      "answer_equivalent": false,
+      "verdict": "reference_wrong",
+      "failure_type": null,
+      "failed_step": null,
+      "member_expression": null,
+      "ambiguous_text": null,
+      "clarification": null,
+      "missing_fact": null,
+      "objection_assessment": null,
+      "reasoning": "The reference's Step 3 uses V = 12.5 L for both the initial and final volumes, which zeroes the nR ln(V2/V1) term without justification. The problem gives the initial volume as 5.0 L and the final as 12.5 L, so the student's choice of V1 = 5.0 L is the more defensible reading, and with it the entropy change is about 2.774 + 2.164 ≈ 4.94 J/K. The student's own arithmetic is also slightly off (0.284 × 20.785 × 0.470 ≈ 2.774, not 2.704, and the second term is about 2.163), so the 4.848 J/K result is not correct even under its own reading."
+    }
   }
 ]

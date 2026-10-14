@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Slip confirmation must be grounded in the solver's own working
+- Run 7 (no question accepted, $0.088): Llama 3.3 answered 0.2915 kJ for 307.4 kJ and was counted as solved because the verifier labelled it a slip and wrote the correct set-up (0.45 × 6 × 96500 × 1.18) itself. `flow._grounded()`: a slip is confirmed only if every number in the verifier's expression appears in the member's working (within 0.5 %), apart from powers of ten (unit factors) and at most one substituted value (the miscopied number).
+- The rest of run 7 graded correctly: answers within 0.04–0.13 % with a slip counted as solved; two chains went to `engine_wrong`, both engine or chain faults the verifier explained — the separation-factor step computes the inverse of the ratio the question asks ("methane relative to the solute": 4⁶, not 0.25⁶), and the 170 → 84 → 125 chain wired V₁ = V₂ = 12.5 L although the stem states 5.0 L.
+- Tests updated: slip rows carry working; the run-7 case and a genuine miscopy (86 tests).
+
 ### Writer replies cut off by thinking no longer crash a run
 - Run 6: answer matching held (Llama's "2" and "2.0" read correctly; too easy twice), then the refiner's input proposal was cut off mid-JSON three times (its thinking used the 3000-token cap) and the run crashed.
 - Token caps raised for thinking writers and checkers (inputs and stems 16000; refinement choice, fact stems, gate extraction, verifier and solutions 8000; clarification hints and format repair 4000). Only tokens used are billed.
