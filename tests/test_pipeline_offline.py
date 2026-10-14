@@ -37,7 +37,7 @@ class FakeModels:
                     "values": {"s0.mass": 4.4, "s0.molar_mass": 44}}
         if role in ("generator", "refiner") and "Write one JEE" in user:
             return {"stem": "4.4 g of CO2 (molar mass 44 g mol⁻¹) is collected. Taking the molar volume "
-                            "at 1 atm and 273 K as 22.4 L, find the volume of the gas in L."}
+                            "at 1 atm and 273 K as 22.4 L, find the volume of the gas. Give the answer in L."}
         if role in ("generator", "refiner") and "too easy" in user:
             return {"mode": self.refine_mode, "feedback": "hide the molar volume cue"}
         if role in ("generator", "refiner") and "misread" in user:
@@ -347,6 +347,7 @@ class Grading(unittest.TestCase):
 
     def test_value_formatting(self):
         from core.pipeline.stages import _fmt_value
+        self.assertEqual(_fmt_value(0.00035), "3.5 × 10⁻⁴")                 # run 5 printed "0.00035 × 10⁰"
         self.assertEqual(_fmt_value(4e-05), "4 × 10⁻⁵")
         self.assertEqual(_fmt_value(1.725e-10), "1.725 × 10⁻¹⁰")
         self.assertEqual(_fmt_value(0.0591), "0.0591")
@@ -476,6 +477,24 @@ class GradingStress(unittest.TestCase):
         self.assertFalse(self._solved(r, None, "L"))
         self.assertFalse(self._solved(r, "29.79", "L", {"verdict": "right_answer_wrong_reasoning"}))
 
+    def test_decision_table(self):
+        """Every row of the solved? table (Flow.md step 8)."""
+        r = self._r(-192.2, "kJ mol⁻¹", kind="real")
+        rows = [  # (answer, diagnosis, solved?)
+            ("-192.2", {"verdict": "correct"}, True),
+            ("-190.28", {"verdict": "wrong", "failure_type": "slip"}, True),                 # inside tol, slip
+            ("-190.28", {"verdict": "wrong", "failure_type": "genuine_difficulty"}, False),  # run 5: wrong method
+            ("-190.28", {"verdict": "wrong", "failure_type": "missing_knowledge"}, False),
+            ("-192.2", {"verdict": "right_answer_wrong_reasoning"}, False),
+            ("-150", {"verdict": "wrong", "failure_type": "slip", "member_expression": "-221.1 + 85*152/1000 - 450*102.6/1000 + 0"}, False),
+            ("-150", {"verdict": "wrong", "failure_type": "slip", "member_expression": "-150 - 42.2"}, True),   # own arithmetic = -192.2
+            ("-150", {"verdict": "correct", "member_expression": "-150 - 42.2"}, True),
+            ("-150", {"verdict": "wrong", "failure_type": "genuine_difficulty"}, False),
+            (None, {"verdict": "wrong"}, False),
+        ]
+        for ans, diag, want in rows:
+            self.assertEqual(self._solved(r, ans, "kJ mol⁻¹", diag), want, (ans, diag))
+
     def test_fractions_expressions_and_powers(self):
         ok = {"verdict": "correct"}
         self.assertTrue(self._solved(self._r(0.2157), "11/51", "", ok))
@@ -517,6 +536,106 @@ class GradingStress(unittest.TestCase):
         L = SimpleNamespace(answer="AC", unit="", kind="letters", tolerance=0.01)
         self.assertTrue(self._solved(L, "A and C", "", ok))
         self.assertFalse(self._solved(L, "A", "", ok))
+
+
+class AnswerSpec(unittest.TestCase):
+    """The answer form is fixed at the source; a broken form is repaired, never graded."""
+
+    def test_spec_and_format_check(self):
+        from core.answers import answer_spec, format_ok, options_from_format
+        num = answer_spec(29.79, "positive", "L")
+        self.assertEqual(num, {"type": "number", "unit": "L"})
+        for good in (29.79, 30, "29.8", "-7.1", "1.5e-15", "+2"):
+            self.assertTrue(format_ok(num, good), good)
+        for bad in ("29.8 L", "11/51", "about 30", "1.5 × 10^-15", "", None, True, float("nan")):
+            self.assertFalse(format_ok(num, bad), bad)
+        self.assertEqual(options_from_format("Answer yes or no."), ["yes", "no"])
+        ch = answer_spec("forward", "text", "", "Answer with exactly one of: forward, backward, no shift.")
+        self.assertEqual(ch["options"], ["forward", "backward", "no shift"])
+        self.assertTrue(format_ok(ch, "Forward."))
+        self.assertFalse(format_ok(ch, "it shifts to the right"))
+        self.assertTrue(format_ok(answer_spec(["A"], "letters"), "A and C"))
+        self.assertTrue(format_ok(answer_spec("Th-234", "text", "", _NUCLIDE_FMT), "Th-234"))
+
+    def test_broken_reply_is_repaired_not_graded(self):
+        from core.answers import answer_spec
+        from core.pipeline import stages
+        replies = iter([{"working": "n = ... so V = 29.8 L", "final_answer": "about 29.8 L", "unit": ""},
+                        {"final_answer": 29.8, "unit": "L"}])
+        calls = []
+        def fake(role, model, system, user, **kw):
+            calls.append(user[:40])
+            return next(replies)
+        with mock.patch.object(models, "ask_json", fake):
+            out = stages._solve("x/y", "stem", spec=answer_spec(29.79, "positive", "L"))
+        self.assertEqual((out["final_answer"], out["unit"], out["format_repaired"]), (29.8, "L", True))
+        self.assertEqual(out["raw_final_answer"], "about 29.8 L")
+        self.assertEqual(len(calls), 2)
+
+    def test_repair_failure_keeps_the_raw_answer_for_the_verifier(self):
+        from core.answers import answer_spec
+        from core.pipeline import stages
+        replies = iter([{"working": "w", "final_answer": "about 29.8 L"}, {"final_answer": "still words"}])
+        with mock.patch.object(models, "ask_json", lambda *a, **k: next(replies)):
+            out = stages._solve("x/y", "stem", spec=answer_spec(29.79, "positive", "L"))
+        self.assertEqual((out["final_answer"], out["format_repaired"]), ("about 29.8 L", False))
+
+    def test_numeric_stem_must_state_the_unit(self):
+        from types import SimpleNamespace
+        from core.pipeline import flow
+        ad = SimpleNamespace(answer_format=lambda r: None)
+        self.assertEqual(flow._answer_instruction(ad, SimpleNamespace(answer=29.79, unit="L", kind="positive")),
+                         "Give the answer in L.")
+        self.assertIsNone(flow._answer_instruction(ad, SimpleNamespace(answer=3.0, unit="", kind="count")))
+
+    def test_prompt_carries_the_spec(self):
+        from core.answers import answer_spec
+        from core.pipeline import stages
+        p = stages._council_prompt("stem", spec=answer_spec(156.1, "positive", "kJ mol⁻¹"))
+        self.assertIn("single JSON number", p)
+        self.assertIn("express it in kJ mol⁻¹", p)
+
+
+_NUCLIDE_FMT = "Give the product nuclide as element symbol and mass number (for example, C-14)."
+
+
+class GeneratedVariants(unittest.TestCase):
+    """Many writings of a correct answer must match; every trap value must not."""
+
+    def _variants(self, v):
+        mant, exp = f"{v:.3e}".split("e")
+        e = int(exp)
+        sup = str(e).translate(str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻"))
+        out = [v, str(v), f"{v:.4g}", f"{v:.3g}", f"{v:.3e}", f"{v:.4e}", f"{mant} × 10^{e}", f"{mant} × 10^({e})",
+               f"{mant}×10{sup}", f"{mant} x 10^{e}", f"{mant}*10**{e}", f"{mant} × 10⁻⁰" if False else f"{mant}e{e}"]
+        out += [f"≈ {v:.4g}" if False else f"{v:.4g} ", f"x = {v:.4g}", f"answer = {v:.4g}"]
+        return out
+
+    def test_correct_writings_match(self):
+        from core import answers
+        for v in (29.79, 0.000577, 1.507e-15, 156.1, 6.022e23, -7.1, 2500.0, 0.2157):
+            for w in self._variants(v):
+                self.assertTrue(answers.matches(v, w, "real", 0.01), (v, w))
+
+    def test_trap_values_never_match(self):
+        from core import answers
+        for v, traps in ((29.79, (31.2, 22.66, 25.58, 14.89)), (156.1, (156100.0, 67.8, 15.61)),
+                         (1.507e-15, (6.405e-22, 3.656e-07, 7.44e-35)), (2500.0, (2.5, 250.0, 25000.0))):
+            for t in traps:
+                for w in self._variants(t):
+                    self.assertFalse(answers.matches(v, w, "real", 0.0225), (v, w))
+
+    def test_units_by_stated_unit(self):
+        from core import answers
+        cases = [(156.1, "kJ mol⁻¹", 156100, "J mol⁻¹", True), (156.1, "kJ mol⁻¹", 156100, "kJ mol⁻¹", False),
+                 (29.79, "L", 29790, "mL", True), (29.79, "L", 0.02979, "m³", True), (29.79, "L", 29.79, "dm³", True),
+                 (0.25, "mol L⁻¹", 0.25, "M", True), (0.25, "mol L⁻¹", 250, "mmol L⁻¹", True),
+                 (5.776e-4, "s⁻¹", 0.03466, "min⁻¹", True), (1.0, "atm", 760, "mmHg", True),
+                 (2.24, "L", 2.24, "kg", False), (300.0, "K", 26.85, "°C", False)]
+        for eng, eu, val, mu, want in cases:
+            conv = answers.convert_unit(val, mu, eu)
+            got = conv is not None and answers.answers_match(eng, conv, 0.01)
+            self.assertEqual(got, want, (eng, eu, val, mu))
 
 
 class GateCompare(unittest.TestCase):

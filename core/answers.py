@@ -244,6 +244,80 @@ def numeric_value(text):
     return parse_numeric_answer(s)
 
 
+# ── Answer spec: the exact form a solver must give its final answer in ────────
+# Fixing the format at the source removes whole classes of reading problems: a numeric
+# answer is a JSON number in the asked unit, a categorical answer is one of the listed
+# options, a fact answer is option letters. A reply that breaks the spec gets one short
+# repair request (stages._repair_format); a format problem is never graded as wrong.
+
+_STRICT_NUMBER = re.compile(r"^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?$")
+
+
+def options_from_format(fmt):
+    """Allowed answers named by an answer instruction, or None:
+    'Answer yes or no.' -> ['yes', 'no'];
+    'Answer with exactly one of: forward, backward, no shift.' -> ['forward', 'backward', 'no shift']."""
+    if not fmt:
+        return None
+    f = str(fmt).strip().rstrip(".")
+    if re.fullmatch(r"(?i)answer yes or no", f):
+        return ["yes", "no"]
+    m = re.search(r"(?i)exactly one of:\s*(.+)$", f)
+    if m:
+        return [o.strip() for o in m.group(1).split(",") if o.strip()]
+    return None
+
+
+def answer_spec(engine_answer, kind: str, unit: str = "", fmt: str | None = None) -> dict:
+    """What the solver's final_answer must look like for this question."""
+    if kind == "letters":
+        return {"type": "letters"}
+    if isinstance(engine_answer, (int, float)) and not isinstance(engine_answer, bool):
+        return {"type": "number", "unit": unit or ""}
+    opts = options_from_format(fmt)
+    if opts:
+        return {"type": "choice", "options": opts}
+    return {"type": "text", "format": fmt or ""}
+
+
+def spec_instruction(spec: dict) -> str:
+    """The prompt line telling the solver how to write final_answer (and unit)."""
+    t = spec.get("type")
+    if t == "number":
+        u = spec.get("unit") or ""
+        return ('"final_answer": a single JSON number (digits, a decimal point, optional e-notation '
+                'such as 1.5e-15) — no units, words, fractions or "×10" inside it'
+                + (f'; express it in {u}' if u else '') + '.\n'
+                + (f'"unit": "{u}"' if u else '"unit": ""'))
+    if t == "choice":
+        return ('"final_answer": exactly one of ' + ", ".join(f'"{o}"' for o in spec["options"])
+                + ', copied as written.\n"unit": ""')
+    if t == "letters":
+        return '"final_answer": the letter(s) of the correct option(s) only, e.g. "B" or "AC".\n"unit": ""'
+    fmt = spec.get("format") or "the final formula, name or label only"
+    return f'"final_answer": {fmt} (just the answer, no explanation).\n"unit": ""'
+
+
+def format_ok(spec: dict, final_answer) -> bool:
+    """Does the final answer follow the spec? (Only the form is checked, never correctness.)"""
+    if final_answer is None or (isinstance(final_answer, str) and not final_answer.strip()):
+        return False
+    t = spec.get("type")
+    if t == "number":
+        if isinstance(final_answer, bool):
+            return False
+        if isinstance(final_answer, (int, float)):
+            return math.isfinite(final_answer)
+        return bool(_STRICT_NUMBER.match(str(final_answer).strip()))
+    if t == "choice":
+        a = normalise_text(final_answer).strip(" .'\"")
+        return a in {normalise_text(o) for o in spec["options"]}
+    if t == "letters":
+        from core.engine.facts import letters_of
+        return bool(letters_of(final_answer))
+    return True
+
+
 # ── Units ────────────────────────────────────────────────────────────────────
 # A member may answer in another unit than the one asked (156100 J mol⁻¹ for 156.1 kJ mol⁻¹).
 # The value is converted using the unit the member STATED, so a real "forgot to convert"

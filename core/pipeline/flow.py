@@ -175,7 +175,7 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
     plan = cand["_plan"]
     traps = [t["desc"] for t in result.traps]
     options, correct = _ask_options(plan, rng)
-    fmt = adapter.answer_format(result) if hasattr(adapter, "answer_format") else None
+    fmt = _answer_instruction(adapter, result)
     for attempt in range(GATE_RETRIES + 1):
         stem = stages.write_stem(adapter.config["display_name"], scenario, adapter.chain_text(plan), spec,
                                  values, result.constants, result.asks, result.unit, traps,
@@ -219,6 +219,15 @@ def _eval_expression(expr):
         except (ValueError, ZeroDivisionError, OverflowError, SyntaxError, TypeError):
             continue
     return None
+
+
+def _answer_instruction(adapter, result):
+    """The sentence the stem must end with, checked verbatim by the gate: the option list or
+    form for a non-numeric answer (physical.ANSWER_FORMATS), the unit for a numeric one."""
+    fmt = adapter.answer_format(result) if hasattr(adapter, "answer_format") else None
+    if fmt is None and _is_numeric(result) and result.unit:
+        fmt = f"Give the answer in {result.unit}."
+    return fmt
 
 
 def _numeric_match(result, final_answer, unit):
@@ -268,10 +277,12 @@ def _grade(result, member, diag) -> dict:
     tell, the verifier's narrow answer_equivalent field decides. match_by records which."""
     match, match_by = _text_match(result, member.get("final_answer"), diag, member.get("unit", ""))
     solved, slip_confirmed = False, None
-    if match and diag["verdict"] in ("correct", "wrong"):
-        # the final answer is within tolerance: a slip the verifier saw on the way (e.g. 29.52
-        # against 29.79 L) did not change the result, so it counts as solved. Only a right
-        # answer by a wrong or lucky route is not counted.
+    # Decision table (Flow.md, step 8). Within tolerance: solved if the verifier calls the
+    # work correct, or wrong only by a slip that did not change the result (run 4: 29.52 vs
+    # 29.79 L). Within tolerance by a WRONG METHOD (run 5: −190.28 vs −192.2 kJ mol⁻¹ from a
+    # linear extrapolation) or by wrong reasoning is a lucky number, not a solution.
+    if match and (diag["verdict"] == "correct" or
+                  (diag["verdict"] == "wrong" and diag.get("failure_type") == "slip")):
         solved = True
     elif not match and diag.get("failure_type") == "slip" or (not match and diag["verdict"] == "correct"):
         expr = diag.get("member_expression")
@@ -302,10 +313,12 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
        {"decision": "accept", ...} | {"decision": "too_easy", ...} | {"decision": "reword", "feedback"}
        | {"decision": "drop", "reason"}.  Raises Parked if a council call fails."""
     rtext, atext = trace_text(result), answer_text(result)
+    fmt = _answer_instruction(adapter, result)
+    spec = answers.answer_spec(result.answer, result.kind, result.unit, fmt)
 
     def solve_and_grade(names):
         try:
-            members = stages.council_solve(stem, names)
+            members = stages.council_solve(stem, names, spec)
         except CouncilMemberFailed as e:
             raise Parked({"error": str(e)})
         with cf.ThreadPoolExecutor(max_workers=len(members)) as ex:
@@ -368,7 +381,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
         if kind == "unclear_wording":
             hint = stages.clarification_hint(stem, d.get("ambiguous_text") or "", d.get("clarification") or "")
-            re_ = stages.solve_with_hint(g, stem, hint)
+            re_ = stages.solve_with_hint(g, stem, hint, spec)
             ok, _ = _hint_solved(result, re_, stem, rtext, atext, hint)
             hint_log.append({"member": g["name"], "hint": "clarification", "text": hint, "solved": ok,
                              "answer": re_["final_answer"]})
@@ -381,7 +394,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
         if kind == "missing_knowledge":
             hint = knowledge_hint(cand)
-            re_ = stages.solve_with_hint(g, stem, hint)
+            re_ = stages.solve_with_hint(g, stem, hint, spec)
             ok, _ = _hint_solved(result, re_, stem, rtext, atext, hint)
             hint_log.append({"member": g["name"], "hint": "knowledge", "text": hint, "solved": ok,
                              "answer": re_["final_answer"]})
@@ -393,7 +406,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
         # genuine difficulty: always confirmed with the code-written insight hint
         hint = insight_hint(cand, d.get("failed_step"))
-        re_ = stages.solve_with_hint(g, stem, hint)
+        re_ = stages.solve_with_hint(g, stem, hint, spec)
         ok, d_hint = _hint_solved(result, re_, stem, rtext, atext, hint)
         entry = {"member": g["name"], "hint": "insight", "text": hint, "solved": ok, "answer": re_["final_answer"]}
         if d_hint is not None:
