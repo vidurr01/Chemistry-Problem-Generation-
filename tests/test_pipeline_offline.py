@@ -476,9 +476,10 @@ class GradingStress(unittest.TestCase):
         from types import SimpleNamespace
         return SimpleNamespace(answer=answer, unit=unit, kind=kind, tolerance=tol)
 
-    def _solved(self, r, ans, unit="", diag=None):
+    def _solved(self, r, ans, unit="", diag=None, working=""):
         from core.pipeline import flow
-        g = flow._grade(r, {"final_answer": ans, "unit": unit}, diag or {"verdict": "wrong", "failure_type": "genuine_difficulty"})
+        g = flow._grade(r, {"final_answer": ans, "unit": unit, "working": working},
+                        diag or {"verdict": "wrong", "failure_type": "genuine_difficulty"})
         return g["counts_as_solved"]
 
     def test_numbers(self):
@@ -512,8 +513,9 @@ class GradingStress(unittest.TestCase):
             ("-150", {"verdict": "wrong", "failure_type": "genuine_difficulty"}, False),
             (None, {"verdict": "wrong"}, False),
         ]
+        work = "dH = -150 kJ; T dS = 42.2 kJ; so dG = -150 - 42.2 = -150 (arithmetic slip)"
         for ans, diag, want in rows:
-            self.assertEqual(self._solved(r, ans, "kJ mol⁻¹", diag), want, (ans, diag))
+            self.assertEqual(self._solved(r, ans, "kJ mol⁻¹", diag, work), want, (ans, diag))
 
     def test_fractions_expressions_and_powers(self):
         ok = {"verdict": "correct"}
@@ -541,7 +543,16 @@ class GradingStress(unittest.TestCase):
     def test_slip_confirmed_by_the_members_own_arithmetic(self):
         r = self._r(29.79, "L")
         d = {"verdict": "wrong", "failure_type": "slip", "member_expression": "(1.4173 * 0.0821 * 320.0) / 1.25"}
-        self.assertTrue(self._solved(r, "31.0", "L", d))
+        work = "n total = 1.4173 mol; V = nRT/P = 1.4173 x 0.0821 x 320.0 / 1.25 = 31.0 L"
+        self.assertTrue(self._solved(r, "31.0", "L", d, work))
+        # run 7: the verifier wrote the correct set-up itself; the member's working has none of it
+        d7 = {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.45 * 6 * 96500 * 1.18 / 1000"}
+        r7 = self._r(307.4, "kJ")
+        self.assertFalse(self._solved(r7, "0.2915", "kJ", d7, "W = nFE = 2 x 96500 x 1.51 = 291.5 J, i.e. 0.2915 kJ"))
+        # a genuine miscopy (1.81 written for 1.18) is still confirmed: one substituted value allowed
+        self.assertTrue(self._solved(r7, "471.6", "kJ", d7, "W = 0.45 x 6 x 96500 x 1.81 = 471.6 kJ"))
+        # no working at all: cannot be confirmed
+        self.assertFalse(self._solved(r, "31.0", "L", d, ""))
         d = {"verdict": "wrong", "failure_type": "slip", "member_expression": "1.0 * 0.0821 * 320 / 1.25"}
         self.assertFalse(self._solved(r, "21.0", "L", d))
 
