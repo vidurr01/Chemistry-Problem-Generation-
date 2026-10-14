@@ -224,6 +224,9 @@ Write it the way a human JEE paper setter would:
   dissociation behaviour, stoichiometric factors, physical constants) goes in one short
   closing line such as "(Given: equivalent mass of sulfamic acid = 97.09 g eq⁻¹; NaOH → Na⁺ +
   OH⁻)", never as an "Assuming that ..." sentence inside the story;
+- whenever an element, compound or ion is named in words, give its formula in brackets right
+  after the name, as JEE papers do: "iron (Fe)", "potassium dichromate (K₂Cr₂O₇)",
+  "aluminium sulfate (Al₂(SO₄)₃)"; a reaction is named by the formulas of its species;
 - state each value once; no filler ("a certain amount of", "the said substance");
 - short, plain sentences; no meta-talk about the question or the student.
 Finally, re-read the question as an examiner and rewrite any phrase a human setter would not
@@ -286,7 +289,10 @@ def gate_extract(stem: str, spec: list, ask_options: list, constants: list) -> d
         elif s["kind"] == "list":
             how = "a JSON list"
         elif s["kind"] == "text":
-            how = "the text exactly as written in the question"
+            how = ("a species: the formula the question gives for it ('iron (Fe)' -> Fe), or null "
+                   "if it gives none; a reaction: its equation, or for a reaction told in words "
+                   "with formulas ('X is converted into Y') 'X -> Y' with only the coefficients the "
+                   "question states; any other text as written")
         fields.append(f'- "{s["key"]}": {s["desc"]}{(" [" + s["unit"] + "]") if s.get("unit") else ""} — {how}')
     opts = "\n".join(f"{i + 1}. {o}" for i, o in enumerate(ask_options))
     consts = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(constants)) or "(none)"
@@ -578,7 +584,18 @@ Return JSON: {{"hint": "..."}}"""
 
 # ── 7. Readable solution ─────────────────────────────────────────────────────
 
-def write_solution(stem: str, trace_text: str, answer_text: str) -> str:
+def write_solution(stem: str, trace_text: str, answer_text: str, *, previous: str | None = None,
+                   problems: list | None = None) -> str:
+    redo = ""
+    if previous:
+        found = "\n".join(f"- {p}" for p in problems or [])
+        redo = f"""
+Your earlier solution had these errors. Write the whole solution again with every one fixed:
+{found}
+
+Earlier solution:
+{previous}
+"""
     prompt = f"""Write a clear worked solution for this chemistry question, for a student.
 
 QUESTION:
@@ -590,12 +607,70 @@ EXACT COMPUTATION (follow it; do not change any number):
 FINAL ANSWER: {answer_text}
 
 Explain each step in words, show the substitution, and end with the final answer.
+- Each step must reach that step's result from the exact computation, with the arithmetic
+  written out, e.g. "0.025 mol × 1.5 = 0.0375 mol"; every calculation you write must be true.
+- Where a step's formula needs a ratio, n-factor or molar mass that the computation does not
+  list, derive it from the formula shown and check that it gives the step's result.
+- Never state a ratio, quantity or label that contradicts the computation; do not invent
+  extra quantities.
 The solution is ONE plain-text string: numbered steps separated by line breaks, no nested
-JSON, no LaTeX. Return JSON: {{"solution": "1. ...\\n2. ...\\nFinal answer: ..."}}"""
+JSON, no LaTeX. The last line is "Final answer: <answer>".
+{redo}
+Return JSON: {{"solution": "1. ...\\n2. ...\\nFinal answer: ..."}}"""
     out = models.ask_json("solution_writer", models.SOLUTION_WRITER,
                           "You write clear chemistry solutions. Output JSON only.", prompt,
                           max_tokens=8000, temperature=0.3)
     return _solution_text(out.get("solution"))
+
+
+def check_solution(stem: str, trace_text: str, answer_text: str, solution: str) -> list:
+    """The mismatch verifier reads a written solution against the exact computation and
+    reports every step that is wrong. Returns [{"step", "quote", "problem"}] (empty: correct)."""
+    numbered = "\n".join(f"[{i}] {ln}" for i, ln in enumerate(
+        (ln for ln in str(solution).splitlines() if ln.strip()), 1))
+    prompt = f"""A worked solution was written for a student from an exact reference computation.
+Check it step by step and find every place where it is wrong.
+
+QUESTION:
+{stem}
+
+EXACT REFERENCE COMPUTATION (correct; the final answer is {answer_text}):
+{trace_text}
+
+WRITTEN SOLUTION (lines numbered):
+{numbered}
+
+Report an error for every line that:
+- states a ratio, n-factor, coefficient, molar mass or formula that is wrong or does not lead
+  to the reference step's result;
+- writes a calculation that is false (check every one), or reaches a step's result by
+  arithmetic that does not give it;
+- labels or explains a quantity wrongly (e.g. calls the amount used the amount left);
+- contradicts itself or the reference computation;
+- gives a final answer different from the reference.
+Do not report wording, style, or extra correct explanation. If every line is correct,
+return an empty list.
+
+Return JSON: {{"errors": [{{"line": <line number>, "quote": "the exact wrong text, copied",
+"problem": "what is wrong and what is right"}}]}}"""
+    out = models.ask_json("solution_checker", models.VERIFIER,
+                          "You are a meticulous chemistry examiner. Output JSON only.", prompt,
+                          max_tokens=6000, temperature=0.0)
+    errs = out.get("errors")
+    if errs is None:
+        raise ValueError("solution checker returned no 'errors' list")
+    if isinstance(errs, dict):
+        errs = [errs]
+    if not isinstance(errs, list):
+        raise ValueError("solution checker returned no 'errors' list")
+    found = []
+    for e in errs:
+        if isinstance(e, str) and e.strip():
+            found.append({"line": None, "quote": "", "problem": e.strip()})
+        elif isinstance(e, dict) and (e.get("problem") or e.get("quote")):
+            found.append({"line": as_number(e.get("line")), "quote": str(e.get("quote") or "").strip(),
+                          "problem": str(e.get("problem") or "").strip()})
+    return found
 
 
 def _solution_text(sol) -> str:

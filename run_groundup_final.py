@@ -110,11 +110,9 @@ def _taken_ids(config, subject):
 def build_record(subject, config, payload, bb):
     cand, result, decision = payload["cand"], payload["result"], payload["decision"]
     graded = decision["graded"]
-    try:
-        solution = stages.write_solution(payload["stem"], flow.trace_text(result), flow.answer_text(result))
-    except Exception as e:                                       # display only: never blocks acceptance
-        solution = ""
-        print(f"  [warn] solution writer failed ({type(e).__name__}); saving without a readable solution")
+    solution, solution_check = flow.checked_solution(payload["stem"], result)
+    if solution_check["status"] != "verified":
+        print(f"  [warn] solution {solution_check['status']}; saving without a readable solution")
     try:
         meta = compute_meta_tags_for_subject(
             config, question_text=payload["stem"], archetype_code=config["default_archetype_code"],
@@ -137,6 +135,7 @@ def build_record(subject, config, payload, bb):
         "unit": result.unit,
         "answer_text": flow.answer_text(result),
         "solution": solution,
+        "solution_check": solution_check,
         "tags": {"knowledge": "recall" if decision.get("recall") else "closed_book", "trap_types": trap_types},
         "council_n_correct": decision["n_correct"],
         "council_n_solved": decision["n_solved"],

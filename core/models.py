@@ -42,7 +42,7 @@ DIFFICULTY_LABELS = {        # first step that solves an accepted question -> it
 }
 
 ROSTER = {"generator": GENERATOR, "refiner": REFINER, "extractor": EXTRACTOR, "verifier": VERIFIER,
-          "solution_writer": SOLUTION_WRITER, "ladder": [slug for _, slug in LADDER]}
+          "solution_writer": SOLUTION_WRITER, "solution_checker": VERIFIER, "ladder": [slug for _, slug in LADDER]}
 
 
 def api_key() -> str:
