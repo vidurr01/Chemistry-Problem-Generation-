@@ -235,9 +235,11 @@ class Given:
 @dataclass
 class ChainPlan:
     steps: list
-    wiring: list          # per step: {key: ("prev", field) | ("given", qkey) | ("derive", None)}
+    wiring: list          # per step: {key: ("prev", field) | ("given", qkey) | ("derive", None)
+                          #            | ("step", (j, field)): an earlier step's output (a tree)}
     givens: dict          # qkey -> Given
     constants: list
+    branches: tuple = ()  # a tree: ((first, last) step index of each branch), final step after them
 
 
 def qualify(i: int, p: Param) -> str:
@@ -291,6 +293,149 @@ def plan_chain(steps: list) -> ChainPlan:
         prev_outputs = st.outputs + carried
     return ChainPlan(steps, wiring, givens, constants)
 
+
+
+def _params_of(st: Step) -> dict:
+    params = {p.key: p for p in st.needs}
+    for d in st.derive:
+        for p in d.params:
+            params.setdefault(p.key, p)
+    return params
+
+
+def plan_tree(branches: list, final: Step, feeds: dict, share: dict | None = None, merge: bool = True) -> ChainPlan:
+    """Two or more chains computed separately and merged by one final step (a tree: 'ΔH from
+    the enthalpies of formation, ΔS from the entropies, then T = ΔH/ΔS').
+
+    branches  lists of steps; each must be a valid chain on its own
+    final     the step that merges them; it runs after all branches
+    feeds     {final input key: branch index, or (branch index, output field)}: that
+              branch's last step supplies the input
+    share     {branch index: {its own given qkey: qkey of an earlier branch}}: the same value
+              in both (the one unknown two processes share)
+    merge     givens with the same field, description and unit in several branches (the
+              temperature of the one reaction) become one given; False for branches that
+              describe different systems (a condition: two reactions, two processes)
+
+    A tree is
+    refused when a stated value would contradict a computed one: a field stated in one branch
+    (or at the final step) that another branch computes."""
+    if len(branches) < 2:
+        raise EngineError("a tree needs two branches")
+    share = share or {}
+    steps, wiring, givens, constants, spans = [], [], {}, [], []
+    by_sig: dict = {}             # (field, desc, unit) -> qkeys stated by the branches so far
+
+    def bind(i, p, own=()):
+        """The qkey for input p of step i: the one earlier given with the same field,
+        description and unit, if exactly one exists outside `own` (this branch's givens)."""
+        sig = (p.key, p.desc, p.unit)
+        earlier = [q for q in by_sig.get(sig, []) if q not in own] if merge else []
+        qk = earlier[0] if len(earlier) == 1 else qualify(i, p)
+        g = givens.setdefault(qk, Given(qk, p))
+        if i not in g.steps:
+            g.steps.append(i)
+        return qk
+
+    for b, chain in enumerate(branches):
+        sub = plan_chain(list(chain))
+        off = len(steps)
+        rename = {}
+        for qk, g in sub.givens.items():
+            forced = share.get(b, {}).get(qk)
+            if forced is not None:
+                if forced not in givens:
+                    raise EngineError(f"shared given {forced!r} is not in an earlier branch")
+                rename[qk] = forced
+                for j in g.steps:
+                    givens[forced].steps.append(off + j)
+            elif qk.startswith("ctx."):
+                rename[qk] = qk
+                gg = givens.setdefault(qk, Given(qk, g.param))
+                gg.steps.extend(off + j for j in g.steps)
+            else:
+                sig = (g.param.key, g.param.desc, g.param.unit)
+                own = [q for q, gg in sub.givens.items() if (gg.param.key, gg.param.desc, gg.param.unit) == sig]
+                if len(own) > 1:                 # stated twice within the branch: kept apart
+                    rename[qk] = qualify(off + g.steps[0], g.param)
+                    givens[rename[qk]] = Given(rename[qk], g.param, [off + g.steps[0]])
+                else:
+                    rename[qk] = bind(off + g.steps[0], g.param)
+                for j in g.steps[1:]:
+                    givens[rename[qk]].steps.append(off + j)
+        for qk in sub.givens:
+            gg = sub.givens[qk].param
+            lst = by_sig.setdefault((gg.key, gg.desc, gg.unit), [])
+            if rename[qk] not in lst:
+                lst.append(rename[qk])
+        for w in sub.wiring:
+            wiring.append({k: (src, rename[ref]) if src == "given" else (src, ref) for k, (src, ref) in w.items()})
+        steps.extend(sub.steps)
+        spans.append((off, off + len(sub.steps) - 1))
+        for c in sub.constants:
+            if c not in constants:
+                constants.append(c)
+
+    fi = len(steps)
+    ends = [steps[last] for _, last in spans]
+    params = _params_of(final)
+    feeds = {k: (v if isinstance(v, tuple) else (v, k)) for k, v in feeds.items()}
+    for key, (b, fld) in feeds.items():
+        if key not in params:
+            raise EngineError(f"{final.tx} has no input {key!r}")
+        end = ends[b]
+        if fld not in end.outputs and not (end.final and end.final[0] == fld):
+            raise EngineError(f"branch {b} (tx {end.tx}) does not compute {fld!r}")
+        if end.tx in final.not_after or not role_ok(params[key], end.roles.get(fld)):
+            raise EngineError(f"tx {end.tx} cannot feed {key!r} of tx {final.tx}")
+    if any(st.tx in final.not_after_any for st in steps):
+        raise EngineError(f"tx {final.tx} must not follow steps of its branches")
+    w: dict = {}
+
+    def source(key):
+        if key in feeds:
+            b, fld = feeds[key]
+            return ("step", (spans[b][1], fld))
+        hits = [b for b, e in enumerate(ends) if key in e.outputs]
+        if len(hits) > 1:
+            raise EngineError(f"{key!r} is computed by two branches")
+        if hits:
+            if not role_ok(params[key], ends[hits[0]].roles.get(key)):
+                raise EngineError(f"{key!r} of tx {final.tx} cannot come from tx {ends[hits[0]].tx}")
+            return ("step", (spans[hits[0]][1], key))
+        return None
+
+    for d in final.derive:
+        src = source(d.key)
+        if src:
+            w[d.key] = src
+            continue
+        w[d.key] = ("derive", None)
+        for p in d.params:
+            if p.key not in w:
+                w[p.key] = source(p.key) or ("given", bind(fi, p))
+    for p in final.needs:
+        if p.key not in w:
+            w[p.key] = source(p.key) or ("given", bind(fi, p))
+    wiring.append(w)
+    steps.append(final)
+    for c in final.constants:
+        if c not in constants:
+            constants.append(c)
+
+    branch_of = {}
+    for b, (first, last) in enumerate(spans):
+        for j in range(first, last + 1):
+            branch_of[j] = b
+    branch_of[fi] = None
+    for qk, g in givens.items():
+        k = g.param.key
+        for j, st in enumerate(steps):
+            if wiring[j].get(k) == ("given", qk):
+                continue                       # the step hands on the value it was given
+            if k in st.outputs and branch_of[j] is not None and any(branch_of[u] != branch_of[j] for u in g.steps):
+                raise EngineError(f"{k!r} is stated (for step {g.steps[0]}) and computed by tx {st.tx}")
+    return ChainPlan(steps, wiring, givens, constants, tuple(spans))
 
 def links(a: Step, b: Step, bridges=None) -> bool:
     """True if step b can follow step a: b uses at least one output of a, no wired value
@@ -391,7 +536,7 @@ class ChainResult:
     tolerance: float = 0.01   # relative; wider when rounding intermediates moves the answer
 
 
-def _resolve(plan: ChainPlan, i: int, prev_out: dict, values: dict) -> dict:
+def _resolve(plan: ChainPlan, i: int, prev_out: dict, values: dict, outs=None) -> dict:
     st = plan.steps[i]
     v = {}
     for key, (src, ref) in plan.wiring[i].items():
@@ -399,16 +544,19 @@ def _resolve(plan: ChainPlan, i: int, prev_out: dict, values: dict) -> dict:
             v[key] = prev_out[ref]
         elif src == "given":
             v[key] = values[ref]
+        elif src == "step":
+            v[key] = outs[ref[0]][ref[1]]
     for d in st.derive:
         if plan.wiring[i][d.key][0] == "derive":
             v[d.key] = d.fn(dict(v))
     return v
 
 
-def _run_step(plan: ChainPlan, i: int, prev_out: dict, values: dict):
+def _run_step(plan: ChainPlan, i: int, prev_out: dict, values: dict, outs=None):
+    """outs: every earlier step's output, in order (needed only by a tree's final step)."""
     st = plan.steps[i]
     try:
-        v = _resolve(plan, i, prev_out, values)
+        v = _resolve(plan, i, prev_out, values, outs)
         out = st.fn(dict(v))
     except EngineError:
         raise
@@ -423,10 +571,13 @@ def _run_step(plan: ChainPlan, i: int, prev_out: dict, values: dict):
     return v, out
 
 
-def _run_from(plan: ChainPlan, start: int, prev_out: dict, values: dict) -> dict:
-    out = prev_out
+def _run_from(plan: ChainPlan, start: int, outs: list, values: dict) -> dict:
+    """Run steps start.. after the outputs `outs` of steps 0..start-1; the last output."""
+    hist = list(outs)
+    out = hist[-1] if hist else {}
     for i in range(start, len(plan.steps)):
-        _, out = _run_step(plan, i, out, values)
+        _, out = _run_step(plan, i, out, values, hist)
+        hist.append(out)
     return out
 
 
@@ -444,7 +595,7 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
     constants = list(plan.constants)
     out: dict = {}
     for i, st in enumerate(plan.steps):
-        v, out = _run_step(plan, i, out, values)
+        v, out = _run_step(plan, i, out, values, outs)
         inputs.append(v)
         outs.append(out)
         for c in out.get("_constants", ()):       # data the step looked up, e.g. atomic masses
@@ -475,7 +626,7 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
                 else:
                     wrong_out[st.answer] = wrong
                 check_kind(st.kind, wrong_out[st.answer])
-                final = _run_from(plan, i + 1, wrong_out, values)[a_field]
+                final = _run_from(plan, i + 1, outs[:i] + [wrong_out], values)[a_field]
                 check_kind(a_kind, final)
             except _TRAP_ERRORS:
                 continue
@@ -511,9 +662,11 @@ def rounding_tolerance(plan: ChainPlan, values: dict, a_field: str, answer) -> f
         return 0.01
     try:
         prev: dict = {}
+        hist: list = []
         for i in range(len(plan.steps)):
-            _, out = _run_step(plan, i, prev, values)
+            _, out = _run_step(plan, i, prev, values, hist)
             prev = round_sig({k: x for k, x in out.items() if k != "_constants"}, ROUNDING_SIG)
+            hist.append(prev)
         shifted = prev[a_field]
         dev = abs(float(shifted) - float(answer)) / abs(float(answer))
     except Exception:  # noqa: BLE001 - a rounded path that fails just keeps the default

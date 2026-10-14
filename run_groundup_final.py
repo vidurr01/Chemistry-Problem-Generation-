@@ -151,6 +151,7 @@ def build_record(subject, config, payload, bb):
         "engine": {"txs": cand["txs"], "graph_edges": cand["edges"], "graph_path": cand["nodes"],
                    "scenario": payload["scenario"], "givens": payload["values"], "constants": result.constants,
                    "trace": result.trace, "traps": result.traps, "asks": result.asks,
+                   "shape": cand.get("_shape"),
                    "form": getattr(result, "form", "forward"), "form_detail": getattr(result, "detail", {}),
                    "form_note": getattr(result, "form_note", "")},
         **({"options": [f"({chr(65 + i)}) {o}" for i, o in enumerate(payload["values"]["options"])],
@@ -223,10 +224,16 @@ def _rebuild_parked(item, chain_adapter, config, rng):
         cand = {"edges": item["edges"], "nodes": item["nodes"], "chapters": item["chapters"], "txs": item["txs"],
                 "trap_ids": [], "description": "", "_fact": fq}
         return fa, cand, None, fa.result(fq)
-    plan = chain_adapter.plan(item["txs"])
-    result = chain_adapter.compute(plan, item["values"])
+    plan = chain_adapter.plan(item["txs"], item.get("shape"))
+    if item.get("form_result"):                  # asked in a form: judged as that question
+        from core.pipeline.forms_layer import FormResult
+        result = FormResult(**item["form_result"])
+        chain_adapter.compute(plan, item["chain_values"])      # the chain itself still runs
+    else:
+        result = chain_adapter.compute(plan, item["values"])
     cand = {"edges": item["edges"], "nodes": item["nodes"], "chapters": item["chapters"],
-            "txs": item["txs"], "trap_ids": item.get("trap_ids", []), "_plan": plan}
+            "txs": item["txs"], "trap_ids": item.get("trap_ids", []), "_plan": plan,
+            **({"_shape": item["shape"]} if item.get("shape") else {})}
     return chain_adapter, cand, plan, result
 
 
@@ -346,10 +353,14 @@ def main():
         cand = bb.current["chain"] if bb.current else {}
         last_inputs = bb.last("inputs") or {}
         last_gate = bb.last("gate") or {}
+        last_form = bb.last("form") or {}          # the question as asked: its stated values and answer
         pid = park(config, {"error": p.item.get("error"), "kind": "fact" if kind == "facts" else "chain",
                             "txs": cand.get("txs"), "edges": cand.get("edges"),
                             "nodes": cand.get("nodes"), "chapters": cand.get("chapters"),
-                            "trap_ids": cand.get("trap_ids"), "values": last_inputs.get("values"),
+                            "trap_ids": cand.get("trap_ids"),
+                            "values": last_form.get("values", last_inputs.get("values")),
+                            "chain_values": last_inputs.get("values"), "shape": last_form.get("shape"),
+                            "form_result": last_form.get("result"),
                             "scenario": last_inputs.get("scenario"), "stem": last_gate.get("stem"),
                             "rounds": bb.current["rounds"] if bb.current else 0})
         if _out_of_credits(p.item.get("error")):

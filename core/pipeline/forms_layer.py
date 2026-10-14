@@ -8,7 +8,11 @@ FormResult, so grading, the ladder, the verifier and the answer key work unchang
 is the forward computation plus a note saying how the form uses it.
 
     picked = apply_form(adapter, cand, spec, values, result, rng, avoid={"forward"})
-    # -> (form_spec, form_values, form_result) or None when no form fits these values
+    # -> (form_spec, form_values, form_result); None for a condition that cannot be posed
+
+A candidate's `_shape` says what kind of plan it is: a chain (none), a tree (branches merged
+by one step; every form applies, and the forward question is the tree question) or a
+condition (two systems compared; only the condition form applies).
 """
 
 from __future__ import annotations
@@ -18,12 +22,15 @@ from dataclasses import dataclass, field
 
 from core.engine import forms
 from core.engine.base import EngineError, round_sig, run_chain
+from core.engine.forms import COMPARE_TX, _add_trap, _trap_list, roots, value_of
 
 NUMERIC = {"real", "positive", "nonneg", "negative", "fraction", "open_fraction", "percent", "ph",
            "temperature", "integer", "count", "posint"}
 # How often each form is chosen when several fit (the forward chain stays possible but rare:
 # about a third of real Advanced questions are forward, docs/advanced_formula_map.md).
 FORM_WEIGHTS = {"inverse": 3, "two_state": 3, "simultaneous": 2, "forward": 1}
+# A tree is already a non-forward use of its formulas: asked as it is most often.
+TREE_WEIGHTS = {"forward": 3, "inverse": 2, "two_state": 1, "simultaneous": 1}
 TWO_STATE_FACTORS = (2.0, 3.0, 4.0, 0.5, 0.25, 10.0, 0.1, 1.5)
 SIMULTANEOUS_TRIES = 8        # (varied input, two unknowns) combinations tried per question
 FRAGILE_TOL = 0.02
@@ -207,27 +214,138 @@ def _simultaneous(plan, spec, values, base, rng):
     return None
 
 
+# What a condition may set to make its two systems equal: a condition or amount the
+# experimenter chooses (temperature, pressure, volume, concentration, mass, time, charge),
+# never a property of a substance (molar mass, K_a, E°, ΔH, a vapour pressure of a pure liquid),
+# which would describe a substance that does not exist.
+ADJUSTABLE_UNITS = {"K", "°C", "atm", "mol", "mol L⁻¹", "mol kg⁻¹", "L", "mL", "g", "kg", "mg", "s", "h",
+                    "C", "A h", "J", "% w/W", "% w/V"}
+
+
+def _stretch(lo, hi, x):
+    return min(lo, x * 0.8 if x > 0 else x * 1.25), max(hi, x * 1.25 if x > 0 else x * 0.8)
+
+
+def _condition(plan, spec, values, base, rng, shape):
+    """Two systems compared (the plan ends in forms.compare_step): ask for the input at which
+    their results are equal. Forward, then hidden: the unknown keeps the value the generator
+    chose, one stated input (of the second system if possible) is set, to 3 s.f., so that the
+    two results are equal there, and the condition must then give back exactly one value in
+    the unknown's realistic range."""
+    if plan.steps[-1].tx != COMPARE_TX:
+        return None
+    h = shape["unknown"]
+    p = plan.givens[h].param
+    x0 = float(values[h])
+    lo, hi = _stretch(float(p.lo), float(p.hi), x0)
+    (a0, a1), (b0, b1) = plan.branches
+    num = [k for k in _numeric_givens(plan, spec) if k != h]
+    second = [k for k in num if all(b0 <= j <= b1 for j in plan.givens[k].steps)]
+    first = [k for k in num if k not in second]
+    rng.shuffle(second)
+    rng.shuffle(first)
+
+    def diff(vals, x, trap=None):
+        return value_of(plan, {**vals, h: x}, None, trap)
+
+    for b in second + first:
+        pb = plan.givens[b].param
+        if pb.kind in ("integer", "count", "posint") or pb.unit not in ADJUSTABLE_UNITS:
+            continue
+        blo, bhi = _stretch(float(pb.lo), float(pb.hi), float(values[b]))
+        rb = roots(lambda y: diff({**values, b: y}, x0), blo, bhi)
+        if len(rb) != 1:
+            continue
+        vals = {**values, b: float(round_sig(rb[0], 3))}
+        rx = roots(lambda x: diff(vals, x), lo, hi)
+        if len(rx) != 1 or not math.isclose(rx[0], x0, rel_tol=0.05):
+            continue
+        x = rx[0]
+        shifts = []                        # how far stating each value to ~3-4 s.f. moves x
+        for k in num:
+            for f in (1 - 5e-4, 1 + 5e-4):
+                r2 = roots(lambda z: diff({**vals, k: vals[k] * f}, z), lo, hi)
+                if len(r2) == 1:
+                    shifts.append(abs(r2[0] - x) / abs(x))
+        tol = min(0.10, max(0.01, 1.5 * max(shifts or [0])))
+        if tol > FRAGILE_TOL:
+            continue
+        traps = []
+        for i, t in _trap_list(plan):
+            try:
+                rt = roots(lambda z: diff(vals, z, (i, t)), lo, hi)
+            except Exception:  # noqa: BLE001
+                continue
+            if len(rt) == 1:
+                n = len(traps)
+                _add_trap(traps, t, rt[0], x, tol)
+                if len(traps) > n:
+                    traps[-1]["desc"] += " (for the first system)" if i <= a1 else " (for the second system)"
+        run = run_chain(plan, {**vals, h: x})
+        sa, sb = plan.steps[a1], plan.steps[b1]
+        qa = sa.final[3] if sa.final else sa.asks
+        qb = sb.final[3] if sb.final else sb.asks
+        both = "the same for both systems" if shape.get("shared") else "of the first system"
+        unit = f" {p.unit}" if p.unit else ""
+        note = (f"FORM condition: two systems; the {qa} of the first equals the {qb} of the second when "
+                f"{p.desc} ({both}) = {round_sig(x)}{unit}. The steps above are run at that value: the last "
+                f"step's difference is zero there, and no other value in a realistic range makes it zero.")
+        stem_note = (f"QUESTION FORM (condition): describe the two systems (the first and the second) with "
+                     f"their stated values. Do NOT state {p.desc} ({both}). Ask for the value of {p.desc} at "
+                     f"which the {qa} of the first system equals the {qb} of the second.")
+        asks = f"{p.desc} at which the {qa} of the first system equals the {qb} of the second"
+        spec2 = [s for s in spec if s["key"] != h]
+        vals2 = {k: v for k, v in vals.items() if k != h}
+        return spec2, vals2, FormResult(round_sig(x), p.unit, p.kind if p.kind in NUMERIC else "real", asks,
+                                        run.trace, traps, run.constants, tol, "condition", note, None, stem_note,
+                                        {"unknown": h, "adjusted": b, "adjusted_value": vals[b]})
+    return None
+
+
 BUILDERS = {"inverse": _inverse, "two_state": _two_state, "simultaneous": _simultaneous}
+
+
+def _as_given(plan, result, tree: bool):
+    """The plan's own question (a chain run forward, or a tree)."""
+    note = "FORM tree: the branches are computed separately and the last step merges their results." if tree else ""
+    stem_note = ("QUESTION FORM (tree): state the data of each branch; the student works out each branch's "
+                 "result separately and combines them in the last step. Do not state the branch results."
+                 if tree else "")
+    return FormResult(result.answer, result.unit, result.kind, result.asks, result.trace, result.traps,
+                      result.constants, result.tolerance, "tree" if tree else "forward", note,
+                      getattr(result, "answer_substances", None), stem_note)
 
 
 def apply_form(adapter, cand, spec, values, result, rng, avoid=()):
     """Choose a form (weighted, skipping `avoid`) that fits these values and apply it. Returns
-    (spec, values, FormResult). Falls back to the forward chain when nothing else fits."""
+    (spec, values, FormResult). A chain falls back to the forward question when nothing else
+    fits; a tree is asked as it is by weight (form "tree"); a condition has no other question
+    and gives None when it cannot be posed with these values."""
     plan = cand["_plan"]
-    kinds = [k for k in FORM_WEIGHTS if k not in avoid and k != "forward"]
+    shape = (cand.get("_shape") or {}).get("kind")
+    if shape == "condition":
+        try:
+            return _condition(plan, spec, values, result, rng, cand["_shape"])
+        except (EngineError, ArithmeticError, ValueError, TypeError):
+            return None
+    weights = TREE_WEIGHTS if shape == "tree" else FORM_WEIGHTS
+    blocked = set(avoid) | ({"forward"} if "tree" in avoid else set())
+    kinds = [k for k in weights if k not in blocked and (shape == "tree" or k != "forward")]
     order = []
     while kinds:
-        w = [FORM_WEIGHTS[k] for k in kinds]
+        w = [weights[k] for k in kinds]
         pick = rng.choices(kinds, weights=w)[0]
         order.append(pick)
         kinds.remove(pick)
     for kind in order:
+        if kind == "forward":
+            if not isinstance(result.answer, (int, float)) or result.tolerance <= FRAGILE_TOL:
+                return spec, values, _as_given(plan, result, True)
+            continue
         try:
             got = BUILDERS[kind](plan, spec, values, result, rng)
         except Exception:  # noqa: BLE001 - a form that cannot be built is just skipped
             got = None
         if got:
             return got
-    return spec, values, FormResult(result.answer, result.unit, result.kind, result.asks, result.trace,
-                                    result.traps, result.constants, result.tolerance, "forward", "",
-                                    getattr(result, "answer_substances", None))
+    return spec, values, _as_given(plan, result, shape == "tree")
