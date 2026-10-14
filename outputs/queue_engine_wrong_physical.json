@@ -117,5 +117,43 @@
       "objection_assessment": null,
       "reasoning": "The reference's Step 3 uses V = 12.5 L for both the initial and final volumes, which zeroes the nR ln(V2/V1) term without justification. The problem gives the initial volume as 5.0 L and the final as 12.5 L, so the student's choice of V1 = 5.0 L is the more defensible reading, and with it the entropy change is about 2.774 + 2.164 ≈ 4.94 J/K. The student's own arithmetic is also slightly off (0.284 × 20.785 × 0.470 ≈ 2.774, not 2.704, and the second term is about 2.163), so the 4.848 J/K result is not correct even under its own reading."
     }
+  },
+  {
+    "id": "ENG_20261014T075713_4",
+    "reason": "engine_wrong",
+    "queued_at": "2026-10-14T07:57:13.712251+00:00",
+    "chain": [
+      "temperature_to_heat_qccaltbombqv",
+      "heat_to_delta_h_sasbh573kjpe",
+      "delta_h_to_activation_energy_heafeabexoth"
+    ],
+    "txs": [
+      148,
+      144,
+      216
+    ],
+    "values": {
+      "s0.temperature": 298.15,
+      "s0.final_temperature": 301.75,
+      "s0.heat_capacity": 0.795,
+      "s1.water_moles": 0.05,
+      "s2.forward_activation_energy": 12.5
+    },
+    "stem": "In a thermochemical experiment conducted at constant pressure, an aqueous hydrochloric acid solution is mixed with an aqueous sodium hydroxide solution inside a solution calorimeter. The activation energy of the forward combination of hydronium and hydroxide ions to form liquid water is 12.5 kJ mol⁻¹. The initial temperature of the calorimeter and its contents is 298.15 K. Following complete reaction yielding 0.05 mol of water formed, the final temperature reaches 301.75 K. The heat capacity of the calorimeter (including the resulting solution) is 0.795 kJ K⁻¹. Assuming negligible heat loss to the surroundings, calculate the activation energy of the backward reaction. Give the answer in kJ mol⁻¹.",
+    "engine_answer": "69.74 kJ mol⁻¹",
+    "member": "glm-5.3-flash",
+    "member_answer": 68.945,
+    "diagnosis": {
+      "answer_equivalent": false,
+      "verdict": "reference_wrong",
+      "failure_type": null,
+      "failed_step": null,
+      "member_expression": null,
+      "ambiguous_text": null,
+      "clarification": null,
+      "missing_fact": null,
+      "objection_assessment": null,
+      "reasoning": "The student correctly used the given temperatures (301.75 − 298.15 = 3.60 K), giving q = 2.82225 kJ, ΔH = −56.445 kJ/mol, and Ea(backward) = 68.945 kJ/mol with the correct relation ΔH = Ea(forward) − Ea(backward). The reference is internally inconsistent: it lists 298.1 and 301.8 K (ΔT = 3.7 K), yet its heat value of 2862 J corresponds to ΔT = 3.6 K, and its 69.74 answer depends on that inconsistent −57.24 kJ/mol. The student's result is therefore the one supported by the problem data, so the reference answer is the one at fault."
+    }
   }
 ]

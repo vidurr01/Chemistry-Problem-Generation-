@@ -45,6 +45,20 @@ EXIT_SAVE_FAILED = 4
 EXIT_NO_CREDITS = 5        # OpenRouter refused a call for lack of credits (HTTP 402)
 
 
+def _save_run_blackboard(subject, config, bb):
+    """Every run's full Blackboard (all chains, rounds, attempts, diagnoses) goes to
+    outputs/runs/, accepted or not, so each grading decision can be audited afterwards."""
+    try:
+        d = os.path.join(os.path.dirname(os.path.abspath(config["output_file"])), "runs")
+        os.makedirs(d, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        with open(os.path.join(d, f"{stamp}_{subject}.json"), "w", encoding="utf-8") as f:
+            json.dump({"subject": subject, "saved_at": stamp, "spend": models.SPEND.summary(),
+                       "chains": bb.history()}, f, ensure_ascii=False, indent=1, default=str)
+    except Exception as e:                                       # audit copy only: never blocks a run
+        print(f"  [warn] could not save the run's Blackboard: {type(e).__name__}: {e}")
+
+
 def _out_of_credits(err) -> bool:
     return getattr(err, "status_code", None) == 402 or "Error code: 402" in str(err)
 
@@ -320,6 +334,7 @@ def main():
     bb = Blackboard(args.subject)
     try:
         outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+        _save_run_blackboard(args.subject, config, bb)
     except Exception as e:
         if not isinstance(e, flow.Parked) and _out_of_credits(e):
             _credits_message()
