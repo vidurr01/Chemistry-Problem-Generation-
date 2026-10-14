@@ -57,6 +57,21 @@ def answer_text(result) -> str:
     return f"{result.answer}{u}"
 
 
+def stated_answer(result) -> str:
+    """The answer the way the question asks for it: numbers to SIG_FIGS significant figures
+    (the engine keeps 4, so 1.5376 is 1.538 internally but the question wants 1.54); whole
+    numbers, text and letters as they are."""
+    vals = answers.numeric_values(result.answer)
+    if vals is None or getattr(result, "kind", "") in ("count", "posint", "integer"):
+        return answer_text(result)
+    fmt = lambda v: f"{round_sig(float(v), answers.SIG_FIGS):g}"
+    if len(vals) > 1:
+        subs = getattr(result, "answer_substances", None) or [None] * len(vals)
+        tus = answers.target_units({"unit": result.unit, "count": len(vals)})
+        return ", ".join(f"{s + ': ' if s else ''}{fmt(v)}{(' ' + u) if u else ''}" for v, s, u in zip(vals, subs, tus))
+    return f"{fmt(vals[0])}{(' ' + result.unit) if result.unit else ''}"
+
+
 def trace_text(result) -> str:
     lines = []
     for i, t in enumerate(result.trace):
@@ -66,7 +81,8 @@ def trace_text(result) -> str:
         lines.append(f"Step {i + 1}: {t['formula']}\n   with {ins}\n   gives {outs}")
     if result.constants:
         lines.append("Constants used: " + "; ".join(result.constants))
-    lines.append(f"Final answer: {answer_text(result)}")
+    stated, exact = stated_answer(result), answer_text(result)
+    lines.append(f"Final answer: {stated}" + (f" (as the question asks; unrounded {exact})" if stated != exact else ""))
     return "\n".join(lines)
 
 
@@ -103,7 +119,7 @@ def checked_solution(stem: str, result) -> tuple:
     is empty and the record says why (status: verified | failed_check | writer_failed |
     checker_failed). Never raises: the solution is display only."""
     from core import solution_check
-    trace, ans = trace_text(result), answer_text(result)
+    trace, ans = trace_text(result), stated_answer(result)
     history, draft, problems = [], None, None
     for attempt in range(SOLUTION_REWRITES + 1):
         try:
@@ -484,7 +500,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
     """Ladder → verifier → grading → hint tests. Returns one of:
        {"decision": "accept", ...} | {"decision": "too_easy", ...} | {"decision": "reword", "feedback"}
        | {"decision": "drop", "reason"}.  Raises Parked if a council call fails."""
-    rtext, atext = trace_text(result), answer_text(result)
+    rtext, atext = trace_text(result), stated_answer(result)
     fmt = _answer_instruction(adapter, result)
     spec = answers.answer_spec(result.answer, result.kind, result.unit, fmt, getattr(result, "answer_substances", None))
 
