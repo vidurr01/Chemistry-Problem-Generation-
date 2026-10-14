@@ -20,16 +20,21 @@ GENERATOR = "google/gemini-3.7-flash"                 # picks inputs, writes ste
 REFINER = "google/gemini-3.8-flash"                   # too easy: reads the solvers' working, redesigns inputs or rewrites
 EXTRACTOR = "deepseek/deepseek-v4-flash-0731"          # chemistry gate: lists the facts a stem states
 VERIFIER = "anthropic/claude-haiku-5.5"                # mismatch verifier: reads every council attempt
-SOLUTION_WRITER = "mistralai/mistral-small-3.2-24b-instruct"   # readable solution, accepted questions only
-# Difficulty ladder, weakest first (flow.judge). Calibrated on real JEE papers (2026-10-14):
-#                       Mains easy/medium  Mains hard  Advanced
-#   llama-3.3-70b            fails 29 %     fails 68 %  fails 65 %   <- separates; decides accept
-#   glm-5.3-flash            fails 14 %     fails 11 %  fails 29 %   <- difficulty label
-#   gpt-6-luna               fails  7 %     fails  0 %  fails  8 %   <- difficulty label
+SOLUTION_WRITER = "openai/gpt-6-luna"     # readable solution (answer key), accepted questions only; never grades
+# Difficulty ladder, weakest first (flow.judge). Calibrated on real JEE papers (2026-10-14;
+# calibration/ladder_separation.py; hard Mains = top third by calculated_difficulty):
+#                       Mains easy/medium  Mains hard  Advanced   $ per question
+#   phi-4                    fails 14 %     fails 53 %  fails 53 %   0.00017   <- separates; decides accept
+#   glm-5.3-flash            fails 14 %     fails 11 %  fails 29 %   0.00020   <- difficulty label
+#   gpt-6-luna               fails  7 %     fails  0 %  fails  8 %   0.00057   <- difficulty label
+# Bottom-step candidates measured: Llama 3.3 70B (29 % / 66 %, $0.00100), Phi-4 solves 21
+# questions Llama 3.3 misses and Llama 8 Phi-4 misses (p = 0.02); GLM beats Phi-4 29 to 9
+# (p = 0.002). Llama 4 Maverick (14 % / 28 %), Llama 4 Scout (43 % / 54 %) and GLM do not
+# separate easy from hard; Granite 4.2 8B separates but refuses to answer solvable questions.
 # A question is accepted when the first step fails it; the step that first solves it (or
 # none) is its difficulty label. Later steps are called only after the earlier ones fail.
 LADDER = [
-    ("llama-3.3-70b", "meta-llama/llama-3.3-70b-instruct"),   # Meta
+    ("phi-4", "microsoft/phi-4"),                              # Microsoft
     ("glm-5.3-flash", "z-ai/glm-5.3-flash"),                   # Z.ai
     ("gpt-6-luna", "openai/gpt-6-luna"),                       # OpenAI
 ]
