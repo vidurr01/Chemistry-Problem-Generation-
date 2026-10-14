@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Slip confirmation for every value; per-value units; more multi-value tests
+- Slip confirmation applies to every value (`flow._slip_confirmed`): the verifier gives one set-up expression per value (a list in the reference's order, null where the value is right; a string for one value). Each wrong value must be explained by its own expression, evaluating to the engine's value and grounded in the working; one unexplained value fails the attempt.
+- Per-value target units (`answers.target_units`): a question can ask ΔH in kJ mol⁻¹, ΔS in J K⁻¹ mol⁻¹ and ΔG in kJ mol⁻¹ in one answer; stems read "Give the 3 answers to 3 significant figures, in the order: ΔH in kJ mol⁻¹; ΔS in J K⁻¹ mol⁻¹; ΔG in kJ mol⁻¹."
+- Bug found by the new tests: values listed in another order than the question's (labelled) were converted to the target unit by position, before pairing. `complete_answer` now reorders by label first. Labels compare case-insensitively unless that makes the question's own labels collide (T and t, K and k).
+- `answers.align_values / value_ok / label_keys` shared by matching and slip confirmation.
+- Tests: 12 realistic multi-value examples with 40+ answer lines (Haber partial pressures in atm/torr/mmHg/kPa/bar, ΔH/ΔS/ΔG with own units, buffer ion concentrations, masses in series cells, electrolysis gas volumes, mixed mol/mmol, boiling/freezing points in °C, rates per min, complex ions with brackets, named substances, Kp/Kc in Pa⁻² and dm⁶ mol⁻², four unlabelled values); 1500 random shuffled answers whose values are all different kinds of quantity; ten per-value slip cases (132 tests).
+
 ### Several values in one answer
 - Grading only ever compared one value; a correct multi-substance answer would have been graded wrong. `answers.numeric_values` / `values_match`: an engine answer may be a list (optionally labelled with `answer_substances`). Values are paired by substance when both sides name them (formula keys, so N₂, N2 and N2(g) agree; the member must name the same substances, no duplicates) and by position otherwise; each value is checked against the tolerance (0 needs |x| ≤ 1e-9); the count must match, and a wrong count is a restate request, not a grade.
 - `answer_spec(..., substances)` carries the count and substances; the solver prompt asks for exactly that many values and the order; stems end with "Give the 2 answers in atm, to 3 significant figures, in the order: N2, H2."; `answer_text` lists "N2: 0.75 atm, H2: 0.25 atm". Slip confirmation stays single-value only.
