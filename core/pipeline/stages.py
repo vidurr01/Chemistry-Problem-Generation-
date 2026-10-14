@@ -184,8 +184,9 @@ Scenario: {scenario}
 The intended solution path (do NOT reveal it):
 {chain_text}
 
-The question must state each of these values exactly (same number, same unit), in words a
-student would read naturally:
+The question must state each of these values exactly (same number, same unit). The labels are
+generic internal names ("the substance", "the cation", "particles per unit"); in the question,
+call each thing by its actual name from the scenario:
 {given_lines}
 
 It must state these constants (copy them as written):
@@ -212,6 +213,21 @@ no multiple-choice options; do not add data that is not listed. The descriptions
 internal labels: write natural exam prose and never copy them or template symbols (A, B, x, y,
 AxBy) into the question; a subscript is stated by writing the actual formula (AgCl states
 x = 1, y = 1). Write powers of ten as × 10ⁿ.
+
+Write it the way a human JEE paper setter would:
+- name substances directly, with the unit right after the number:
+  BAD  "a mass of the substance equal to 2.719 g of pure sulfamic acid"
+  GOOD "2.719 g of sulfamic acid"
+  BAD  "a volume of the cation solution of 100.0 mL"   GOOD "100.0 mL of the Ag⁺ solution"
+  BAD  "a concentration of the acid of 0.05"           GOOD "0.05 M acetic acid"
+- data a real paper would give as supporting data (molar or equivalent masses, ionisation or
+  dissociation behaviour, stoichiometric factors, physical constants) goes in one short
+  closing line such as "(Given: equivalent mass of sulfamic acid = 97.09 g eq⁻¹; NaOH → Na⁺ +
+  OH⁻)", never as an "Assuming that ..." sentence inside the story;
+- state each value once; no filler ("a certain amount of", "the said substance");
+- short, plain sentences; no meta-talk about the question or the student.
+Finally, re-read the question as an examiner and rewrite any phrase a human setter would not
+write, without changing any value.
 {redo}
 Return JSON: {{"easy_cues_avoided": ["..."], "stem": "the full question text"}}"""
     role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
