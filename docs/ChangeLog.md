@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Run 8: trace precision, overruled reference-wrong claims, every run saved
+- Run 8 (no question accepted, $0.131): all numeric gradings were right (within 0–0.7 % or confirmed slips). One chain was dropped wrongly as engine_wrong: the engine was right (q = 0.795 × 3.60 = 2.862 kJ → Eₐ,back = 69.74 kJ mol⁻¹), but the trace shown to the verifier rounded the given 298.15 K / 301.75 K to 298.1 / 301.8, so the verifier saw an "inconsistent reference" when GLM slipped.
+- `base.run_chain`: trace inputs exactly as given; intermediate outputs at 5 s.f.
+- `flow.judge`: a "reference wrong" judgement is overruled (recorded as `reference_wrong_overruled_by`) when another step reached the engine's answer with a "correct" verdict.
+- `run_groundup_final._save_run_blackboard`: every run's full Blackboard goes to `outputs/runs/` (next to the configured output file), accepted or not, for auditing.
+- Tests (88).
+
 ### Slip confirmation must be grounded in the solver's own working
 - Run 7 (no question accepted, $0.088): Llama 3.3 answered 0.2915 kJ for 307.4 kJ and was counted as solved because the verifier labelled it a slip and wrote the correct set-up (0.45 × 6 × 96500 × 1.18) itself. `flow._grounded()`: a slip is confirmed only if every number in the verifier's expression appears in the member's working (within 0.5 %), apart from powers of ten (unit factors) and at most one substituted value (the miscopied number).
 - The rest of run 7 graded correctly: answers within 0.04–0.13 % with a slip counted as solved; two chains went to `engine_wrong`, both engine or chain faults the verifier explained — the separation-factor step computes the inverse of the ratio the question asks ("methane relative to the solute": 4⁶, not 0.25⁶), and the 170 → 84 → 125 chain wired V₁ = V₂ = 12.5 L although the stem states 5.0 L.

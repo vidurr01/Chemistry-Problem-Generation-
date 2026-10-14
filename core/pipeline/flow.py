@@ -387,6 +387,18 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
               f" ({g['verdict']}{', ' + g['failure_type'] if g['failure_type'] else ''})")
 
     # engine or question judged wrong, or an objection nobody can settle
+    # A "reference wrong" judgement on one attempt is overruled when another attempt reached
+    # the engine's answer and the verifier judged that attempt's reasoning correct (run 8:
+    # GLM slipped to 68.945, the verifier blamed the engine; Luna got 69.74 by sound reasoning).
+    sound = [g for g in graded if g["counts_as_solved"] and g["verdict"] == "correct"]
+    for g in graded:
+        d = g["diagnosis"]
+        if sound and d["verdict"] == "reference_wrong":
+            g["reference_wrong_overruled_by"] = sound[0]["name"]
+            g["verdict"] = d["verdict"] = "wrong"
+            g["failure_type"] = d["failure_type"] = d.get("failure_type") or "genuine_difficulty"
+            print(f"    [{g['name']}] 'reference wrong' overruled: {sound[0]['name']} reached the engine's "
+                  f"answer by sound reasoning")
     for g in graded:
         d = g["diagnosis"]
         if d["verdict"] == "reference_wrong" or d.get("objection_assessment") == "valid":

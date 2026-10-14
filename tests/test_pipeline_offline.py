@@ -246,6 +246,27 @@ class PipelineOffline(_Env, unittest.TestCase):
         self.assertEqual(self._run(fake), 0)
         self.assertEqual(len(self._records()), 1)            # recovered on the next attempt and accepted
 
+    def test_reference_wrong_overruled_by_a_sound_solve(self):
+        """Run 8: GLM slipped, the verifier blamed the engine, while Luna matched by sound reasoning."""
+        slugs = [s for _, s in models.LADDER]
+        fake = FakeModels(
+            council_answers={slugs[0]: "2.45", slugs[1]: "2.10", slugs[2]: "2.24"},
+            hint_answers={slugs[0]: "2.24", slugs[1]: "2.24"},
+            verdicts={"2.24": {"verdict": "correct"},
+                      "2.10": {"verdict": "reference_wrong", "reasoning": "reference inconsistent"}})
+        self.assertEqual(self._run(fake), 0)
+        r = self._records()[0]                                   # accepted, not dropped as engine_wrong
+        by = {c["name"]: c for c in r["council"]}
+        self.assertEqual(by[models.LADDER[1][0]]["verdict"], "wrong")
+        self.assertEqual(r["difficulty_label"], "hard_advanced")
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "queue_engine_wrong_physical.json")))
+        self.assertTrue(os.listdir(os.path.join(self.tmp, "runs")))      # the run's Blackboard is saved
+
+    def test_trace_shows_inputs_as_given(self):
+        ad = adapters.PhysicalAdapter(entry.get_subject_config("physical"))
+        r = ad.compute(ad.plan(CHAIN), {"s0.mass": 4.4015, "s0.molar_mass": 44.0098})
+        self.assertEqual(r.trace[0]["inputs"]["mass"], 4.4015)          # not rounded to 4.402
+
     def test_harder_question_prompts(self):
         from core.pipeline import stages
         seen = {}

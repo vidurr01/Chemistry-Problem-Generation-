@@ -402,8 +402,10 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
             if c not in constants:
                 constants.append(c)
         trace.append({"tx": st.tx, "src": st.src, "dst": st.dst, "formula": st.formula,
-                      "inputs": round_sig(v),
-                      "outputs": round_sig({k: x for k, x in out.items() if k != "_constants"})})
+                      # inputs exactly as the question states them (298.15 K stays 298.15; at
+                      # 4 s.f. it read 298.1 and the verifier saw an "inconsistent reference")
+                      "inputs": round_sig(v, 12),
+                      "outputs": round_sig({k: x for k, x in out.items() if k != "_constants"}, 5)})
 
     last = plan.steps[-1]
     a_field, a_unit, a_kind, a_asks = last.final or (last.answer, last.unit, last.kind, last.asks)
