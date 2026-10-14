@@ -133,7 +133,7 @@ def build_record(subject, config, payload, bb):
         "question": payload["stem"],
         "answer": result.answer,
         "unit": result.unit,
-        "answer_text": flow.answer_text(result),
+        "answer_text": flow.stated_answer(result),
         "solution": solution,
         "solution_check": solution_check,
         "tags": {"knowledge": "recall" if decision.get("recall") else "closed_book", "trap_types": trap_types},

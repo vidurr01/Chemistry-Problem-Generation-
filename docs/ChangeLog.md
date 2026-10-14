@@ -4,6 +4,9 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Answers stated as the question asks (3 s.f.) to the solution writer, checker and verifier
+- Run 13: the engine keeps 4 significant figures (1.538) but the stem asks for 3 (1.54). The checker rightly called "1.538 to three significant figures" false, then called the writer's 1.54 a mismatch with the reference; all three drafts failed and the question was saved without a solution. `flow.stated_answer` rounds numbers to `answers.SIG_FIGS` (whole numbers, text and letters unchanged); the trace's final line, the solution writer and checker, the mismatch verifier and the record's `answer_text` use it ("Final answer: 1.54 (as the question asks; unrounded 1.538)"). Grading still compares with the engine's value.
+
 ### Engine audit: every chain checked offline, every error found fixed
 - Run 12 lost two of three chains to engine errors (K_x fed into van 't Hoff; ΔS° stated alongside K₁ and K₂, contradicting them). Both were of a kind already known (the over-determined PCl5 chain). `tools/audit_engine.py` (new) now checks every chain the walk can build (266 single steps, 382 pairs, 604 triples) before any model is paid: a value passed in another unit than the next step reads, a value a later step asks for again, and a run of every chain on 20 sampled inputs (`tests/engine_samples.py`) that must give a finite answer with a readable unit or refuse cleanly. Result: 0 flags, every chain runs.
 - Engine mechanics (`core/engine/base.py`): a role may be a tuple of accepted roles and `strict` (an untagged value is refused); `Step.not_after` / `not_after_any` refuse pairs (or earlier steps anywhere in the chain) that are valid by field name but wrong in meaning; `Step.carries` passes on a value a step holds constant (Charles's law at constant P hands that P on); an answer unit may depend on the inputs.

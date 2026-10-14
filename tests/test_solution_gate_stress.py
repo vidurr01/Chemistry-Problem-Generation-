@@ -377,6 +377,31 @@ class Loop(unittest.TestCase):
             with mock.patch.object(models, "ask_json", lambda *a, **k: reply):
                 self.assertEqual(len(stages.check_solution("Q", "T", "A", RUN11_FIXED)), n, reply)
 
+    def test_answer_stated_as_the_question_asks(self):
+        """Run 13: the engine's 1.538 (4 s.f.) went to the writer and checker while the question
+        asked for 3 s.f.; 'rounding to three significant figures gives 1.538' was rightly called
+        false, and '1.54' was then called a mismatch. Both now see 1.54."""
+        r = types.SimpleNamespace(trace=[{"formula": "f", "inputs": {"a": 0.05}, "outputs": {"vant_hoff_factor": 1.5376}}],
+                                  answer=1.538, unit="", kind="positive", constants=[], answer_substances=None)
+        self.assertEqual(flow.stated_answer(r), "1.54")
+        self.assertIn("Final answer: 1.54 (as the question asks; unrounded 1.538)", flow.trace_text(r))
+        good = "1. α = 0.53759.\n2. i = 1 + (2 − 1) × 0.53759 = 1.5376, which is 1.54 to 3 significant figures.\nFinal answer: 1.54"
+        self.assertEqual(sc.code_problems(good, r.trace, r.answer), [])
+        captured = []
+
+        def ask_json(role, model, system, user, **kw):
+            captured.append((role, user))
+            return {"solution": good} if role == "solution_writer" else {"errors": []}
+        with mock.patch.object(models, "ask_json", ask_json):
+            sol, rec = flow.checked_solution("Q", r)
+        self.assertEqual(rec["status"], "verified")
+        self.assertTrue(all("1.54" in u and "FINAL ANSWER: 1.54" in u or role == "solution_checker" for role, u in captured))
+        self.assertIn("the final answer is 1.54", captured[1][1])
+        for kind, ans, want in (("count", 6, "6"), ("posint", 3, "3"), ("real", 1.988e22, "1.99e+22"),
+                                ("real", -33.19, "-33.2"), ("text", "Th-234", "Th-234")):
+            self.assertEqual(flow.stated_answer(types.SimpleNamespace(answer=ans, unit="", kind=kind,
+                                                                      answer_substances=None)), want)
+
     def test_writer_prompt_rules(self):
         captured = {}
         with mock.patch.object(models, "ask_json",
