@@ -337,49 +337,48 @@ def _first(out: dict, keys):
     return None
 
 
-def _repair_format(slug: str, stem: str, out: dict, spec: dict) -> dict | None:
-    """The solver's final answer breaks the spec (e.g. "about 29.8 L", "11/51", "Yes, it
-    forms", or missing with the working present). Ask it, cheaply, to restate the SAME answer
-    in the required form; it must not re-solve. Returns {"final_answer", "unit"} or None."""
+def _repair_line(slug: str, stem: str, out: dict, spec: dict, reason: str) -> dict | None:
+    """The solver's answer line cannot be used (missing, not a plain number, an unreadable
+    unit, ...). Ask it, cheaply, to restate the SAME answer as a correct line; it must not
+    re-solve. Returns the completed answer, or None."""
     prompt = f"""You solved this problem:
 {stem}
 
 The end of your solution:
 {str(out.get("working") or "")[-1500:]}
 
-Your final answer was: {json.dumps(out.get("final_answer"), ensure_ascii=False)} (unit: {out.get("unit") or "none"})
+Your answer was: {json.dumps(out.get("answer") if out.get("answer") is not None else out.get("final_answer"), ensure_ascii=False)}
+It cannot be used because: {reason}.
 
-Restate the SAME final answer in exactly this form. Do not solve again and do not change the
-answer; only rewrite it (convert the unit if a different one is required).
+Restate the SAME answer. Do not solve again and do not change the value.
 {answers.spec_instruction(spec)}
-Return JSON with the keys "final_answer" and "unit"."""
+Return JSON with the single key "answer"."""
     try:
         r = models.ask_json("council", slug, "Output JSON only.", prompt, max_tokens=4000,
                             temperature=0.0, reasoning_effort="low")
     except Exception:                                            # noqa: BLE001 - grading falls back
         return None
-    ans = _first(r, _ANSWER_KEYS)
-    return {"final_answer": ans, "unit": str(r.get("unit") or "")} if answers.format_ok(spec, ans) else None
+    done = answers.complete_answer(answers.parse_answer_line(_first(r, ("answer",) + _ANSWER_KEYS)), spec)
+    return done if done.get("ok") else None
 
 
 def _solve(slug: str, stem: str, hint: str | None = None, spec: dict | None = None) -> dict:
-    """One closed-book attempt. Some models answer {"answer": 100.1} instead of the requested
-    keys, or put their working only in the reasoning trace; both are read. A reply with no
-    answer and no working at all is a failed call, not a wrong answer: it is asked again,
-    and still blank raises (the question parks)."""
+    """One closed-book attempt. The solver writes its working and one answer line
+    ([TYPE] [CALC_VALUE] [CALC_UNIT] [SUBSTANCE]); code fills TARGET_UNIT, FINAL_VALUE and
+    RENDER. A line that cannot be used gets one restate request; a blank reply is asked
+    again, and still blank raises (the question parks)."""
     for attempt in range(BLANK_RETRIES + 1):
         out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint, spec),
                               max_tokens=COUNCIL_MAX_TOKENS, temperature=0.2,
                               reasoning_effort=models.COUNCIL_REASONING_EFFORT)
-        answer = _first(out, _ANSWER_KEYS)
         working = _first(out, _WORKING_KEYS)
         if isinstance(working, (dict, list)):
             working = json.dumps(working, ensure_ascii=False)
         if not working and out.get("_reasoning"):
             working = "(from the model's reasoning trace)\n" + out["_reasoning"]
-        out = {**out, "final_answer": answer, "working": working or ""}
-        blank = answer is None and not str(working or "").strip()
-        if not blank:
+        line = _first(out, ("answer",)) or _first(out, _ANSWER_KEYS)
+        out = {**out, "working": working or "", "answer": line}
+        if line is not None or str(working or "").strip():
             break
         print(f"    [council] {slug} sent a blank reply — asking again ({attempt + 1}/{BLANK_RETRIES})")
     else:
@@ -389,14 +388,26 @@ def _solve(slug: str, stem: str, hint: str | None = None, spec: dict | None = No
         objection = {"type": obj["type"], "detail": str(obj.get("detail", ""))[:1000]}
     else:
         objection = None
-    rec = {"working": str(out.get("working", ""))[:20000], "final_answer": out.get("final_answer"),
-           "unit": str(out.get("unit") or ""), "objection": objection}
-    if spec and not answers.format_ok(spec, rec["final_answer"]):
-        fixed = _repair_format(slug, stem, out, spec)
-        if fixed is not None:
-            print(f"    [council] {slug}: answer {rec['final_answer']!r} restated as {fixed['final_answer']!r}")
-            rec.update(raw_final_answer=rec["final_answer"], raw_unit=rec["unit"], **fixed)
+    rec = {"working": str(out.get("working", ""))[:20000], "objection": objection,
+           "answer_line": None if line is None else str(line)}
+    if not spec:                                                 # no spec: the raw answer is graded
+        rec.update(final_answer=line, unit=str(out.get("unit") or ""))
+        return rec
+    done = answers.complete_answer(answers.parse_answer_line(line), spec)
+    if not done.get("ok"):
+        reason = done.get("reason", "")
+        fixed = _repair_line(slug, stem, out, spec, reason)
         rec["format_repaired"] = fixed is not None
+        print(f"    [council] {slug}: answer line unusable ({reason}); "
+              + (f"restated as {fixed['render']!r}" if fixed else "restate failed"))
+        done = fixed or {"ok": False, "reason": reason}
+    if done.get("ok"):
+        rec.update(final_answer=done["render"], unit="", answer_type=done.get("type"),
+                   calc_value=done["calc_value"], calc_unit=done.get("calc_unit"),
+                   target_unit=done.get("target_unit"), final_value=done["final_value"],
+                   substance=done.get("substance"))
+    else:                                                        # graded by the verifier's equivalence
+        rec.update(final_answer=line, unit="", answer_unusable=done.get("reason"))
     return rec
 
 

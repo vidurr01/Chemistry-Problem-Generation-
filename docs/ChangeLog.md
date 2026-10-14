@@ -4,6 +4,14 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Structured answer line and pint unit conversion (user's design)
+- Solvers now end with one line `[TYPE: …] [CALC_VALUE: …] [CALC_UNIT: …] [SUBSTANCE: …]`: the number they calculated, as a plain decimal or e-notation number, and the unit of exactly that number. Code fills `TARGET_UNIT` (from the question), `FINAL_VALUE` (CALC_VALUE converted, `core/units.py`) and `RENDER` (final value + target unit); anything a solver writes in those three fields is ignored. Lists (several substances) are compared element by element.
+- `core/units.py` (new): conversion on the pint library (`pint>=0.26`, added to requirements.txt with sympy, which the engine already used). Exam notation ("kJ mol⁻¹", "g mL⁻¹", "dm³", "°C", "mm Hg", "M", "% w/W", "ppm (as CaCO3)", "g eq⁻¹") and plain text ("kJ/mol", "mol L^-1", "s-1") are both read; all 73 units used by the physical engine parse. Different kinds of quantity are refused (L → kg, eV per particle → kJ mol⁻¹). The hand-written unit table in `answers.py` is gone; `convert_unit` wraps pint.
+- `answers.parse_answer_line / complete_answer`: a line that cannot be used (no CALC_VALUE, not a plain number, unreadable or inconvertible unit, wrong number of values, not an allowed option) gives a reason; `stages._repair_line` sends one restate-only request with that reason. Only if that fails too does grading fall back to the verifier's `answer_equivalent`.
+- Numeric stems end with "Give the answer in <unit>, to 3 significant figures." (or "as an integer" for counts), checked by the gate.
+- `flow._code_match` compares FINAL_VALUE with the engine's answer directly.
+- Tests rewritten for the line, including the user's two examples (89 tests).
+
 ### Run 8: trace precision, overruled reference-wrong claims, every run saved
 - Run 8 (no question accepted, $0.131): all numeric gradings were right (within 0–0.7 % or confirmed slips). One chain was dropped wrongly as engine_wrong: the engine was right (q = 0.795 × 3.60 = 2.862 kJ → Eₐ,back = 69.74 kJ mol⁻¹), but the trace shown to the verifier rounded the given 298.15 K / 301.75 K to 298.1 / 301.8, so the verifier saw an "inconsistent reference" when GLM slipped.
 - `base.run_chain`: trace inputs exactly as given; intermediate outputs at 5 s.f.
