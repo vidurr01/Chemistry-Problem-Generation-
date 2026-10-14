@@ -307,20 +307,60 @@ def spec_instruction(spec: dict) -> str:
     return head + f"Rules: CALC_VALUE is {fmt} (just the answer, no explanation, no commas); CALC_UNIT: none."
 
 
-_FIELD = re.compile(r"\[\s*(TYPE|CALC_VALUE|CALC_UNIT|TARGET_UNIT|FINAL_VALUE|SUBSTANCE|RENDER)\s*:\s*(.*?)\s*\]",
-                    re.I | re.S)
+_LABEL = re.compile(r"\[\s*(TYPE|CALC[ _]?VALUES?|CALC[ _]?UNITS?|TARGET[ _]?UNITS?|FINAL[ _]?VALUES?|"
+                    r"SUBSTANCES?|RENDER)\s*:", re.I)
+_KEY = {"TYPE": "TYPE", "CALCVALUE": "CALC_VALUE", "CALCUNIT": "CALC_UNIT", "TARGETUNIT": "TARGET_UNIT",
+        "FINALVALUE": "FINAL_VALUE", "SUBSTANCE": "SUBSTANCE", "RENDER": "RENDER"}
+_MINUS = str.maketrans({"−": "-", "–": "-", "—": "-", "＋": "+"})
+
+
+def _label_key(label: str) -> str | None:
+    k = re.sub(r"[\s_]", "", label.upper())
+    k = k[:-1] if k.endswith("S") and k[:-1] in _KEY else k
+    return _KEY.get(k)
+
+
+def _line_fields(text) -> dict:
+    """{FIELD: raw value} from an answer line. Values may contain brackets
+    ([SUBSTANCE: K4[Fe(CN)6]]): a value runs to the next field label, and only its own
+    closing bracket is dropped. A JSON object with the same keys is read too."""
+    if isinstance(text, dict):
+        out = {}
+        for k, v in text.items():
+            key = _label_key(str(k))
+            if key:
+                out[key] = ", ".join(map(str, v)) if isinstance(v, (list, tuple)) else ("" if v is None else str(v))
+        return out
+    if isinstance(text, (list, tuple)):
+        text = " ".join(map(str, text))
+    s = str(text or "").replace("`", "")
+    marks = list(_LABEL.finditer(s))
+    out = {}
+    for i, m in enumerate(marks):
+        end = marks[i + 1].start() if i + 1 < len(marks) else len(s)
+        val = s[m.end():end].strip()
+        cut = val.rfind("]")
+        if cut >= 0:
+            val = val[:cut]                       # this field's closing bracket (and any text after it)
+        key = _label_key(m.group(1))
+        if key and key not in out:
+            out[key] = val.strip()
+    return out
 
 
 def parse_answer_line(text) -> dict | None:
-    """The solver's fields from '[TYPE: x] [CALC_VALUE: a, b] [CALC_UNIT: u, v] [SUBSTANCE: s, t]',
-    or None if there is no CALC_VALUE. Lists split on commas; anything the solver put in
-    TARGET_UNIT / FINAL_VALUE / RENDER is ignored (code computes those)."""
-    found = {k.upper(): v for k, v in _FIELD.findall(str(text or ""))}
-    if "CALC_VALUE" not in found:
+    """The solver's fields from '[TYPE: x] [CALC_VALUE: a, b] [CALC_UNIT: u, v] [SUBSTANCE: s, t]'
+    (or a JSON object with those keys), or None if there is no CALC_VALUE. Numbers and units
+    are split on commas; calc_value_raw keeps the unsplit value for text answers. Anything the
+    solver put in TARGET_UNIT / FINAL_VALUE / RENDER is ignored (code computes those)."""
+    found = _line_fields(text)
+    if "CALC_VALUE" not in found or not found["CALC_VALUE"].strip():
         return None
     split = lambda v: [x.strip() for x in str(v).split(",") if x.strip()]
-    subst = [x for x in split(found.get("SUBSTANCE", "")) if x.lower() not in ("null", "none", "-")]
-    return {"type": (found.get("TYPE") or "").strip() or None, "calc_value": split(found["CALC_VALUE"]),
+    raw = found["CALC_VALUE"].strip()
+    subst = [x for x in split(found.get("SUBSTANCE", "")) if x.lower() not in ("null", "none", "-", "n/a")]
+    return {"type": (found.get("TYPE") or "").strip() or None,
+            "calc_value": split(raw.translate(_MINUS)), "calc_value_raw": raw,
             "calc_unit": split(found.get("CALC_UNIT", "")), "substance": subst}
 
 
@@ -337,7 +377,7 @@ def complete_answer(parsed: dict | None, spec: dict) -> dict:
     t = spec.get("type")
     out = {**parsed, "target_unit": spec.get("unit", "") if t == "number" else ""}
     if t != "number":
-        v = parsed["calc_value"][0] if t != "letters" else "".join(parsed["calc_value"])
+        v = "".join(parsed["calc_value"]) if t == "letters" else parsed.get("calc_value_raw", parsed["calc_value"][0])
         if not format_ok(spec, v):
             return {"ok": False, "reason": f"CALC_VALUE {v!r} is not one of the allowed answers"}
         return {**out, "ok": True, "final_value": [v], "render": str(v)}
