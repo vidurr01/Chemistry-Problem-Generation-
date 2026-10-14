@@ -258,7 +258,11 @@ def _code_match(result, member):
     fv = member.get("final_value")
     if fv is not None:
         if _is_numeric(result):
-            return len(fv) == 1 and answers.answers_match(float(result.answer), float(fv[0]), tol)
+            if len(fv) != 1:
+                return False
+            if float(result.answer) == 0.0:          # relative tolerance is meaningless at zero
+                return abs(float(fv[0])) <= 1e-9
+            return answers.answers_match(float(result.answer), float(fv[0]), tol)
         v = fv[0]
     else:
         v = member.get("final_answer")
@@ -330,17 +334,17 @@ def _grade(result, member, diag) -> dict:
     # work correct, or wrong only by a slip that did not change the result (run 4: 29.52 vs
     # 29.79 L). Within tolerance by a WRONG METHOD (run 5: −190.28 vs −192.2 kJ mol⁻¹ from a
     # linear extrapolation) or by wrong reasoning is a lucky number, not a solution.
-    if match and (diag["verdict"] == "correct" or
-                  (diag["verdict"] == "wrong" and diag.get("failure_type") == "slip")):
+    if match and (diag.get("verdict") == "correct" or
+                  (diag.get("verdict") == "wrong" and diag.get("failure_type") == "slip")):
         solved = True
-    elif not match and diag.get("failure_type") == "slip" or (not match and diag["verdict"] == "correct"):
+    elif not match and diag.get("failure_type") == "slip" or (not match and diag.get("verdict") == "correct"):
         expr = diag.get("member_expression")
         value = _eval_expression(expr)
         slip_confirmed = value is not None and _is_numeric(result) and \
             answers.matches(result.answer, value, result.kind, getattr(result, "tolerance", 0.01)) and \
             _grounded(expr, member.get("working", ""))
         solved = bool(slip_confirmed)
-    return {"answer_matches": match, "match_by": match_by, "verdict": diag["verdict"],
+    return {"answer_matches": match, "match_by": match_by, "verdict": diag.get("verdict"),
             "failure_type": diag.get("failure_type"), "slip_confirmed": slip_confirmed, "counts_as_solved": solved}
 
 
