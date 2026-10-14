@@ -268,12 +268,63 @@ def options_from_format(fmt):
     return None
 
 
-def answer_spec(engine_answer, kind: str, unit: str = "", fmt: str | None = None) -> dict:
-    """What the solver's final_answer must look like for this question."""
+def numeric_values(engine_answer):
+    """The engine's answer as a list of numbers (one or several), or None if it is not numeric."""
+    if isinstance(engine_answer, bool):
+        return None
+    if isinstance(engine_answer, (int, float)):
+        return [float(engine_answer)]
+    if isinstance(engine_answer, (list, tuple)) and engine_answer and \
+            all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in engine_answer):
+        return [float(x) for x in engine_answer]
+    return None
+
+
+def _subst_key(s) -> str:
+    """Comparable key of a substance label: 'N₂', 'N2', 'n2', 'N2(g)' -> the same key."""
+    f = _formula(s)
+    return repr(f) if f is not None else normalise_text(s)
+
+
+def values_match(engine_vals, member_vals, tol: float = 0.01, engine_subst=None, member_subst=None) -> bool:
+    """Do several values match? Same count required. When both sides name their substances
+    the values are paired by substance (so 'H2, N2' in swapped order still pairs correctly)
+    and the member must name the same substances; otherwise they are paired by position.
+    Each pair is compared with the relative tolerance; an engine value of exactly 0 needs
+    |x| <= 1e-9."""
+    if member_vals is None or len(member_vals) != len(engine_vals):
+        return False
+    pairs = list(zip(engine_vals, member_vals))
+    if engine_subst and member_subst and len(engine_subst) == len(engine_vals) == len(member_subst):
+        ek = [_subst_key(x) for x in engine_subst]
+        mk = [_subst_key(x) for x in member_subst]
+        if len(set(ek)) != len(ek) or len(set(mk)) != len(mk) or set(ek) != set(mk):
+            return False
+        by = dict(zip(mk, member_vals))
+        pairs = [(e, by[k]) for e, k in zip(engine_vals, ek)]
+    for e, m in pairs:
+        try:
+            m = float(m)
+        except (TypeError, ValueError):
+            return False
+        if e == 0.0:
+            if not abs(m) <= 1e-9:
+                return False
+        elif not answers_match(e, m, tol):
+            return False
+    return True
+
+
+def answer_spec(engine_answer, kind: str, unit: str = "", fmt: str | None = None, substances=None) -> dict:
+    """What the solver's answer must look like for this question."""
     if kind == "letters":
         return {"type": "letters"}
-    if isinstance(engine_answer, (int, float)) and not isinstance(engine_answer, bool):
-        return {"type": "number", "unit": unit or "", "count": 1}
+    vals = numeric_values(engine_answer)
+    if vals is not None:
+        spec = {"type": "number", "unit": unit or "", "count": len(vals)}
+        if substances:
+            spec["substances"] = list(substances)
+        return spec
     opts = options_from_format(fmt)
     if opts:
         return {"type": "choice", "options": opts}
@@ -296,8 +347,16 @@ def spec_instruction(spec: dict) -> str:
             "(e.g. -45200, 0.0005776, 1.5e-15) — no units, words, fractions, '×10' or thousands "
             "separators. CALC_UNIT is the unit of exactly that number, in plain text (e.g. J, kJ/mol, "
             "J/(K mol), mol/L, atm, torr, K, s^-1, g/mL); you do not need to convert it — conversion "
-            "is done for you. Give exactly one value. If the quantity has no unit, write none.\n"
-            "Example: [TYPE: thermochemistry] [CALC_VALUE: -45200] [CALC_UNIT: J] [SUBSTANCE: null]")
+            "is done for you. " + (
+                "Give exactly one value. " if spec.get("count", 1) == 1 else
+                f"Give exactly {spec['count']} values, comma-separated, with one unit per value (or one "
+                "unit for all), and name each value's substance in SUBSTANCE in the same order"
+                + (f" ({', '.join(spec['substances'])})" if spec.get("substances") else "") + ". ")
+            + "If the quantity has no unit, write none.\n"
+            "Example: [TYPE: thermochemistry] [CALC_VALUE: -45200] [CALC_UNIT: J] [SUBSTANCE: null]"
+            + ("" if spec.get("count", 1) == 1 else
+               "\nExample with two values: [TYPE: equilibrium] [CALC_VALUE: 0.75, 570] [CALC_UNIT: atm, torr] "
+               "[SUBSTANCE: N2, H2]"))
     if t == "choice":
         return head + ("Rules: CALC_VALUE is exactly one of: " + ", ".join(spec["options"])
                        + " (copied as written); CALC_UNIT: none.")

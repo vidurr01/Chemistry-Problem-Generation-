@@ -230,6 +230,115 @@ class Numbers(unittest.TestCase):
             "[CALC_VALUE: 570, 190] [CALC_UNIT: torr, atm, K]"), spec)["ok"])
 
 
+class MultipleValues(unittest.TestCase):
+    """Answers with several values (one per substance), as in
+    [TYPE: equilibrium] [CALC_VALUE: 0.75, 570] [CALC_UNIT: atm, torr] [SUBSTANCE: N2, H2]."""
+
+    def _r(self, vals, unit="atm", subs=("N2", "H2"), tol=0.01):
+        return SimpleNamespace(answer=list(vals), unit=unit, kind="real", tolerance=tol,
+                               answer_substances=list(subs) if subs else None)
+
+    def _member(self, r, line):
+        spec = answers.answer_spec(r.answer, r.kind, r.unit, None, r.answer_substances)
+        done = answers.complete_answer(answers.parse_answer_line(line), spec)
+        m = {"working": "w", "final_answer": line, "unit": ""}
+        if done.get("ok"):
+            m.update(final_value=done["final_value"], final_answer=done["render"], substance=done.get("substance"))
+        return m, done
+
+    def test_user_example_and_variants(self):
+        r = self._r([0.75, 0.75])
+        cases = [
+            ("[TYPE: equilibrium] [CALC_VALUE: 0.75, 570] [CALC_UNIT: atm, torr] [SUBSTANCE: N2, H2]", True),
+            ("[CALC_VALUE: 570, 0.75] [CALC_UNIT: torr, atm] [SUBSTANCE: H2, N2]", True),          # swapped, labelled
+            ("[CALC_VALUE: 0.75, 0.75] [CALC_UNIT: atm] [SUBSTANCE: N₂, H₂]", True),              # one unit, subscripts
+            ("[CALC_VALUE: 0.75, 0.75] [CALC_UNIT: atm] [SUBSTANCE: N2(g), H2(g)]", True),        # state labels
+            ("[CALC_VALUE: 0.75, 0.75] [CALC_UNIT: atm] [SUBSTANCE: null]", True),                # no labels: by position
+            ("[CALC_VALUE: 0.75, 0.80] [CALC_UNIT: atm] [SUBSTANCE: N2, H2]", False),             # one value wrong
+            ("[CALC_VALUE: 0.75, 0.75] [CALC_UNIT: atm] [SUBSTANCE: N2, O2]", False),             # wrong substance
+            ("[CALC_VALUE: 0.75, 0.75] [CALC_UNIT: atm] [SUBSTANCE: N2, N2]", False),             # duplicate label
+            ("[CALC_VALUE: 0.75, 570] [CALC_UNIT: atm, atm] [SUBSTANCE: N2, H2]", False),         # forgot torr->atm
+        ]
+        for line, want in cases:
+            m, done = self._member(r, line)
+            self.assertTrue(done["ok"], (line, done))
+            self.assertEqual(flow._code_match(r, m), want, line)
+
+    def test_position_matters_without_labels(self):
+        r = self._r([0.25, 0.75], subs=None)
+        m, _ = self._member(r, "[CALC_VALUE: 0.25, 0.75] [CALC_UNIT: atm]")
+        self.assertTrue(flow._code_match(r, m))
+        m, _ = self._member(r, "[CALC_VALUE: 0.75, 0.25] [CALC_UNIT: atm]")
+        self.assertFalse(flow._code_match(r, m))
+        r = self._r([0.25, 0.75])                         # engine labelled, member did not: by position
+        m, _ = self._member(r, "[CALC_VALUE: 0.75, 0.25] [CALC_UNIT: atm] [SUBSTANCE: null]")
+        self.assertFalse(flow._code_match(r, m))
+
+    def test_wrong_count_is_a_restate_not_a_grade(self):
+        r = self._r([0.75, 0.25])
+        for line in ("[CALC_VALUE: 0.75] [CALC_UNIT: atm]", "[CALC_VALUE: 0.75, 0.25, 0.1] [CALC_UNIT: atm]",
+                     "[CALC_VALUE: 0.75, 0.25] [CALC_UNIT: atm, atm, atm]"):
+            _, done = self._member(r, line)
+            self.assertFalse(done["ok"], line)
+
+    def test_zero_and_mixed_kinds(self):
+        r = self._r([0.0, 2.5], unit="mol", subs=("A", "B"))
+        m, _ = self._member(r, "[CALC_VALUE: 0, 2500] [CALC_UNIT: mol, mmol] [SUBSTANCE: A, B]")
+        self.assertTrue(flow._code_match(r, m))
+        m, _ = self._member(r, "[CALC_VALUE: 0.01, 2.5] [CALC_UNIT: mol] [SUBSTANCE: A, B]")
+        self.assertFalse(flow._code_match(r, m))
+
+    def test_random_permutations(self):
+        rng = random.Random(5)
+        names = ["N2", "H2", "NH3", "O2", "CO2", "SO3", "Cl2", "HCl"]
+        alts = [("atm", "torr"), ("atm", "kPa"), ("mol L⁻¹", "mmol/L"), ("kJ mol⁻¹", "J/mol")]
+        for _ in range(1500):
+            n = rng.randint(2, 4)
+            unit, alt = rng.choice(alts)
+            subs = rng.sample(names, n)
+            vals = [rng.uniform(1, 10) * 10 ** rng.randint(-6, 6) for _ in range(n)]
+            r = self._r(vals, unit=unit, subs=subs)
+            order = list(range(n))
+            rng.shuffle(order)
+            written = [float(f"{units.convert(vals[i], unit, alt):.3g}") for i in order]
+            line = (f"[TYPE: t] [CALC_VALUE: {', '.join(f'{w:.3e}' for w in written)}] [CALC_UNIT: {alt}] "
+                    f"[SUBSTANCE: {', '.join(subs[i] for i in order)}]")
+            m, done = self._member(r, line)
+            self.assertTrue(done["ok"] and flow._code_match(r, m), line)
+            k = rng.randrange(n)                                   # now break one value
+            written[k] *= 1.05
+            bad = (f"[CALC_VALUE: {', '.join(f'{w:.3e}' for w in written)}] [CALC_UNIT: {alt}] "
+                   f"[SUBSTANCE: {', '.join(subs[i] for i in order)}]")
+            m, done = self._member(r, bad)
+            self.assertFalse(flow._code_match(r, m), bad)
+
+    def test_stem_and_prompt_for_several_values(self):
+        r = self._r([0.75, 0.25])
+        ad = SimpleNamespace(answer_format=lambda x: None)
+        self.assertEqual(flow._answer_instruction(ad, r),
+                         "Give the 2 answers in atm, to 3 significant figures, in the order: N2, H2.")
+        spec = answers.answer_spec(r.answer, r.kind, r.unit, None, r.answer_substances)
+        text = answers.spec_instruction(spec)
+        self.assertIn("Give exactly 2 values", text)
+        self.assertIn("(N2, H2)", text)
+        self.assertEqual(flow.answer_text(r), "N2: 0.75 atm, H2: 0.25 atm")
+
+    def test_solver_and_grade_for_several_values(self):
+        r = self._r([0.75, 0.25])
+        spec = answers.answer_spec(r.answer, r.kind, r.unit, None, r.answer_substances)
+        replies = iter([{"working": "pN2 = 570 torr, pH2 = 0.25 atm", "answer": "pN2 = 570 torr, pH2 = 0.25 atm"},
+                        {"answer": "[TYPE: equilibrium] [CALC_VALUE: 570, 0.25] [CALC_UNIT: torr, atm] [SUBSTANCE: N2, H2]"}])
+        with mock.patch.object(models, "ask_json", lambda *a, **k: next(replies)):
+            out = stages._solve("x/y", "stem", spec=spec)
+        self.assertTrue(out["format_repaired"])
+        self.assertEqual(out["substance"], ["N2", "H2"])
+        g = flow._grade(r, out, {"verdict": "correct"})
+        self.assertTrue(g["counts_as_solved"])
+        g = flow._grade(r, {**out, "final_value": [0.75, 0.3]}, {"verdict": "wrong", "failure_type": "slip",
+                                                                  "member_expression": "570/760"})
+        self.assertFalse(g["counts_as_solved"])          # no slip confirmation for several values
+
+
 class OptionsAndText(unittest.TestCase):
     DIR = "Answer with exactly one of: forward, backward, no shift."
 
@@ -314,9 +423,11 @@ class Fuzz(unittest.TestCase):
     def test_no_raise_anywhere(self):
         rng = random.Random(7)
         specs = [answers.answer_spec(29.79, "positive", "L"), answers.answer_spec("forward", "text", "", OptionsAndText.DIR),
-                 answers.answer_spec(["A"], "letters"), answers.answer_spec("CH2O", "text", "", "Give the empirical formula.")]
+                 answers.answer_spec(["A"], "letters"), answers.answer_spec("CH2O", "text", "", "Give the empirical formula."),
+                 answers.answer_spec([0.75, 0.25], "real", "atm", None, ["N2", "H2"])]
         results = [_res(29.79, "L"), _res("forward", kind="text", fmt=OptionsAndText.DIR), _res(["A"], kind="letters"),
-                   _res("CH2O", kind="text")]
+                   _res("CH2O", kind="text"),
+                   SimpleNamespace(answer=[0.75, 0.25], unit="atm", kind="real", tolerance=0.01, answer_substances=["N2", "H2"])]
         alphabet = "0123456789.-+eE []:,/^*()abcdeJLkmolsKatm°Cµ⁻¹²³_"
         junk = list(self.JUNK)
         for _ in range(1500):
@@ -329,7 +440,7 @@ class Fuzz(unittest.TestCase):
                 self.assertIn(done.get("ok"), (True, False))
                 m = {"working": "w", "final_answer": j if isinstance(j, str) else None, "unit": ""}
                 if done.get("ok"):
-                    m.update(final_value=done["final_value"], final_answer=done["render"])
+                    m.update(final_value=done["final_value"], final_answer=done["render"], substance=done.get("substance"))
                 self.assertIn(flow._code_match(r, m), (True, False, None))
                 g = flow._grade(r, m, {"verdict": rng.choice(["correct", "wrong", "right_answer_wrong_reasoning"]),
                                        "failure_type": rng.choice([None, "slip"]), "member_expression": j if isinstance(j, str) else None})

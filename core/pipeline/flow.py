@@ -48,7 +48,12 @@ class Parked(Exception):
 # ── text helpers ─────────────────────────────────────────────────────────────
 
 def answer_text(result) -> str:
-    return f"{result.answer}{(' ' + result.unit) if result.unit else ''}"
+    vals = answers.numeric_values(result.answer)
+    u = f" {result.unit}" if result.unit else ""
+    if vals is not None and len(vals) > 1:
+        subs = getattr(result, "answer_substances", None) or [None] * len(vals)
+        return ", ".join(f"{s + ': ' if s else ''}{v:g}{u}" for v, s in zip(vals, subs))
+    return f"{result.answer}{u}"
 
 
 def trace_text(result) -> str:
@@ -213,7 +218,13 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
 
 
 def _is_numeric(result) -> bool:
-    return isinstance(result.answer, (int, float)) and not isinstance(result.answer, bool)
+    """One number or a list of numbers (several substances)."""
+    return answers.numeric_values(result.answer) is not None
+
+
+def _is_scalar(result) -> bool:
+    v = answers.numeric_values(result.answer)
+    return v is not None and len(v) == 1
 
 
 def _eval_expression(expr):
@@ -237,7 +248,13 @@ def _answer_instruction(adapter, result):
     """The sentence the stem must end with, checked verbatim by the gate: the option list or
     form for a non-numeric answer (physical.ANSWER_FORMATS), the unit for a numeric one."""
     fmt = adapter.answer_format(result) if hasattr(adapter, "answer_format") else None
-    if fmt is None and _is_numeric(result):
+    if fmt is None and _is_numeric(result) and not _is_scalar(result):
+        n = len(answers.numeric_values(result.answer))
+        subs = getattr(result, "answer_substances", None)
+        order = f"in the order: {', '.join(subs)}" if subs else "in the order asked"
+        unit = f" in {result.unit}" if result.unit else ""
+        fmt = f"Give the {n} answers{unit}, to {answers.SIG_FIGS} significant figures, {order}."
+    elif fmt is None and _is_numeric(result):
         if result.unit:
             fmt = f"Give the answer in {result.unit}, to {answers.SIG_FIGS} significant figures."
         elif result.kind in ("count", "posint", "integer"):
@@ -258,19 +275,20 @@ def _code_match(result, member):
     fv = member.get("final_value")
     if fv is not None:
         if _is_numeric(result):
-            if len(fv) != 1:
-                return False
-            if float(result.answer) == 0.0:          # relative tolerance is meaningless at zero
-                return abs(float(fv[0])) <= 1e-9
-            return answers.answers_match(float(result.answer), float(fv[0]), tol)
+            return answers.values_match(answers.numeric_values(result.answer), fv, tol,
+                                        getattr(result, "answer_substances", None), member.get("substance"))
         v = fv[0]
     else:
         v = member.get("final_answer")
         if v is None:
             return False
         if _is_numeric(result):
-            val = answers.numeric_value(v)
-            return None if val is None else answers.answers_match(float(result.answer), val, tol)
+            ev = answers.numeric_values(result.answer)
+            if len(ev) == 1:
+                val = answers.numeric_value(v)
+                return None if val is None else answers.values_match(ev, [val], tol)
+            vals = answers.parse_numeric_answers(v)
+            return None if vals is None else answers.values_match(ev, vals, tol)
     if result.kind == "letters":
         return answers.matches(result.answer, v, "letters")
     if answers.matches(result.answer, v, result.kind):
@@ -340,7 +358,7 @@ def _grade(result, member, diag) -> dict:
     elif not match and diag.get("failure_type") == "slip" or (not match and diag.get("verdict") == "correct"):
         expr = diag.get("member_expression")
         value = _eval_expression(expr)
-        slip_confirmed = value is not None and _is_numeric(result) and \
+        slip_confirmed = value is not None and _is_scalar(result) and \
             answers.matches(result.answer, value, result.kind, getattr(result, "tolerance", 0.01)) and \
             _grounded(expr, member.get("working", ""))
         solved = bool(slip_confirmed)
@@ -364,7 +382,7 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
        | {"decision": "drop", "reason"}.  Raises Parked if a council call fails."""
     rtext, atext = trace_text(result), answer_text(result)
     fmt = _answer_instruction(adapter, result)
-    spec = answers.answer_spec(result.answer, result.kind, result.unit, fmt)
+    spec = answers.answer_spec(result.answer, result.kind, result.unit, fmt, getattr(result, "answer_substances", None))
 
     def solve_and_grade(names):
         try:
