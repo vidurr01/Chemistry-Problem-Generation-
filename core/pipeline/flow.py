@@ -221,13 +221,36 @@ def _eval_expression(expr):
     return None
 
 
-def _text_match(result, final_answer, diag):
-    """(matches, decided_by) for a final answer; diag is the verifier's diagnosis or None."""
-    if answers.matches(result.answer, final_answer, result.kind, getattr(result, "tolerance", 0.01)):
-        return True, "code"
-    if _is_numeric(result) or result.kind == "letters" or final_answer is None:
+def _numeric_match(result, final_answer, unit):
+    """True / False when code can read the member's number, None when it cannot.
+    A value in another unit than the one asked is converted using the member's stated unit."""
+    tol = getattr(result, "tolerance", 0.01)
+    value = answers.numeric_value(final_answer)
+    if value is None:
+        return None
+    if answers.answers_match(float(result.answer), value, tol):
+        return True
+    if unit and result.unit and unit.strip() != result.unit.strip():
+        conv = answers.convert_unit(value, unit, result.unit)
+        if conv is not None and answers.answers_match(float(result.answer), conv, tol):
+            return True
+    return False
+
+
+def _text_match(result, final_answer, diag, unit=""):
+    """(matches, decided_by) for a final answer; diag is the verifier's diagnosis or None.
+    Code decides whenever it can read the answer; only when it cannot (an answer phrased in
+    words, a number with commentary around it) does the verifier's answer_equivalent decide."""
+    if final_answer is None:
         return False, "code"
-    decided = answers.text_answers_match(result.answer, final_answer)
+    if _is_numeric(result):
+        decided = _numeric_match(result, final_answer, unit)
+    elif result.kind == "letters":
+        decided = answers.matches(result.answer, final_answer, "letters")
+    elif answers.matches(result.answer, final_answer, result.kind):
+        decided = True
+    else:
+        decided = answers.text_answers_match(result.answer, final_answer)
     if decided is not None or diag is None:
         return bool(decided), "code"
     eq = diag.get("answer_equivalent")
@@ -243,7 +266,7 @@ def _grade(result, member, diag) -> dict:
     code where its shape allows (formulas by element counts, nuclides, configurations, balanced
     equations, categories such as forward/backward or yes/no with synonyms); when code cannot
     tell, the verifier's narrow answer_equivalent field decides. match_by records which."""
-    match, match_by = _text_match(result, member.get("final_answer"), diag)
+    match, match_by = _text_match(result, member.get("final_answer"), diag, member.get("unit", ""))
     solved, slip_confirmed = False, None
     if match and diag["verdict"] in ("correct", "wrong"):
         # the final answer is within tolerance: a slip the verifier saw on the way (e.g. 29.52
@@ -263,12 +286,15 @@ def _grade(result, member, diag) -> dict:
 def _hint_solved(result, re_, stem, rtext, atext, hint):
     """Did the member solve it after the hint? Same rule as grading: code where it can decide,
     otherwise the verifier's answer_equivalent (returns that diagnosis too)."""
-    ok, _ = _text_match(result, re_["final_answer"], None)
-    if ok or _is_numeric(result) or result.kind == "letters" or \
-            answers.text_answers_match(result.answer, re_["final_answer"]) is not None:
+    unit = re_.get("unit", "")
+    ok, by = _text_match(result, re_["final_answer"], None, unit)
+    code_can_tell = result.kind == "letters" or re_["final_answer"] is None or (
+        _numeric_match(result, re_["final_answer"], unit) is not None if _is_numeric(result)
+        else ok or answers.text_answers_match(result.answer, re_["final_answer"]) is not None)
+    if code_can_tell:
         return ok, None
     d = stages.verify_member(stem, rtext, atext, re_, after_hint=hint)
-    return _text_match(result, re_["final_answer"], d)[0], d
+    return _text_match(result, re_["final_answer"], d, unit)[0], d
 
 
 def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:

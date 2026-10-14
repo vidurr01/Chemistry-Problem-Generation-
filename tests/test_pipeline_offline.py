@@ -447,6 +447,78 @@ class SmokeTest3(unittest.TestCase):
         self.assertEqual(parse_json(r'{"q": "keep \"this\" and \\ that"}')["q"], 'keep "this" and \\ that')
 
 
+class GradingStress(unittest.TestCase):
+    """Every answer form seen in live runs, plus the obvious variants. (engine answer, unit,
+    tolerance) x (member answer, member unit, verifier diagnosis) -> counts as solved?"""
+
+    def _r(self, answer, unit="", kind="positive", tol=0.01):
+        from types import SimpleNamespace
+        return SimpleNamespace(answer=answer, unit=unit, kind=kind, tolerance=tol)
+
+    def _solved(self, r, ans, unit="", diag=None):
+        from core.pipeline import flow
+        g = flow._grade(r, {"final_answer": ans, "unit": unit}, diag or {"verdict": "wrong", "failure_type": "genuine_difficulty"})
+        return g["counts_as_solved"]
+
+    def test_numbers(self):
+        r = self._r(29.79, "L")
+        ok = {"verdict": "correct"}
+        slip = {"verdict": "wrong", "failure_type": "slip"}
+        self.assertTrue(self._solved(r, "29.52", "L", slip))          # run 4: inside 1% with a slip on the way
+        self.assertTrue(self._solved(r, "29.8", "L", ok))
+        self.assertTrue(self._solved(r, 29.79, "L", ok))              # a number, not a string
+        self.assertTrue(self._solved(r, "29.8 L", "", ok))
+        self.assertTrue(self._solved(r, "V = 29.8 L", "", ok))
+        self.assertTrue(self._solved(r, "29790", "mL", ok))           # other unit, converted by the stated unit
+        self.assertTrue(self._solved(r, "0.02979", "m³", ok))
+        self.assertFalse(self._solved(r, "31.2", "L"))                # the uses-22.4 trap
+        self.assertFalse(self._solved(r, "29790", "L"))               # wrong unit really is wrong
+        self.assertFalse(self._solved(r, None, "L"))
+        self.assertFalse(self._solved(r, "29.79", "L", {"verdict": "right_answer_wrong_reasoning"}))
+
+    def test_fractions_expressions_and_powers(self):
+        ok = {"verdict": "correct"}
+        self.assertTrue(self._solved(self._r(0.2157), "11/51", "", ok))
+        self.assertTrue(self._solved(self._r(0.6931), "ln(4)/2", "", ok))
+        self.assertTrue(self._solved(self._r(1.507e-15, tol=0.0225), "1.51 × 10^-15", "", ok))
+        self.assertTrue(self._solved(self._r(1.507e-15, tol=0.0225), "1.51×10⁻¹⁵", "", ok))
+        self.assertTrue(self._solved(self._r(-7.1, kind="real"), "-7.1", "", ok))
+        self.assertFalse(self._solved(self._r(-7.1, kind="real"), "7.1", "", ok))     # sign matters
+
+    def test_energy_units(self):
+        ok = {"verdict": "correct"}
+        r = self._r(156.1, "kJ mol⁻¹")
+        self.assertTrue(self._solved(r, "156100", "J mol⁻¹", ok))
+        self.assertTrue(self._solved(r, "156100", "J/mol", ok))
+        self.assertFalse(self._solved(r, "156100", "kJ mol⁻¹", ok))   # the kJ-not-converted trap
+        self.assertTrue(self._solved(self._r(0.0005776, "s⁻¹"), "0.03466", "min⁻¹", ok))
+        self.assertTrue(self._solved(self._r(1.0, "atm"), "101.325", "kPa", ok))
+
+    def test_unreadable_number_goes_to_the_verifier_field(self):
+        r = self._r(29.79, "L")
+        self.assertTrue(self._solved(r, "about 29.8 (29.79) L", "", {"verdict": "correct", "answer_equivalent": True}))
+        self.assertFalse(self._solved(r, "about 29.8 (29.79) L", "", {"verdict": "wrong", "answer_equivalent": False}))
+
+    def test_slip_confirmed_by_the_members_own_arithmetic(self):
+        r = self._r(29.79, "L")
+        d = {"verdict": "wrong", "failure_type": "slip", "member_expression": "(1.4173 * 0.0821 * 320.0) / 1.25"}
+        self.assertTrue(self._solved(r, "31.0", "L", d))
+        d = {"verdict": "wrong", "failure_type": "slip", "member_expression": "1.0 * 0.0821 * 320 / 1.25"}
+        self.assertFalse(self._solved(r, "21.0", "L", d))
+
+    def test_text_and_letters(self):
+        from types import SimpleNamespace
+        ok = {"verdict": "correct"}
+        t = lambda a: SimpleNamespace(answer=a, unit="", kind="text", tolerance=0.01)
+        self.assertTrue(self._solved(t("precipitate forms"), "Yes", "", ok))
+        self.assertTrue(self._solved(t("forward"), "shifts to the right", "", ok))
+        self.assertTrue(self._solved(t("Th-234"), "²³⁴₉₀Th", "", ok))
+        self.assertFalse(self._solved(t("forward"), "backward", "", ok))
+        L = SimpleNamespace(answer="AC", unit="", kind="letters", tolerance=0.01)
+        self.assertTrue(self._solved(L, "A and C", "", ok))
+        self.assertFalse(self._solved(L, "A", "", ok))
+
+
 class GateCompare(unittest.TestCase):
     SPEC = [{"key": "s0.mass", "desc": "mass", "unit": "g", "kind": "positive"},
             {"key": "s0.eq", "desc": "equation", "unit": "", "kind": "text"}]

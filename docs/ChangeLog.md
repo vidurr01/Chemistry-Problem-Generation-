@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Answer matching audited end to end
+- Numeric answers in the pipeline now use `answers.numeric_value` (it was only in calibration): fractions (11/51), expressions (ln(4)/2), × 10ⁿ in every form. Superscript exponents are read as powers (1.51×10⁻¹⁵ was being read as 1.51 × (10 − 15)).
+- A number in another unit than the one asked is converted using the unit the member STATED (`answers.convert_unit`: length, volume, mass, amount, concentration, time, energy, pressure, potential, charge, conductance), so 156100 J mol⁻¹ matches 156.1 kJ mol⁻¹ but 156100 "kJ mol⁻¹" (the not-converted trap) does not.
+- When code cannot read a numeric answer at all (a number wrapped in words), the verifier's `answer_equivalent` decides, as for text answers; when code can read it, code decides.
+- Hint re-solves use the same rule.
+- `GradingStress` tests cover every answer form seen in live runs (76 tests). Re-grading the stored council answers of all three wrongly accepted live questions now marks each as solved by its solvers, i.e. too easy.
+
 ### First live run with the ladder
 - Run 4 (airbag: NaN₃ solution → N₂ → Amagat with argon) was accepted as "advanced", wrongly: Llama 3.3 answered 29.52 L against 29.79 L, inside tolerance, but the verifier labelled a slip on the way and a matching answer only counted with verdict "correct". Rejected (GEN_20261014T020357).
 - `flow._grade()`: a final answer within tolerance counts as solved unless the verdict is "right answer by wrong reasoning".
