@@ -102,8 +102,13 @@ def _propose(adapter, cand, spec, bb, log, refine=None):
     errors = []
     for attempt in range(INPUT_TRIES):
         traps = list(dict.fromkeys(t.desc for st in cand["_plan"].steps for t in st.traps))
-        out = stages.propose_inputs(adapter.config["display_name"], adapter.chain_text(cand["_plan"]),
-                                    spec, refine=refine, errors=errors or None, traps=traps)
+        try:
+            out = stages.propose_inputs(adapter.config["display_name"], adapter.chain_text(cand["_plan"]),
+                                        spec, refine=refine, errors=errors or None, traps=traps)
+        except ValueError as e:                  # unparseable or cut-off reply after retries
+            bb.note("inputs_unusable", attempt=attempt + 1, error=str(e)[:300])
+            print(f"    input proposal unusable ({attempt + 1}/{INPUT_TRIES}): {str(e)[:120]}")
+            continue
         if not out["coherent"]:
             bb.note("inputs_veto", reason=out.get("reason", ""))
             log({"event": "inputs_veto", "chain": cand["edges"], "reason": out.get("reason", "")})
@@ -177,9 +182,15 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
     options, correct = _ask_options(plan, rng)
     fmt = _answer_instruction(adapter, result)
     for attempt in range(GATE_RETRIES + 1):
-        stem = stages.write_stem(adapter.config["display_name"], scenario, adapter.chain_text(plan), spec,
-                                 values, result.constants, result.asks, result.unit, traps,
-                                 previous=previous, feedback=feedback, solved=solved, answer_format=fmt)
+        try:
+            stem = stages.write_stem(adapter.config["display_name"], scenario, adapter.chain_text(plan), spec,
+                                     values, result.constants, result.asks, result.unit, traps,
+                                     previous=previous, feedback=feedback, solved=solved, answer_format=fmt)
+        except ValueError as e:                  # unparseable or cut-off reply: a failed gate attempt
+            bb.note("gate", attempt=attempt + 1, stem=None, ok=False, mismatches=[f"unusable reply: {e}"[:300]],
+                    unreadable=False)
+            print(f"    stem reply unusable ({attempt + 1}/{GATE_RETRIES + 1}): {str(e)[:120]}")
+            continue
         ext = stages.gate_extract(stem, spec, options, result.constants)
         g = gate.compare(spec, values, ext, correct, result.constants)
         if fmt and " ".join(fmt.split()) not in " ".join(stem.split()):
@@ -380,7 +391,10 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
             kind = "genuine_difficulty"            # an unconfirmed slip or a lucky answer is tested like any failure
 
         if kind == "unclear_wording":
-            hint = stages.clarification_hint(stem, d.get("ambiguous_text") or "", d.get("clarification") or "")
+            try:
+                hint = stages.clarification_hint(stem, d.get("ambiguous_text") or "", d.get("clarification") or "")
+            except ValueError:                   # the verifier's own clarification is a usable hint
+                hint = d.get("clarification") or "Read every given value and what is asked carefully."
             re_ = stages.solve_with_hint(g, stem, hint, spec)
             ok, _ = _hint_solved(result, re_, stem, rtext, atext, hint)
             hint_log.append({"member": g["name"], "hint": "clarification", "text": hint, "solved": ok,
@@ -451,8 +465,12 @@ def _fact_stem_and_gate(adapter, cand, bb, previous=None, feedback=None, solved=
     fq = cand["_fact"]
     src = _fact_source(cand)
     for attempt in range(GATE_RETRIES + 1):
-        stem = stages.write_fact_stem(adapter.config["display_name"], src.title, fq.lead, fq.option_lines,
-                                      previous=previous, feedback=feedback, solved=solved)
+        try:
+            stem = stages.write_fact_stem(adapter.config["display_name"], src.title, fq.lead, fq.option_lines,
+                                          previous=previous, feedback=feedback, solved=solved)
+        except ValueError as e:
+            print(f"    stem reply unusable ({attempt + 1}/{GATE_RETRIES + 1}): {str(e)[:120]}")
+            continue
         g = gate.compare_fact(stem, fq)
         bb.note("gate", attempt=attempt + 1, stem=stem, ok=g["ok"], mismatches=g["mismatches"], unreadable=False)
         if g["ok"]:
@@ -546,7 +564,11 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 previous, feedback, solved = stem, decision["feedback"], None
                 continue
             solved = _solved_summary(decision["graded"])
-            choice = stages.choose_refinement(stem, solved, adapter.refine_modes)
+            try:
+                choice = stages.choose_refinement(stem, solved, adapter.refine_modes)
+            except ValueError:
+                choice = {"mode": adapter.refine_modes[0],
+                          "feedback": "Too easy: find the shortcut the solvers used and remove it."}
             bb.note("refine", **choice)
             print(f"  [refine] too easy → {choice['mode']}: {choice['feedback'][:140]}")
             if choice["mode"] == "reword":

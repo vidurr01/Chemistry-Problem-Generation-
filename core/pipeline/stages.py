@@ -115,7 +115,7 @@ Return JSON:
     role, model = ("refiner", models.REFINER) if refine else ("generator", models.GENERATOR)
     out = models.ask_json(role, model,
                           "You design chemistry problems. Output JSON only.", prompt,
-                          max_tokens=3000, temperature=0.8)
+                          max_tokens=16000, temperature=0.8)
     out["coherent"] = as_bool(out.get("coherent"), default=False)
     return out
 
@@ -217,7 +217,7 @@ Return JSON: {{"easy_cues_avoided": ["..."], "stem": "the full question text"}}"
     role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
     out = models.ask_json(role, model,
                           "You write rigorous chemistry exam questions. Output JSON only.", prompt,
-                          max_tokens=3000, temperature=0.6)
+                          max_tokens=16000, temperature=0.6)
     stem = str(out.get("stem") or "").strip()
     if not stem:
         raise ValueError("generator returned an empty stem")
@@ -248,7 +248,7 @@ Return JSON: {{"stem": "the full question text"}}"""
     role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
     out = models.ask_json(role, model,
                           "You write rigorous chemistry exam questions. Output JSON only.", prompt,
-                          max_tokens=1500, temperature=0.4)
+                          max_tokens=8000, temperature=0.4)
     stem = str(out.get("stem") or "").strip()
     if not stem:
         raise ValueError("generator returned an empty stem")
@@ -295,7 +295,7 @@ Return JSON: {{"values": {{"<field>": <value or null>, ...}}, "asked": <option n
 "constants_stated": [true/false, ...]}}"""
     return models.ask_json("extractor", models.EXTRACTOR,
                            "You extract facts from text precisely. Output JSON only.", prompt,
-                           max_tokens=2000, temperature=0.0)
+                           max_tokens=8000, temperature=0.0)
 
 
 # ── 4. Council ───────────────────────────────────────────────────────────────
@@ -354,7 +354,7 @@ answer; only rewrite it (convert the unit if a different one is required).
 {answers.spec_instruction(spec)}
 Return JSON with the keys "final_answer" and "unit"."""
     try:
-        r = models.ask_json("council", slug, "Output JSON only.", prompt, max_tokens=1500,
+        r = models.ask_json("council", slug, "Output JSON only.", prompt, max_tokens=4000,
                             temperature=0.0, reasoning_effort="low")
     except Exception:                                            # noqa: BLE001 - grading falls back
         return None
@@ -480,7 +480,7 @@ Return JSON with exactly these keys: answer_equivalent, verdict, failure_type, f
 member_expression, ambiguous_text, clarification, missing_fact, objection_assessment, reasoning."""
     out = models.ask_json("verifier", models.VERIFIER,
                           "You are a meticulous chemistry examiner. Output JSON only.", prompt,
-                          max_tokens=2000, temperature=0.0)
+                          max_tokens=8000, temperature=0.0)
     verdict = out.get("verdict") if out.get("verdict") in VERDICTS else "wrong"
     failure = out.get("failure_type") if out.get("failure_type") in FAILURES else None
     if verdict == "wrong" and failure is None:
@@ -521,7 +521,7 @@ Decide what to change for the next version:
 Return JSON: {{"mode": "new_inputs" or "reword", "feedback": "one or two sentences on what to change"}}"""
     out = models.ask_json("refiner", models.REFINER,
                           "You design hard but fair chemistry questions. Output JSON only.", prompt,
-                          max_tokens=1500, temperature=0.4)
+                          max_tokens=8000, temperature=0.4)
     mode = out.get("mode") if out.get("mode") in modes else modes[0]
     return {"mode": mode, "feedback": str(out.get("feedback") or "")[:600]}
 
@@ -543,7 +543,7 @@ formula, step or result.
 Return JSON: {{"hint": "..."}}"""
     out = models.ask_json("generator", models.GENERATOR,
                           "You clarify exam questions without solving them. Output JSON only.", prompt,
-                          max_tokens=400, temperature=0.2)
+                          max_tokens=4000, temperature=0.2)
     return str(out.get("hint") or clarification or "").strip()
 
 
@@ -565,7 +565,7 @@ The solution is ONE plain-text string: numbered steps separated by line breaks, 
 JSON, no LaTeX. Return JSON: {{"solution": "1. ...\\n2. ...\\nFinal answer: ..."}}"""
     out = models.ask_json("solution_writer", models.SOLUTION_WRITER,
                           "You write clear chemistry solutions. Output JSON only.", prompt,
-                          max_tokens=3000, temperature=0.3)
+                          max_tokens=8000, temperature=0.3)
     return _solution_text(out.get("solution"))
 
 
