@@ -61,6 +61,8 @@ class FakeModels:
             ans = re.search(r"STUDENT'S FINAL ANSWER: (\S+)", user).group(1)
             return self.verdicts.get(ans, {"verdict": "wrong", "failure_type": "genuine_difficulty",
                                            "failed_step": 2, "reasoning": "used the wrong molar volume"})
+        if role == "solution_checker":
+            return {"errors": []}
         if role == "solution_writer":
             return {"solution": "n = 0.1 mol; V = 0.1 × 22.4 = 2.24 L."}
         raise AssertionError(f"unexpected call: {role}")
@@ -143,6 +145,8 @@ class FakeFactModels:
             ans = letters_of(re.search(r"STUDENT'S FINAL ANSWER: (.*)", user).group(1))
             return {"verdict": "correct"} if ans == self.key else \
                 {"verdict": "wrong", "failure_type": "genuine_difficulty", "failed_step": 1}
+        if role == "solution_checker":
+            return {"errors": []}
         if role == "solution_writer":
             return {"solution": "Each statement checked."}
         raise AssertionError(f"unexpected call: {role}")

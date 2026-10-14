@@ -70,6 +70,70 @@ def trace_text(result) -> str:
     return "\n".join(lines)
 
 
+SOLUTION_REWRITES = 2       # a written solution with errors is rewritten at most twice
+
+
+def _squash_text(s) -> str:
+    return " ".join(answers.normalise_text(s).replace("*", "×").split())
+
+
+def _grounded_error(err: dict, lines: list) -> bool:
+    """A verifier error counts only if it points at the solution: its quote is in the text
+    (nearly word for word), or it gives no quote but a line that exists."""
+    import difflib
+    quote = _squash_text(err.get("quote") or "")
+    if not quote:
+        n = err.get("line")
+        return n is not None and 1 <= int(n) <= len(lines)
+    text = [_squash_text(ln) for ln in lines]
+    if any(quote in t for t in text):
+        return True
+    for t in text:
+        blocks = difflib.SequenceMatcher(None, quote, t, autojunk=False).get_matching_blocks()
+        if sum(b.size for b in blocks) >= 0.85 * len(quote):
+            return True
+    return False
+
+
+def checked_solution(stem: str, result) -> tuple:
+    """(solution, record). The solution writer drafts; code checks every calculation and that
+    each step's result and the final answer appear; only a draft code finds clean goes to the
+    mismatch verifier, which names each wrong step. Errors go back to the writer, at most
+    SOLUTION_REWRITES times. Only a draft that passes both is returned; otherwise the solution
+    is empty and the record says why (status: verified | failed_check | writer_failed |
+    checker_failed). Never raises: the solution is display only."""
+    from core import solution_check
+    trace, ans = trace_text(result), answer_text(result)
+    history, draft, problems = [], None, None
+    for attempt in range(SOLUTION_REWRITES + 1):
+        try:
+            draft = stages.write_solution(stem, trace, ans, previous=draft, problems=problems)
+        except Exception as e:                                   # noqa: BLE001
+            history.append({"attempt": attempt + 1, "error": f"writer: {type(e).__name__}: {str(e)[:160]}"})
+            return "", {"status": "writer_failed", "attempts": attempt + 1, "history": history}
+        problems = solution_check.code_problems(draft, result.trace, result.answer,
+                                                getattr(result, "kind", "real"))
+        entry = {"attempt": attempt + 1, "draft": draft, "code_problems": problems}
+        if not problems:
+            try:
+                errs = stages.check_solution(stem, trace, ans, draft)
+            except Exception as e:                               # noqa: BLE001
+                entry["error"] = f"checker: {type(e).__name__}: {str(e)[:160]}"
+                history.append(entry)
+                return "", {"status": "checker_failed", "attempts": attempt + 1, "history": history}
+            lines = [ln for ln in draft.splitlines() if ln.strip()]
+            kept = [e for e in errs if _grounded_error(e, lines)]
+            entry["verifier_errors"] = kept
+            entry["ignored_errors"] = [e for e in errs if e not in kept]
+            problems = [(f"Line {int(e['line'])}: " if e.get("line") is not None else "") +
+                        (f"'{e['quote']}' — " if e.get("quote") else "") + e["problem"] for e in kept]
+        history.append(entry)
+        if not problems:
+            return draft, {"status": "verified", "attempts": attempt + 1, "history": history}
+    return "", {"status": "failed_check", "attempts": SOLUTION_REWRITES + 1, "history": history,
+                "last_problems": problems}
+
+
 def _fact_source(cand):
     from core.engine.physical.facts_data import BY_ID
     return BY_ID[cand["nodes"][0]]
