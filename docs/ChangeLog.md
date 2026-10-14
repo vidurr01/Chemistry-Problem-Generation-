@@ -4,6 +4,9 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Generator prompt: exam-style wording
+- `stages.write_stem`: the stem in run 10 read "a mass of the substance equal to 2.719 g of pure sulfamic acid" and "Assuming each formula unit of NaOH ... yields 2 ions". The prompt now says the value labels are generic internal names and each thing must be called by its actual name from the scenario; it gives bad → good phrasing examples ("2.719 g of sulfamic acid", "100.0 mL of the Ag⁺ solution", "0.05 M acetic acid"); supporting data (molar/equivalent masses, dissociation, stoichiometric factors) goes in one closing "(Given: ...)" line instead of "Assuming ..." sentences; no filler; and it ends with an examiner re-read that may rewrite phrasing but not values. The values, gate and refiner path are unchanged.
+
 ### Slip confirmation for every value; per-value units; more multi-value tests
 - Slip confirmation applies to every value (`flow._slip_confirmed`): the verifier gives one set-up expression per value (a list in the reference's order, null where the value is right; a string for one value). Each wrong value must be explained by its own expression, evaluating to the engine's value and grounded in the working; one unexplained value fails the attempt.
 - Per-value target units (`answers.target_units`): a question can ask ΔH in kJ mol⁻¹, ΔS in J K⁻¹ mol⁻¹ and ΔG in kJ mol⁻¹ in one answer; stems read "Give the 3 answers to 3 significant figures, in the order: ΔH in kJ mol⁻¹; ΔS in J K⁻¹ mol⁻¹; ΔG in kJ mol⁻¹."
