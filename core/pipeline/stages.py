@@ -64,7 +64,7 @@ def _spec_lines(spec: list) -> str:
 # ── 1. Inputs ────────────────────────────────────────────────────────────────
 
 def propose_inputs(subject_name: str, chain_text: str, spec: list, *, refine: dict | None = None,
-                   errors: list | None = None) -> dict:
+                   errors: list | None = None, traps: list | None = None) -> dict:
     """{"coherent": bool, "reason": str, "scenario": str, "values": {key: value}}."""
     refine_block = ""
     if refine:
@@ -82,6 +82,9 @@ not just bigger or messier numbers.
     if errors:
         error_block = "\nYour previous values were rejected by the calculation engine:\n" + \
                       "\n".join(f"- {e}" for e in errors) + "\nPropose values that avoid these problems.\n"
+    trap_block = ("Mistakes this chain is built to catch (never mention them in a question); pick values\n"
+                  "where each gives a clearly different but believable answer:\n"
+                  + "\n".join(f"- {t}" for t in traps) + "\n") if traps else ""
     prompt = f"""You design JEE Advanced {subject_name} questions.
 
 A calculation engine will compute the answer from these steps, in this order:
@@ -95,7 +98,12 @@ each step's result really is the quantity the next step uses (same substance, sa
 sample)? If not, say so and stop.
 
 If yes: invent a concrete, realistic scenario (name the substances) and give a value for
-EVERY input. Use realistic JEE values with 2–4 significant figures; text inputs must be
+EVERY input. Aim for a JEE Advanced question, not a plug-in exercise:
+- prefer a system where recognising which concept applies takes thought;
+- choose values where the usual shortcut or approximation would mislead (e.g. a degree of
+  dissociation that is not small, a limiting reagent that is not the obvious one);
+- avoid round "textbook" numbers that make the path obvious.
+{trap_block} Use realistic JEE values with 2–4 significant figures; text inputs must be
 exact strings in the format described (equations use '->'); JSON inputs must be JSON.
 
 Return JSON:
@@ -188,17 +196,27 @@ Typical mistakes a strong student could make here (do not warn about them; just 
 the question does not give them away):
 {trap_lines}
 
+Make it as demanding as a JEE Advanced question, but fair:
+- never name the law, equation or method needed, and never hint at the next step;
+- do not list the data in the order the solution uses it; place each value where it belongs
+  naturally in the description of the system or experiment;
+- describe a concrete system or experiment, so the student has to recognise which concepts apply;
+- ask only for the final quantity (no intermediate results, no "first find ...");
+- it must stay complete and unambiguous: every value above stated, exactly one reading.
+Before writing, list what would make this easy for a strong student (a cue word, a spelled-out
+step, data in solution order) and avoid each one.
+
 Rules: no intermediate results, no hints, no answer; one question (no parts); text only;
 no multiple-choice options; do not add data that is not listed. The descriptions above are
 internal labels: write natural exam prose and never copy them or template symbols (A, B, x, y,
 AxBy) into the question; a subscript is stated by writing the actual formula (AgCl states
 x = 1, y = 1). Write powers of ten as × 10ⁿ.
 {redo}
-Return JSON: {{"stem": "the full question text"}}"""
+Return JSON: {{"easy_cues_avoided": ["..."], "stem": "the full question text"}}"""
     role, model = ("refiner", models.REFINER) if solved else ("generator", models.GENERATOR)
     out = models.ask_json(role, model,
                           "You write rigorous chemistry exam questions. Output JSON only.", prompt,
-                          max_tokens=2500, temperature=0.6)
+                          max_tokens=3000, temperature=0.6)
     stem = str(out.get("stem") or "").strip()
     if not stem:
         raise ValueError("generator returned an empty stem")

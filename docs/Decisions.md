@@ -2,6 +2,14 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## A difficulty ladder instead of a council vote
+
+Date: 2026-10-14
+Context: the council solved 92 % of real JEE Advanced numericals, so "at most one of three solves" rejected almost every genuine Advanced question. Calibration on real Mains (2024–2026) and Advanced (2021–2025) papers showed no contamination effect (2026 papers solved as often as 2024) and that strong models barely tell Mains from Advanced (GLM 87 % vs 71 %, Luna 96 % vs 92 %, Qwen3.5-35B 94 % vs 86 %). Counting the hardest Mains questions as Advanced-level, as the user defines it, only Llama 3.3 70B separates: it fails 29 % of easy/medium Mains and 66 % of Advanced-level questions.
+Decision: a ladder, weakest first — Llama 3.3 70B, GLM-5.3-Flash, GPT-6 Luna. Each step runs only if all below failed. The bottom step decides (solves → too easy; fails → accepted after hint tests); the first step that solves gives the difficulty label. Families stay separate (Meta, Z.ai, OpenAI; Google writes, DeepSeek extracts, Anthropic verifies, Mistral writes solutions).
+Alternatives: majority of a strong council (rejects ~90 % of real Advanced); GLM as the bottom step (fails easy and medium Mains through careless slips as often as hard ones); MiniMax M3 or Qwen3.8-Flash at the top (not stronger than Luna, far costlier).
+Trade-off: about 29 % of easy/medium questions also fail the bottom step; the verifier and hint tests trim some of these. "Hard Mains" comes from the dataset's `calculated_difficulty`, which is not student data, and the samples are small (28/19/49).
+
 ## Ask a stable quantity, not one rounding can move
 
 Date: 2026-10-13

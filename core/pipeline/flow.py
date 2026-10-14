@@ -5,14 +5,15 @@ flow.py — one question through the pipeline. Every decision here is code.
         pick inputs (generator; may veto an incoherent chain) → engine
         loop over rounds (at most MAX_ROUNDS refinements):
             write stem → gate (original + GATE_RETRIES) → duplicate check
-            council → verifier on every member → grade in code
+            ladder (weakest first; next step only if all below failed) → verifier → grade in code
             reference wrong / unresolved objection → queue, drop chain
-            2+ solved → too easy → refine (new inputs or reword), next round
-            ≤1 solved → hint tests on the failed members
+            first step solves → too easy → refine (new inputs or reword), next round
+            first step fails → hint tests on the failed steps
                 clarification solves → reword, next round
-                otherwise → ACCEPT (tagged recall if a knowledge hint was needed)
+                otherwise → ACCEPT, labelled by the first step that solved it
+                (tagged recall if a knowledge hint was needed)
 
-judge() (council onward) is separate so a question parked by an API failure can be
+judge() (ladder onward) is separate so a question parked by an API failure can be
 judged again on the next run without regenerating it.
 """
 
@@ -32,7 +33,6 @@ MAX_CHAINS = 3          # chains (question ideas) per run
 MAX_ROUNDS = 3          # refinements per chain (too easy, or reworded for clarity)
 GATE_RETRIES = 2        # stem rewrites after a gate mismatch (original + 2)
 INPUT_TRIES = 3         # input proposals per round before the chain is dropped
-TOO_EASY_IF_SOLVED_GE = 2
 
 
 class Parked(Exception):
@@ -101,8 +101,9 @@ def _propose(adapter, cand, spec, bb, log, refine=None):
     """Up to INPUT_TRIES proposals; returns (values, scenario, result) or None to drop."""
     errors = []
     for attempt in range(INPUT_TRIES):
+        traps = list(dict.fromkeys(t.desc for st in cand["_plan"].steps for t in st.traps))
         out = stages.propose_inputs(adapter.config["display_name"], adapter.chain_text(cand["_plan"]),
-                                    spec, refine=refine, errors=errors or None)
+                                    spec, refine=refine, errors=errors or None, traps=traps)
         if not out["coherent"]:
             bb.note("inputs_veto", reason=out.get("reason", ""))
             log({"event": "inputs_veto", "chain": cand["edges"], "reason": out.get("reason", "")})
@@ -268,7 +269,7 @@ def _hint_solved(result, re_, stem, rtext, atext, hint):
 
 
 def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
-    """Council → verifier → grading → hint tests. Returns one of:
+    """Ladder → verifier → grading → hint tests. Returns one of:
        {"decision": "accept", ...} | {"decision": "too_easy", ...} | {"decision": "reword", "feedback"}
        | {"decision": "drop", "reason"}.  Raises Parked if a council call fails."""
     rtext, atext = trace_text(result), answer_text(result)
@@ -282,19 +283,18 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
             diags = list(ex.map(lambda m: stages.verify_member(stem, rtext, atext, m), members))
         return [{**m, "diagnosis": d, **_grade(result, m, d)} for m, d in zip(members, diags)]
 
-    # Early stop: the cheaper members solve first. The rest are called only if their answers
-    # could still change the decision (too easy at TOO_EASY_IF_SOLVED_GE solved), so the
-    # accept / too-easy outcome is the same as with the full council.
-    graded = solve_and_grade(models.COUNCIL_FIRST)
-    rest = [n for n, _ in models.COUNCIL if n not in models.COUNCIL_FIRST]
-    n_first = sum(g["counts_as_solved"] for g in graded)
-    if rest and n_first < TOO_EASY_IF_SOLVED_GE <= n_first + len(rest):
-        graded += solve_and_grade(rest)
-        skipped = []
-    else:
-        skipped = rest
-        print(f"    council: {n_first}/{len(graded)} solved; {', '.join(rest)} cannot change the decision, not called")
-    bb.note("council", members=graded, skipped=skipped)
+    # Ladder: the weakest model first; each next step is called only if every step below
+    # failed. If the first step solves it, the question is too easy; otherwise the first step
+    # that solves it (or none) is the difficulty label.
+    graded = []
+    for name, _ in models.LADDER:
+        graded += solve_and_grade([name])
+        if graded[-1]["counts_as_solved"]:
+            break
+    called = {g["name"] for g in graded}
+    skipped = [n for n, _ in models.LADDER if n not in called]
+    first_solver = next((g["name"] for g in graded if g["counts_as_solved"]), None)
+    bb.note("council", members=graded, skipped=skipped, first_solver=first_solver)
     for g in graded:
         tag = "solved" if g["counts_as_solved"] else ("correct-but-not-counted" if g["answer_matches"] else "failed")
         print(f"    [{g['name']}] {g['final_answer']} {g['unit']} → {tag}"
@@ -319,10 +319,13 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
     n_correct = sum(g["answer_matches"] for g in graded)
     n_solved = sum(g["counts_as_solved"] for g in graded)
-    print(f"    council: {n_correct}/{len(graded)} answers match, {n_solved}/{len(graded)} count as solved")
-    if n_solved >= TOO_EASY_IF_SOLVED_GE:
+    bottom = models.LADDER[0][0]
+    if first_solver == bottom:
+        print(f"    ladder: {bottom} solved it → too easy")
         return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
-                "skipped": skipped}
+                "skipped": skipped, "first_solver": first_solver}
+    label = models.DIFFICULTY_LABELS.get(first_solver, "frontier")
+    print(f"    ladder: {bottom} failed; first solved by {first_solver or 'no step'} → {label}")
 
     # hint tests on every member that did not solve
     recall, hint_log = False, []
@@ -389,7 +392,8 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
 
     bb.note("hints", tests=hint_log)
     return {"decision": "accept", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
-            "recall": recall, "hints": hint_log, "skipped": skipped}
+            "recall": recall, "hints": hint_log, "skipped": skipped, "first_solver": first_solver,
+            "difficulty_label": label}
 
 
 def _solved_summary(graded) -> str:
