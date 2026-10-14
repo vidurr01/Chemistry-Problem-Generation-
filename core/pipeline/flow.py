@@ -27,7 +27,7 @@ import re
 
 from core import answers, dedup, models
 from core.engine.base import EngineError, round_sig
-from core.pipeline import gate, queues, stages
+from core.pipeline import forms_layer, gate, queues, stages
 from core.pipeline.stages import CouncilMemberFailed
 
 MAX_CHAINS = 3          # chains (question ideas) per run
@@ -81,6 +81,8 @@ def trace_text(result) -> str:
         lines.append(f"Step {i + 1}: {t['formula']}\n   with {ins}\n   gives {outs}")
     if result.constants:
         lines.append("Constants used: " + "; ".join(result.constants))
+    if getattr(result, "form_note", ""):
+        lines.append(result.form_note)
     stated, exact = stated_answer(result), answer_text(result)
     lines.append(f"Final answer: {stated}" + (f" (as the question asks; unrounded {exact})" if stated != exact else ""))
     return "\n".join(lines)
@@ -250,10 +252,11 @@ def _stable_ask(adapter, cand, values, result, bb):
     return cand, values, result
 
 
-def _ask_options(plan, rng):
+def _ask_options(plan, rng, asked=None):
     final = plan.steps[-1]
-    final_asks = (final.final[3] if final.final else final.asks)
-    others = [s.asks for s in plan.steps[:-1] if s.asks and s.asks != final_asks]
+    chain_asks = (final.final[3] if final.final else final.asks)
+    final_asks = asked or chain_asks              # a form may ask something else (an input, a ratio)
+    others = [s.asks for s in plan.steps if s.asks and s.asks != final_asks]
     opts = list(dict.fromkeys([final_asks] + others + ["something else"]))
     shuffled = opts[:-1]
     rng.shuffle(shuffled)
@@ -266,11 +269,13 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
     """Write the stem and pass the gate. Returns (stem, None) or (None, reason)."""
     plan = cand["_plan"]
     traps = [t["desc"] for t in result.traps]
-    options, correct = _ask_options(plan, rng)
+    form = getattr(result, "form", "forward")
+    options, correct = _ask_options(plan, rng, result.asks if form != "forward" else None)
     fmt = _answer_instruction(adapter, result)
+    chain_text = adapter.chain_text(plan) + ("\n" + result.stem_note if getattr(result, "stem_note", "") else "")
     for attempt in range(GATE_RETRIES + 1):
         try:
-            stem = stages.write_stem(adapter.config["display_name"], scenario, adapter.chain_text(plan), spec,
+            stem = stages.write_stem(adapter.config["display_name"], scenario, chain_text, spec,
                                      values, result.constants, result.asks, result.unit, traps,
                                      previous=previous, feedback=feedback, solved=solved, answer_format=fmt)
         except ValueError as e:                  # unparseable or cut-off reply: a failed gate attempt
@@ -711,6 +716,10 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             values, scenario, result = picked
             cand, values, result = _stable_ask(adapter, cand, values, result, bb)
             plan, spec = cand["_plan"], adapter.input_spec(cand["_plan"])
+            chain_values = values
+            spec, values, result = forms_layer.apply_form(adapter, cand, spec, values, result, rng)
+            bb.note("form", form=result.form, answer=result.answer, detail=result.detail)
+            print(f"  [form] {result.form}: asks {result.asks}")
         print(f"  [engine] answer {answer_text(result)}; traps: {[t['id'] for t in result.traps]}")
         previous = feedback = solved = None
         while True:
@@ -771,13 +780,21 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 values, result = _fact_values(cand), adapter.result(cand["_fact"])
                 bb.note("inputs", values=values, answer=result.answer)
             else:
+                spec = adapter.input_spec(cand["_plan"])
                 picked = _propose(adapter, cand, spec, bb, log,
-                                  refine={"values": values, "summary": choice["feedback"], "working": solved})
+                                  refine={"values": chain_values, "summary": choice["feedback"], "working": solved})
                 if picked is None:
                     break
+                solved_form = getattr(result, "form", "forward")
                 values, scenario, result = picked
                 cand, values, result = _stable_ask(adapter, cand, values, result, bb)
                 plan, spec = cand["_plan"], adapter.input_spec(cand["_plan"])
+                chain_values = values
+                # the form the solvers just beat is not used again for this chain's next round
+                spec, values, result = forms_layer.apply_form(adapter, cand, spec, values, result, rng,
+                                                              avoid={solved_form})
+                bb.note("form", form=result.form, answer=result.answer, detail=result.detail)
+                print(f"  [form] {result.form}: asks {result.asks}")
             print(f"  [engine] new answer {answer_text(result)}")
             previous = feedback = solved = None
     return {"status": "none"}

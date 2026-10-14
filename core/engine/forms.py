@@ -283,9 +283,22 @@ class Simultaneous:
             return min(lo, x * 0.8), max(hi, x * 1.25)
 
         (l1, u1), (l2, u2) = span(h1), span(h2)
+        # cheap first test at the true values: the two statements must be independent there
+        # (most pairs of inputs fail this, so the costly search below runs rarely)
+        true = np.array([float(values[h1]), float(values[h2])])
+        jac0 = []
+        for j in range(2):
+            d = np.zeros(2)
+            d[j] = 1e-6 * max(1.0, abs(true[j]))
+            try:
+                jac0.append((np.array(eqs(true + d)) - np.array(eqs(true - d))) / (2 * d[j]) * max(1e-300, abs(true[j])))
+            except (EngineError, ArithmeticError, ValueError, TypeError):
+                raise EngineError("the chain cannot be evaluated near these values")
+        if not np.all(np.isfinite(jac0)) or np.linalg.cond(np.array(jac0).T) > 1e6:
+            raise EngineError("the two statements do not fix both unknowns (they are not independent)")
         sols = []
-        starts = [(values[h1], values[h2])] + [(l1 + f1 * (u1 - l1), l2 + f2 * (u2 - l2))
-                                                for f1 in np.linspace(0.05, 0.95, 7) for f2 in np.linspace(0.05, 0.95, 7)]
+        grid = np.linspace(0.1, 0.9, 4)
+        starts = [tuple(true)] + [(l1 + f1 * (u1 - l1), l2 + f2 * (u2 - l2)) for f1 in grid for f2 in grid]
         for s0 in starts:
             try:
                 u, info, ok, _ = fsolve(eqs, list(s0), full_output=True)

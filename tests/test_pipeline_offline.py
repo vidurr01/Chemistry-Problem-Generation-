@@ -14,7 +14,7 @@ from unittest import mock
 
 import run_groundup_final as entry
 from core import dedup, models
-from core.pipeline import adapters, gate, queues
+from core.pipeline import adapters, forms_layer, gate, queues
 
 CHAIN = [1, 4]          # mass -> moles -> gas volume at 1 atm, 273 K (answer 2.24 L for 4.4 g CO2)
 
@@ -80,6 +80,7 @@ class _Env:
             mock.patch.object(models, "key_is_set", lambda: True),
             mock.patch.object(dedup, "STORE", __import__("pathlib").Path(self.tmp, "seen.json")),
             mock.patch.object(queues, "_OUT", self.tmp),
+            mock.patch.object(forms_layer, "FORM_WEIGHTS", {"forward": 1}),   # these fakes answer the forward chain
             mock.patch("tools.results.promote", lambda *a, **k: 0),
             mock.patch.object(adapters.PhysicalAdapter, "candidates", self._fixed_candidates),
             mock.patch.object(entry, "compute_meta_tags_for_subject", lambda *a, **k: {"stub": True}),
