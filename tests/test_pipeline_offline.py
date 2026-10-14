@@ -330,6 +330,15 @@ class Grading(unittest.TestCase):
         self.assertEqual(fmt, "Answer with exactly one of: forward, backward, no shift.")
         self.assertIsNone(PhysicalAdapter.answer_format(SimpleNamespace(answer=2.24, trace=[{"tx": 4}])))
 
+    def test_matching_answer_with_a_slip_on_the_way_counts(self):
+        """Run 4: 29.52 L against 29.79 L (inside tolerance) was labelled a slip and not counted."""
+        from core.pipeline import flow
+        r = self._res(29.79, "positive")
+        g = flow._grade(r, {"final_answer": "29.52"}, {"verdict": "wrong", "failure_type": "slip"})
+        self.assertTrue(g["counts_as_solved"])
+        g = flow._grade(r, {"final_answer": "29.79"}, {"verdict": "right_answer_wrong_reasoning"})
+        self.assertFalse(g["counts_as_solved"])
+
     def test_numbers_stay_code_matched(self):
         from core.pipeline import flow
         g = flow._grade(self._res(2.24, "positive"), {"final_answer": "3.1"}, {"verdict": "correct"})

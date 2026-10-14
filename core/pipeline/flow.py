@@ -245,7 +245,10 @@ def _grade(result, member, diag) -> dict:
     tell, the verifier's narrow answer_equivalent field decides. match_by records which."""
     match, match_by = _text_match(result, member.get("final_answer"), diag)
     solved, slip_confirmed = False, None
-    if match and diag["verdict"] == "correct":
+    if match and diag["verdict"] in ("correct", "wrong"):
+        # the final answer is within tolerance: a slip the verifier saw on the way (e.g. 29.52
+        # against 29.79 L) did not change the result, so it counts as solved. Only a right
+        # answer by a wrong or lucky route is not counted.
         solved = True
     elif not match and diag.get("failure_type") == "slip" or (not match and diag["verdict"] == "correct"):
         expr = diag.get("member_expression")
