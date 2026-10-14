@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Ladder bottom step Phi-4; answer key by GPT-6 Luna; replies read more robustly
+- `core/models.py`: `LADDER` = Phi-4 → GLM-5.3-Flash → GPT-6 Luna (was Llama 3.3 70B at the bottom); `SOLUTION_WRITER` = GPT-6 Luna (was Mistral Small 3.2). Calibration of Phi-4, Llama 4 Scout and Granite 4.2 8B on the 96 saved JEE questions ($0.15 in all); `calibration/ladder_separation.py` (new) prints each model's failure rate on easy/medium Mains, hard Mains and Advanced, the gap and the cost per question. See Decisions.
+- `core/models.py`: `MAX_OUTPUT_TOKENS` caps the output for models with a small context (Phi-4, Scout: 8000); `NO_JSON_MODE` asks for JSON in the prompt only where the providers refuse JSON mode (Scout: every call was a 404 "no endpoints").
+- `core/llm.py`: `parse_json` reads replies with quotes left unescaped inside a string (`the "crossed Cannizzaro" reaction`), raw line breaks and LaTeX backslashes, alone or together (Phi-4 lost one calibration answer this way; 4 more were saved by retries). Every reply that still cannot be read is kept whole in `outputs/unparseable_replies.jsonl` with model and finish reason. `tests/test_json_parsing.py` (9 tests, incl. 5000 random valid replies unchanged).
+- Granite's "blank" answers were debugged: the replies are complete JSON with `final_answer: null` and an "insufficient data" objection on solvable questions, not a parsing fault.
+
 ### Answers stated as the question asks (3 s.f.) to the solution writer, checker and verifier
 - Run 13: the engine keeps 4 significant figures (1.538) but the stem asks for 3 (1.54). The checker rightly called "1.538 to three significant figures" false, then called the writer's 1.54 a mismatch with the reference; all three drafts failed and the question was saved without a solution. `flow.stated_answer` rounds numbers to `answers.SIG_FIGS` (whole numbers, text and letters unchanged); the trace's final line, the solution writer and checker, the mismatch verifier and the record's `answer_text` use it ("Final answer: 1.54 (as the question asks; unrounded 1.538)"). Grading still compares with the engine's value.
 

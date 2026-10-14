@@ -153,7 +153,7 @@ class FakeFactModels:
 
 
 class PipelineOffline(_Env, unittest.TestCase):
-    """Ladder order: models.LADDER = [llama-3.3-70b, glm-5.3-flash, gpt-6-luna]."""
+    """Ladder order: models.LADDER = [phi-4, glm-5.3-flash, gpt-6-luna]."""
 
     def test_accepts_and_labels_by_first_solver(self):
         slugs = [s for _, s in models.LADDER]
