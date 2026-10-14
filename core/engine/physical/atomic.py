@@ -425,7 +425,7 @@ STEPS = [
          traps=(Trap("isobar_isotone_swap", "swaps the isobar and isotone definitions", _nuclide_relation_trap),),
          formula="isotopes same Z; isobars same A; isotones same A − Z; isodiaphers same A − 2Z",
          asks="relation between the two nuclides"),
-    Step(tx=326, src="radial_peaks", dst="orbital_label",
+    Step(tx=326, src="radial_peaks", dst="orbital_label", not_after=(82,),
          needs=(P("radial_peaks", "", "number of peaks in the radial probability curve", kind="posint", lo=1, hi=5),
                 P("n", "", "principal quantum number", kind="posint", lo=1, hi=6)),
          answer="orbital_label", unit="", kind="text",

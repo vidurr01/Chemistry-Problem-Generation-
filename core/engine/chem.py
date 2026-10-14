@@ -39,14 +39,28 @@ ATOMIC_MASS = {
 _TOKEN = re.compile(r"([A-Z][a-z]?|\(|\)|\[|\]|\d+)")
 
 
-def _split_charge(text: str):
-    """Separate an ionic charge from a formula.
+_SUPER_DIGITS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+_SUB_DIGITS = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
 
-    A charge other than ±1 must follow '^' ('Cr2O7^2-', 'Fe^3+'), because a bare
-    'Fe3+' cannot be told apart from a formula ending in a digit ('NH4+' is NH4 with
-    charge +1). Without '^', trailing signs count one each: 'MnO4-' -> -1, 'Fe+++' -> +3.
+
+def _split_charge(text: str):
+    """Separate an ionic charge from a formula, in the notations exams and models write.
+
+    'Cr2O7^2-', 'Fe^3+'          after '^': the charge
+    'Fe²⁺', 'SO₄²⁻'              superscripts: the charge
+    'Fe+++'                      repeated signs: one each
+    a bare trailing 'digits±' is read by the usual convention:
+      one element (a monatomic ion): the digit is the charge      Fe2+, Al3+, O2- (oxide)
+      several elements, one digit: a subscript, charge ±1         MnO4-, NH4+, HCO3-
+      several digits: the last is the charge                      SO42-, Cr2O72-, PO43-, Hg22+
     """
-    s = text.strip().replace("⁺", "+").replace("⁻", "-").replace("−", "-")
+    raw = text.strip().replace("−", "-")
+    m = re.match(r"^(.*?)([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])$", raw)
+    if m and m.group(1):                       # superscript charge
+        body = m.group(1).translate(_SUB_DIGITS)
+        num = m.group(2).translate(_SUPER_DIGITS)
+        return body, int(num or 1) * (1 if m.group(3) == "⁺" else -1)
+    s = raw.replace("⁺", "+").replace("⁻", "-").translate(_SUB_DIGITS)
     if "^" in s:
         body, _, ch = s.partition("^")
         ch = ch.strip("()")
@@ -61,7 +75,17 @@ def _split_charge(text: str):
         signs = s[len(s) - n:]
         if len(set(signs)) != 1:
             raise EngineError(f"cannot read charge in {text!r}")
-        return s[:len(s) - n], n * (1 if signs[0] == "+" else -1)
+        sign = 1 if signs[0] == "+" else -1
+        rest = s[:len(s) - n].rstrip()
+        d = re.search(r"(\d+)$", rest)
+        if n == 1 and d and not rest.endswith(")"):
+            digits, head = d.group(1), rest[:d.start()]
+            monatomic = re.fullmatch(r"[A-Z][a-z]?", head) is not None
+            if monatomic and len(digits) == 1:
+                return head, int(digits) * sign                     # Fe2+ -> Fe, +2
+            if len(digits) >= 2:
+                return head + digits[:-1], int(digits[-1]) * sign   # SO42- -> SO4, -2
+        return rest, n * sign
     return s, 0
 
 

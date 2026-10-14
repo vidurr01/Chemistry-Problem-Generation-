@@ -223,7 +223,9 @@ Write it the way a human JEE paper setter would:
 - data a real paper would give as supporting data (molar or equivalent masses, ionisation or
   dissociation behaviour, stoichiometric factors, physical constants) goes in one short
   closing line such as "(Given: equivalent mass of sulfamic acid = 97.09 g eq⁻¹; NaOH → Na⁺ +
-  OH⁻)", never as an "Assuming that ..." sentence inside the story;
+  OH⁻)", never as an "Assuming that ..." sentence inside the story. That line holds only
+  values and constants listed above: never a value you computed (a logarithm such as
+  ln(13.25), a ratio, an intermediate result), which would give the method away;
 - whenever an element, compound or ion is named in words, give its formula in brackets right
   after the name, as JEE papers do: "iron (Fe)", "potassium dichromate (K₂Cr₂O₇)",
   "aluminium sulfate (Al₂(SO₄)₃)"; a reaction is named by the formulas of its species;
