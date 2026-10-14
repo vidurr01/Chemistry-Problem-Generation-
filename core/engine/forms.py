@@ -23,7 +23,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any
 
-from core.engine.base import EngineError, _run_step, plan_chain, round_sig
+from core.engine.base import EngineError, Param, Step, _run_step, plan_chain, plan_tree, round_sig
 
 # ── running a plan exactly ───────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ def run_outputs(plan, values: dict, trap=None) -> list:
     replaced by the trap's wrong value and the later steps run on it."""
     outs, prev = [], {}
     for i in range(len(plan.steps)):
-        v, out = _run_step(plan, i, prev, values)
+        v, out = _run_step(plan, i, prev, values, outs)
         if trap is not None and trap[0] == i:
             wrong = trap[1].fn(dict(v))
             out = dict(out)
@@ -398,3 +398,47 @@ class Tree:
         return FormQuestion("tree", {"branches": branch_values, "final": final_values}, [],
                             round_sig(ans), self.final.asks, self.final.unit, traps, 0.01,
                             {"branch_results": {k: round_sig(v) for k, v in fed.items()}})
+
+
+# ── a condition as one plan: two branches and a comparing step ───────────────
+
+COMPARE_TX = -1
+
+
+def compare_step(unit: str, asks_a: str, asks_b: str) -> Step:
+    """The final step of a condition plan: the first branch's result minus the second's. The
+    condition ('the two are equal') is that this is zero."""
+    return Step(tx=COMPARE_TX, src="", dst="",
+                needs=(Param("first", unit, f"{asks_a} (first system)", kind="real"),
+                       Param("second", unit, f"{asks_b} (second system)", kind="real")),
+                answer="difference", unit=unit, kind="real",
+                fn=lambda v: {"difference": v["first"] - v["second"]},
+                formula=f"condition: {asks_a} (first system) = {asks_b} (second system)",
+                asks=f"difference between the {asks_a} of the first system and the {asks_b} of the second")
+
+
+def _end(steps):
+    last = steps[-1]
+    if last.final:
+        f, unit, kind, asks = last.final
+    else:
+        f, unit, kind, asks = last.answer, last.unit, last.kind, last.asks
+    return f, unit, kind, asks
+
+
+def plan_condition(chain_a: list, chain_b: list, unknown_a: str, unknown_b: str | None = None):
+    """Two systems (chain_a, chain_b) whose results are compared; unknown_a (a given of
+    chain_a) is the input asked for, shared by chain_b as its given unknown_b when that is set
+    ('at what temperature do the two reactions have the same rate constant'), or used by
+    chain_a alone ('at what temperature is the rms speed of X that of Y at 300 K')."""
+    fa, ua, ka, aa = _end(chain_a)
+    fb, ub, kb, ab = _end(chain_b)
+    if callable(ua) or callable(ub) or ua != ub:
+        raise EngineError(f"the two results are in different units ({ua!r}, {ub!r})")
+    share = {1: {unknown_b: unknown_a}} if unknown_b else None
+    plan = plan_tree([list(chain_a), list(chain_b)], compare_step(ua, aa, ab),
+                     {"first": (0, fa), "second": (1, fb)}, share=share, merge=False)
+    if unknown_a not in plan.givens:
+        raise EngineError(f"{unknown_a} is not a given of the first system")
+    return plan
+

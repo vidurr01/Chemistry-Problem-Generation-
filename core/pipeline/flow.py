@@ -20,6 +20,7 @@ judged again on the next run without regenerating it.
 from __future__ import annotations
 
 import concurrent.futures as cf
+import dataclasses
 import json
 import math
 import random
@@ -232,7 +233,8 @@ def _stable_ask(adapter, cand, values, result, bb):
     intermediates moves by several per cent; it asks the quantity before it (here Eₐ). While
     the answer's rounding tolerance exceeds FRAGILE_TOL, drop the chain's last step and ask
     the previous step's result with the same inputs. Returns (cand, values, result)."""
-    while _is_numeric(result) and result.tolerance > FRAGILE_TOL and len(cand["txs"]) > 1:
+    while _is_numeric(result) and result.tolerance > FRAGILE_TOL and len(cand["txs"]) > 1 \
+            and not cand.get("_shape"):            # a tree or condition is not a chain to shorten
         txs = cand["txs"][:-1]
         try:
             plan = adapter.plan(txs)
@@ -688,6 +690,23 @@ def _signature(adapter, cand, values):
     return dedup.signature(adapter.subject, cand["txs"], values)
 
 
+def _apply_form(adapter, cand, spec, values, result, rng, bb, log, avoid=()):
+    """forms_layer.apply_form, noted on the blackboard in full (a parked question is judged
+    again with exactly this question: its stated values and the form's answer). None: the
+    idea cannot be posed with these values (a condition with no unique answer)."""
+    formed = forms_layer.apply_form(adapter, cand, spec, values, result, rng, avoid=avoid)
+    if formed is None:
+        print("  [form] the condition has no unique answer with these values; dropping this idea")
+        bb.note("form_failed", shape=(cand.get("_shape") or {}).get("kind"))
+        log({"event": "form_failed", "chain": cand["edges"]})
+        return None
+    spec, values, result = formed
+    bb.note("form", form=result.form, answer=result.answer, detail=result.detail, values=values,
+            result=dataclasses.asdict(result), shape=cand.get("_shape"))
+    print(f"  [form] {result.form}: asks {result.asks}")
+    return formed
+
+
 def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     """Try up to MAX_CHAINS question ideas (chains, or fact sources for a fact adapter).
     Returns {"status": "accepted", "payload"} or {"status": "none"}. Raises Parked."""
@@ -717,9 +736,10 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             cand, values, result = _stable_ask(adapter, cand, values, result, bb)
             plan, spec = cand["_plan"], adapter.input_spec(cand["_plan"])
             chain_values = values
-            spec, values, result = forms_layer.apply_form(adapter, cand, spec, values, result, rng)
-            bb.note("form", form=result.form, answer=result.answer, detail=result.detail)
-            print(f"  [form] {result.form}: asks {result.asks}")
+            formed = _apply_form(adapter, cand, spec, values, result, rng, bb, log)
+            if formed is None:
+                continue
+            spec, values, result = formed
         print(f"  [engine] answer {answer_text(result)}; traps: {[t['id'] for t in result.traps]}")
         previous = feedback = solved = None
         while True:
@@ -791,10 +811,10 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 plan, spec = cand["_plan"], adapter.input_spec(cand["_plan"])
                 chain_values = values
                 # the form the solvers just beat is not used again for this chain's next round
-                spec, values, result = forms_layer.apply_form(adapter, cand, spec, values, result, rng,
-                                                              avoid={solved_form})
-                bb.note("form", form=result.form, answer=result.answer, detail=result.detail)
-                print(f"  [form] {result.form}: asks {result.asks}")
+                formed = _apply_form(adapter, cand, spec, values, result, rng, bb, log, avoid={solved_form})
+                if formed is None:
+                    break
+                spec, values, result = formed
             print(f"  [engine] new answer {answer_text(result)}")
             previous = feedback = solved = None
     return {"status": "none"}

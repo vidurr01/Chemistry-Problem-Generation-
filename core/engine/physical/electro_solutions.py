@@ -253,7 +253,10 @@ STEPS = [
            needs=(P("molality", "mol kg⁻¹", "molality of the solution", lo=0.01, hi=3),
                   P(kname, "K kg mol⁻¹", f"{label} constant of the solvent", lo=0.5, hi=40),
                   P("vant_hoff_factor", "", "van 't Hoff factor i (1 for a non-electrolyte)", lo=0.5, hi=4)),
-           answer="delta_T", unit="K", kind="positive", roles={"delta_T": label}, gives=(kname,),
+           # K_f goes on (antifreeze mass, tx 328); K_b does not: the only steps that read a "Kb"
+           # are the pH steps, whose K_b is a base's dissociation constant
+           answer="delta_T", unit="K", kind="positive", roles={"delta_T": label},
+           gives=(kname,) if kname == "Kf" else (),
            fn=lambda v, kname=kname: {"delta_T": v["vant_hoff_factor"] * v[kname] * v["molality"], kname: v[kname]},
            traps=(Trap("forgets_i", "ignores the van 't Hoff factor", lambda v, kname=kname: v[kname] * v["molality"]),),
            formula=f"ΔT = i K m", asks=f"{label} (K)")
