@@ -33,6 +33,75 @@ def _mass_action(eq_text, values, use_powers=True):
     return k
 
 
+_SUPS = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻")
+
+
+def _power_unit(base: str, dn) -> str:
+    """'atm', 'atm²', 'atm⁻¹' … for K in a unit raised to Δn; '' when Δn = 0."""
+    if abs(dn) < 1e-9:
+        return ""
+    if abs(dn - round(dn)) < 1e-9:
+        d = int(round(dn))
+        return base if d == 1 else base + str(d).translate(_SUPS)
+    return f"{base}^({dn:g})"
+
+
+def _kc_unit(dn) -> str:
+    """(mol L⁻¹)^Δn written the way exams do: 'mol L⁻¹', 'mol² L⁻²', 'L mol⁻¹', 'L² mol⁻²'."""
+    if abs(dn) < 1e-9 or abs(dn - round(dn)) > 1e-9:
+        return "" if abs(dn) < 1e-9 else f"(mol L⁻¹)^({dn:g})"
+    d = int(round(dn))
+    s = lambda k: "" if k == 1 else str(k).translate(_SUPS)
+    return f"mol{s(d)} L{s(-d)}" if d > 0 else f"L{s(-d)} mol{s(d)}"
+
+
+def _dn_of(eq_text, species):
+    """Δν over the species listed (those in the K expression)."""
+    r, p = parse_equation(eq_text)
+    keys = {k.replace(" ", "") for k in species}
+    return (sum(c for c, f in p if f.replace(" ", "") in keys)
+            - sum(c for c, f in r if f.replace(" ", "") in keys))
+
+
+def _single_reactant(eq_text):
+    check_balanced(eq_text)
+    r, p = parse_equation(eq_text)
+    if len(r) != 1 or not p:
+        raise EngineError("a dissociation equilibrium needs a single reactant, e.g. 'PCl5 -> PCl3 + Cl2'")
+    return r[0], p
+
+
+def _kp_from_alpha(v, total_moles=True):
+    """K_p of a gaseous dissociation from α and the total pressure, for any single-reactant
+    equation: amounts per mole of reactant 1 − α and αν/ν_r; p_i = x_i P."""
+    (nu_r, reac), prods = _single_reactant(v["balanced_equation"])
+    a, P = v["gas_dissociation_degree"], v["total_pressure"]
+    amounts = [(nu_r, 1 - a)] + [(c, a * c / nu_r) for c, _ in prods]
+    total = sum(n for _, n in amounts) if total_moles else 1.0
+    k = 1.0
+    for i, (c, n) in enumerate(amounts):
+        k *= (n / total * P) ** (-c if i == 0 else c)
+    return k
+
+
+def _alpha_from_vd(v, minus_one=True):
+    """α = (D − d)/(d(n − 1)): D from the reactant's molar mass, n = product molecules per
+    reactant molecule."""
+    from core.engine.chem import ATOMIC_MASS, parse_formula
+    (nu_r, reac), prods = _single_reactant(v["balanced_equation"])
+    counts = parse_formula(reac)[0]
+    D = sum(ATOMIC_MASS[el] * k for el, k in counts.items()) / 2
+    n = sum(c for c, _ in prods) / nu_r
+    if n <= 1:
+        raise EngineError("the dissociation must give more molecules than it consumes")
+    d = v["vapour_density"]
+    if not 0 < d < D:
+        raise EngineError(f"the observed vapour density must lie below {D:g} (undissociated)")
+    alpha = (D - d) / (d * ((n - 1) if minus_one else 1))
+    return {"gas_dissociation_degree": alpha, "balanced_equation": v["balanced_equation"],
+            "_constants": [f"atomic mass of {el} = {ATOMIC_MASS[el]:g}" for el in counts]}
+
+
 def _ice_alpha(v, use_coef=True):
     eq = v["balanced_equation"]
     check_balanced(eq)
@@ -182,9 +251,12 @@ STEPS = [
          needs=(P("balanced_equation", "", "balanced equation", kind="text"),
                 P("eq_amounts", "mol", "equilibrium amount of each species (gases/solutes only)", kind="dict"),
                 P("volume", "L", "volume of the vessel", lo=0.1, hi=20)),
-         answer="equilibrium_constant", unit="", kind="positive", roles={"equilibrium_constant": "Kc"},
+         answer="equilibrium_constant", kind="positive", roles={"equilibrium_constant": "Kc"},
+         unit=lambda v: _kc_unit(_dn_of(v["balanced_equation"], v["eq_amounts"])),
+         gives=("balanced_equation",),
          fn=lambda v: {"equilibrium_constant": _mass_action(v["balanced_equation"],
-                                                            {k: x / v["volume"] for k, x in v["eq_amounts"].items()})},
+                                                            {k: x / v["volume"] for k, x in v["eq_amounts"].items()}),
+                       "balanced_equation": v["balanced_equation"]},
          traps=(Trap("uses_moles", "puts amounts instead of concentrations into K_c",
                      lambda v: _mass_action(v["balanced_equation"], v["eq_amounts"])),
                 Trap("ignores_powers", "ignores the stoichiometric powers",
@@ -193,8 +265,12 @@ STEPS = [
     Step(tx=153, src="partial_pressure", dst="equilibrium_constant",
          needs=(P("balanced_equation", "", "balanced equation (gaseous species)", kind="text"),
                 P("partial_pressures", "atm", "equilibrium partial pressure of each gas", kind="dict")),
-         answer="equilibrium_constant", unit="", kind="positive", roles={"equilibrium_constant": "Kp"},
-         fn=lambda v: {"equilibrium_constant": _mass_action(v["balanced_equation"], v["partial_pressures"])},
+         answer="equilibrium_constant", kind="positive", roles={"equilibrium_constant": "Kp"},
+         unit=lambda v: _power_unit("atm", _dn_of(v["balanced_equation"], v["partial_pressures"])),
+         gives=("total_pressure", "balanced_equation"),   # the total pressure is the sum, not a new value
+         fn=lambda v: {"equilibrium_constant": _mass_action(v["balanced_equation"], v["partial_pressures"]),
+                       "total_pressure": sum(float(x) for x in v["partial_pressures"].values()),
+                       "balanced_equation": v["balanced_equation"]},
          traps=(Trap("ignores_powers", "ignores the stoichiometric powers",
                      lambda v: _mass_action(v["balanced_equation"], v["partial_pressures"], False)),),
          formula="K_p = Πp(products)^ν / Πp(reactants)^ν", asks="K_p"),
@@ -202,8 +278,11 @@ STEPS = [
          needs=(P("equilibrium_constant", "", "K_c", lo=1e-6, hi=1e6, role="Kc"),
                 P("balanced_equation", "", "balanced equation (all species gaseous)", kind="text"),
                 P("T", "K", "temperature", kind="temperature", lo=250, hi=1500)),
-         answer="equilibrium_constant", unit="", kind="positive", roles={"equilibrium_constant": "Kp"},
-         fn=lambda v: {"equilibrium_constant": v["equilibrium_constant"] * (C.R_LATM * v["T"]) ** _gas_delta_n(v["balanced_equation"])},
+         answer="equilibrium_constant", kind="positive", roles={"equilibrium_constant": "Kp"},
+         unit=lambda v: _power_unit("atm", _gas_delta_n(v["balanced_equation"])),
+         gives=("T1", "balanced_equation"),   # K_p is at this temperature: a van 't Hoff step's T₁
+         fn=lambda v: {"equilibrium_constant": v["equilibrium_constant"] * (C.R_LATM * v["T"]) ** _gas_delta_n(v["balanced_equation"]),
+                       "T1": v["T"], "balanced_equation": v["balanced_equation"]},
          traps=(Trap("delta_n_sign", "uses (RT)^(−Δn)",
                      lambda v: v["equilibrium_constant"] * (C.R_LATM * v["T"]) ** -_gas_delta_n(v["balanced_equation"])),
                 Trap("wrong_R", "uses R = 8.314",
@@ -220,46 +299,56 @@ STEPS = [
     Step(tx=156, src="equilibrium_constant", dst="equilibrium_constant",
          needs=(P("equilibrium_constant", "", "K of the original reaction", lo=1e-6, hi=1e6),
                 P("manipulation", "", "how the reaction is changed", kind="choice", choices=_MANIP)),
-         answer="equilibrium_constant", unit="", kind="positive",
+         answer="equilibrium_constant", unit="", kind="positive", keeps_role=True,
+         carries=("T", "T1", "total_pressure"),     # same conditions; the equation itself changes
          fn=lambda v: {"equilibrium_constant": _manipulate(v)},
          traps=(Trap("arithmetic_instead_of_power", "negates, doubles or halves K instead",
                      lambda v: _manipulate(v, wrong=True)),),
          formula="reverse: 1/K; ×2: K²; ×½: √K", asks="K of the new reaction"),
     Step(tx=157, src="equilibrium_constant", dst="direction_of_shift",
-         needs=(P("equilibrium_constant", "", "K at the temperature", lo=1e-6, hi=1e6),
+         needs=(P("equilibrium_constant", "", "K_c at the temperature", lo=1e-6, hi=1e6, role="Kc", strict=True),
                 P("balanced_equation", "", "balanced equation", kind="text"),
                 P("current_concentrations", "mol L⁻¹", "concentration of each species at the moment considered", kind="dict")),
          answer="direction_of_shift", unit="", kind="text",
          fn=lambda v: {"direction_of_shift": _shift(v)},
          traps=(Trap("reversed_criterion", "shifts forward when Q > K", lambda v: _shift(v, reverse=True)),),
          formula="Q < K forward; Q > K backward; Q = K at equilibrium", asks="direction the reaction proceeds"),
+    # The undissociated vapour density and n both follow from the equation, so neither is
+    # stated (a stated D or n could contradict the reactant's formula).
     Step(tx=159, src="vapour_density", dst="degree_of_dissociation",
-         needs=(P("vapour_density", "", "observed vapour density of the equilibrium mixture", lo=5, hi=200),
-                P("theoretical_vapour_density", "", "vapour density if undissociated", lo=5, hi=300),
-                P("particles_per_molecule", "", "n in A → nB", kind="posint", lo=2, hi=4)),
-         answer="gas_dissociation_degree", unit="", kind="open_fraction",
-         fn=lambda v: {"gas_dissociation_degree": (v["theoretical_vapour_density"] - v["vapour_density"])
-                       / (v["vapour_density"] * (v["particles_per_molecule"] - 1))},
+         needs=(P("balanced_equation", "", "gaseous dissociation with one reactant, e.g. 'PCl5 -> PCl3 + Cl2' "
+                  "or 'N2O4 -> 2NO2'", kind="text"),
+                P("vapour_density", "", "observed vapour density of the equilibrium mixture", lo=5, hi=200)),
+         answer="gas_dissociation_degree", unit="", kind="open_fraction", gives=("balanced_equation",),
+         fn=_alpha_from_vd,
          traps=(Trap("forgets_n_minus_1", "divides by d only",
-                     lambda v: (v["theoretical_vapour_density"] - v["vapour_density"]) / v["vapour_density"]),),
-         formula="α = (D − d)/(d(n − 1))", asks="degree of dissociation"),
+                     lambda v: _alpha_from_vd(v, minus_one=False)["gas_dissociation_degree"]),),
+         formula="α = (D − d)/(d(n − 1)), D = M/2 of the undissociated gas, n = molecules formed per molecule",
+         asks="degree of dissociation"),
     Step(tx=160, src="degree_of_dissociation", dst="equilibrium_constant",
-         needs=(P("gas_dissociation_degree", "", "degree of dissociation of a PCl5-type (1 → 2) gas", kind="open_fraction", lo=0.05, hi=0.9),
+         needs=(P("balanced_equation", "", "gaseous dissociation with one reactant, e.g. 'PCl5 -> PCl3 + Cl2' "
+                  "or 'N2O4 -> 2NO2'", kind="text"),
+                P("gas_dissociation_degree", "", "degree of dissociation α", kind="open_fraction", lo=0.05, hi=0.9),
                 P("total_pressure", "atm", "total equilibrium pressure", lo=0.1, hi=20)),
-         answer="equilibrium_constant", unit="atm", kind="positive", roles={"equilibrium_constant": "Kp"},
-         fn=lambda v: {"equilibrium_constant": v["gas_dissociation_degree"] ** 2 * v["total_pressure"]
-                       / (1 - v["gas_dissociation_degree"] ** 2)},
-         traps=(Trap("forgets_total_moles", "uses α²P/(1 − α)",
-                     lambda v: v["gas_dissociation_degree"] ** 2 * v["total_pressure"] / (1 - v["gas_dissociation_degree"])),),
-         formula="K_p = α²P/(1 − α²)", asks="K_p (atm)"),
+         answer="equilibrium_constant", kind="positive", roles={"equilibrium_constant": "Kp"},
+         unit=lambda v: _power_unit("atm", _gas_delta_n(v["balanced_equation"])),
+         gives=("total_pressure", "balanced_equation"),
+         fn=lambda v: {"equilibrium_constant": _kp_from_alpha(v), "total_pressure": v["total_pressure"],
+                       "balanced_equation": v["balanced_equation"]},
+         traps=(Trap("forgets_total_moles", "takes the mole fractions over the initial moles, not the total at equilibrium",
+                     lambda v: _kp_from_alpha(v, total_moles=False)),),
+         formula="per mole of reactant: 1 − α and αν/ν_r; p_i = (n_i/n_total)P; K_p = Πp_i^ν",
+         asks="K_p"),
     Step(tx=163, src="equilibrium_constant", dst="equilibrium_constant",
          needs=(P("equilibrium_constant", "", "K at T₁", lo=1e-6, hi=1e6),
                 P("delta_h", "kJ mol⁻¹", "standard enthalpy change", kind="real", lo=-200, hi=200),
                 P("T1", "K", "temperature T₁", kind="temperature", lo=250, hi=1200),
                 P("T2", "K", "temperature T₂", kind="temperature", lo=250, hi=1200)),
-         answer="equilibrium_constant", unit="", kind="positive",
+         answer="equilibrium_constant", unit="", kind="positive", keeps_role=True,
+         gives=("T",),                    # the new K is at T₂: a next step's temperature
          fn=lambda v: {"equilibrium_constant": v["equilibrium_constant"]
-                       * math.exp(1000 * v["delta_h"] / C.R_J * (v["T2"] - v["T1"]) / (v["T1"] * v["T2"]))},
+                       * math.exp(1000 * v["delta_h"] / C.R_J * (v["T2"] - v["T1"]) / (v["T1"] * v["T2"])),
+                       "T": v["T2"]},
          traps=(Trap("sign", "uses the opposite sign in the exponent",
                      lambda v: v["equilibrium_constant"]
                      * math.exp(-1000 * v["delta_h"] / C.R_J * (v["T2"] - v["T1"]) / (v["T1"] * v["T2"]))),),
@@ -275,7 +364,7 @@ STEPS = [
     Step(tx=315, src="vant_hoff_plot", dst="delta_h",
          needs=(P("slope", "K", "slope of the plot against 1/T", kind="negative", lo=-20000, hi=-100),
                 P("plot", "", "what is plotted against 1/T", kind="choice", choices=("ln K", "log K"))),
-         answer="delta_h", unit="kJ mol⁻¹", kind="real",
+         answer="delta_h", unit="kJ mol⁻¹", kind="real", roles={"delta_h": "reaction"},
          fn=lambda v: {"delta_h": -v["slope"] * C.R_J * (1 if v["plot"] == "ln K" else 2.303) / 1000},
          traps=(Trap("forgets_2303", "omits 2.303 for a log K plot (or adds it for ln K)",
                      lambda v: -v["slope"] * C.R_J * (2.303 if v["plot"] == "ln K" else 1) / 1000),
@@ -356,7 +445,7 @@ STEPS = [
          fn=lambda v: {"ph": 7 + 0.5 * (-log10(v["Ka"]) + log10(v["molarity"]))},
          traps=(Trap("wrong_sign", "uses 7 − ½(pK_a + log C)", lambda v: 7 - 0.5 * (-log10(v["Ka"]) + log10(v["molarity"]))),),
          constants=(const("KW_25"),), formula="pH = 7 + ½(pK_a + log C)", asks="pH of the salt solution"),
-    Step(tx=183, src="dissociation_constant", dst="ph",
+    Step(tx=183, src="dissociation_constant", dst="ph", not_after=(178,),
          needs=(P("dissociation_constant", "", "K_a of the weak acid", lo=1e-10, hi=1e-3),
                 P("Kb", "", "K_b of the weak base", lo=1e-10, hi=1e-3)),
          answer="ph", unit="", kind="ph", roles={"ph": "solution"},
@@ -421,7 +510,7 @@ STEPS = [
          traps=(Trap("full_dissociation", "assumes both protons are released", lambda v: _pH(2 * v["concentration"])),),
          formula="K₁ ≫ K₂: only the first step sets [H⁺]", asks="pH"),
     Step(tx=193, src="solubility", dst="solubility_product",
-         needs=(P("solubility", "mol L⁻¹", "molar solubility S", lo=1e-10, hi=1e-1),
+         needs=(P("solubility", "mol L⁻¹", "molar solubility S in pure water", lo=1e-10, hi=1e-1, role="pure water"),
                 P("cation_count", "", "x in AxBy", kind="posint", lo=1, hi=3),
                 P("anion_count", "", "y in AxBy", kind="posint", lo=1, hi=3)),
          answer="solubility_product", unit="", kind="positive", gives=("cation_count", "anion_count"),
@@ -447,7 +536,7 @@ STEPS = [
                 P("anion_count", "", "y in AxBy", kind="posint", lo=1, hi=3),
                 P("common_ion", "", "which ion is already present", kind="choice", choices=("anion", "cation")),
                 P("common_ion_concentration", "mol L⁻¹", "concentration of the common ion already present", lo=1e-4, hi=1)),
-         answer="solubility", unit="mol L⁻¹", kind="positive",
+         answer="solubility", unit="mol L⁻¹", kind="positive", roles={"solubility": "common ion"},
          fn=lambda v: {"solubility": _common_ion_s(v)},
          traps=(Trap("ignores_common_ion", "ignores the common ion",
                      lambda v: _common_ion_s(dict(v, common_ion_concentration=0.0))),),
@@ -456,7 +545,7 @@ STEPS = [
     Step(tx=196, src="solubility_product", dst="solubility",
          needs=(P("Ksp_AB", "", "K_sp of AB-type salt 1 (e.g. AgCl)", lo=1e-20, hi=1e-4),
                 P("Ksp2", "", "K_sp of AB-type salt 2 sharing the cation (e.g. AgBr)", lo=1e-20, hi=1e-4)),
-         answer="solubility", unit="mol L⁻¹", kind="positive",
+         answer="solubility", unit="mol L⁻¹", kind="positive", roles={"solubility": "mixed salts"},
          fn=lambda v: {"solubility": v["Ksp_AB"] / sqrt(v["Ksp_AB"] + v["Ksp2"])},
          traps=(Trap("ignores_other_salt", "uses √K_sp of salt 1 alone", lambda v: sqrt(v["Ksp_AB"])),),
          formula="x(x + y) = K₁, y(x + y) = K₂ → x = K₁/√(K₁ + K₂)", asks="solubility of salt 1 (mol L⁻¹)"),
@@ -464,7 +553,7 @@ STEPS = [
          needs=(P("Ksp_AB", "", "K_sp of the AB-type salt (e.g. AgBr)", lo=1e-20, hi=1e-8),
                 P("Kf", "", "formation constant of the complex [M(L)₂]⁺", lo=1e5, hi=1e9),
                 P("ligand_concentration", "mol L⁻¹", "initial concentration of the ligand (e.g. NH3)", lo=0.01, hi=6)),
-         answer="solubility", unit="mol L⁻¹", kind="positive",
+         answer="solubility", unit="mol L⁻¹", kind="positive", roles={"solubility": "complexing solution"},
          fn=lambda v: {"solubility": (lambda r: v["ligand_concentration"] * r / (1 + 2 * r))(sqrt(v["Ksp_AB"] * v["Kf"]))},
          traps=(Trap("ignores_ligand_use", "ignores the ligand used up in the complex",
                      lambda v: v["ligand_concentration"] * sqrt(v["Ksp_AB"] * v["Kf"])),),

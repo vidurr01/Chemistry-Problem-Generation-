@@ -35,8 +35,17 @@ def _member(result, line, working="w"):
     return m, done
 
 
+def _unit_variants():
+    """Units an answer can take when its unit depends on the inputs (K_p in atm^Δn, K_c in
+    (mol L⁻¹)^Δn, a critical constant in K, atm or L mol⁻¹)."""
+    from core.engine.physical.equilibrium import _kc_unit, _power_unit
+    return {f(d) for d in (-3, -2, -1, 1, 2, 3) for f in (lambda d: _power_unit("atm", d), _kc_unit)} | \
+        {"K", "atm", "L mol⁻¹"}
+
+
 ENGINE_UNITS = sorted({u for s in STEPS.values()
-                       for u in [s.unit] + [p.unit for p in s.needs] + ([s.final[1]] if s.final else [])})
+                       for u in ([s.unit] if not callable(s.unit) else []) + [p.unit for p in s.needs]
+                       + ([s.final[1]] if s.final else [])} | _unit_variants())
 
 
 def _writings(u):

@@ -112,7 +112,29 @@ class PhysicalAdapter:
 
     @staticmethod
     def chain_text(plan) -> str:
-        return "\n".join(f"Step {i + 1}: {st.asks} — {st.formula}" for i, st in enumerate(plan.steps))
+        """The steps, and for each later step what it takes from the one before: the
+        generator chooses the substances, so it must know that 'the amount of the excess
+        reagent left' goes on as 'amount of Cr2O7²⁻ reduced to Cr³⁺' (the excess reagent must
+        be the dichromate) or as 'amount of the gas' (it must be a gas)."""
+        lines = []
+        for i, st in enumerate(plan.steps):
+            lines.append(f"Step {i + 1}: {st.asks} — {st.formula}")
+            if i == 0:
+                continue
+            params = {p.key: p for p in st.needs}
+            for d in st.derive:
+                for p in d.params:
+                    params.setdefault(p.key, p)
+            used = []
+            for key, (src, ref) in plan.wiring[i].items():
+                p = params.get(key)
+                if src != "prev" or p is None:
+                    continue
+                used.append(f"'{p.desc}'")
+            if used:
+                lines.append(f"   takes from step {i}: " + "; ".join(used)
+                             + " (choose the substances so that this is literally true)")
+        return "\n".join(lines)
 
 
 class PhysicalFactsAdapter:

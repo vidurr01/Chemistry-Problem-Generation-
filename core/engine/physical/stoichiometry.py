@@ -19,12 +19,13 @@ _MASS_TO_MOLES_TRAPS = (
 )
 
 
-def _mass_to_moles_step(tx, what):
+def _mass_to_moles_step(tx, what, mass_role=None, strict=False, out_role=None):
     return Step(
         tx=tx, src="mass", dst="moles", keeps_role=True,
-        needs=(P("mass", "g", f"mass of the {what}", lo=0.1, hi=500),
+        needs=(P("mass", "g", f"mass of the {what}", lo=0.1, hi=500, role=mass_role, strict=strict),
                P("molar_mass", "g mol⁻¹", f"molar mass of the {what}", lo=1, hi=500)),
         answer="moles", unit="mol", kind="positive", fn=_mass_to_moles,
+        roles={"moles": out_role} if out_role else {},
         traps=_MASS_TO_MOLES_TRAPS, formula="n = m / M",
         asks=f"amount (in mol) of the {what}")
 
@@ -161,7 +162,7 @@ def _molecular_trap(v):
 
 
 def _eudiometry(v):
-    vh, contraction, co2 = v["gas_volume"], v["contraction_on_cooling"], v["volume_absorbed_by_KOH"]
+    vh, contraction, co2 = v["hydrocarbon_volume"], v["contraction_on_cooling"], v["volume_absorbed_by_KOH"]
     x = co2 / vh
     y = 4 * (contraction / vh - 1)
     return {"molecular_formula": _cxhy(x, y)}
@@ -177,7 +178,7 @@ def _cxhy(x, y):
 
 
 def _eudiometry_trap(v):
-    vh, contraction, co2 = v["gas_volume"], v["contraction_on_cooling"], v["volume_absorbed_by_KOH"]
+    vh, contraction, co2 = v["hydrocarbon_volume"], v["contraction_on_cooling"], v["volume_absorbed_by_KOH"]
     # treats water as still gaseous: contraction = V(1 - y/4)
     return _cxhy(co2 / vh, 4 * (1 - contraction / vh))
 
@@ -224,7 +225,7 @@ def _oxidation_number(v):
             raise EngineError(f"{formula}: the oxidation number of {el} is not fixed by the rules, "
                               f"so {target} cannot be found from them alone")
         known += on * n
-    return {"oxidation_number": (charge - known) / counts[target]}
+    return {"oxidation_number": (charge - known) / counts[target], "atoms_per_formula": counts[target]}
 
 
 def _on_trap_charge(v):
@@ -269,18 +270,34 @@ REDOX_N = {
     "KMnO4 in neutral or weakly basic medium (MnO4- -> MnO2)": 3,
     "KMnO4 in strongly basic medium (MnO4- -> MnO4^2-)": 1,
     "K2Cr2O7 in acidic medium (Cr2O7^2- -> 2Cr3+)": 6,
-    "oxalate ion with KMnO4 (C2O4^2- -> 2CO2)": 2,
+    "oxalic acid H2C2O4.2H2O with KMnO4 (C2O4^2- -> 2CO2)": 2,
     "H2O2 as oxidant (-> H2O)": 2,
     "H2O2 as reductant (-> O2)": 2,
     "H2O2 decomposition (2H2O2 -> 2H2O + O2)": 1,
     "bleaching powder CaOCl2 with excess KI (Cl -> Cl-)": 2,
     "Mohr's salt FeSO4.(NH4)2SO4.6H2O (Fe2+ -> Fe3+)": 1,
     "ferrous oxalate FeC2O4 with KMnO4 (Fe2+ -> Fe3+ and C2O4^2- -> 2CO2)": 3,
-    "IO3- with excess I- in acid (IO3- -> I2)": 5,
+    "KIO3 with excess KI in acid (IO3- -> I2)": 5,
     "Cl2 in hot concentrated alkali (3Cl2 -> ClO3- + 5Cl-)": 5 / 3,
     "N2H4 as reductant (N2H4 -> N2)": 4,
     "MnO2 with concentrated HCl (MnO2 -> Mn2+)": 2,
 }
+
+# The compound each reagent is weighed as: its molar mass follows from the formula, so a
+# next step (E = M/n) never states a molar mass that could contradict the reagent.
+REDOX_FORMULA = {
+    "KMnO4": "KMnO4", "K2Cr2O7": "K2Cr2O7", "oxalic acid": "H2C2O4.2H2O", "H2O2": "H2O2",
+    "bleaching powder": "CaOCl2", "Mohr's salt": "FeSO4.(NH4)2SO4.6H2O", "ferrous oxalate": "FeC2O4",
+    "KIO3": "KIO3", "Cl2": "Cl2", "N2H4": "N2H4", "MnO2": "MnO2",
+}
+
+
+def _reagent_molar_mass(key):
+    from core.engine.chem import ATOMIC_MASS
+    formula = next(f for k, f in REDOX_FORMULA.items() if key.startswith(k))
+    counts = parse_formula(formula)[0]
+    return sum(ATOMIC_MASS[el] * n for el, n in counts.items()), formula, counts
+
 
 _REDOX_CONFUSION = {
     5: (3, "uses the neutral-medium value"), 3: (5, "uses the acidic-medium value"),
@@ -294,7 +311,9 @@ def _redox_step(tx, keys, label):
     choices = tuple(keys)
 
     def fn(v):
-        return {"n_factor": REDOX_N[v["redox_reagent"]]}
+        m, formula, counts = _reagent_molar_mass(v["redox_reagent"])
+        return {"n_factor": REDOX_N[v["redox_reagent"]], "molar_mass": m,
+                "_constants": [f"atomic mass of {el} = {ATOMIC_MASS[el]:g}" for el in counts]}
 
     def trap(v):
         n = REDOX_N[v["redox_reagent"]]
@@ -310,7 +329,7 @@ def _redox_step(tx, keys, label):
     return Step(tx=tx, src="redox_reagent", dst="n_factor",
                 needs=(P("redox_reagent", "", f"the redox reagent and medium ({label})",
                          kind="choice", choices=choices),),
-                answer="n_factor", unit="", kind="positive", fn=fn,
+                answer="n_factor", unit="", kind="positive", fn=fn, gives=("molar_mass",),
                 traps=(Trap("wrong_n_factor", "uses the n-factor of a different medium or half-reaction", trap),),
                 formula="n-factor = electrons gained or lost per formula unit",
                 asks="n-factor of the reagent")
@@ -321,9 +340,13 @@ _K = list(REDOX_N)
 # ── Steps ────────────────────────────────────────────────────────────────────
 
 STEPS = [
-    _mass_to_moles_step(0, "element (as atoms)"),
-    _mass_to_moles_step(1, "compound"),
-    _mass_to_moles_step(2, "ionic compound (formula units)"),
+    # roles: an element's atoms are not gas molecules (2.8 g of N is 0.2 mol of atoms but
+    # 0.1 mol of N2); a fixed substance (ethanol, a deposited metal) only feeds steps about it
+    _mass_to_moles_step(0, "element (as atoms)", mass_role=("deposited metal", "electrode material"),
+                        strict=True, out_role="atoms"),
+    _mass_to_moles_step(1, "compound", mass_role=("ethanol", "antifreeze", "softening reagent")),
+    _mass_to_moles_step(2, "ionic compound (formula units)", mass_role=("softening reagent",),
+                        out_role="ionic compound"),
     Step(tx=3, keeps_role=True, src="moles", dst="number_of_particles",
          needs=(P("moles", "mol", "amount of the substance", lo=0.01, hi=10),
                 P("particles_per_unit", "", "number of the counted particles in one formula unit "
@@ -335,7 +358,7 @@ STEPS = [
          constants=(const("NA"),), formula="N = n × N_A × (particles per unit)",
          asks="number of particles"),
     Step(tx=4, src="moles", dst="gas_volume",
-         needs=(P("moles", "mol", "amount of the gas", lo=0.01, hi=10, role="gas"),),
+         needs=(P("moles", "mol", "amount of the gas", lo=0.01, hi=10, role=("gas", "excess reagent")),),
          answer="gas_volume", unit="L", kind="positive",
          fn=lambda v: {"gas_volume": v["moles"] * C.MOLAR_VOL_STP},
          traps=(Trap("uses_1_bar_molar_volume", "uses 22.7 L (1 bar) instead of 22.4 L (1 atm)",
@@ -355,9 +378,9 @@ STEPS = [
                 Trap("swapped_abundances", "attaches each abundance to the other isotope",
                      lambda v: (v["isotope_2_mass"] * v["isotope_1_percent"]
                                 + v["isotope_1_mass"] * (100 - v["isotope_1_percent"])) / 100)),
-         formula="A_avg = (A1 x1 + A2 x2)/(x1 + x2)", asks="average atomic mass (u)"),
+         roles={"molar_mass": "atomic mass"}, formula="A_avg = (A1 x1 + A2 x2)/(x1 + x2)", asks="average atomic mass (u)"),
     Step(tx=6, src="moles", dst="molar_mass",
-         needs=(P("moles", "mol", "amount of gas 1 in the mixture", lo=0.1, hi=10, role="gas"),
+         needs=(P("moles", "mol", "amount of gas 1 in the mixture", lo=0.1, hi=10, role=("gas", "excess reagent")),
                 P("M1", "g mol⁻¹", "molar mass of gas 1", lo=2, hi=200),
                 P("moles_2", "mol", "amount of gas 2 in the mixture", lo=0.1, hi=10),
                 P("M2", "g mol⁻¹", "molar mass of gas 2", lo=2, hi=200)),
@@ -365,7 +388,7 @@ STEPS = [
          fn=lambda v: {"molar_mass": (v["M1"] * v["moles"] + v["M2"] * v["moles_2"]) / (v["moles"] + v["moles_2"])},
          traps=(Trap("unweighted_mean", "averages the molar masses without mole weighting",
                      lambda v: (v["M1"] + v["M2"]) / 2),),
-         formula="M_avg = (M1 n1 + M2 n2)/(n1 + n2)", asks="average molar mass of the mixture"),
+         roles={"molar_mass": "gas"}, formula="M_avg = (M1 n1 + M2 n2)/(n1 + n2)", asks="average molar mass of the mixture"),
     Step(tx=7, src="percent_composition", dst="empirical_formula",
          needs=(P("percent_composition", "% by mass", "mass percentage of each element, e.g. "
                   "{\"C\": 40.0, \"H\": 6.7, \"O\": 53.3}", kind="dict"),),
@@ -388,9 +411,11 @@ STEPS = [
          traps=(Trap("vd_as_molar_mass", "takes the vapour density as the molar mass",
                      lambda v: v["vapour_density"]),
                 Trap("halves_vd", "divides the vapour density by 2", lambda v: v["vapour_density"] / 2)),
-         formula="M = 2 × VD", asks="molar mass (g mol⁻¹)"),
+         roles={"molar_mass": "gas"}, formula="M = 2 × VD", asks="molar mass (g mol⁻¹)"),
     Step(tx=10, keeps_role=True, src="mass", dst="density",
-         needs=(P("mass", "g", "mass of the sample", lo=0.5, hi=500),
+         needs=(P("mass", "g", "mass of the sample", lo=0.5, hi=500,
+                  role=("deposited metal", "electrode material", "ethanol", "antifreeze", "softening reagent"),
+                  strict=True),
                 P("volume", "mL", "volume of the sample", lo=0.5, hi=500)),
          answer="density", unit="g mL⁻¹", kind="positive",
          fn=lambda v: {"density": v["mass"] / v["volume"]},
@@ -422,7 +447,8 @@ STEPS = [
     Step(tx=13, src="moles", dst="limiting_reagent",
          needs=(P("balanced_equation", "", "the balanced equation", kind="text"),
                 P("reactant_A", "", "first reactant (amount = moles)", kind="text"),
-                P("moles", "mol", "amount of reactant A", lo=0.05, hi=10, role="reactant"),
+                P("moles", "mol", "amount of reactant A", lo=0.05, hi=10,
+                  role=("reactant", "ionic compound", "excess reagent", "atoms")),
                 P("reactant_B", "", "second reactant", kind="text"),
                 P("moles_B", "mol", "amount of reactant B", lo=0.05, hi=10)),
          answer="limiting_reagent", unit="", kind="text",
@@ -434,12 +460,13 @@ STEPS = [
          needs=(P("n_A", "mol", "amount of reactant A"), P("n_B", "mol", "amount of reactant B"),
                 P("coef_A", "", "coefficient of A in the balanced equation"),
                 P("coef_B", "", "coefficient of B in the balanced equation")),
-         answer="moles", unit="mol", kind="positive", fn=_excess_left,
+         answer="moles", unit="mol", kind="positive", fn=_excess_left, roles={"moles": "excess reagent"},
          traps=(Trap("subtracts_amounts", "subtracts the amounts directly, ignoring coefficients",
                      _excess_left_trap),),
          formula="left = n_excess − n_LR × ν_excess/ν_LR", asks="amount of the excess reagent left (mol)"),
     Step(tx=15, src="moles", dst="percent_yield",
-         needs=(P("moles", "mol", "theoretical amount of product", lo=0.05, hi=10, role="product"),
+         needs=(P("moles", "mol", "theoretical amount of product", lo=0.05, hi=10,
+                  role=("product", "ionic compound", "atoms")),
                 P("actual_moles", "mol", "amount of product actually obtained", lo=0.01, hi=10)),
          answer="percent_yield", unit="%", kind="percent",
          fn=lambda v: {"percent_yield": 100 * v["actual_moles"] / v["moles"]},
@@ -477,8 +504,9 @@ STEPS = [
          needs=(P("mass_percent", "% w/W", "mass percentage of solute", kind="percent", lo=1, hi=98),
                 P("density", "g mL⁻¹", "density of the solution", lo=0.8, hi=2.0),
                 P("solute_molar_mass", "g mol⁻¹", "molar mass of the solute", lo=10, hi=400)),
-         answer="molarity", unit="mol L⁻¹", kind="positive",
-         fn=lambda v: {"molarity": 10 * v["density"] * v["mass_percent"] / v["solute_molar_mass"]},
+         answer="molarity", unit="mol L⁻¹", kind="positive", gives=("density", "solute_molar_mass"),
+         fn=lambda v: {"molarity": 10 * v["density"] * v["mass_percent"] / v["solute_molar_mass"],
+                       "density": v["density"], "solute_molar_mass": v["solute_molar_mass"]},
          traps=(Trap("forgets_density", "ignores the density (takes 1 g mL⁻¹)",
                      lambda v: 10 * v["mass_percent"] / v["solute_molar_mass"]),),
          formula="M = 10 × d × (% w/W) / M_solute", asks="molarity (mol L⁻¹)"),
@@ -486,9 +514,10 @@ STEPS = [
          needs=(P("molarity", "mol L⁻¹", "molarity of the solution", lo=0.1, hi=10),
                 P("density", "g mL⁻¹", "density of the solution", lo=0.8, hi=2.0),
                 P("solute_molar_mass", "g mol⁻¹", "molar mass of the solute", lo=10, hi=400)),
-         answer="molality", unit="mol kg⁻¹", kind="positive",
+         answer="molality", unit="mol kg⁻¹", kind="positive", gives=("solute_molar_mass",),
          fn=lambda v: {"molality": 1000 * v["molarity"]
-                       / _positive(1000 * v["density"] - v["molarity"] * v["solute_molar_mass"])},
+                       / _positive(1000 * v["density"] - v["molarity"] * v["solute_molar_mass"]),
+                       "solute_molar_mass": v["solute_molar_mass"]},
          traps=(Trap("divides_by_density", "divides molarity by density (keeps the solute mass in)",
                      lambda v: v["molarity"] / v["density"]),),
          formula="m = 1000 M / (1000 d − M × M_solute)", asks="molality (mol kg⁻¹)"),
@@ -508,7 +537,7 @@ STEPS = [
          traps=(Trap("total_as_other_gas", "takes the total volume as the other component",
                      lambda v: v["gas_volume"] / (v["gas_volume"] + v["total_volume"])),),
          formula="for gases, volume fraction = mole fraction", asks="mole fraction of the component"),
-    Step(tx=23, keeps_role=True, src="molarity", dst="molarity",
+    Step(tx=23, keeps_role=True, src="molarity", dst="molarity", carries=("solute_molar_mass",),
          needs=(P("molarity", "mol L⁻¹", "initial molarity", lo=0.05, hi=10),
                 P("initial_volume", "mL", "initial volume of the solution", lo=5, hi=1000),
                 P("water_added", "mL", "volume of water added", lo=5, hi=2000)),
@@ -517,7 +546,7 @@ STEPS = [
          traps=(Trap("water_as_final_volume", "takes the water added as the final volume",
                      lambda v: v["molarity"] * v["initial_volume"] / v["water_added"]),),
          formula="M1V1 = M2V2", asks="molarity after dilution (mol L⁻¹)"),
-    Step(tx=24, keeps_role=True, src="molarity", dst="molarity",
+    Step(tx=24, keeps_role=True, src="molarity", dst="molarity", carries=("solute_molar_mass",),
          needs=(P("molarity", "mol L⁻¹", "molarity of solution 1", lo=0.05, hi=10),
                 P("volume_1", "mL", "volume of solution 1", lo=5, hi=1000),
                 P("molarity_2", "mol L⁻¹", "molarity of solution 2 (same solute)", lo=0.05, hi=10),
@@ -537,7 +566,8 @@ STEPS = [
                 Trap("gives_normality", "divides by 5.6 (normality)", lambda v: v["volume_strength"] / 5.6)),
          constants=(const("MOLAR_VOL_STP"),), formula="M = volume strength / 11.2",
          asks="molarity of the H2O2 solution"),
-    Step(tx=26, keeps_role=True, src="ppm", dst="mass",
+    # hardness is ppm AS CaCO3, not ppm of the solute by mass
+    Step(tx=26, keeps_role=True, src="ppm", dst="mass", not_after=(49,),
          needs=(P("ppm", "ppm (by mass)", "concentration of the solute", lo=1, hi=1000),
                 P("solution_mass", "g", "mass of the solution", lo=100, hi=1e7)),
          answer="mass", unit="g", kind="positive",
@@ -556,7 +586,7 @@ STEPS = [
          traps=(Trap("ignores_coefficients", "takes the volume ratio as 1:1", lambda v: v["gas_volume"]),),
          formula="Gay-Lussac: volume ratio = mole ratio (same T, P)", asks="volume of the product gas"),
     Step(tx=29, src="gas_volume", dst="molecular_formula",
-         needs=(P("gas_volume", "mL", "volume of the gaseous hydrocarbon", lo=5, hi=100),
+         needs=(P("hydrocarbon_volume", "mL", "volume of the gaseous hydrocarbon", lo=5, hi=100),
                 P("contraction_on_cooling", "mL", "contraction after explosion with excess O2 and cooling", lo=5, hi=500),
                 P("volume_absorbed_by_KOH", "mL", "further contraction on passing through KOH", lo=5, hi=500)),
          answer="molecular_formula", unit="", kind="text", fn=_eudiometry,
@@ -566,7 +596,7 @@ STEPS = [
     Step(tx=30, src="chemical_species", dst="oxidation_number",
          needs=(P("chemical_species", "", "formula of the species, with charge if an ion (e.g. 'Cr2O7^2-')", kind="text"),
                 P("element", "", "element whose oxidation number is asked", kind="text")),
-         answer="oxidation_number", unit="", kind="real", fn=_oxidation_number,
+         answer="oxidation_number", unit="", kind="real", fn=_oxidation_number, gives=("atoms_per_formula",),
          traps=(Trap("ignores_charge", "ignores the charge on the ion", _on_trap_charge),
                 Trap("peroxide_as_oxide", "takes O as −2 in a peroxide/superoxide", _on_trap_peroxide)),
          formula="sum of oxidation numbers = charge; O −2, H +1, F −1 unless an exception applies",
@@ -647,20 +677,22 @@ STEPS = [
          asks="percentage purity of the sample"),
     _redox_step(44, [k for k in _K if k.startswith("KMnO4")], "KMnO4 in different media"),
     _redox_step(45, [k for k in _K if k.startswith("K2Cr2O7")] + [k for k in _K if k.startswith("KMnO4 in acidic")], "dichromate"),
-    _redox_step(46, [k for k in _K if "oxalate" in k], "oxalate"),
+    _redox_step(46, [k for k in _K if "oxal" in k], "oxalate"),
     _redox_step(47, [k for k in _K if k.startswith("H2O2")], "hydrogen peroxide"),
-    _redox_step(48, [k for k in _K if k.startswith("bleaching")] + [k for k in _K if k.startswith("IO3")], "iodometric reagents"),
+    _redox_step(48, [k for k in _K if k.startswith("bleaching")] + [k for k in _K if k.startswith("KIO3")], "iodometric reagents"),
     Step(tx=49, src="mass", dst="ppm",
-         needs=(P("mass", "g", "mass of the hardness-causing salt in the water sample", lo=0.001, hi=10, role="hardness salt"),
+         needs=(P("mass", "g", "mass of the hardness-causing salt in the water sample", lo=0.001, hi=10,
+                  role="hardness salt", strict=True),
                 P("salt_molar_mass", "g mol⁻¹", "molar mass of the salt (one Ca²⁺ or Mg²⁺ per formula unit)", lo=50, hi=300),
                 P("water_mass", "g", "mass of the water sample", lo=100, hi=1e7)),
-         answer="ppm", unit="ppm (as CaCO3)", kind="positive",
-         fn=lambda v: {"ppm": v["mass"] * 100 / v["salt_molar_mass"] * 1e6 / v["water_mass"]},
+         answer="ppm", unit="ppm (as CaCO3)", kind="positive", gives=("water_mass",),
+         fn=lambda v: {"ppm": v["mass"] * 100 / v["salt_molar_mass"] * 1e6 / v["water_mass"],
+                       "water_mass": v["water_mass"]},
          traps=(Trap("skips_caco3_conversion", "reports the salt mass, not the CaCO3 equivalent",
                      lambda v: v["mass"] * 1e6 / v["water_mass"]),),
          formula="hardness = (mass as CaCO3 / mass of water) × 10⁶", asks="degree of hardness (ppm of CaCO3)"),
     _redox_step(50, [k for k in _K if k.startswith("Mohr") or k.startswith("ferrous")], "iron(II) reagents"),
-    _redox_step(51, [k for k in _K if k.startswith("IO3")] + [k for k in _K if k.startswith("bleaching")], "iodate"),
+    _redox_step(51, [k for k in _K if k.startswith("KIO3")] + [k for k in _K if k.startswith("bleaching")], "iodate"),
     _redox_step(52, [k for k in _K if k.startswith("Cl2")] + [k for k in _K if k.startswith("MnO2")], "chlorine"),
     _redox_step(53, [k for k in _K if k.startswith("N2H4")] + [k for k in _K if k.startswith("H2O2 as reductant")], "hydrazine"),
     _redox_step(54, [k for k in _K if k.startswith("MnO2")] + [k for k in _K if k.startswith("Cl2")], "MnO2/HCl"),
@@ -675,7 +707,8 @@ STEPS = [
          formula="mass of reagent = (ppm × m_water / 10⁶) × M_reagent / 100",
          asks="mass of softening reagent needed (g)"),
     Step(tx=340, src="mass", dst="gas_volume",
-         needs=(P("mass", "g", "mass of sodium azide NaN3 (65 g mol⁻¹)", lo=10, hi=200, role="sodium azide"),
+         needs=(P("mass", "g", "mass of sodium azide NaN3 (65 g mol⁻¹)", lo=10, hi=200, role="sodium azide",
+                  strict=True),
                 P("temperature", "K", "temperature of the inflated bag", kind="temperature", lo=273, hi=400),
                 P("pressure", "atm", "pressure in the inflated bag", lo=0.8, hi=2.0)),
          answer="gas_volume", unit="L", kind="positive",
@@ -687,7 +720,8 @@ STEPS = [
          constants=(const("R_LATM"), "Na = 23, N = 14"), formula="2NaN3 → 2Na + 3N2; V = nRT/P",
          asks="volume of N2 released (L)"),
     Step(tx=341, src="moles", dst="mass",
-         needs=(P("moles", "mol", "amount of Cr2O7²⁻ reduced to Cr³⁺", lo=1e-5, hi=0.1, role="dichromate"),),
+         needs=(P("moles", "mol", "amount of Cr2O7²⁻ reduced to Cr³⁺", lo=1e-5, hi=0.1,
+                  role=("dichromate", "excess reagent", "ionic compound")),),
          answer="mass", unit="g", kind="positive", roles={"mass": "ethanol"},
          fn=lambda v: {"mass": v["moles"] * 6 / 4 * 46},
          traps=(Trap("one_to_one", "takes one ethanol per dichromate", lambda v: v["moles"] * 46),

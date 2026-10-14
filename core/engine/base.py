@@ -108,7 +108,10 @@ class Param:
              of the one system two steps describe)
     choices  allowed values when kind == "choice"
     role     what the value must belong to when it is wired from the previous step
-             (e.g. "gas", "strong acid"); None accepts any (see links)
+             (e.g. "gas", "strong acid", or a tuple of acceptable roles); None accepts any
+             (see links)
+    strict   the wired value must carry one of the roles: an untagged output is refused
+             (e.g. Q from concentrations must be compared with K_c, not any K)
     """
     key: str
     unit: str
@@ -118,7 +121,25 @@ class Param:
     hi: float | None = None
     context: str | None = None
     choices: tuple | None = None
-    role: str | None = None
+    role: str | tuple | None = None
+    strict: bool = False
+
+
+def role_ok(param, have) -> bool:
+    """Can a wired value with role `have` (None: untagged) feed this input?"""
+    want = getattr(param, "role", None) if param is not None else None
+    if not want:
+        return True
+    if have is None:
+        return not getattr(param, "strict", False)
+    return have in ((want,) if isinstance(want, str) else tuple(want))
+
+
+def first_role(param):
+    want = getattr(param, "role", None)
+    if not want:
+        return None
+    return want if isinstance(want, str) else want[0]
 
 
 @dataclass(frozen=True)
@@ -165,6 +186,14 @@ class Step:
                 topics only along the subject's bridges
     keeps_role  the output is the same substance/system as the wired input (mass ->
                 moles), so untagged outputs inherit the input's role along a chain
+    not_after   txs this step must not follow: pairs whose wiring is valid by field name
+                but wrong in meaning (e.g. a non-first-order half-life into λ = 0.693/t½)
+    not_after_any  txs that must not appear ANYWHERE earlier in the chain (ΔH stated in one
+                step must not be recomputed from two K values two steps later)
+    carries     values the step does not use but passes on unchanged when the previous step
+                supplied them (Charles's law at constant P hands that P to the next process)
+    unit        the answer's unit; a function of the step's inputs when it depends on them
+                (K_p in atm^Δn, a critical constant in K, atm or L mol⁻¹)
     """
     tx: int
     src: str
@@ -184,6 +213,9 @@ class Step:
     roles: dict = field(default_factory=dict)
     domain: str | None = None
     keeps_role: bool = False
+    not_after: tuple = ()
+    not_after_any: tuple = ()
+    carries: tuple = ()
 
     @property
     def outputs(self) -> tuple:
@@ -249,11 +281,14 @@ def plan_chain(steps: list) -> ChainPlan:
                 add_given(i, p, w)
         if i > 0 and not any(src == "prev" for src, _ in w.values()):
             raise EngineError(f"step {i} (tx {st.tx}) uses nothing from step {i - 1} (tx {steps[i - 1].tx})")
+        carried = tuple(k for k in st.carries if k in prev_outputs and k not in w and k not in st.outputs)
+        for k in carried:
+            w[k] = ("prev", k)
         wiring.append(w)
         for c in st.constants:
             if c not in constants:
                 constants.append(c)
-        prev_outputs = st.outputs
+        prev_outputs = st.outputs + carried
     return ChainPlan(steps, wiring, givens, constants)
 
 
@@ -264,6 +299,8 @@ def links(a: Step, b: Step, bridges=None) -> bool:
     if bridges is not None and a.domain and b.domain and a.domain != b.domain \
             and frozenset((a.domain, b.domain)) not in bridges:
         return False
+    if a.tx in b.not_after:
+        return False
     params = {p.key: p for p in b.needs}
     for d in b.derive:
         params.setdefault(d.key, None)
@@ -273,9 +310,10 @@ def links(a: Step, b: Step, bridges=None) -> bool:
     if not shared:
         return False
     for key in shared:
-        want = params[key].role if params[key] is not None else None
         have = a.roles.get(key)
-        if want and have and want != have:
+        if have is None and a.keeps_role:
+            continue                       # inherited along the chain: roles_consistent decides
+        if not role_ok(params[key], have):
             return False
     return True
 
@@ -320,11 +358,19 @@ def roles_consistent(steps: list) -> bool:
                 params.setdefault(p.key, p)
         wired_role = None
         if i > 0:
+            if steps[i - 1].tx in st.not_after:
+                return False
+            if any(s.tx in st.not_after_any for s in steps[:i]):
+                return False
             for key in set(params) & set(steps[i - 1].outputs):
-                want, have = params[key].role, prev_roles.get(key)
-                if want and have and want != have:
+                have = prev_roles.get(key)
+                if not role_ok(params[key], have):
                     return False
-                wired_role = wired_role or have or want
+                wired_role = wired_role or have or first_role(params[key])
+        elif st.keeps_role:
+            # a chain's first step whose output is its own input changed (mass in cell 1 ->
+            # mass in cell 2): the output is what that input describes
+            wired_role = next((first_role(p) for p in st.needs if p.key in st.outputs and first_role(p)), None)
         roles = dict(st.roles)
         if st.keeps_role and wired_role:
             for f in st.outputs:
@@ -371,6 +417,9 @@ def _run_step(plan: ChainPlan, i: int, prev_out: dict, values: dict):
     if not isinstance(out, dict) or st.answer not in out:
         raise EngineError(f"tx {st.tx} did not produce {st.answer!r}")
     check_kind(st.kind, out[st.answer])
+    for k in st.carries:                       # passed on unchanged (see Step.carries)
+        if k in v and k not in out:
+            out = {**out, k: v[k]}
     return v, out
 
 
@@ -409,6 +458,8 @@ def run_chain(plan: ChainPlan, values: dict) -> ChainResult:
 
     last = plan.steps[-1]
     a_field, a_unit, a_kind, a_asks = last.final or (last.answer, last.unit, last.kind, last.asks)
+    if callable(a_unit):
+        a_unit = a_unit(inputs[-1])
     answer = out[a_field]
     check_kind(a_kind, answer)
     tol = rounding_tolerance(plan, values, a_field, answer)

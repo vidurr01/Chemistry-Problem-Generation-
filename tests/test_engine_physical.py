@@ -74,7 +74,7 @@ class Stoichiometry(Close):
         self.close(run([25], s0__volume_strength=20), 1.786)
 
     def test_eudiometry(self):
-        r = run([29], s0__gas_volume=10, s0__contraction_on_cooling=25, s0__volume_absorbed_by_KOH=20)
+        r = run([29], s0__hydrocarbon_volume=10, s0__contraction_on_cooling=25, s0__volume_absorbed_by_KOH=20)
         self.assertEqual(r.answer, "C2H6")
 
     def test_oxidation_numbers(self):
@@ -197,7 +197,11 @@ class Equilibrium(Close):
         self.close(run([152], s0__balanced_equation="N2O4 -> 2NO2", s0__eq_amounts={"N2O4": 0.5, "NO2": 1.0},
                        s0__volume=1), 2.0)
         self.close(run([154], s0__equilibrium_constant=2, s0__balanced_equation="N2O4 -> 2NO2", s0__T=300), 49.26)
-        self.close(run([160], s0__gas_dissociation_degree=0.5, s0__total_pressure=1), 1 / 3)
+        self.close(run([160], s0__balanced_equation="PCl5 -> PCl3 + Cl2", s0__gas_dissociation_degree=0.5,
+                       s0__total_pressure=1), 1 / 3)
+        # A -> 2B is not A -> B + C: K_p = 4α²P/(1 − α²)
+        self.close(run([160], s0__balanced_equation="N2O4 -> 2NO2", s0__gas_dissociation_degree=0.5,
+                       s0__total_pressure=1), 4 / 3)
 
     def test_ph(self):
         self.close(run([174], s0__molarity=1e-8, s0__basicity=1), 6.979)

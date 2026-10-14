@@ -267,6 +267,11 @@ def _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng, previ
         if fmt and " ".join(fmt.split()) not in " ".join(stem.split()):
             g = {**g, "ok": False, "unreadable": False,
                  "mismatches": g["mismatches"] + [f"the question must end with this sentence, copied exactly: {fmt}"]}
+        added = gate.computed_values(stem)
+        if added:
+            g = {**g, "ok": False, "unreadable": False,
+                 "mismatches": g["mismatches"] + [f"the question gives a computed value that is not in the data, "
+                                                  f"which reveals the method; remove it: {'; '.join(added)}"]}
         bb.note("gate", attempt=attempt + 1, stem=stem, ok=g["ok"], mismatches=g["mismatches"],
                 unreadable=g["unreadable"])
         if g["ok"]:

@@ -126,6 +126,19 @@ def _eq_text(a, b) -> bool:
     return re.sub(r"\s", "", normalise_text(sa)) == re.sub(r"\s", "", normalise_text(sb))
 
 
+_LOG_TABLE = {"2", "3", "5", "7", "10"}       # the log values JEE papers print as data
+
+
+def computed_values(stem: str) -> list:
+    """Logarithms of anything but a table number that the stem hands the student
+    ('ln(13.25) = 2.584' is ln(K₂/K₁): it gives the method away). Returns the phrases."""
+    out = []
+    for m in re.finditer(r"\b(ln|log(?:10)?|log₁₀)\s*\(?\s*([0-9]+(?:\.[0-9]+)?)\s*\)?\s*[=≈]\s*-?[0-9.]+", stem):
+        if m.group(2) not in _LOG_TABLE:
+            out.append(m.group(0))
+    return out
+
+
 def _same(kind: str, expected, got) -> bool:
     if got is None:
         return False
