@@ -88,7 +88,7 @@ def matches(engine_answer, member_answer, kind: str = "real", rel_tol: float = 0
         from core.engine.facts import letters_of
         return bool(engine_answer) and letters_of(member_answer) == "".join(sorted(engine_answer))
     if isinstance(engine_answer, (int, float)) and not isinstance(engine_answer, bool):
-        value = parse_numeric_answer(member_answer)
+        value = numeric_value(member_answer)
         return value is not None and answers_match(float(engine_answer), value, rel_tol)
     if isinstance(engine_answer, str):
         return normalise_text(engine_answer) == normalise_text(member_answer) or \
@@ -233,12 +233,74 @@ def numeric_value(text):
         return None
     if isinstance(text, (int, float)):
         return float(text)
-    s = str(text).strip().translate(_SUPERSCRIPTS)
+    s = str(text).strip().replace("−", "-")
+    # a superscript exponent is a power: 10⁻¹⁵ -> 10^(-15), never 10 - 15
+    s = re.sub(r"([0-9)])\s*([⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+)",
+               lambda m: f"{m.group(1)}^({m.group(2).translate(_SUPERSCRIPTS)})", s)
     try:
         return float(safe_eval(s))
     except (ValueError, ZeroDivisionError, OverflowError, SyntaxError, TypeError):
         pass
     return parse_numeric_answer(s)
+
+
+# ── Units ────────────────────────────────────────────────────────────────────
+# A member may answer in another unit than the one asked (156100 J mol⁻¹ for 156.1 kJ mol⁻¹).
+# The value is converted using the unit the member STATED, so a real "forgot to convert"
+# mistake (156100 with unit kJ mol⁻¹) still does not match. Units that cannot be read, or
+# differ in dimension, are not converted.
+
+_U = {  # symbol: (dimension vector as dict, factor to the base unit)
+    "m": ({"L": 1}, 1.0), "km": ({"L": 1}, 1e3), "cm": ({"L": 1}, 1e-2), "mm": ({"L": 1}, 1e-3),
+    "µm": ({"L": 1}, 1e-6), "μm": ({"L": 1}, 1e-6), "nm": ({"L": 1}, 1e-9), "pm": ({"L": 1}, 1e-12),
+    "Å": ({"L": 1}, 1e-10), "A°": ({"L": 1}, 1e-10),
+    "L": ({"L": 3}, 1e-3), "l": ({"L": 3}, 1e-3), "mL": ({"L": 3}, 1e-6), "ml": ({"L": 3}, 1e-6),
+    "dm": ({"L": 1}, 0.1),
+    "kg": ({"M": 1}, 1.0), "g": ({"M": 1}, 1e-3), "mg": ({"M": 1}, 1e-6),
+    "mol": ({"N": 1}, 1.0), "mmol": ({"N": 1}, 1e-3),
+    "M": ({"N": 1, "L": -3}, 1e3), "mM": ({"N": 1, "L": -3}, 1.0),
+    "s": ({"T": 1}, 1.0), "ms": ({"T": 1}, 1e-3), "min": ({"T": 1}, 60.0), "h": ({"T": 1}, 3600.0),
+    "hr": ({"T": 1}, 3600.0), "day": ({"T": 1}, 86400.0), "days": ({"T": 1}, 86400.0),
+    "year": ({"T": 1}, 3.15576e7), "years": ({"T": 1}, 3.15576e7), "yr": ({"T": 1}, 3.15576e7),
+    "J": ({"E": 1}, 1.0), "kJ": ({"E": 1}, 1e3), "MJ": ({"E": 1}, 1e6), "cal": ({"E": 1}, 4.184),
+    "kcal": ({"E": 1}, 4184.0), "eV": ({"E": 1}, 1.602176634e-19),
+    "Pa": ({"P": 1}, 1.0), "kPa": ({"P": 1}, 1e3), "bar": ({"P": 1}, 1e5), "atm": ({"P": 1}, 101325.0),
+    "mmHg": ({"P": 1}, 133.322), "torr": ({"P": 1}, 133.322), "Torr": ({"P": 1}, 133.322),
+    "K": ({"K": 1}, 1.0), "V": ({"V": 1}, 1.0), "mV": ({"V": 1}, 1e-3),
+    "C": ({"Q": 1}, 1.0), "A": ({"I": 1}, 1.0), "S": ({"G": 1}, 1.0), "mS": ({"G": 1}, 1e-3),
+}
+_UNIT_SUP = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⁻", "0123456789-")
+
+
+def _unit(u):
+    """(dimension dict, factor) of a unit string such as 'kJ mol⁻¹', 'J/mol', 'mol L^-1',
+    'L mol-1 s-1', 'dm³'; None if any part is unknown. '' is dimensionless."""
+    s = str(u or "").strip().translate(_UNIT_SUP).replace("·", " ").replace("*", " ")
+    s = s.replace("mm Hg", "mmHg").replace("^", "")
+    if not s:
+        return {}, 1.0
+    dims, factor, sign = {}, 1.0, 1
+    for tok in re.findall(r"/|[A-Za-zµμÅ°]+-?\d*", s):
+        if tok == "/":
+            sign = -1
+            continue
+        m = re.fullmatch(r"([A-Za-zµμÅ°]+?)(-?\d+)?", tok)
+        sym, exp = m.group(1), int(m.group(2) or 1)
+        if sym not in _U:
+            return None
+        d, f = _U[sym]
+        for k, v in d.items():
+            dims[k] = dims.get(k, 0) + v * exp * sign
+        factor *= f ** (exp * sign)
+    return {k: v for k, v in dims.items() if v}, factor
+
+
+def convert_unit(value, from_unit, to_unit):
+    """value in from_unit expressed in to_unit, or None if they are not the same kind."""
+    a, b = _unit(from_unit), _unit(to_unit)
+    if a is None or b is None or a[0] != b[0]:
+        return None
+    return value * a[1] / b[1]
 
 
 # ── Safe arithmetic for confirming slips ─────────────────────────────────────
