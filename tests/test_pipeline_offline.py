@@ -50,7 +50,7 @@ class FakeModels:
             return {"values": {"s0.mass": 4.4, "s0.molar_mass": 44}, "asked": asked,
                     "constants_stated": [True] * max(1, n_const)}
         if role == "council":
-            if self.fail_council and model == models.COUNCIL[2][1]:
+            if self.fail_council and model == models.LADDER[2][1]:
                 raise RuntimeError("503 provider overloaded")
             hinted = "A teacher adds this hint" in user
             ans = (self.hint_answers if hinted else self.council_answers)[model]
@@ -146,82 +146,98 @@ class FakeFactModels:
 
 
 class PipelineOffline(_Env, unittest.TestCase):
-    def test_accepts_when_failures_are_confirmed(self):
-        slugs = [s for _, s in models.COUNCIL]
+    """Ladder order: models.LADDER = [llama-3.3-70b, glm-5.3-flash, gpt-6-luna]."""
+
+    def test_accepts_and_labels_by_first_solver(self):
+        slugs = [s for _, s in models.LADDER]
         fake = FakeModels(
-            council_answers={slugs[0]: "2.24", slugs[1]: "2.45", slugs[2]: "1.12"},
-            hint_answers={slugs[1]: "2.24", slugs[2]: "1.12"},
-            verdicts={"2.24": {"verdict": "correct"},
-                      "1.12": {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.05*22.4"}})
+            council_answers={slugs[0]: "2.45", slugs[1]: "2.24", slugs[2]: "2.24"},
+            hint_answers={slugs[0]: "2.24"},
+            verdicts={"2.24": {"verdict": "correct"}})
         self.assertEqual(self._run(fake), 0)
         recs = self._records()
         self.assertEqual(len(recs), 1)
         r = recs[0]
         self.assertEqual(r["answer"], 2.24)
-        self.assertEqual((r["council_n_correct"], r["council_n_solved"]), (1, 1))
+        self.assertEqual((r["difficulty_label"], r["ladder_first_solver"]), ("advanced", models.LADDER[1][0]))
+        self.assertEqual((r["council_n_called"], r["council_skipped"]), (2, [models.LADDER[2][0]]))
         self.assertEqual(r["tags"]["knowledge"], "closed_book")
-        by = {c["name"]: c for c in r["council"]}
-        self.assertFalse(by[models.COUNCIL[2][0]]["slip_confirmed"])     # 0.05*22.4 ≠ 2.24
-        self.assertEqual(len(r["hint_tests"]), 2)
+        self.assertEqual(len(r["hint_tests"]), 1)                       # only the failed step
+        self.assertEqual(fake.calls.count("council"), 2 + 1)            # two steps + one hint re-solve
         self.assertTrue(r["solution"])
         self.assertTrue(os.path.exists(dedup.STORE))
 
-    def test_confirmed_slip_counts_as_solved(self):
-        slugs = [s for _, s in models.COUNCIL]
+    def test_confirmed_slip_at_the_bottom_counts_as_solved(self):
+        slugs = [s for _, s in models.LADDER]
         fake = FakeModels(
-            council_answers={slugs[0]: "2.24", slugs[1]: "2.45", slugs[2]: "22.4"},
-            hint_answers={slugs[1]: "2.45"},
+            council_answers={slugs[0]: "22.4", slugs[1]: "2.24", slugs[2]: "2.24"},
             verdicts={"2.24": {"verdict": "correct"},
                       "22.4": {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.1*22.4"}},
             refine_mode="reword")
-        self.assertEqual(self._run(fake), 0)        # 2 solved -> too easy every round -> dropped
+        self.assertEqual(self._run(fake), 0)        # the bottom step solves (slip confirmed) -> too easy -> dropped
         self.assertEqual(self._records(), [])
+        self.assertEqual(fake.calls.count("council"), 1 * 4)
 
     def test_too_easy_until_rounds_run_out(self):
-        slugs = [s for _, s in models.COUNCIL]
+        slugs = [s for _, s in models.LADDER]
         fake = FakeModels(council_answers={s: "2.24" for s in slugs}, verdicts={"2.24": {"verdict": "correct"}})
         self.assertEqual(self._run(fake), 0)
         self.assertEqual(self._records(), [])
-        # original + 3 refinements; both cheaper members solve each time, so Qwen is never called
-        self.assertEqual(fake.calls.count("council"), 2 * 4)
+        # original + 3 refinements; the bottom step solves each time, so no step above it is called
+        self.assertEqual(fake.calls.count("council"), 1 * 4)
         # each too-easy round: the refiner chooses and rewrites; the first draft is the generator's
         self.assertEqual(fake.calls.count("refiner"), 3 * 2)
         self.assertEqual(fake.calls.count("generator"), 2)              # inputs + first stem
 
-    def test_early_stop_skips_decider_when_both_first_members_fail(self):
-        slugs = [s for _, s in models.COUNCIL]
+    def test_ladder_climbs_to_the_top(self):
+        slugs = [s for _, s in models.LADDER]
         fake = FakeModels(
-            council_answers={slugs[0]: "2.45", slugs[1]: "2.24", slugs[2]: "1.12"},
-            hint_answers={slugs[0]: "2.24", slugs[2]: "2.24"},
+            council_answers={slugs[0]: "2.45", slugs[1]: "1.12", slugs[2]: "2.24"},
+            hint_answers={slugs[0]: "2.24", slugs[1]: "2.24"},
+            verdicts={"2.24": {"verdict": "correct"},
+                      "1.12": {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.05*22.4"}})
+        self.assertEqual(self._run(fake), 0)
+        r = self._records()[0]
+        self.assertEqual((r["difficulty_label"], r["council_n_called"], r["council_skipped"]), ("hard_advanced", 3, []))
+        by = {c["name"]: c for c in r["council"]}
+        self.assertFalse(by[models.LADDER[1][0]]["slip_confirmed"])     # 0.05*22.4 ≠ 2.24
+        self.assertEqual(len(r["hint_tests"]), 2)
+
+    def test_no_step_solves_is_frontier(self):
+        slugs = [s for _, s in models.LADDER]
+        fake = FakeModels(
+            council_answers={s: "2.45" for s in slugs},
+            hint_answers={s: "2.24" for s in slugs},
             verdicts={"2.24": {"verdict": "correct"}})
         self.assertEqual(self._run(fake), 0)
         r = self._records()[0]
-        self.assertEqual((r["council_n_solved"], r["council_n_called"]), (0, 2))
-        self.assertEqual(r["council_skipped"], [models.COUNCIL[1][0]])
-        self.assertEqual(fake.calls.count("council"), 2 + 2)        # two solves + two hint re-solves
-        self.assertNotIn(models.COUNCIL[1][0], {c["name"] for c in r["council"]})
-
-    def test_decider_called_when_first_members_split(self):
-        slugs = [s for _, s in models.COUNCIL]
-        fake = FakeModels(
-            council_answers={slugs[0]: "2.24", slugs[1]: "2.24", slugs[2]: "1.12"},
-            verdicts={"2.24": {"verdict": "correct"}}, refine_mode="reword")
-        self.assertEqual(self._run(fake), 0)        # Qwen makes it 2 solved -> too easy every round
-        self.assertEqual(self._records(), [])
-        self.assertEqual(fake.calls.count("council"), 3 * 4)
+        self.assertEqual((r["difficulty_label"], r["ladder_first_solver"], r["council_n_solved"]), ("frontier", None, 0))
 
     def test_council_failure_parks_then_recheck_accepts(self):
-        slugs = [s for _, s in models.COUNCIL]
-        answers = {slugs[0]: "2.24", slugs[1]: "2.45", slugs[2]: "2.45"}
+        slugs = [s for _, s in models.LADDER]
+        answers = {slugs[0]: "2.45", slugs[1]: "2.45", slugs[2]: "2.24"}
         verdicts = {"2.24": {"verdict": "correct"}}
+        # the top step (called because both lower steps failed) is unreachable -> parked
         self.assertEqual(self._run(FakeModels(answers, answers, verdicts, fail_council=True)), entry.EXIT_COUNCIL_FAILED)
         with open(self.cfg["pending_file"], encoding="utf-8") as f:
             self.assertEqual(len(json.load(f)), 1)
-        self.assertEqual(self._run(FakeModels(answers, {slugs[1]: "2.24", slugs[2]: "2.24"}, verdicts)), 0)
+        self.assertEqual(self._run(FakeModels(answers, {slugs[0]: "2.24", slugs[1]: "2.24"}, verdicts)), 0)
         self.assertEqual(len(self._records()), 1)
         with open(self.cfg["pending_file"], encoding="utf-8") as f:
             self.assertEqual(json.load(f), [])
 
+    def test_harder_question_prompts(self):
+        from core.pipeline import stages
+        seen = {}
+        def capture(role, model, system, user, **kw):
+            seen[role] = user
+            return {"coherent": True, "values": {}, "stem": "x"}
+        with mock.patch.object(models, "ask_json", capture):
+            stages.propose_inputs("Physical Chemistry", "chain", [], traps=["uses log₁₀ without 2.303"])
+            self.assertIn("uses log₁₀ without 2.303", seen["generator"])
+            self.assertIn("shortcut or approximation would mislead", seen["generator"])
+            stages.write_stem("Physical Chemistry", "s", "chain", [], {}, [], "k", "s⁻¹", [])
+            self.assertIn("never name the law, equation or method", seen["generator"])
 
 
 class FactQuestions(_Env, unittest.TestCase):
@@ -246,16 +262,17 @@ class FactQuestions(_Env, unittest.TestCase):
         super().tearDown()
 
     def test_fact_question_accepted_with_letters(self):
-        slugs = [s for _, s in models.COUNCIL]
+        slugs = [s for _, s in models.LADDER]
         wrong = lambda key: "ABCD".replace(key[0], "")[0]          # a single wrong letter
-        self.fake = FakeFactModels({slugs[0]: lambda key: " and ".join(key), slugs[1]: wrong, slugs[2]: wrong})
+        # bottom step wrong, middle step right -> accepted, labelled "advanced"
+        self.fake = FakeFactModels({slugs[0]: wrong, slugs[1]: lambda key: " and ".join(key), slugs[2]: wrong})
         self.assertEqual(self._run(self.fake, kind="facts"), 0)
         recs = self._records()
         self.assertEqual(len(recs), 1)
         r = recs[0]
         self.assertEqual(r["question_kind"], "fact")
         self.assertEqual(len(r["options"]), 4)
-        self.assertEqual(r["council_n_solved"], 1)
+        self.assertEqual((r["council_n_solved"], r["difficulty_label"]), (1, "advanced"))
         self.assertNotIn("extractor", self.fake.calls)                  # the fact gate is code only
 
 

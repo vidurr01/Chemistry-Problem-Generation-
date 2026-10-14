@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Difficulty ladder replaces the council; prompts aimed at harder questions
+- `core/models.py`: `LADDER` = Llama 3.3 70B (Meta) → GLM-5.3-Flash (Z.ai) → GPT-6 Luna (OpenAI); `COUNCIL` is now an alias of it; Qwen3.8-Flash removed. `DIFFICULTY_LABELS`.
+- `flow.judge()`: each step is called only after every step below failed. The bottom step solving it means too easy; otherwise the question is accepted (after hint tests) and labelled by the first step that solved it: advanced (GLM), hard_advanced (Luna), frontier (none). Records gain `ladder_first_solver` and `difficulty_label`.
+- Why: on real papers (Mains n = 47, Advanced n = 49) Llama 3.3 fails 29 % of easy/medium Mains but 66 % of Advanced-level questions (Advanced plus the hardest third of Mains by `calculated_difficulty`); GLM, Qwen3.5-35B, Llama 4 Maverick and Luna separate the two far less. Calibration runs added for Qwen3.5-35B, Llama 4 Maverick and Llama 3.3 70B.
+- `stages.propose_inputs()` gets the chain's trap descriptions and is told to pick values where shortcuts and approximations mislead and each mistake gives a different, believable answer. `write_stem()` must not name the method or hint at steps, must not list data in solution order, must frame a concrete system, asks only the final quantity, and lists the cues it avoided (`easy_cues_avoided`).
+- Tests rewritten for the ladder (69).
+
 ### JEE Mains calibration set; ladder candidates
 - `data/jee_mains/` (new): 24 JEE Main papers, 2020–2026, same schema as the Advanced set. Eight 2024–2026 numerical items whose structure or scheme is not in the text carry `exclude_reason`.
 - `anchor_calibration.py --set mains [--years]` (default 2024–2026, the papers least likely to be in training data; numerical "NAT" items only). Mains answers are integers, so the grader rounds the model's answer to the nearest integer for that set. Results files get a `_mains` suffix.

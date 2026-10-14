@@ -2,7 +2,7 @@
 Model roster and the one call helper every pipeline stage uses.
 
 Every role goes through OpenRouter. No model checks output from its own family:
-Gemini writes and refines, DeepSeek extracts, the council (OpenAI, Qwen, Z.ai) solves, Claude
+Gemini writes and refines, DeepSeek extracts, the ladder (Meta, Z.ai, OpenAI) solves, Claude
 diagnoses, Mistral writes the readable solution after acceptance.
 """
 
@@ -21,18 +21,28 @@ REFINER = "google/gemini-3.8-flash"                   # too easy: reads the solv
 EXTRACTOR = "deepseek/deepseek-v4-flash-0731"          # chemistry gate: lists the facts a stem states
 VERIFIER = "anthropic/claude-haiku-5.5"                # mismatch verifier: reads every council attempt
 SOLUTION_WRITER = "mistralai/mistral-small-3.2-24b-instruct"   # readable solution, accepted questions only
-COUNCIL = [
-    ("gpt-6-luna", "openai/gpt-6-luna"),            # GPQA Diamond 87–90%
-    ("qwen3.8-flash", "qwen/qwen3.8-flash"),         # 88.6%
-    ("glm-5.3-flash", "z-ai/glm-5.3-flash"),         # 85–91%
+# Difficulty ladder, weakest first (flow.judge). Calibrated on real JEE papers (2026-10-14):
+#                       Mains easy/medium  Mains hard  Advanced
+#   llama-3.3-70b            fails 29 %     fails 68 %  fails 65 %   <- separates; decides accept
+#   glm-5.3-flash            fails 14 %     fails 11 %  fails 29 %   <- difficulty label
+#   gpt-6-luna               fails  7 %     fails  0 %  fails  8 %   <- difficulty label
+# A question is accepted when the first step fails it; the step that first solves it (or
+# none) is its difficulty label. Later steps are called only after the earlier ones fail.
+LADDER = [
+    ("llama-3.3-70b", "meta-llama/llama-3.3-70b-instruct"),   # Meta
+    ("glm-5.3-flash", "z-ai/glm-5.3-flash"),                   # Z.ai
+    ("gpt-6-luna", "openai/gpt-6-luna"),                       # OpenAI
 ]
+COUNCIL = LADDER            # the solvers, in ladder order (council_eval.py and older code read COUNCIL)
 COUNCIL_REASONING_EFFORT = "medium"
-# Early stop: the two cheaper members solve first; the rest are called only when their
-# answers could still change the decision (see flow.judge).
-COUNCIL_FIRST = ("gpt-6-luna", "glm-5.3-flash")
+DIFFICULTY_LABELS = {        # first step that solves an accepted question -> its label
+    "glm-5.3-flash": "advanced",
+    "gpt-6-luna": "hard_advanced",
+    None: "frontier",
+}
 
 ROSTER = {"generator": GENERATOR, "refiner": REFINER, "extractor": EXTRACTOR, "verifier": VERIFIER,
-          "solution_writer": SOLUTION_WRITER, "council": [slug for _, slug in COUNCIL]}
+          "solution_writer": SOLUTION_WRITER, "ladder": [slug for _, slug in LADDER]}
 
 
 def api_key() -> str:

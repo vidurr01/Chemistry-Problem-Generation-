@@ -31,9 +31,8 @@ Chemistry gate     extractor (DeepSeek V4 Flash) copies the stated facts into a 
    │
 Duplicate check    same engine steps and same inputs as an accepted question → new inputs
    │
-Council            GPT-6 Luna · GLM-5.3-Flash first, in parallel; Qwen3.8-Flash
-                   only when exactly one of them solves (otherwise it cannot change the
-                   decision); closed book (question only), reasoning effort medium
+Ladder             Llama 3.3 70B → GLM-5.3-Flash → GPT-6 Luna, weakest first; each step is
+                   called only if every step below failed; closed book (question only)
    │
 Mismatch verifier  Claude Haiku 5.5 reads every attempt against the engine's trace:
                    correct / wrong (genuine, unclear wording, missing knowledge, slip) /
@@ -42,10 +41,11 @@ Mismatch verifier  Claude Haiku 5.5 reads every attempt against the engine's tra
 Grading            code: answer within 1% of the engine's; a slip counts as solved only if
                    the member's own arithmetic, re-evaluated in code, gives the answer
    │
-   ├─ 2+ solved      too easy → refiner (Gemini 3.8 Flash) reads how they solved it →
-   │                 new inputs or reworded (at most 3 rounds per chain)
+   ├─ Llama 3.3 solves  too easy → refiner (Gemini 3.8 Flash) reads how it solved it →
+   │                    new inputs or reworded (at most 3 rounds per chain)
    ├─ reference wrong / unsettled objection → review queue, next chain
-   └─ ≤1 solved      hint tests on each failed member:
+   └─ Llama 3.3 fails   label = first step that solves it (GLM: advanced; Luna: hard
+                        advanced; none: frontier); hint tests on each failed step:
                       clarification hint solves → reworded, judged again
                       knowledge hint solves     → accepted, tagged "recall"
                       insight hint (written by code) → difficulty confirmed → accepted
@@ -160,7 +160,7 @@ Each item in `results/generated_questions_*_final.json` contains `human_eval_sco
 | Generator | `google/gemini-3.7-flash` | proposes inputs (or vetoes a chain), writes stems, clarification hints |
 | Refiner | `google/gemini-3.8-flash` (GPQA Diamond 95.6 %) | too easy only: reads the solvers' working, chooses new inputs or rewording, and does it |
 | Extractor | `deepseek/deepseek-v4-flash-0731` | chemistry gate: copies stated facts into a form |
-| Council | `openai/gpt-6-luna`, `qwen/qwen3.8-flash`, `z-ai/glm-5.3-flash` (GPQA Diamond ~87–90%) | closed-book solves, reasoning effort medium |
+| Ladder | `meta-llama/llama-3.3-70b-instruct` → `z-ai/glm-5.3-flash` → `openai/gpt-6-luna` | closed-book solves, weakest first; the first step decides too easy / accepted, the first to solve gives the difficulty label |
 | Mismatch verifier | `anthropic/claude-haiku-5.5` | diagnoses every council attempt against the engine's trace |
 | Solution writer | `mistralai/mistral-small-3.2-24b-instruct` | readable solution, accepted questions only |
 
