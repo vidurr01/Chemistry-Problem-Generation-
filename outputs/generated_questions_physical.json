@@ -1197,5 +1197,397 @@
       }
     ],
     "generated_at": "2026-10-13T13:54:58.782445+00:00"
+  },
+  {
+    "question_id": "GEN_20261014T020357",
+    "generation_mode": "engine_council",
+    "question_kind": "chain",
+    "subject": "physical",
+    "chapter": "Stoichiometry → Gaseous State",
+    "chapters": [
+      "Stoichiometry",
+      "Gaseous State"
+    ],
+    "archetype": "Multi-Formulae",
+    "archetype_code": "I",
+    "question": "An automotive airbag test vessel contains argon gas whose partial volume is 8.4 L under the operational test conditions of 1.25 atm and 320.0 K. Separately, 180.0 g of an aqueous sodium azide (NaN₃) solution having a concentration of 24.5 % w/W is completely evaporated to isolate pure solid NaN₃. This solid is transferred into the vessel and completely decomposed via heating into solid sodium and nitrogen gas. Assuming ideal gas behavior and negligible volume occupied by any condensed phases, calculate the total volume (L) of the inflated bag at the final temperature of 320.0 K and pressure of 1.25 atm. (Given: R = 0.0821 L atm K⁻¹ mol⁻¹; atomic masses: Na = 23, N = 14)",
+    "answer": 29.79,
+    "unit": "L",
+    "answer_text": "29.79 L",
+    "solution": "1. To find the mass of the solute (NaN₃) in the solution, use the formula m_solute = (% w/W)/100 × m_solution. Given the mass percent is 24.5 and the solution mass is 180 g, the calculation is m_solute = (24.5/100) × 180 = 44.1 g.\n2. The decomposition reaction of sodium azide is 2NaN₃ → 2Na + 3N₂. To find the volume of nitrogen gas produced, first calculate the number of moles of NaN₃ using its molar mass (65 g/mol): n = 44.1 g / 65 g/mol = 0.678 mol. From the reaction, 2 moles of NaN₃ produce 3 moles of N₂, so 0.678 mol of NaN₃ will produce (3/2) × 0.678 mol = 1.017 mol of N₂. Using the ideal gas law V = nRT/P, with T = 320 K, P = 1.25 atm, and R = 0.0821 L atm K⁻¹ mol⁻¹, the volume of N₂ gas is V = (1.017 mol) × (0.0821 L atm K⁻¹ mol⁻¹) × (320 K) / (1.25 atm) = 21.39 L.\n3. The total volume of the inflated bag is the sum of the volume of the nitrogen gas produced and the initial partial volume of argon gas (8.4 L). Using Amagat's law of partial volumes, V_total = V_N₂ + V_Ar = 21.39 L + 8.4 L = 29.79 L.\nFinal answer: 29.79 L",
+    "tags": {
+      "knowledge": "closed_book",
+      "trap_types": [
+        "averages",
+        "ignores_3_2_ratio",
+        "per_100g_solvent",
+        "uses_22_4"
+      ]
+    },
+    "council_n_correct": 2,
+    "council_n_solved": 1,
+    "council_n_called": 2,
+    "council_skipped": [
+      "gpt-6-luna"
+    ],
+    "ladder_first_solver": "glm-5.3-flash",
+    "difficulty_label": "advanced",
+    "council": [
+      {
+        "name": "llama-3.3-70b",
+        "model": "meta-llama/llama-3.3-70b-instruct",
+        "final_answer": 29.52,
+        "unit": "L",
+        "answer_matches": true,
+        "match_by": "code",
+        "counts_as_solved": false,
+        "verdict": "wrong",
+        "failure_type": "slip",
+        "slip_confirmed": null,
+        "objection": null,
+        "diagnosis": {
+          "answer_equivalent": false,
+          "verdict": "wrong",
+          "failure_type": "slip",
+          "failed_step": 1,
+          "member_expression": "(1.4173 * 0.0821 * 320.0) / 1.25",
+          "ambiguous_text": null,
+          "clarification": null,
+          "missing_fact": null,
+          "objection_assessment": null,
+          "reasoning": "The method is right: argon and N₂ moles are added and the total is converted with PV = nRT, which is equivalent to Amagat's law. The student miscalculated argon moles in Step 1 (1.25 × 8.4 / (0.0821 × 320) = 0.3997 mol, not 0.404 mol), and the final division also gives 29.86 L with the student's own n = 1.421 mol rather than the stated 29.52 L. Correct arithmetic yields 29.79 L, so the error is arithmetic rather than chemistry."
+        },
+        "working": "Step 1: Calculate the number of moles of argon gas in the vessel.\nLet's use the ideal gas law: PV = nRT, where P = 1.25 atm, V = 8.4 L, R = 0.0821 L atm K⁻¹ mol⁻¹, and T = 320.0 K.\nRearranging the equation to solve for n: n = PV / RT = (1.25 atm * 8.4 L) / (0.0821 L atm K⁻¹ mol⁻¹ * 320.0 K) = 0.404 mol\n\nStep 2: Calculate the mass of NaN₃ in the solution.\nGiven: 180.0 g of an aqueous sodium azide (NaN₃) solution having a concentration of 24.5 % w/W.\nMass of NaN₃ = 180.0 g * 0.245 = 44.1 g\n\nStep 3: Calculate the number of moles of NaN₃.\nMolar mass of NaN₃ = 23 (Na) + 3 * 14 (N) = 65 g/mol\nNumber of moles of NaN₃ = mass of NaN₃ / molar mass of NaN₃ = 44.1 g / 65 g/mol = 0.678 mol\n\nStep 4: Calculate the number of moles of nitrogen gas produced from the decomposition of NaN₃.\n2NaN₃ (s) → 2Na (s) + 3N₂ (g)\nFrom the balanced equation, 2 moles of NaN₃ produce 3 moles of N₂.\nNumber of moles of N₂ = (3/2) * number of moles of NaN₃ = (3/2) * 0.678 mol = 1.017 mol\n\nStep 5: Calculate the total number of moles of gas in the vessel after decomposition.\nTotal number of moles of gas = number of moles of argon + number of moles of nitrogen = 0.404 mol + 1.017 mol = 1.421 mol\n\nStep 6: Calculate the total volume of the inflated bag at the final temperature and pressure.\nUsing the ideal gas law again: PV = nRT, where P = 1.25 atm, n = 1.421 mol, R = 0.0821 L atm K⁻¹ mol⁻¹, and T = 320.0 K.\nRearranging the equation to solve for V: V = nRT / P = (1.421 mol * 0.0821 L atm K⁻¹ mol⁻¹ * 320.0 K) / 1.25 atm = 29.52 L\n"
+      },
+      {
+        "name": "glm-5.3-flash",
+        "model": "z-ai/glm-5.3-flash",
+        "final_answer": "29.8",
+        "unit": "L",
+        "answer_matches": true,
+        "match_by": "code",
+        "counts_as_solved": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "slip_confirmed": null,
+        "objection": null,
+        "diagnosis": {
+          "answer_equivalent": true,
+          "verdict": "correct",
+          "failure_type": null,
+          "failed_step": null,
+          "member_expression": null,
+          "ambiguous_text": null,
+          "clarification": null,
+          "missing_fact": null,
+          "objection_assessment": null,
+          "reasoning": "The student followed the same route as the reference: 44.1 g NaN₃, 0.6785 mol, 1.0177 mol N₂, 21.39 L of N₂ at 320 K and 1.25 atm, then added the 8.4 L argon partial volume (Amagat). The total of 29.79 L is reported as 29.8 L, which is only a rounding difference from the intended 29.79 L. The answer is therefore equivalent and the reasoning is sound."
+        },
+        "working": "NaN3 mass = 180.0 × 0.245 = 44.1 g. Molar mass NaN3 = 23 + 42 = 65 g/mol → n = 44.1/65 = 0.6785 mol. Decomposition: 2NaN3 → 2Na + 3N2, so N2 moles = 0.6785 × 3/2 = 1.0177 mol. Volume of N2 at 320 K, 1.25 atm: V = nRT/P = 1.0177 × 0.0821 × 320 / 1.25 = 21.39 L. Adding the argon partial volume 8.4 L: total = 21.39 + 8.4 = 29.79 L ≈ 29.8 L."
+      }
+    ],
+    "hint_tests": [
+      {
+        "member": "llama-3.3-70b",
+        "hint": "insight",
+        "text": "Look again at the step where you work out the mass of solute (g). A common mistake there: reads X% as X g per 100 g of solvent.",
+        "solved": true,
+        "answer": 29.572
+      }
+    ],
+    "engine": {
+      "txs": [
+        17,
+        340,
+        93
+      ],
+      "graph_edges": [
+        "mass_percent_to_mass_wwxgsolutepe",
+        "mass_to_gas_volume_2nan32na3n2g",
+        "gas_volume_to_gas_volume_amagatslawvt"
+      ],
+      "graph_path": [
+        "mass_percent",
+        "mass",
+        "gas_volume",
+        "gas_volume"
+      ],
+      "scenario": "An aqueous formulation of sodium azide is completely dried to isolate solid NaN3, which is then thermally decomposed inside a specialized automotive airbag test vessel already containing argon at the specified operating temperature and pressure.",
+      "givens": {
+        "s0.mass_percent": 24.5,
+        "s0.solution_mass": 180.0,
+        "s1.temperature": 320.0,
+        "s1.pressure": 1.25,
+        "s2.partial_volume_2": 8.4
+      },
+      "constants": [
+        "R = 0.0821 L atm K⁻¹ mol⁻¹",
+        "Na = 23, N = 14"
+      ],
+      "trace": [
+        {
+          "tx": 17,
+          "src": "mass_percent",
+          "dst": "mass",
+          "formula": "m_solute = (% w/W)/100 × m_solution",
+          "inputs": {
+            "mass_percent": 24.5,
+            "solution_mass": 180
+          },
+          "outputs": {
+            "mass": 44.1
+          }
+        },
+        {
+          "tx": 340,
+          "src": "mass",
+          "dst": "gas_volume",
+          "formula": "2NaN3 → 2Na + 3N2; V = nRT/P",
+          "inputs": {
+            "mass": 44.1,
+            "temperature": 320,
+            "pressure": 1.25
+          },
+          "outputs": {
+            "gas_volume": 21.39
+          }
+        },
+        {
+          "tx": 93,
+          "src": "gas_volume",
+          "dst": "gas_volume",
+          "formula": "Amagat: V_total = ΣVᵢ (same T, P)",
+          "inputs": {
+            "gas_volume": 21.39,
+            "partial_volume_2": 8.4
+          },
+          "outputs": {
+            "gas_volume": 29.79
+          }
+        }
+      ],
+      "traps": [
+        {
+          "id": "per_100g_solvent",
+          "desc": "reads X% as X g per 100 g of solvent",
+          "step": 0,
+          "tx": 17,
+          "wrong_answer": 25.58
+        },
+        {
+          "id": "ignores_3_2_ratio",
+          "desc": "takes one N2 per NaN3",
+          "step": 1,
+          "tx": 340,
+          "wrong_answer": 22.66
+        },
+        {
+          "id": "uses_22_4",
+          "desc": "uses 22.4 L mol⁻¹ regardless of T and P",
+          "step": 1,
+          "tx": 340,
+          "wrong_answer": 31.2
+        },
+        {
+          "id": "averages",
+          "desc": "averages the partial volumes",
+          "step": 2,
+          "tx": 93,
+          "wrong_answer": 14.89
+        }
+      ],
+      "asks": "total volume (L)"
+    },
+    "rounds": 0,
+    "meta_tags": {
+      "question_length_scope": 5,
+      "semantic_obfuscation": 4,
+      "conceptual_fragility": 3,
+      "number_of_exceptions": 3,
+      "model_solution_length": 5,
+      "distractor_plausibility": 3
+    },
+    "models": {
+      "generator": "google/gemini-3.7-flash",
+      "refiner": "google/gemini-3.8-flash",
+      "extractor": "deepseek/deepseek-v4-flash-0731",
+      "verifier": "anthropic/claude-haiku-5.5",
+      "solution_writer": "mistralai/mistral-small-3.2-24b-instruct",
+      "ladder": [
+        "meta-llama/llama-3.3-70b-instruct",
+        "z-ai/glm-5.3-flash",
+        "openai/gpt-6-luna"
+      ]
+    },
+    "spend": {
+      "total_cost_usd": 0.02814,
+      "by_role": {
+        "generator": {
+          "calls": 2,
+          "prompt_tokens": 1299,
+          "completion_tokens": 2047,
+          "cost": 0.008650499999999998
+        },
+        "extractor": {
+          "calls": 1,
+          "prompt_tokens": 573,
+          "completion_tokens": 1158,
+          "cost": 0.00034083
+        },
+        "council": {
+          "calls": 4,
+          "prompt_tokens": 1459,
+          "completion_tokens": 33827,
+          "cost": 0.01771357
+        },
+        "verifier": {
+          "calls": 2,
+          "prompt_tokens": 3732,
+          "completion_tokens": 1811,
+          "cost": 0.0012787
+        },
+        "solution_writer": {
+          "calls": 1,
+          "prompt_tokens": 530,
+          "completion_tokens": 437,
+          "cost": 0.0001589375
+        }
+      }
+    },
+    "blackboard": [
+      {
+        "chain": {
+          "edges": [
+            "mass_percent_to_mass_wwxgsolutepe",
+            "mass_to_gas_volume_2nan32na3n2g",
+            "gas_volume_to_gas_volume_amagatslawvt"
+          ],
+          "nodes": [
+            "mass_percent",
+            "mass",
+            "gas_volume",
+            "gas_volume"
+          ],
+          "chapters": [
+            "Stoichiometry",
+            "Gaseous State"
+          ],
+          "txs": [
+            17,
+            340,
+            93
+          ],
+          "trap_ids": [
+            "averages",
+            "ignores_3_2_ratio",
+            "per_100g_solvent",
+            "uses_22_4"
+          ],
+          "weight": 1.0,
+          "description": "mass of solute (g) [m_solute = (% w/W)/100 × m_solution] → volume of N2 released (L) [2NaN3 → 2Na + 3N2; V = nRT/P] → total volume (L) [Amagat: V_total = ΣVᵢ (same T, P)]"
+        },
+        "rounds": 0,
+        "events": [
+          {
+            "stage": "inputs",
+            "at": "2026-10-14T01:51:55.902309+00:00",
+            "values": {
+              "s0.mass_percent": 24.5,
+              "s0.solution_mass": 180.0,
+              "s1.temperature": 320.0,
+              "s1.pressure": 1.25,
+              "s2.partial_volume_2": 8.4
+            },
+            "scenario": "An aqueous formulation of sodium azide is completely dried to isolate solid NaN3, which is then thermally decomposed inside a specialized automotive airbag test vessel already containing argon at the specified operating temperature and pressure.",
+            "answer": 29.79
+          },
+          {
+            "stage": "gate",
+            "at": "2026-10-14T01:52:18.412701+00:00",
+            "attempt": 1,
+            "stem": "An automotive airbag test vessel contains argon gas whose partial volume is 8.4 L under the operational test conditions of 1.25 atm and 320.0 K. Separately, 180.0 g of an aqueous sodium azide (NaN₃) solution having a concentration of 24.5 % w/W is completely evaporated to isolate pure solid NaN₃. This solid is transferred into the vessel and completely decomposed via heating into solid sodium and nitrogen gas. Assuming ideal gas behavior and negligible volume occupied by any condensed phases, calculate the total volume (L) of the inflated bag at the final temperature of 320.0 K and pressure of 1.25 atm. (Given: R = 0.0821 L atm K⁻¹ mol⁻¹; atomic masses: Na = 23, N = 14)",
+            "ok": true,
+            "mismatches": [],
+            "unreadable": false
+          },
+          {
+            "stage": "council",
+            "at": "2026-10-14T01:52:47.908676+00:00",
+            "members": [
+              {
+                "name": "llama-3.3-70b",
+                "model": "meta-llama/llama-3.3-70b-instruct",
+                "working": "Step 1: Calculate the number of moles of argon gas in the vessel.\nLet's use the ideal gas law: PV = nRT, where P = 1.25 atm, V = 8.4 L, R = 0.0821 L atm K⁻¹ mol⁻¹, and T = 320.0 K.\nRearranging the equation to solve for n: n = PV / RT = (1.25 atm * 8.4 L) / (0.0821 L atm K⁻¹ mol⁻¹ * 320.0 K) = 0.404 mol\n\nStep 2: Calculate the mass of NaN₃ in the solution.\nGiven: 180.0 g of an aqueous sodium azide (NaN₃) solution having a concentration of 24.5 % w/W.\nMass of NaN₃ = 180.0 g * 0.245 = 44.1 g\n\nStep 3: Calculate the number of moles of NaN₃.\nMolar mass of NaN₃ = 23 (Na) + 3 * 14 (N) = 65 g/mol\nNumber of moles of NaN₃ = mass of NaN₃ / molar mass of NaN₃ = 44.1 g / 65 g/mol = 0.678 mol\n\nStep 4: Calculate the number of moles of nitrogen gas produced from the decomposition of NaN₃.\n2NaN₃ (s) → 2Na (s) + 3N₂ (g)\nFrom the balanced equation, 2 moles of NaN₃ produce 3 moles of N₂.\nNumber of moles of N₂ = (3/2) * number of moles of NaN₃ = (3/2) * 0.678 mol = 1.017 mol\n\nStep 5: Calculate the total number of moles of gas in the vessel after decomposition.\nTotal number of moles of gas = number of moles of argon + number of moles of nitrogen = 0.404 mol + 1.017 mol = 1.421 mol\n\nStep 6: Calculate the total volume of the inflated bag at the final temperature and pressure.\nUsing the ideal gas law again: PV = nRT, where P = 1.25 atm, n = 1.421 mol, R = 0.0821 L atm K⁻¹ mol⁻¹, and T = 320.0 K.\nRearranging the equation to solve for V: V = nRT / P = (1.421 mol * 0.0821 L atm K⁻¹ mol⁻¹ * 320.0 K) / 1.25 atm = 29.52 L\n",
+                "final_answer": 29.52,
+                "unit": "L",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": false,
+                  "verdict": "wrong",
+                  "failure_type": "slip",
+                  "failed_step": 1,
+                  "member_expression": "(1.4173 * 0.0821 * 320.0) / 1.25",
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The method is right: argon and N₂ moles are added and the total is converted with PV = nRT, which is equivalent to Amagat's law. The student miscalculated argon moles in Step 1 (1.25 × 8.4 / (0.0821 × 320) = 0.3997 mol, not 0.404 mol), and the final division also gives 29.86 L with the student's own n = 1.421 mol rather than the stated 29.52 L. Correct arithmetic yields 29.79 L, so the error is arithmetic rather than chemistry."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "wrong",
+                "failure_type": "slip",
+                "slip_confirmed": null,
+                "counts_as_solved": false
+              },
+              {
+                "name": "glm-5.3-flash",
+                "model": "z-ai/glm-5.3-flash",
+                "working": "NaN3 mass = 180.0 × 0.245 = 44.1 g. Molar mass NaN3 = 23 + 42 = 65 g/mol → n = 44.1/65 = 0.6785 mol. Decomposition: 2NaN3 → 2Na + 3N2, so N2 moles = 0.6785 × 3/2 = 1.0177 mol. Volume of N2 at 320 K, 1.25 atm: V = nRT/P = 1.0177 × 0.0821 × 320 / 1.25 = 21.39 L. Adding the argon partial volume 8.4 L: total = 21.39 + 8.4 = 29.79 L ≈ 29.8 L.",
+                "final_answer": "29.8",
+                "unit": "L",
+                "objection": null,
+                "diagnosis": {
+                  "answer_equivalent": true,
+                  "verdict": "correct",
+                  "failure_type": null,
+                  "failed_step": null,
+                  "member_expression": null,
+                  "ambiguous_text": null,
+                  "clarification": null,
+                  "missing_fact": null,
+                  "objection_assessment": null,
+                  "reasoning": "The student followed the same route as the reference: 44.1 g NaN₃, 0.6785 mol, 1.0177 mol N₂, 21.39 L of N₂ at 320 K and 1.25 atm, then added the 8.4 L argon partial volume (Amagat). The total of 29.79 L is reported as 29.8 L, which is only a rounding difference from the intended 29.79 L. The answer is therefore equivalent and the reasoning is sound."
+                },
+                "answer_matches": true,
+                "match_by": "code",
+                "verdict": "correct",
+                "failure_type": null,
+                "slip_confirmed": null,
+                "counts_as_solved": true
+              }
+            ],
+            "skipped": [
+              "gpt-6-luna"
+            ],
+            "first_solver": "glm-5.3-flash"
+          },
+          {
+            "stage": "hints",
+            "at": "2026-10-14T02:03:45.812230+00:00",
+            "tests": [
+              {
+                "member": "llama-3.3-70b",
+                "hint": "insight",
+                "text": "Look again at the step where you work out the mass of solute (g). A common mistake there: reads X% as X g per 100 g of solvent.",
+                "solved": true,
+                "answer": 29.572
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "generated_at": "2026-10-14T02:03:57.265831+00:00"
   }
 ]

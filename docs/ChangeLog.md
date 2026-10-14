@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### First live run with the ladder
+- Run 4 (airbag: NaN₃ solution → N₂ → Amagat with argon) was accepted as "advanced", wrongly: Llama 3.3 answered 29.52 L against 29.79 L, inside tolerance, but the verifier labelled a slip on the way and a matching answer only counted with verdict "correct". Rejected (GEN_20261014T020357).
+- `flow._grade()`: a final answer within tolerance counts as solved unless the verdict is "right answer by wrong reasoning".
+- The new prompts gave a realistic, cue-free stem, but the chain is still a three-step plug-in. Cost $0.028.
+
 ### Difficulty ladder replaces the council; prompts aimed at harder questions
 - `core/models.py`: `LADDER` = Llama 3.3 70B (Meta) → GLM-5.3-Flash (Z.ai) → GPT-6 Luna (OpenAI); `COUNCIL` is now an alias of it; Qwen3.8-Flash removed. `DIFFICULTY_LABELS`.
 - `flow.judge()`: each step is called only after every step below failed. The bottom step solving it means too easy; otherwise the question is accepted (after hint tests) and labelled by the first step that solved it: advanced (GLM), hard_advanced (Luna), frontier (none). Records gain `ladder_first_solver` and `difficulty_label`.
