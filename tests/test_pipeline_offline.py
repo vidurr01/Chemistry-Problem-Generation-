@@ -226,6 +226,26 @@ class PipelineOffline(_Env, unittest.TestCase):
         with open(self.cfg["pending_file"], encoding="utf-8") as f:
             self.assertEqual(json.load(f), [])
 
+    def test_cut_off_writer_replies_do_not_crash(self):
+        """Run 6: the refiner's input proposal was cut off mid-JSON three times and the run crashed."""
+        slugs = [s for _, s in models.LADDER]
+
+        class Flaky(FakeModels):
+            seen = {"inputs": 0, "stem": 0}
+            def __call__(self, role, model, system, user, **kw):
+                if role == "generator" and "invent a concrete" in user and self.seen["inputs"] == 0:
+                    self.seen["inputs"] += 1
+                    raise ValueError("Could not parse JSON from model output: cut off")
+                if role == "generator" and "Write one JEE" in user and self.seen["stem"] == 0:
+                    self.seen["stem"] += 1
+                    raise ValueError("Could not parse JSON from model output: cut off")
+                return super().__call__(role, model, system, user, **kw)
+
+        fake = Flaky(council_answers={slugs[0]: "2.45", slugs[1]: "2.24", slugs[2]: "2.24"},
+                     hint_answers={slugs[0]: "2.24"}, verdicts={"2.24": {"verdict": "correct"}})
+        self.assertEqual(self._run(fake), 0)
+        self.assertEqual(len(self._records()), 1)            # recovered on the next attempt and accepted
+
     def test_harder_question_prompts(self):
         from core.pipeline import stages
         seen = {}

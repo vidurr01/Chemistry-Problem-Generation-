@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-10-14
 
+### Writer replies cut off by thinking no longer crash a run
+- Run 6: answer matching held (Llama's "2" and "2.0" read correctly; too easy twice), then the refiner's input proposal was cut off mid-JSON three times (its thinking used the 3000-token cap) and the run crashed.
+- Token caps raised for thinking writers and checkers (inputs and stems 16000; refinement choice, fact stems, gate extraction, verifier and solutions 8000; clarification hints and format repair 4000). Only tokens used are billed.
+- An unusable writer reply is a failed attempt: input proposals count toward `INPUT_TRIES`, stems toward the gate retries; a failed refinement choice or clarification hint falls back to a default. Test for cut-off replies (86 tests).
+
 ### Answer form fixed at the source; complete decision table
 - `answers.answer_spec / spec_instruction / format_ok`: each solver gets the exact form of its final answer — a JSON number in the asked unit, one of the listed options (parsed from the answer instruction), or option letters. `stages._repair_format()`: a reply that breaks the form gets one short request to restate the same answer (it must not re-solve); the raw answer is kept (`raw_final_answer`, `format_repaired`). Grading falls back to the verifier's `answer_equivalent` only if the repair fails too.
 - Numeric stems must end with "Give the answer in <unit>." (`flow._answer_instruction`), checked verbatim by the gate like the option instructions.
