@@ -479,7 +479,9 @@ Judge:
   or "slip" (method and chemistry right; careless arithmetic, a miscopied number, or a
   format/unit error).
 - "failed_step": the number of the reference step where the student first went wrong (or null).
-- For a slip: "member_expression": the arithmetic the student set up for the final answer,
+- For a slip: "member_expression": the arithmetic the student set up for the final answer (if the
+  answer has several values: a JSON list with one expression per value, in the order of the
+  reference answer, and null for each value the student already got right),
   with any miscopied number replaced by the value the problem gives, in the unit asked
   (numbers and + - * / ^ ( ) log ln sqrt exp only).
 - For unclear wording: "ambiguous_text" (quote) and "clarification" (one plain sentence).

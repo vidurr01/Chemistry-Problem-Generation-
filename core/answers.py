@@ -268,6 +268,14 @@ def options_from_format(fmt):
     return None
 
 
+def target_units(spec: dict) -> list:
+    """One target unit per value: a spec unit may be one string for all values or a list."""
+    u, n = spec.get("unit", ""), spec.get("count", 1)
+    if isinstance(u, (list, tuple)):
+        return [str(x or "") for x in u] if len(u) == n else [str(u[0] or "")] * n
+    return [str(u or "")] * n
+
+
 def numeric_values(engine_answer):
     """The engine's answer as a list of numbers (one or several), or None if it is not numeric."""
     if isinstance(engine_answer, bool):
@@ -286,33 +294,58 @@ def _subst_key(s) -> str:
     return repr(f) if f is not None else normalise_text(s)
 
 
+def label_keys(engine_labels, member_labels):
+    """(engine keys, member keys) for pairing values by label, or None when they cannot pair.
+    Formulas compare by element counts (N₂ = N2 = N2(g)); other labels case-insensitively
+    (Ethanol = ethanol) unless that makes the question's own labels collide (T and t,
+    K and k), in which case case matters on both sides."""
+    if not engine_labels or not member_labels or len(engine_labels) != len(member_labels):
+        return None
+    ek = [_subst_key(x) for x in engine_labels]
+    mk = [_subst_key(x) for x in member_labels]
+    if len(set(ek)) != len(ek):
+        exact = lambda x: repr(_formula(x)) if _formula(x) is not None else " ".join(str(x).split())
+        ek, mk = [exact(x) for x in engine_labels], [exact(x) for x in member_labels]
+    if len(set(ek)) != len(ek) or len(set(mk)) != len(mk) or set(ek) != set(mk):
+        return None
+    return ek, mk
+
+
+def value_ok(e: float, m, tol: float = 0.01) -> bool:
+    """One value against the engine's: relative tolerance; an engine value of 0 needs |x| <= 1e-9."""
+    try:
+        m = float(m)
+    except (TypeError, ValueError):
+        return False
+    if not math.isfinite(m):
+        return False
+    return abs(m) <= 1e-9 if e == 0.0 else answers_match(e, m, tol)
+
+
+def align_values(engine_vals, member_vals, engine_subst=None, member_subst=None):
+    """[(engine value, member value)] in the ENGINE's order, or None when they cannot be paired
+    (different count; substances named on both sides but not the same set, or repeated).
+    Paired by substance when both sides name them, by position otherwise."""
+    if member_vals is None or len(member_vals) != len(engine_vals):
+        return None
+    if engine_subst and member_subst and len(engine_subst) == len(engine_vals) == len(member_subst):
+        keys = label_keys(engine_subst, member_subst)
+        if keys is None:
+            return None
+        ek, mk = keys
+        by = dict(zip(mk, member_vals))
+        return [(e, by[k]) for e, k in zip(engine_vals, ek)]
+    return list(zip(engine_vals, member_vals))
+
+
 def values_match(engine_vals, member_vals, tol: float = 0.01, engine_subst=None, member_subst=None) -> bool:
     """Do several values match? Same count required. When both sides name their substances
     the values are paired by substance (so 'H2, N2' in swapped order still pairs correctly)
     and the member must name the same substances; otherwise they are paired by position.
     Each pair is compared with the relative tolerance; an engine value of exactly 0 needs
     |x| <= 1e-9."""
-    if member_vals is None or len(member_vals) != len(engine_vals):
-        return False
-    pairs = list(zip(engine_vals, member_vals))
-    if engine_subst and member_subst and len(engine_subst) == len(engine_vals) == len(member_subst):
-        ek = [_subst_key(x) for x in engine_subst]
-        mk = [_subst_key(x) for x in member_subst]
-        if len(set(ek)) != len(ek) or len(set(mk)) != len(mk) or set(ek) != set(mk):
-            return False
-        by = dict(zip(mk, member_vals))
-        pairs = [(e, by[k]) for e, k in zip(engine_vals, ek)]
-    for e, m in pairs:
-        try:
-            m = float(m)
-        except (TypeError, ValueError):
-            return False
-        if e == 0.0:
-            if not abs(m) <= 1e-9:
-                return False
-        elif not answers_match(e, m, tol):
-            return False
-    return True
+    pairs = align_values(engine_vals, member_vals, engine_subst, member_subst)
+    return pairs is not None and all(value_ok(e, m, tol) for e, m in pairs)
 
 
 def answer_spec(engine_answer, kind: str, unit: str = "", fmt: str | None = None, substances=None) -> dict:
@@ -350,7 +383,7 @@ def spec_instruction(spec: dict) -> str:
             "is done for you. " + (
                 "Give exactly one value. " if spec.get("count", 1) == 1 else
                 f"Give exactly {spec['count']} values, comma-separated, with one unit per value (or one "
-                "unit for all), and name each value's substance in SUBSTANCE in the same order"
+                "unit for all), and name each value's substance or quantity in SUBSTANCE in the same order"
                 + (f" ({', '.join(spec['substances'])})" if spec.get("substances") else "") + ". ")
             + "If the quantity has no unit, write none.\n"
             "Example: [TYPE: thermochemistry] [CALC_VALUE: -45200] [CALC_UNIT: J] [SUBSTANCE: null]"
@@ -435,6 +468,7 @@ def complete_answer(parsed: dict | None, spec: dict) -> dict:
         return {"ok": False, "reason": "no [CALC_VALUE: ...] field"}
     t = spec.get("type")
     out = {**parsed, "target_unit": spec.get("unit", "") if t == "number" else ""}
+    tus = target_units(spec) if t == "number" else []
     if t != "number":
         v = "".join(parsed["calc_value"]) if t == "letters" else parsed.get("calc_value_raw", parsed["calc_value"][0])
         if not format_ok(spec, v):
@@ -452,17 +486,31 @@ def complete_answer(parsed: dict | None, spec: dict) -> dict:
         cu = cu * len(values)
     if len(cu) != len(values):
         return {"ok": False, "reason": "CALC_UNIT does not give one unit per value"}
+    # Put the values in the QUESTION's order before converting, so each value is converted to
+    # the unit of the quantity it belongs to (a solver may list ΔG, ΔH, ΔS for ΔH, ΔS, ΔG).
+    # Labels that do not name the asked substances are left in place; matching then fails them.
+    subst = list(parsed.get("substance") or [])
+    want = spec.get("substances")
+    if want and len(subst) == len(values) == len(want):
+        keys = label_keys(want, subst)
+        if keys is not None:
+            ek, mk = keys
+            order = [mk.index(k) for k in ek]
+            values = [values[i] for i in order]
+            cu = [cu[i] for i in order]
+            subst = [subst[i] for i in order]
+    out["substance"] = subst
     finals = []
-    for v, u in zip(values, cu):
+    for v, u, tu in zip(values, cu, tus):
         if units.parse(u) is None:
             return {"ok": False, "reason": f"unit {u!r} cannot be read"}
-        f = units.convert(v, u, out["target_unit"])
+        f = units.convert(v, u, tu)
         if f is None:
-            return {"ok": False, "reason": f"{u!r} cannot be converted to {out['target_unit']!r}"}
+            return {"ok": False, "reason": f"{u!r} cannot be converted to {tu!r}"}
         finals.append(f)
-    tu = out["target_unit"]
-    render = ", ".join(f"{_fmt_number(f)}{(' ' + tu) if tu else ''}" for f in finals)
-    return {**out, "ok": True, "calc_value": values, "calc_unit": cu, "final_value": finals, "render": render}
+    render = ", ".join(f"{_fmt_number(f)}{(' ' + tu) if tu else ''}" for f, tu in zip(finals, tus))
+    return {**out, "ok": True, "calc_value": values, "calc_unit": cu, "final_value": finals, "render": render,
+            "target_unit": tus if len(tus) > 1 else tus[0]}
 
 
 def format_ok(spec: dict, final_answer) -> bool:

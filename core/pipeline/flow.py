@@ -49,10 +49,11 @@ class Parked(Exception):
 
 def answer_text(result) -> str:
     vals = answers.numeric_values(result.answer)
-    u = f" {result.unit}" if result.unit else ""
     if vals is not None and len(vals) > 1:
         subs = getattr(result, "answer_substances", None) or [None] * len(vals)
-        return ", ".join(f"{s + ': ' if s else ''}{v:g}{u}" for v, s in zip(vals, subs))
+        tus = answers.target_units({"unit": result.unit, "count": len(vals)})
+        return ", ".join(f"{s + ': ' if s else ''}{v:g}{(' ' + u) if u else ''}" for v, s, u in zip(vals, subs, tus))
+    u = f" {result.unit}" if result.unit else ""
     return f"{result.answer}{u}"
 
 
@@ -250,10 +251,16 @@ def _answer_instruction(adapter, result):
     fmt = adapter.answer_format(result) if hasattr(adapter, "answer_format") else None
     if fmt is None and _is_numeric(result) and not _is_scalar(result):
         n = len(answers.numeric_values(result.answer))
-        subs = getattr(result, "answer_substances", None)
-        order = f"in the order: {', '.join(subs)}" if subs else "in the order asked"
-        unit = f" in {result.unit}" if result.unit else ""
-        fmt = f"Give the {n} answers{unit}, to {answers.SIG_FIGS} significant figures, {order}."
+        subs = getattr(result, "answer_substances", None) or []
+        tus = answers.target_units({"unit": result.unit, "count": n})
+        if len(set(tus)) == 1:
+            order = f" in the order: {', '.join(subs)}" if subs else " in the order asked"
+            fmt = (f"Give the {n} answers{(' in ' + tus[0]) if tus[0] else ''}, to {answers.SIG_FIGS} "
+                   f"significant figures,{order}.")
+        else:
+            items = [f"{(subs[i] + ' ') if i < len(subs) else ''}in {u}" if u else (subs[i] if i < len(subs) else "unitless")
+                     for i, u in enumerate(tus)]
+            fmt = f"Give the {n} answers to {answers.SIG_FIGS} significant figures, in the order: {'; '.join(items)}."
     elif fmt is None and _is_numeric(result):
         if result.unit:
             fmt = f"Give the answer in {result.unit}, to {answers.SIG_FIGS} significant figures."
@@ -327,6 +334,38 @@ def _grounded(expr, working, allowed_missing: int = 1) -> bool:
     return missing <= allowed_missing
 
 
+def _slip_confirmed(result, member, diag) -> bool:
+    """Every value the member got wrong must be explained by its own set-up arithmetic: the
+    verifier gives one expression per value (a list in the reference's order, null where the
+    value is already right; a single string for a one-value answer), each must evaluate to the
+    engine's value and be grounded in the member's working. One unexplained value -> False."""
+    ev = answers.numeric_values(result.answer)
+    if ev is None:
+        return False
+    tol = getattr(result, "tolerance", 0.01)
+    exprs = diag.get("member_expression")
+    if not isinstance(exprs, (list, tuple)):
+        exprs = [exprs] if len(ev) == 1 else None
+    if exprs is None or len(exprs) != len(ev):
+        return False
+    fv = member.get("final_value")
+    if fv is None:                                   # no usable answer line: read the raw answer
+        raw = member.get("final_answer")
+        fv = [answers.numeric_value(raw)] if len(ev) == 1 else answers.parse_numeric_answers(raw)
+    pairs = answers.align_values(ev, fv, getattr(result, "answer_substances", None), member.get("substance")) \
+        if fv is not None and None not in fv else [(e, None) for e in ev]
+    if pairs is None:
+        return False
+    working = member.get("working", "")
+    for (e, m), expr in zip(pairs, exprs):
+        if m is not None and answers.value_ok(e, m, tol):
+            continue                                 # this value is already right
+        value = _eval_expression(expr)
+        if value is None or not answers.value_ok(e, value, tol) or not _grounded(expr, working):
+            return False
+    return True
+
+
 def _text_match(result, member, diag):
     """(matches, decided_by): code whenever it can decide (_code_match); otherwise the
     verifier's narrow answer_equivalent field. diag is the verifier's diagnosis or None."""
@@ -356,11 +395,7 @@ def _grade(result, member, diag) -> dict:
                   (diag.get("verdict") == "wrong" and diag.get("failure_type") == "slip")):
         solved = True
     elif not match and diag.get("failure_type") == "slip" or (not match and diag.get("verdict") == "correct"):
-        expr = diag.get("member_expression")
-        value = _eval_expression(expr)
-        slip_confirmed = value is not None and _is_scalar(result) and \
-            answers.matches(result.answer, value, result.kind, getattr(result, "tolerance", 0.01)) and \
-            _grounded(expr, member.get("working", ""))
+        slip_confirmed = _slip_confirmed(result, member, diag)
         solved = bool(slip_confirmed)
     return {"answer_matches": match, "match_by": match_by, "verdict": diag.get("verdict"),
             "failure_type": diag.get("failure_type"), "slip_confirmed": slip_confirmed, "counts_as_solved": solved}

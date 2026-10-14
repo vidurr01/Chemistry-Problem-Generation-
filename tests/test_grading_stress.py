@@ -339,6 +339,208 @@ class MultipleValues(unittest.TestCase):
         self.assertFalse(g["counts_as_solved"])          # no slip confirmation for several values
 
 
+# (description, engine values, target unit(s), substances/quantities,
+#  [(answer line, should match?), ...])
+MULTI_EXAMPLES = [
+    ("Haber equilibrium partial pressures", [0.75, 0.75, 0.5], "atm", ["N2", "H2", "NH3"], [
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.75, 570, 380] [CALC_UNIT: atm, torr, mmHg] [SUBSTANCE: N2, H2, NH3]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 50.66, 76.0, 75.99] [CALC_UNIT: kPa, kPa, kPa] [SUBSTANCE: NH3, N2, H2]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.76, 0.76, 0.507] [CALC_UNIT: bar] [SUBSTANCE: H2, N2, NH3]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.75, 0.75, 0.25] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", False),
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.75, 0.75, 0.5] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, O2]", False)]),
+    ("Thermodynamics: ΔH, ΔS, ΔG with their own units", [-92.4, -198.3, -33.3], ["kJ mol⁻¹", "J K⁻¹ mol⁻¹", "kJ mol⁻¹"],
+     ["ΔH", "ΔS", "ΔG"], [
+        ("[TYPE: thermodynamics] [CALC_VALUE: -92400, -198.3, -33.3] [CALC_UNIT: J/mol, J/(K mol), kJ/mol] [SUBSTANCE: ΔH, ΔS, ΔG]", True),
+        ("[TYPE: thermodynamics] [CALC_VALUE: -33.3, -92.4, -0.1983] [CALC_UNIT: kJ/mol, kJ/mol, kJ/(K mol)] [SUBSTANCE: ΔG, ΔH, ΔS]", True),
+        ("[TYPE: thermodynamics] [CALC_VALUE: -92.4, -198.3, -33.3] [CALC_UNIT: kJ/mol, kJ/(K mol), kJ/mol] [SUBSTANCE: ΔH, ΔS, ΔG]", False),
+        ("[TYPE: thermodynamics] [CALC_VALUE: -92.4, -198.3, 33.3] [CALC_UNIT: kJ/mol, J/(K mol), kJ/mol] [SUBSTANCE: ΔH, ΔS, ΔG]", False)]),
+    ("Ion concentrations in a buffer", [0.05, 0.05, 1.8e-5], "mol L⁻¹", ["CH3COOH", "CH3COO-", "H+"], [
+        ("[TYPE: ionic] [CALC_VALUE: 0.05, 50, 1.8e-5] [CALC_UNIT: M, mmol/L, mol/L] [SUBSTANCE: CH3COOH, CH3COO-, H+]", True),
+        ("[TYPE: ionic] [CALC_VALUE: 1.8e-5, 0.05, 0.05] [CALC_UNIT: M] [SUBSTANCE: H⁺, CH₃COO⁻, CH₃COOH]", True),
+        ("[TYPE: ionic] [CALC_VALUE: 0.05, 0.05, 1.8e-4] [CALC_UNIT: M] [SUBSTANCE: CH3COOH, CH3COO-, H+]", False)]),
+    ("Masses deposited in cells in series", [6.35, 21.6], "g", ["Cu", "Ag"], [
+        ("[TYPE: electrochemistry] [CALC_VALUE: 6350, 0.0216] [CALC_UNIT: mg, kg] [SUBSTANCE: Cu, Ag]", True),
+        ("[TYPE: electrochemistry] [CALC_VALUE: 21.6, 6.35] [CALC_UNIT: g] [SUBSTANCE: Ag, Cu]", True),
+        ("[TYPE: electrochemistry] [CALC_VALUE: 21.6, 6.35] [CALC_UNIT: g] [SUBSTANCE: null]", False),
+        ("[TYPE: electrochemistry] [CALC_VALUE: 12.7, 21.6] [CALC_UNIT: g] [SUBSTANCE: Cu, Ag]", False)]),
+    ("Gas volumes from electrolysis of water", [1.12, 0.56], "L", ["H2", "O2"], [
+        ("[TYPE: electrolysis] [CALC_VALUE: 1120, 560] [CALC_UNIT: mL, cm^3] [SUBSTANCE: H2, O2]", True),
+        ("[TYPE: electrolysis] [CALC_VALUE: 0.00112, 0.56] [CALC_UNIT: m³, dm³] [SUBSTANCE: H2, O2]", True),
+        ("[TYPE: electrolysis] [CALC_VALUE: 1120, 560] [CALC_UNIT: L] [SUBSTANCE: H2, O2]", False)]),
+    ("Moles at equilibrium (one in mmol)", [0.2, 0.3, 0.1], "mol", ["NH3", "N2", "H2"], [
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.2, 300, 0.1] [CALC_UNIT: mol, mmol, mol] [SUBSTANCE: NH3, N2, H2]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.1, 0.2, 0.3] [CALC_UNIT: mol] [SUBSTANCE: H2, NH3, N2]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.2, 0.3, 0.1] [CALC_UNIT: mmol] [SUBSTANCE: NH3, N2, H2]", False)]),
+    ("Boiling and freezing points (offset units)", [373.67, 271.29], ["K", "K"], ["boiling point", "freezing point"], [
+        ("[TYPE: colligative] [CALC_VALUE: 100.52, -1.86] [CALC_UNIT: °C, °C] [SUBSTANCE: boiling point, freezing point]", True),
+        ("[TYPE: colligative] [CALC_VALUE: 271.29, 373.67] [CALC_UNIT: K] [SUBSTANCE: Freezing Point, Boiling Point]", True),
+        ("[TYPE: colligative] [CALC_VALUE: 100.52, -1.86] [CALC_UNIT: K, K] [SUBSTANCE: boiling point, freezing point]", False)]),
+    ("Rates of consumption and formation", [0.04, 0.08, 0.02], "mol L⁻¹ s⁻¹", ["N2O5", "NO2", "O2"], [
+        ("[TYPE: kinetics] [CALC_VALUE: 2.4, 4.8, 1.2] [CALC_UNIT: mol L^-1 min^-1] [SUBSTANCE: N2O5, NO2, O2]", True),
+        ("[TYPE: kinetics] [CALC_VALUE: 0.04, 0.08, 0.02] [CALC_UNIT: M/s] [SUBSTANCE: N₂O₅, NO₂, O₂]", True),
+        ("[TYPE: kinetics] [CALC_VALUE: 0.04, 0.04, 0.02] [CALC_UNIT: M/s] [SUBSTANCE: N2O5, NO2, O2]", False)]),
+    ("Complex ions with brackets in their names", [0.01, 0.0], "mol L⁻¹", ["[Cu(NH3)4]2+", "Cu2+"], [
+        ("[TYPE: coordination] [CALC_VALUE: 10, 0] [CALC_UNIT: mmol/L] [SUBSTANCE: [Cu(NH3)4]2+, Cu2+]", True),
+        ("[TYPE: coordination] [CALC_VALUE: 0, 0.01] [CALC_UNIT: M] [SUBSTANCE: Cu²⁺, [Cu(NH₃)₄]²⁺]", True),
+        ("[TYPE: coordination] [CALC_VALUE: 0.01, 0.001] [CALC_UNIT: M] [SUBSTANCE: [Cu(NH3)4]2+, Cu2+]", False)]),
+    ("Named (non-formula) substances", [46.0, 18.0], "g mol⁻¹", ["ethanol", "water"], [
+        ("[TYPE: stoichiometry] [CALC_VALUE: 0.046, 0.018] [CALC_UNIT: kg/mol] [SUBSTANCE: Ethanol, Water]", True),
+        ("[TYPE: stoichiometry] [CALC_VALUE: 18, 46] [CALC_UNIT: g/mol] [SUBSTANCE: water, ethanol]", True),
+        ("[TYPE: stoichiometry] [CALC_VALUE: 46, 18] [CALC_UNIT: g/mol] [SUBSTANCE: methanol, water]", False)]),
+    ("Kp and Kc with different units", [1.6e-4, 0.105], ["atm⁻²", "L² mol⁻²"], ["Kp", "Kc"], [
+        ("[TYPE: equilibrium] [CALC_VALUE: 1.6e-4, 0.105] [CALC_UNIT: atm^-2, L^2 mol^-2] [SUBSTANCE: Kp, Kc]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 1.5585e-14, 0.105] [CALC_UNIT: Pa^-2, dm^6 mol^-2] [SUBSTANCE: Kp, Kc]", True),
+        ("[TYPE: equilibrium] [CALC_VALUE: 0.105, 1.6e-4] [CALC_UNIT: atm^-2, L^2 mol^-2] [SUBSTANCE: Kp, Kc]", False)]),
+    ("Four values, unlabelled, by position", [1.0, 2.0, 3.0, 4.0], "mol", None, [
+        ("[TYPE: x] [CALC_VALUE: 1, 2, 3, 4] [CALC_UNIT: mol] [SUBSTANCE: null]", True),
+        ("[TYPE: x] [CALC_VALUE: 1000, 2000, 3000, 4000] [CALC_UNIT: mmol] [SUBSTANCE: null]", True),
+        ("[TYPE: x] [CALC_VALUE: 1, 2, 4, 3] [CALC_UNIT: mol] [SUBSTANCE: null]", False)]),
+]
+
+
+class MultiValueExamples(unittest.TestCase):
+    def _case(self, vals, unit, subs):
+        r = SimpleNamespace(answer=list(vals), unit=unit, kind="real", tolerance=0.01, answer_substances=subs)
+        spec = answers.answer_spec(r.answer, r.kind, r.unit, None, subs)
+        return r, spec
+
+    def _member(self, spec, line, working="w"):
+        done = answers.complete_answer(answers.parse_answer_line(line), spec)
+        m = {"working": working, "final_answer": line, "unit": ""}
+        if done.get("ok"):
+            m.update(final_value=done["final_value"], final_answer=done["render"], substance=done.get("substance"))
+        return m, done
+
+    def test_examples(self):
+        n = 0
+        for desc, vals, unit, subs, lines in MULTI_EXAMPLES:
+            r, spec = self._case(vals, unit, subs)
+            for line, want in lines:
+                m, done = self._member(spec, line)
+                self.assertTrue(done["ok"], (desc, line, done.get("reason")))
+                self.assertEqual(flow._code_match(r, m), want, (desc, line, done.get("final_value")))
+                n += 1
+        self.assertGreaterEqual(n, 40)
+
+    def test_random_mixed_kinds_shuffled(self):
+        """Every value of a different kind (energy, entropy, pressure, concentration, ...),
+        listed by the solver in a random order in other units: must match; one value 5 % off
+        must not; the right numbers under swapped labels must not."""
+        kinds = [("ΔH", "kJ mol⁻¹", "J/mol"), ("ΔS", "J K⁻¹ mol⁻¹", "cal/(mol K)"), ("p", "atm", "torr"),
+                 ("c", "mol L⁻¹", "mmol/L"), ("V", "L", "mL"), ("m", "g", "mg"), ("k", "s⁻¹", "min^-1"),
+                 ("T", "K", "°C"), ("E", "V", "mV"), ("t", "s", "min")]
+        rng = random.Random(11)
+        for _ in range(1500):
+            chosen = rng.sample(kinds, rng.randint(2, 5))
+            vals = [rng.uniform(1, 10) * 10 ** rng.randint(-4, 4) * (1 if k[1] == "K" else rng.choice((-1, 1)))
+                    for k in chosen]
+            # temperatures as in real questions (200-2000 K): near 0 K a 4-s.f. Celsius value loses the precision
+            vals = [rng.uniform(200, 2000) if k[1] == "K" else v for v, k in zip(vals, chosen)]
+            subs, units_ = [k[0] for k in chosen], [k[1] for k in chosen]
+            r, spec = self._case(vals, units_, subs)
+            order = list(range(len(chosen)))
+            rng.shuffle(order)
+            written = [float(f"{units.convert(vals[i], chosen[i][1], chosen[i][2]):.4g}") for i in order]
+            line = (f"[TYPE: t] [CALC_VALUE: {', '.join(repr(w) for w in written)}] "
+                    f"[CALC_UNIT: {', '.join(chosen[i][2] for i in order)}] [SUBSTANCE: {', '.join(subs[i] for i in order)}]")
+            m, done = self._member(spec, line)
+            self.assertTrue(done["ok"], (line, done.get("reason")))
+            self.assertTrue(flow._code_match(r, m), line)
+            k = rng.randrange(len(chosen))
+            off = list(written)
+            # 5 % off in the quantity itself (for a Celsius-written temperature: 5 % of the kelvin value)
+            off[k] = off[k] * 1.05 if chosen[order[k]][1] != "K" else off[k] + 0.05 * (off[k] + 273.15)
+            m, _ = self._member(spec, line.replace(f"[CALC_VALUE: {', '.join(repr(w) for w in written)}]",
+                                                    f"[CALC_VALUE: {', '.join(repr(w) for w in off)}]"))
+            self.assertFalse(flow._code_match(r, m), line)
+            same_kind = [i for i in range(len(chosen)) if chosen[i][1] == chosen[order[0]][1]]
+            if len(chosen) >= 2:
+                a_, b_ = order[0], order[1]
+                if chosen[a_][1] == chosen[b_][1] and abs(vals[a_] - vals[b_]) > 0.05 * abs(vals[a_]):
+                    swapped = [subs[i] for i in order]
+                    swapped[0], swapped[1] = swapped[1], swapped[0]
+                    m, done = self._member(spec, line.replace(f"[SUBSTANCE: {', '.join(subs[i] for i in order)}]",
+                                                             f"[SUBSTANCE: {', '.join(swapped)}]"))
+                    self.assertFalse(done.get("ok") and flow._code_match(r, m), line)
+
+    def test_render_and_stem_with_per_value_units(self):
+        r, spec = self._case([-92.4, -198.3, -33.3], ["kJ mol⁻¹", "J K⁻¹ mol⁻¹", "kJ mol⁻¹"], ["ΔH", "ΔS", "ΔG"])
+        _, done = self._member(spec, "[CALC_VALUE: -92400, -198.3, -33.3] [CALC_UNIT: J/mol, J/(K mol), kJ/mol] [SUBSTANCE: ΔH, ΔS, ΔG]")
+        self.assertEqual(done["render"], "-92.4 kJ mol⁻¹, -198.3 J K⁻¹ mol⁻¹, -33.3 kJ mol⁻¹")
+        ad = SimpleNamespace(answer_format=lambda x: None)
+        self.assertEqual(flow._answer_instruction(ad, r),
+                         "Give the 3 answers to 3 significant figures, in the order: ΔH in kJ mol⁻¹; ΔS in J K⁻¹ mol⁻¹; ΔG in kJ mol⁻¹.")
+        self.assertEqual(flow.answer_text(r), "ΔH: -92.4 kJ mol⁻¹, ΔS: -198.3 J K⁻¹ mol⁻¹, ΔG: -33.3 kJ mol⁻¹")
+
+
+class MultiValueSlips(unittest.TestCase):
+    """Slip confirmation applies to every value: each wrong value must be explained by its own
+    grounded set-up arithmetic (one expression per value, reference order, null if right)."""
+
+    def setUp(self):
+        self.r = SimpleNamespace(answer=[0.75, 0.75, 0.5], unit="atm", kind="real", tolerance=0.01,
+                                 answer_substances=["N2", "H2", "NH3"])
+        self.spec = answers.answer_spec(self.r.answer, "real", "atm", None, self.r.answer_substances)
+        self.working = "pN2 = 0.75 atm; pH2 = 3 x 0.25 = 0.75 atm; pNH3 = 2 x 0.25 = 0.5 atm"
+
+    def _grade(self, line, exprs, verdict="wrong", ft="slip", working=None):
+        done = answers.complete_answer(answers.parse_answer_line(line), self.spec)
+        m = {"working": self.working if working is None else working, "final_answer": done.get("render"),
+             "final_value": done["final_value"], "substance": done.get("substance"), "unit": ""}
+        return flow._grade(self.r, m, {"verdict": verdict, "failure_type": ft, "member_expression": exprs})
+
+    def test_one_wrong_value_explained(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.25"])
+        self.assertTrue(g["slip_confirmed"] and g["counts_as_solved"])
+
+    def test_two_wrong_values_both_explained_in_swapped_order(self):
+        # member wrote H2 first; expressions follow the REFERENCE order (N2, H2, NH3)
+        g = self._grade("[CALC_VALUE: 0.85, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: H2, N2, NH3]", [None, "3 * 0.25", "2 * 0.25"])
+        self.assertTrue(g["counts_as_solved"])
+
+    def test_one_of_two_wrong_values_unexplained(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.85, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, "3 * 0.25", None])
+        self.assertFalse(g["counts_as_solved"])
+
+    def test_expression_gives_a_wrong_value(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.3"],
+                        working="pNH3 = 2 x 0.3 = 0.6")
+        self.assertFalse(g["counts_as_solved"])
+
+    def test_expression_not_grounded_in_working(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "1.7 * 0.2941"],
+                        working="pNH3 = 0.6 atm")
+        self.assertFalse(g["counts_as_solved"])
+
+    def test_wrong_number_of_expressions(self):
+        for exprs in ("2 * 0.25", ["2 * 0.25"], [None, "2 * 0.25"], [None, None, "2*0.25", None], None):
+            g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", exprs)
+            self.assertFalse(g["counts_as_solved"], exprs)
+
+    def test_right_values_need_no_expression_and_wrong_substances_never_pass(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, O2]", [None, None, "2 * 0.25"])
+        self.assertFalse(g["counts_as_solved"])                      # cannot pair O2 with NH3
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.5] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, None],
+                        verdict="correct", ft=None)
+        self.assertTrue(g["counts_as_solved"])                       # all right: solved without the slip path
+
+    def test_correct_verdict_with_mismatch_uses_the_same_rule(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.25"],
+                        verdict="correct", ft=None)
+        self.assertTrue(g["counts_as_solved"])
+
+    def test_genuine_difficulty_never_slip_confirmed(self):
+        g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.25"],
+                        ft="genuine_difficulty")
+        self.assertFalse(g["counts_as_solved"])
+
+    def test_single_value_still_takes_a_string(self):
+        r = SimpleNamespace(answer=29.79, unit="L", kind="real", tolerance=0.01)
+        m = {"working": "V = 1.4173*0.0821*320/1.25 = 31.0", "final_value": [31.0], "final_answer": "31.0 L", "unit": ""}
+        g = flow._grade(r, m, {"verdict": "wrong", "failure_type": "slip", "member_expression": "1.4173*0.0821*320/1.25"})
+        self.assertTrue(g["counts_as_solved"])
+
+
 class OptionsAndText(unittest.TestCase):
     DIR = "Answer with exactly one of: forward, backward, no shift."
 
