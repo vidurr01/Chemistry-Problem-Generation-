@@ -55,6 +55,35 @@ def _first_json_object(text: str) -> str:
     return ""
 
 
+def _escape_inner_quotes(text: str) -> str:
+    """Escape quotes a model left unescaped inside a string value ('the "crossed Cannizzaro"
+    reaction'). Inside a string, a quote ends it only if the next non-space character can
+    follow a JSON string (, } ] :); any other quote is part of the text."""
+    out, in_str, escape, i = [], False, False, 0
+    while i < len(text):
+        ch = text[i]
+        if in_str:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                j = i + 1
+                while j < len(text) and text[j] in " \t\r\n":
+                    j += 1
+                if j >= len(text) or text[j] in ",}]:":
+                    in_str = False
+                else:
+                    out.append('\\"')
+                    i += 1
+                    continue
+        elif ch == '"':
+            in_str = True
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def parse_json(content) -> dict:
     """A JSON object from a model reply. Tolerates ```json fences, prose before or after
     the object, a second object, and a single-element list. Raises ValueError (or
@@ -65,17 +94,32 @@ def parse_json(content) -> dict:
     try:
         obj = json.loads(text)
     except json.JSONDecodeError:
-        block = _first_json_object(text)
-        if not block:
+        obj = None
+        # the object as written; then with quotes a model left unescaped inside the text
+        for source in (text, _escape_inner_quotes(text)):
+            block = _first_json_object(source)
+            if not block:
+                continue
+            for attempt in (
+                    lambda b: json.loads(b),
+                    # LaTeX in a string (\ce, \Delta) is not a JSON escape: keep valid escapes
+                    # (\" \\ \n \u...) and double any other backslash
+                    lambda b: json.loads(re.sub(r'\\(["\\/bfnrtu])|\\',
+                                                lambda m: m.group(0) if m.group(1) else "\\\\", b)),
+                    # raw line breaks / tabs inside a string
+                    lambda b: json.loads(b, strict=False),
+                    # both
+                    lambda b: json.loads(re.sub(r'\\(["\\/bfnrtu])|\\',
+                                                lambda m: m.group(0) if m.group(1) else "\\\\", b), strict=False)):
+                try:
+                    obj = attempt(block)
+                    break
+                except json.JSONDecodeError:
+                    continue
+            if obj is not None:
+                break
+        if obj is None:
             raise ValueError(f"Could not parse JSON from model output: {text[:200]!r}")
-        try:
-            obj = json.loads(block)
-        except json.JSONDecodeError as e:
-            if "escape" not in str(e):
-                raise
-            # LaTeX inside a JSON string (\ce, \text, \Delta) is not a valid JSON escape
-            # keep valid escapes (\" \\ \n \u...) as they are; double any other backslash
-            obj = json.loads(re.sub(r'\\(["\\/bfnrtu])|\\', lambda m: m.group(0) if m.group(1) else "\\\\", block))
     if isinstance(obj, list):
         obj = next((x for x in obj if isinstance(x, dict)), None)
     if not isinstance(obj, dict):
@@ -179,6 +223,25 @@ def call_with_retry(fn, retries: int = 5, base_wait: float = 10, label: str = "A
             time.sleep(wait)
 
 
+UNPARSEABLE_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "outputs",
+                               "unparseable_replies.jsonl")
+
+
+def _log_unparseable(label, resp, content, err):
+    """Keep every reply that could not be read, whole, so the cause is seen and not guessed."""
+    try:
+        choice = resp.choices[0] if getattr(resp, "choices", None) else None
+        rec = {"at": time.strftime("%Y-%m-%dT%H:%M:%S"), "label": label,
+               "model": getattr(resp, "model", None),
+               "finish_reason": getattr(choice, "finish_reason", None),
+               "error": str(err)[:300], "content": content}
+        os.makedirs(os.path.dirname(UNPARSEABLE_LOG), exist_ok=True)
+        with open(UNPARSEABLE_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
+    except Exception:  # noqa: BLE001 - logging must never break a call
+        pass
+
+
 def call_json(create, parse, retries: int = 5, parse_retries: int = 2, base_wait: float = 10,
               label: str = "API"):
     """create() makes one chat completion; returns parse(reply text). Transient API
@@ -192,6 +255,7 @@ def call_json(create, parse, retries: int = 5, parse_retries: int = 2, base_wait
                 raise ValueError("empty completion")
             return parse(content)
         except (ValueError, json.JSONDecodeError) as e:
+            _log_unparseable(label, resp, content, e)
             if i == parse_retries:
                 raise
             print(f"    [{label}] unusable reply ({str(e)[:80]}) — asking again ({i + 1}/{parse_retries})")
