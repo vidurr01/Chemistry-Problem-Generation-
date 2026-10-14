@@ -273,33 +273,101 @@ def answer_spec(engine_answer, kind: str, unit: str = "", fmt: str | None = None
     if kind == "letters":
         return {"type": "letters"}
     if isinstance(engine_answer, (int, float)) and not isinstance(engine_answer, bool):
-        return {"type": "number", "unit": unit or ""}
+        return {"type": "number", "unit": unit or "", "count": 1}
     opts = options_from_format(fmt)
     if opts:
         return {"type": "choice", "options": opts}
     return {"type": "text", "format": fmt or ""}
 
 
+SIG_FIGS = 3          # every numeric question asks for 3 significant figures
+
+
 def spec_instruction(spec: dict) -> str:
-    """The prompt line telling the solver how to write final_answer (and unit)."""
+    """How the solver must write its answer: one line of bracketed fields. The solver gives
+    only TYPE, CALC_VALUE, CALC_UNIT and SUBSTANCE; code adds TARGET_UNIT (from the question),
+    FINAL_VALUE (CALC_VALUE converted, core.units) and RENDER (complete_answer)."""
     t = spec.get("type")
+    head = ('"answer": one line in exactly this form, nothing else in it:\n'
+            '[TYPE: <topic in one word>] [CALC_VALUE: <value>] [CALC_UNIT: <unit>] [SUBSTANCE: <formula, or null>]\n')
     if t == "number":
-        u = spec.get("unit") or ""
-        return ('"final_answer": a single JSON number (digits, a decimal point, optional e-notation '
-                'such as 1.5e-15) — no units, words, fractions or "×10" inside it'
-                + (f'; express it in {u}' if u else '') + '.\n'
-                + (f'"unit": "{u}"' if u else '"unit": ""'))
+        return head + (
+            "Rules: CALC_VALUE is the number you calculated, as a plain decimal or e-notation number "
+            "(e.g. -45200, 0.0005776, 1.5e-15) — no units, words, fractions, '×10' or thousands "
+            "separators. CALC_UNIT is the unit of exactly that number, in plain text (e.g. J, kJ/mol, "
+            "J/(K mol), mol/L, atm, torr, K, s^-1, g/mL); you do not need to convert it — conversion "
+            "is done for you. Give exactly one value. If the quantity has no unit, write none.\n"
+            "Example: [TYPE: thermochemistry] [CALC_VALUE: -45200] [CALC_UNIT: J] [SUBSTANCE: null]")
     if t == "choice":
-        return ('"final_answer": exactly one of ' + ", ".join(f'"{o}"' for o in spec["options"])
-                + ', copied as written.\n"unit": ""')
+        return head + ("Rules: CALC_VALUE is exactly one of: " + ", ".join(spec["options"])
+                       + " (copied as written); CALC_UNIT: none.")
     if t == "letters":
-        return '"final_answer": the letter(s) of the correct option(s) only, e.g. "B" or "AC".\n"unit": ""'
+        return head + "Rules: CALC_VALUE is the letter(s) of the correct option(s) only, e.g. B or AC; CALC_UNIT: none."
     fmt = spec.get("format") or "the final formula, name or label only"
-    return f'"final_answer": {fmt} (just the answer, no explanation).\n"unit": ""'
+    return head + f"Rules: CALC_VALUE is {fmt} (just the answer, no explanation, no commas); CALC_UNIT: none."
+
+
+_FIELD = re.compile(r"\[\s*(TYPE|CALC_VALUE|CALC_UNIT|TARGET_UNIT|FINAL_VALUE|SUBSTANCE|RENDER)\s*:\s*(.*?)\s*\]",
+                    re.I | re.S)
+
+
+def parse_answer_line(text) -> dict | None:
+    """The solver's fields from '[TYPE: x] [CALC_VALUE: a, b] [CALC_UNIT: u, v] [SUBSTANCE: s, t]',
+    or None if there is no CALC_VALUE. Lists split on commas; anything the solver put in
+    TARGET_UNIT / FINAL_VALUE / RENDER is ignored (code computes those)."""
+    found = {k.upper(): v for k, v in _FIELD.findall(str(text or ""))}
+    if "CALC_VALUE" not in found:
+        return None
+    split = lambda v: [x.strip() for x in str(v).split(",") if x.strip()]
+    subst = [x for x in split(found.get("SUBSTANCE", "")) if x.lower() not in ("null", "none", "-")]
+    return {"type": (found.get("TYPE") or "").strip() or None, "calc_value": split(found["CALC_VALUE"]),
+            "calc_unit": split(found.get("CALC_UNIT", "")), "substance": subst}
+
+
+def _fmt_number(x: float) -> str:
+    return f"{x:.{SIG_FIGS + 1}g}"
+
+
+def complete_answer(parsed: dict | None, spec: dict) -> dict:
+    """Fill TARGET_UNIT, FINAL_VALUE and RENDER from the solver's fields. Returns a dict with
+    ok=False and a reason when the line cannot be used (that triggers one restate request)."""
+    from core import units
+    if not parsed or not parsed["calc_value"]:
+        return {"ok": False, "reason": "no [CALC_VALUE: ...] field"}
+    t = spec.get("type")
+    out = {**parsed, "target_unit": spec.get("unit", "") if t == "number" else ""}
+    if t != "number":
+        v = parsed["calc_value"][0] if t != "letters" else "".join(parsed["calc_value"])
+        if not format_ok(spec, v):
+            return {"ok": False, "reason": f"CALC_VALUE {v!r} is not one of the allowed answers"}
+        return {**out, "ok": True, "final_value": [v], "render": str(v)}
+    values = []
+    for v in parsed["calc_value"]:
+        if not _STRICT_NUMBER.match(v):
+            return {"ok": False, "reason": f"CALC_VALUE {v!r} is not a plain number"}
+        values.append(float(v))
+    if len(values) != spec.get("count", 1):
+        return {"ok": False, "reason": f"expected {spec.get('count', 1)} value(s), got {len(values)}"}
+    cu = parsed["calc_unit"] or ["none"]
+    if len(cu) == 1 and len(values) > 1:
+        cu = cu * len(values)
+    if len(cu) != len(values):
+        return {"ok": False, "reason": "CALC_UNIT does not give one unit per value"}
+    finals = []
+    for v, u in zip(values, cu):
+        if units.parse(u) is None:
+            return {"ok": False, "reason": f"unit {u!r} cannot be read"}
+        f = units.convert(v, u, out["target_unit"])
+        if f is None:
+            return {"ok": False, "reason": f"{u!r} cannot be converted to {out['target_unit']!r}"}
+        finals.append(f)
+    tu = out["target_unit"]
+    render = ", ".join(f"{_fmt_number(f)}{(' ' + tu) if tu else ''}" for f in finals)
+    return {**out, "ok": True, "calc_value": values, "calc_unit": cu, "final_value": finals, "render": render}
 
 
 def format_ok(spec: dict, final_answer) -> bool:
-    """Does the final answer follow the spec? (Only the form is checked, never correctness.)"""
+    """Is a single final answer (a value, an option, letters) of the right kind?"""
     if final_answer is None or (isinstance(final_answer, str) and not final_answer.strip()):
         return False
     t = spec.get("type")
@@ -319,62 +387,12 @@ def format_ok(spec: dict, final_answer) -> bool:
 
 
 # ── Units ────────────────────────────────────────────────────────────────────
-# A member may answer in another unit than the one asked (156100 J mol⁻¹ for 156.1 kJ mol⁻¹).
-# The value is converted using the unit the member STATED, so a real "forgot to convert"
-# mistake (156100 with unit kJ mol⁻¹) still does not match. Units that cannot be read, or
-# differ in dimension, are not converted.
-
-_U = {  # symbol: (dimension vector as dict, factor to the base unit)
-    "m": ({"L": 1}, 1.0), "km": ({"L": 1}, 1e3), "cm": ({"L": 1}, 1e-2), "mm": ({"L": 1}, 1e-3),
-    "µm": ({"L": 1}, 1e-6), "μm": ({"L": 1}, 1e-6), "nm": ({"L": 1}, 1e-9), "pm": ({"L": 1}, 1e-12),
-    "Å": ({"L": 1}, 1e-10), "A°": ({"L": 1}, 1e-10),
-    "L": ({"L": 3}, 1e-3), "l": ({"L": 3}, 1e-3), "mL": ({"L": 3}, 1e-6), "ml": ({"L": 3}, 1e-6),
-    "dm": ({"L": 1}, 0.1),
-    "kg": ({"M": 1}, 1.0), "g": ({"M": 1}, 1e-3), "mg": ({"M": 1}, 1e-6),
-    "mol": ({"N": 1}, 1.0), "mmol": ({"N": 1}, 1e-3),
-    "M": ({"N": 1, "L": -3}, 1e3), "mM": ({"N": 1, "L": -3}, 1.0),
-    "s": ({"T": 1}, 1.0), "ms": ({"T": 1}, 1e-3), "min": ({"T": 1}, 60.0), "h": ({"T": 1}, 3600.0),
-    "hr": ({"T": 1}, 3600.0), "day": ({"T": 1}, 86400.0), "days": ({"T": 1}, 86400.0),
-    "year": ({"T": 1}, 3.15576e7), "years": ({"T": 1}, 3.15576e7), "yr": ({"T": 1}, 3.15576e7),
-    "J": ({"E": 1}, 1.0), "kJ": ({"E": 1}, 1e3), "MJ": ({"E": 1}, 1e6), "cal": ({"E": 1}, 4.184),
-    "kcal": ({"E": 1}, 4184.0), "eV": ({"E": 1}, 1.602176634e-19),
-    "Pa": ({"P": 1}, 1.0), "kPa": ({"P": 1}, 1e3), "bar": ({"P": 1}, 1e5), "atm": ({"P": 1}, 101325.0),
-    "mmHg": ({"P": 1}, 133.322), "torr": ({"P": 1}, 133.322), "Torr": ({"P": 1}, 133.322),
-    "K": ({"K": 1}, 1.0), "V": ({"V": 1}, 1.0), "mV": ({"V": 1}, 1e-3),
-    "C": ({"Q": 1}, 1.0), "A": ({"I": 1}, 1.0), "S": ({"G": 1}, 1.0), "mS": ({"G": 1}, 1e-3),
-}
-_UNIT_SUP = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⁻", "0123456789-")
-
-
-def _unit(u):
-    """(dimension dict, factor) of a unit string such as 'kJ mol⁻¹', 'J/mol', 'mol L^-1',
-    'L mol-1 s-1', 'dm³'; None if any part is unknown. '' is dimensionless."""
-    s = str(u or "").strip().translate(_UNIT_SUP).replace("·", " ").replace("*", " ")
-    s = s.replace("mm Hg", "mmHg").replace("^", "")
-    if not s:
-        return {}, 1.0
-    dims, factor, sign = {}, 1.0, 1
-    for tok in re.findall(r"/|[A-Za-zµμÅ°]+-?\d*", s):
-        if tok == "/":
-            sign = -1
-            continue
-        m = re.fullmatch(r"([A-Za-zµμÅ°]+?)(-?\d+)?", tok)
-        sym, exp = m.group(1), int(m.group(2) or 1)
-        if sym not in _U:
-            return None
-        d, f = _U[sym]
-        for k, v in d.items():
-            dims[k] = dims.get(k, 0) + v * exp * sign
-        factor *= f ** (exp * sign)
-    return {k: v for k, v in dims.items() if v}, factor
-
+# Conversion lives in core/units.py (pint). This wrapper is kept for older callers.
 
 def convert_unit(value, from_unit, to_unit):
     """value in from_unit expressed in to_unit, or None if they are not the same kind."""
-    a, b = _unit(from_unit), _unit(to_unit)
-    if a is None or b is None or a[0] != b[0]:
-        return None
-    return value * a[1] / b[1]
+    from core import units
+    return units.convert(value, from_unit, to_unit)
 
 
 # ── Safe arithmetic for confirming slips ─────────────────────────────────────

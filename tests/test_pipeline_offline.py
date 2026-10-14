@@ -37,7 +37,7 @@ class FakeModels:
                     "values": {"s0.mass": 4.4, "s0.molar_mass": 44}}
         if role in ("generator", "refiner") and "Write one JEE" in user:
             return {"stem": "4.4 g of CO2 (molar mass 44 g mol⁻¹) is collected. Taking the molar volume "
-                            "at 1 atm and 273 K as 22.4 L, find the volume of the gas. Give the answer in L."}
+                            "at 1 atm and 273 K as 22.4 L, find the volume of the gas. Give the answer in L, to 3 significant figures."}
         if role in ("generator", "refiner") and "too easy" in user:
             return {"mode": self.refine_mode, "feedback": "hide the molar volume cue"}
         if role in ("generator", "refiner") and "misread" in user:
@@ -54,7 +54,8 @@ class FakeModels:
                 raise RuntimeError("503 provider overloaded")
             hinted = "A teacher adds this hint" in user
             ans = (self.hint_answers if hinted else self.council_answers)[model]
-            return {"working": f"n = 4.4/44 = 0.1 mol; V = ... = {ans}", "final_answer": ans, "unit": "L",
+            return {"working": f"n = 4.4/44 = 0.1 mol; V = ... = {ans}",
+                    "answer": f"[TYPE: stoichiometry] [CALC_VALUE: {ans}] [CALC_UNIT: L] [SUBSTANCE: CO2]",
                     "objection": None}
         if role == "verifier":
             ans = re.search(r"STUDENT'S FINAL ANSWER: (\S+)", user).group(1)
@@ -133,8 +134,10 @@ class FakeFactModels:
         if role in ("generator", "refiner") and "too easy" in user:
             return {"mode": "new_inputs", "feedback": "use other statements"}
         if role == "council":
-            return {"working": "checked each statement", "final_answer": self.member_letters[model](self.key),
-                    "unit": "", "objection": None}
+            letters = self.member_letters[model](self.key).replace(" and ", "")
+            return {"working": "checked each statement",
+                    "answer": f"[TYPE: fact] [CALC_VALUE: {letters}] [CALC_UNIT: none] [SUBSTANCE: null]",
+                    "objection": None}
         if role == "verifier":
             from core.engine.facts import letters_of
             ans = letters_of(re.search(r"STUDENT'S FINAL ANSWER: (.*)", user).group(1))
@@ -498,9 +501,19 @@ class GradingStress(unittest.TestCase):
         return SimpleNamespace(answer=answer, unit=unit, kind=kind, tolerance=tol)
 
     def _solved(self, r, ans, unit="", diag=None, working=""):
+        """ans/unit are what the solver wrote in CALC_VALUE/CALC_UNIT; a raw answer that is not
+        a usable line (unit '', non-numeric text) is graded the way the pipeline grades it."""
+        from core import answers
         from core.pipeline import flow
-        g = flow._grade(r, {"final_answer": ans, "unit": unit, "working": working},
-                        diag or {"verdict": "wrong", "failure_type": "genuine_difficulty"})
+        member = {"final_answer": ans, "unit": "", "working": working}
+        if ans is not None:
+            spec = answers.answer_spec(r.answer, r.kind, r.unit,
+                                       getattr(r, "fmt", None))
+            line = f"[TYPE: t] [CALC_VALUE: {ans}] [CALC_UNIT: {unit or (r.unit if spec['type'] == 'number' else 'none')}] [SUBSTANCE: null]"
+            done = answers.complete_answer(answers.parse_answer_line(line), spec)
+            if done.get("ok"):
+                member.update(final_value=done["final_value"], final_answer=done["render"])
+        g = flow._grade(r, member, diag or {"verdict": "wrong", "failure_type": "genuine_difficulty"})
         return g["counts_as_solved"]
 
     def test_numbers(self):
@@ -510,8 +523,6 @@ class GradingStress(unittest.TestCase):
         self.assertTrue(self._solved(r, "29.52", "L", slip))          # run 4: inside 1% with a slip on the way
         self.assertTrue(self._solved(r, "29.8", "L", ok))
         self.assertTrue(self._solved(r, 29.79, "L", ok))              # a number, not a string
-        self.assertTrue(self._solved(r, "29.8 L", "", ok))
-        self.assertTrue(self._solved(r, "V = 29.8 L", "", ok))
         self.assertTrue(self._solved(r, "29790", "mL", ok))           # other unit, converted by the stated unit
         self.assertTrue(self._solved(r, "0.02979", "m³", ok))
         self.assertFalse(self._solved(r, "31.2", "L"))                # the uses-22.4 trap
@@ -540,10 +551,8 @@ class GradingStress(unittest.TestCase):
 
     def test_fractions_expressions_and_powers(self):
         ok = {"verdict": "correct"}
-        self.assertTrue(self._solved(self._r(0.2157), "11/51", "", ok))
-        self.assertTrue(self._solved(self._r(0.6931), "ln(4)/2", "", ok))
-        self.assertTrue(self._solved(self._r(1.507e-15, tol=0.0225), "1.51 × 10^-15", "", ok))
-        self.assertTrue(self._solved(self._r(1.507e-15, tol=0.0225), "1.51×10⁻¹⁵", "", ok))
+        self.assertTrue(self._solved(self._r(0.2157), "0.2157", "", ok))
+        self.assertTrue(self._solved(self._r(1.507e-15, tol=0.0225), "1.51e-15", "", ok))
         self.assertTrue(self._solved(self._r(-7.1, kind="real"), "-7.1", "", ok))
         self.assertFalse(self._solved(self._r(-7.1, kind="real"), "7.1", "", ok))     # sign matters
 
@@ -556,10 +565,10 @@ class GradingStress(unittest.TestCase):
         self.assertTrue(self._solved(self._r(0.0005776, "s⁻¹"), "0.03466", "min⁻¹", ok))
         self.assertTrue(self._solved(self._r(1.0, "atm"), "101.325", "kPa", ok))
 
-    def test_unreadable_number_goes_to_the_verifier_field(self):
+    def test_unusable_line_goes_to_the_verifier_field(self):
         r = self._r(29.79, "L")
-        self.assertTrue(self._solved(r, "about 29.8 (29.79) L", "", {"verdict": "correct", "answer_equivalent": True}))
-        self.assertFalse(self._solved(r, "about 29.8 (29.79) L", "", {"verdict": "wrong", "answer_equivalent": False}))
+        self.assertTrue(self._solved(r, "about 29.8 (29.79)", "L", {"verdict": "correct", "answer_equivalent": True}))
+        self.assertFalse(self._solved(r, "about 29.8 (29.79)", "L", {"verdict": "wrong", "answer_equivalent": False}))
 
     def test_slip_confirmed_by_the_members_own_arithmetic(self):
         r = self._r(29.79, "L")
@@ -580,72 +589,90 @@ class GradingStress(unittest.TestCase):
     def test_text_and_letters(self):
         from types import SimpleNamespace
         ok = {"verdict": "correct"}
-        t = lambda a: SimpleNamespace(answer=a, unit="", kind="text", tolerance=0.01)
-        self.assertTrue(self._solved(t("precipitate forms"), "Yes", "", ok))
-        self.assertTrue(self._solved(t("forward"), "shifts to the right", "", ok))
+        t = lambda a, f=None: SimpleNamespace(answer=a, unit="", kind="text", tolerance=0.01, fmt=f)
+        self.assertTrue(self._solved(t("precipitate forms", "Answer yes or no."), "Yes", "", ok))
+        self.assertTrue(self._solved(t("forward", "Answer with exactly one of: forward, backward, no shift."), "forward", "", ok))
         self.assertTrue(self._solved(t("Th-234"), "²³⁴₉₀Th", "", ok))
-        self.assertFalse(self._solved(t("forward"), "backward", "", ok))
+        self.assertFalse(self._solved(t("forward", "Answer with exactly one of: forward, backward, no shift."), "backward", "", ok))
         L = SimpleNamespace(answer="AC", unit="", kind="letters", tolerance=0.01)
         self.assertTrue(self._solved(L, "A and C", "", ok))
         self.assertFalse(self._solved(L, "A", "", ok))
 
 
 class AnswerSpec(unittest.TestCase):
-    """The answer form is fixed at the source; a broken form is repaired, never graded."""
+    """The solver gives [TYPE] [CALC_VALUE] [CALC_UNIT] [SUBSTANCE]; code fills TARGET_UNIT
+    (from the question), FINAL_VALUE (pint conversion) and RENDER."""
 
-    def test_spec_and_format_check(self):
-        from core.answers import answer_spec, format_ok, options_from_format
+    def test_user_examples(self):
+        from core.answers import answer_spec, complete_answer, parse_answer_line
+        line = "[TYPE: thermochem] [CALC_VALUE: -45200] [CALC_UNIT: J] [TARGET_UNIT: ignored] [FINAL_VALUE: 9] [SUBSTANCE: null] [RENDER: x]"
+        done = complete_answer(parse_answer_line(line), answer_spec(-45.2, "real", "kJ"))
+        self.assertTrue(done["ok"])
+        self.assertEqual((done["final_value"], done["target_unit"], done["render"]), ([-45.2], "kJ", "-45.2 kJ"))
+        two = answer_spec(None, "real", "atm")
+        two = {"type": "number", "unit": "atm", "count": 2}
+        done = complete_answer(parse_answer_line(
+            "[TYPE: equilibrium] [CALC_VALUE: 0.75, 570] [CALC_UNIT: atm, torr] [SUBSTANCE: N2, H2]"), two)
+        self.assertTrue(done["ok"])
+        self.assertAlmostEqual(done["final_value"][1], 0.75, places=6)
+        self.assertEqual(done["substance"], ["N2", "H2"])
+        self.assertEqual(done["render"], "0.75 atm, 0.75 atm")
+
+    def test_unusable_lines_say_why(self):
+        from core.answers import answer_spec, complete_answer, parse_answer_line
         num = answer_spec(29.79, "positive", "L")
-        self.assertEqual(num, {"type": "number", "unit": "L"})
-        for good in (29.79, 30, "29.8", "-7.1", "1.5e-15", "+2"):
-            self.assertTrue(format_ok(num, good), good)
-        for bad in ("29.8 L", "11/51", "about 30", "1.5 × 10^-15", "", None, True, float("nan")):
-            self.assertFalse(format_ok(num, bad), bad)
-        self.assertEqual(options_from_format("Answer yes or no."), ["yes", "no"])
+        for line, why in [("V = 29.8 L", "no [CALC_VALUE"), ("[CALC_VALUE: about 29.8] [CALC_UNIT: L]", "not a plain number"),
+                          ("[CALC_VALUE: 11/51] [CALC_UNIT: none]", "not a plain number"),
+                          ("[CALC_VALUE: 29.8] [CALC_UNIT: blorps]", "cannot be read"),
+                          ("[CALC_VALUE: 29.8] [CALC_UNIT: kg]", "cannot be converted"),
+                          ("[CALC_VALUE: 29.8, 30] [CALC_UNIT: L]", "expected 1 value")]:
+            done = complete_answer(parse_answer_line(line), num)
+            self.assertFalse(done["ok"], line)
+            self.assertIn(why, done["reason"], line)
         ch = answer_spec("forward", "text", "", "Answer with exactly one of: forward, backward, no shift.")
-        self.assertEqual(ch["options"], ["forward", "backward", "no shift"])
-        self.assertTrue(format_ok(ch, "Forward."))
-        self.assertFalse(format_ok(ch, "it shifts to the right"))
-        self.assertTrue(format_ok(answer_spec(["A"], "letters"), "A and C"))
-        self.assertTrue(format_ok(answer_spec("Th-234", "text", "", _NUCLIDE_FMT), "Th-234"))
+        self.assertTrue(complete_answer(parse_answer_line("[CALC_VALUE: Forward] [CALC_UNIT: none]"), ch)["ok"])
+        self.assertFalse(complete_answer(parse_answer_line("[CALC_VALUE: to the right] [CALC_UNIT: none]"), ch)["ok"])
 
-    def test_broken_reply_is_repaired_not_graded(self):
+    def test_bad_line_is_restated_not_graded(self):
         from core.answers import answer_spec
         from core.pipeline import stages
-        replies = iter([{"working": "n = ... so V = 29.8 L", "final_answer": "about 29.8 L", "unit": ""},
-                        {"final_answer": 29.8, "unit": "L"}])
+        replies = iter([{"working": "n = ... so V = 29.8 L", "answer": "V = 29.8 L"},
+                        {"answer": "[TYPE: gases] [CALC_VALUE: 29.8] [CALC_UNIT: L] [SUBSTANCE: N2]"}])
         calls = []
         def fake(role, model, system, user, **kw):
-            calls.append(user[:40])
+            calls.append(user[:30])
             return next(replies)
         with mock.patch.object(models, "ask_json", fake):
             out = stages._solve("x/y", "stem", spec=answer_spec(29.79, "positive", "L"))
-        self.assertEqual((out["final_answer"], out["unit"], out["format_repaired"]), (29.8, "L", True))
-        self.assertEqual(out["raw_final_answer"], "about 29.8 L")
+        self.assertEqual((out["final_value"], out["final_answer"], out["format_repaired"]), ([29.8], "29.8 L", True))
         self.assertEqual(len(calls), 2)
 
-    def test_repair_failure_keeps_the_raw_answer_for_the_verifier(self):
+    def test_restate_failure_goes_to_the_verifier(self):
         from core.answers import answer_spec
         from core.pipeline import stages
-        replies = iter([{"working": "w", "final_answer": "about 29.8 L"}, {"final_answer": "still words"}])
+        replies = iter([{"working": "w", "answer": "about 29.8 L"}, {"answer": "still words"}])
         with mock.patch.object(models, "ask_json", lambda *a, **k: next(replies)):
             out = stages._solve("x/y", "stem", spec=answer_spec(29.79, "positive", "L"))
+        self.assertNotIn("final_value", out)
         self.assertEqual((out["final_answer"], out["format_repaired"]), ("about 29.8 L", False))
 
-    def test_numeric_stem_must_state_the_unit(self):
+    def test_stem_states_unit_and_significant_figures(self):
         from types import SimpleNamespace
         from core.pipeline import flow
         ad = SimpleNamespace(answer_format=lambda r: None)
         self.assertEqual(flow._answer_instruction(ad, SimpleNamespace(answer=29.79, unit="L", kind="positive")),
-                         "Give the answer in L.")
-        self.assertIsNone(flow._answer_instruction(ad, SimpleNamespace(answer=3.0, unit="", kind="count")))
+                         "Give the answer in L, to 3 significant figures.")
+        self.assertEqual(flow._answer_instruction(ad, SimpleNamespace(answer=3.0, unit="", kind="count")),
+                         "Give the answer as an integer.")
+        self.assertEqual(flow._answer_instruction(ad, SimpleNamespace(answer=4.7, unit="", kind="ph")),
+                         "Give the answer to 3 significant figures.")
 
-    def test_prompt_carries_the_spec(self):
+    def test_prompt_asks_for_the_line(self):
         from core.answers import answer_spec
         from core.pipeline import stages
         p = stages._council_prompt("stem", spec=answer_spec(156.1, "positive", "kJ mol⁻¹"))
-        self.assertIn("single JSON number", p)
-        self.assertIn("express it in kJ mol⁻¹", p)
+        self.assertIn("[TYPE: <topic in one word>] [CALC_VALUE: <value>] [CALC_UNIT: <unit>] [SUBSTANCE:", p)
+        self.assertIn("conversion is done for you", p)
 
 
 _NUCLIDE_FMT = "Give the product nuclide as element symbol and mass number (for example, C-14)."
@@ -683,7 +710,7 @@ class GeneratedVariants(unittest.TestCase):
                  (29.79, "L", 29790, "mL", True), (29.79, "L", 0.02979, "m³", True), (29.79, "L", 29.79, "dm³", True),
                  (0.25, "mol L⁻¹", 0.25, "M", True), (0.25, "mol L⁻¹", 250, "mmol L⁻¹", True),
                  (5.776e-4, "s⁻¹", 0.03466, "min⁻¹", True), (1.0, "atm", 760, "mmHg", True),
-                 (2.24, "L", 2.24, "kg", False), (300.0, "K", 26.85, "°C", False)]
+                 (2.24, "L", 2.24, "kg", False), (300.0, "K", 26.85, "°C", True), (1.0, "eV", 96.485, "kJ mol⁻¹", False)]
         for eng, eu, val, mu, want in cases:
             conv = answers.convert_unit(val, mu, eu)
             got = conv is not None and answers.answers_match(eng, conv, 0.01)
