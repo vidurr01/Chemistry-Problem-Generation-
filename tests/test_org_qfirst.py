@@ -161,5 +161,12 @@ class EndToEnd(unittest.TestCase):
         self.assertIn("P = ", r["question"])                        # the scheme is printed by code
 
 
+    def test_below_level_floor_is_dropped(self):
+        # organic level check (knowledge/level_calibration_organic.json): below the floor, no ladder, nothing saved
+        with mock.patch.object(models, "ask_json", self.fake),                 mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: 1.85),                 mock.patch("core.pipeline.qf_checks.jev_level", lambda *a, **k: 1.2),                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "organic", "--seed", "1"]):
+            self.entry.main()
+        self.assertFalse(os.path.exists(self.cfg["output_file"]) and json.load(open(self.cfg["output_file"])))
+
+
 if __name__ == "__main__":
     unittest.main()

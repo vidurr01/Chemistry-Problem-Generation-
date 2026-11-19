@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-20
 
+### Organic level check calibrated and used as a gate
+- `knowledge/level_calibration_organic.json` (log `outputs/calib_level_organic.log`): floor 1.85; 80 % of 49 real JEE Advanced organic numerical questions reach it, 25 % of 40 real JEE Main ones do. $0.0019 ≈ ₹0.17 (₹88/$). GEN_20261119T220155 scores 2.52.
+- `core/pipeline/org_qfirst.py`: Jev's level check now runs on every written organic question before the ladder (as physical's does); below the floor the draw is dropped as too easy. Until now the organic floor only fed the advanced/mains_hard label.
+- `tests/test_org_qfirst.py`: a question below the floor is not saved.
+
 ### Fourth live organic run: first clean organic question
 - `outputs/live_organic_4.log`: $0.0327 ≈ ₹2.9 (₹88/$). One draw, accepted as GEN_20261119T220155: propane → 2-bromopropane → acetone, branching to CHI₃ (I₂/NaOH), acetic acid (Br₂/NaOH, H₃O⁺) and propene (alc. KOH); count format, key 5 by code, checked by hand. Granite failed, MiniMax solved first → advanced_medium; GLM solved after the insight hint.
 - Caveat noted: DMSO oxidation of an unactivated secondary bromide is low-yield in practice (JEE shows it on primary/benzylic halides); kept.

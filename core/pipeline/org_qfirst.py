@@ -464,6 +464,17 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
         values = {"start": cand["_start"][1], "options": result.options, "mode": q["format"]}
         bb.note("qfirst", stem=stem, answer=result.answer, trace=result.trace, traps=result.traps)
         print(f"  [key] {result.answer} (computed by code)")
+        from core.pipeline import qf_checks       # Jev's level check, calibrated on real organic papers
+        floor = qf_checks._level_floor(adapter.subject)
+        if floor is not None:
+            lvl = qf_checks.jev_level(stem)
+            if lvl is not None:
+                print(f"    [level] Jev: {lvl:.2f}; floor {floor:.2f}")
+                bb.note("level", score=lvl, floor=floor)
+                if lvl < floor:
+                    log({"event": "too_easy", "chain": cand["edges"], "reason": f"level {lvl:.2f} < {floor:.2f}"})
+                    print("  ✗ below JEE Advanced level (before the ladder is paid for); next draw")
+                    continue
         sig = dedup.signature(adapter.subject, cand["edges"], {"start": values["start"], "options": result.options})
         if dedup.duplicate_of(sig):
             print("  [dedup] same as an accepted question; next draw")
