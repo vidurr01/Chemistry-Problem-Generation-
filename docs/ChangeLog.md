@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-20
 
+### Fourth live organic run: first clean organic question
+- `outputs/live_organic_4.log`: $0.0327 ≈ ₹2.9 (₹88/$). One draw, accepted as GEN_20261119T220155: propane → 2-bromopropane → acetone, branching to CHI₃ (I₂/NaOH), acetic acid (Br₂/NaOH, H₃O⁺) and propene (alc. KOH); count format, key 5 by code, checked by hand. Granite failed, MiniMax solved first → advanced_medium; GLM solved after the insight hint.
+- Caveat noted: DMSO oxidation of an unactivated secondary bromide is low-yield in practice (JEE shows it on primary/benzylic halides); kept.
+- The run records of the three removed questions (`outputs/runs/*_organic.json`, the attempt log) are kept as evidence.
+
 ### Third live organic run: a wrong key from one-site reactions (fixed)
 - `outputs/live_organic_3.log`: $0.0636 ≈ ₹5.6 (₹88/$). Draw 1 (propan-1-ol, 5 steps) too easy. Draw 2 (phthalic acid, 6 steps) accepted as GEN_20261119T215055, "hard_advanced" because no model solved it, but code's key was wrong: on benzene-1,2-dimethanol and its derivatives the rules reacted at ONE of two identical groups (S kept a CH2Cl, T a CH2OH, V an NH2). All three models answered as if both groups reacted, which is what the reagents (in excess) do. The question was removed from outputs/ and results/ and the duplicate store (removed, not held: its key is wrong).
 - `core/engine/organic/react.py`: `one()` now applies a rule at every site of the starting molecule (dinitrile, diacid, diol, diester, diamide); `react.sites` counts them. Benzene EAS stays a single substitution. `rules.py`: SN2-type rules refuse gem-polyhalides (CHCl3 had become HC(CN)3); selectivity rules (Markovnikov, alkyne hydration, epoxide opening, Baeyer–Villiger, α-halogenation, SeO2) refuse molecules with two competing groups. Audit: 670 products, 0 problems. Regression test `test_every_site_reacts`.

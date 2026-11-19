@@ -1,0 +1,390 @@
+{
+ "subject": "organic",
+ "saved_at": "20261119T220142",
+ "spend": {
+  "total_cost_usd": 0.02814,
+  "by_role": {
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 1639,
+    "completion_tokens": 1247,
+    "cost": 0.018242
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 1902,
+    "completion_tokens": 1217,
+    "cost": 0.00599025
+   },
+   "council": {
+    "calls": 10,
+    "prompt_tokens": 9617,
+    "completion_tokens": 6213,
+    "cost": 0.003909944
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkane_to_alkyl_halide_x",
+     "alkyl_halide_to_ketone_dmsodimethyl",
+     "ketone_to_alkyl_halide_i2",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "alkyl_halide_to_alkene_alckoh"
+    ],
+    "nodes": [
+     "alkane",
+     "alkyl_halide",
+     "ketone",
+     "alkyl_halide",
+     "carboxylic_acid",
+     "alkene"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Alkyl Halides",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     0,
+     413,
+     414,
+     415,
+     416,
+     417,
+     438,
+     214,
+     215,
+     210,
+     471,
+     17,
+     320,
+     330,
+     337,
+     345
+    ],
+    "trap_ids": [],
+    "description": "propane: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-19T22:00:21.013681+00:00",
+     "system": "P = propane\nP --[Br₂, hν]--> Q\nQ --[DMSO, heat]--> R\nR --[I₂, NaOH]--> S\nR --[(i) Br₂, NaOH (excess); (ii) H₃O⁺]--> T\nQ --[alc. KOH, heat]--> U",
+     "hidden": {
+      "Q": "2-bromopropane",
+      "R": "acetone",
+      "S": "iodoform",
+      "T": "acetic acid",
+      "U": "propene"
+     },
+     "hidden_link": "Kornblum oxidation of a secondary alkyl halide yields a ketone, which then undergoes the haloform reaction.",
+     "route": "Propane undergoes radical bromination to yield the more stable 2-bromopropane (Q). Heating Q with DMSO (Kornblum oxidation) produces acetone (R). Acetone gives a positive iodoform test, precipitating iodoform (S). Reaction of R with excess Br2/NaOH followed by acidification yields acetic acid (T) via the haloform reaction. E2 elimination of Q with alc. KOH gives propene (U).",
+     "student_must_notice": "The conversion of Q to R using DMSO is a Kornblum oxidation; if the student wrongly predicts Q as 1-bromopropane, R would be propanal, completely changing the subsequent haloform test results.",
+     "trap": "Assuming Q is 1-bromopropane leads to R being propanal, which would not give S (iodoform test is negative for propanal) and would alter the structure of T.",
+     "given": "The reaction scheme starting from propane with reagents for each step.",
+     "asked": "Count of correct statements regarding the properties, tests, and structures of compounds Q, R, S, T, and U.",
+     "format": "count",
+     "why_hard": "It combines regioselective radical halogenation, a lesser-known but critical oxidation (Kornblum), and specific functional group tests (haloform) that strictly depend on the correct initial regiochemistry.",
+     "situation": "P = propane\nP --[Br₂, hν]--> Q\nQ --[DMSO, heat]--> R\nR --[I₂, NaOH]--> S\nR --[(i) Br₂, NaOH (excess); (ii) H₃O⁺]--> T\nQ --[alc. KOH, heat]--> U",
+     "insight": "The conversion of Q to R using DMSO is a Kornblum oxidation; if the student wrongly predicts Q as 1-bromopropane, R would be propanal, completely changing the subsequent haloform test results.",
+     "links": "Propane undergoes radical bromination to yield the more stable 2-bromopropane (Q). Heating Q with DMSO (Kornblum oxidation) produces acetone (R). Acetone gives a positive iodoform test, precipitating iodoform (S). Reaction of R with excess Br2/NaOH followed by acidification yields acetic acid (T) via the haloform reaction. E2 elimination of Q with alc. KOH gives propene (U)."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T22:00:32.181958+00:00",
+     "attempt": 1,
+     "lead": "Propane (P) is subjected to a series of functional group transformations to yield compounds Q through U as shown below.",
+     "ask": "Find the number of correct statements among the following:",
+     "format": "count",
+     "claims": [
+      {
+       "text": "Compound Q is 2-bromopropane.",
+       "compound": "Q",
+       "property": "structure",
+       "value": "CC(C)Br"
+      },
+      {
+       "text": "Compound R gives a positive Tollens' silver mirror test.",
+       "compound": "R",
+       "property": "tollens_test",
+       "value": true
+      },
+      {
+       "text": "The molecular formula of compound S is CHI₃.",
+       "compound": "S",
+       "property": "molecular_formula",
+       "value": "CHI3"
+      },
+      {
+       "text": "Compound T produces brisk effervescence with aqueous NaHCO₃ solution.",
+       "compound": "T",
+       "property": "nahco3_effervescence",
+       "value": true
+      },
+      {
+       "text": "Compound U decolourises bromine water.",
+       "compound": "U",
+       "property": "bromine_water_decolourised",
+       "value": true
+      },
+      {
+       "text": "Compound R gives a yellow precipitate in the iodoform test.",
+       "compound": "R",
+       "property": "iodoform_test",
+       "value": true
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T22:00:32.182003+00:00",
+     "stem": "Propane (P) is subjected to a series of functional group transformations to yield compounds Q through U as shown below.\nP = propane\nP --[Br₂, hν]--> Q\nQ --[DMSO, heat]--> R\nR --[I₂, NaOH]--> S\nR --[(i) Br₂, NaOH (excess); (ii) H₃O⁺]--> T\nQ --[alc. KOH, heat]--> U\nFind the number of correct statements among the following:\n(1) Compound Q is 2-bromopropane.\n(2) Compound R gives a positive Tollens' silver mirror test.\n(3) The molecular formula of compound S is CHI₃.\n(4) Compound T produces brisk effervescence with aqueous NaHCO₃ solution.\n(5) Compound U decolourises bromine water.\n(6) Compound R gives a yellow precipitate in the iodoform test.\nGive the answer as an integer.",
+     "answer": 5,
+     "trace": [
+      {
+       "tx": [],
+       "src": "Q",
+       "dst": "structure",
+       "formula": "the compound's structure (SMILES; stereo ignored) computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "Q",
+        "structure": "CC(C)Br",
+        "claimed value": "CC(C)Br"
+       },
+       "outputs": {
+        "computed value": "CC(C)Br",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "tollens_test",
+       "formula": "positive Tollens' test computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "R",
+        "structure": "CC(C)=O",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": false,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "molecular_formula",
+       "formula": "molecular formula computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "S",
+        "structure": "IC(I)I",
+        "claimed value": "CHI3"
+       },
+       "outputs": {
+        "computed value": "CHI3",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "T",
+       "dst": "nahco3_effervescence",
+       "formula": "effervescence with NaHCO₃ computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "T",
+        "structure": "CC(=O)O",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "bromine_water_decolourised",
+       "formula": "decolourises bromine water computed by code",
+       "inputs": {
+        "claim": 5,
+        "compound": "U",
+        "structure": "C=CC",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "iodoform_test",
+       "formula": "positive iodoform test computed by code",
+       "inputs": {
+        "claim": 6,
+        "compound": "R",
+        "structure": "CC(C)=O",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "item1",
+       "desc": "misjudges statement 1",
+       "wrong_answer": 4
+      },
+      {
+       "id": "item2",
+       "desc": "misjudges statement 2",
+       "wrong_answer": 6
+      },
+      {
+       "id": "item3",
+       "desc": "misjudges statement 3",
+       "wrong_answer": 4
+      },
+      {
+       "id": "item4",
+       "desc": "misjudges statement 4",
+       "wrong_answer": 4
+      },
+      {
+       "id": "item5",
+       "desc": "misjudges statement 5",
+       "wrong_answer": 4
+      },
+      {
+       "id": "item6",
+       "desc": "misjudges statement 6",
+       "wrong_answer": 4
+      }
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T22:01:14.592978+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Step-by-step:\n1. Propane (CH3-CH2-CH3) reacts with Br2 under hv (light) to undergo free-radical bromination, giving mainly 2-bromopropane (CH3-CHBr-CH3) as the major product. So statement (1) \"Compound Q is 2-bromopropane\" is correct.\n\n2. Q (2-bromopropane) treated with DMSO and heat likely undergoes elimination (E2) to give propene (CH2=CH-CH3) as R. Propene does not give a positive Tollens' test (which requires an aldehyde). So statement (2) is false.\n\n3. R (propene) with I2/NaOH undergoes addition of I2 across the double bond to give 2-iodo-2-propene? Actually I2/NaOH adds I2 to give 1,2-diiodopropane? But typical iodoform reaction requires a methyl ketone or ethanol; propene does not give CHI3. So statement (3) \"The molecular formula of compound S is CHI3\" is false.\n\n4. R (propene) with Br2/NaOH (excess) then H3O+ likely leads to substitution/elimination producing HBr (or bromide). HBr reacts with NaHCO3 to give brisk effervescence (CO2). Thus statement (4) \"Compound T produces brisk effervescence with aqueous NaHCO3\" is true.\n\n5. Q (2-bromopropane) with alcoholic KOH and heat undergoes dehydrohalogenation to give propene (U). Propene reacts rapidly with bromine water, causing decolourisation (addition). So statement (5) \"Compound U decolourises bromine water\" is true.\n\n6. R (propene) does not contain a methyl carbonyl group; iodoform test requires CH3-CO- or CH3-CH(OH)-. Thus statement (6) \"Compound R gives a yellow precipitate in the iodoform test\" is false.\n\nThus correct statements: (1), (4), (5) → three correct statements.\n\nAnswer integer = 3.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: 3] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "3",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        3.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        3.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Propane → Q: radical bromination highly selective, gives 2-bromopropane (Q). (1) True. Q + DMSO, heat: Kornblum oxidation of secondary alkyl bromide → acetone (R). (2) Acetone is a ketone, no α-hydroxy aldehyde — Tollens' negative: False. R + I₂/NaOH → iodoform reaction: S = CHI₃: (3) True; also (6) acetone gives yellow CHI₃ precipitate: True. R + excess Br₂/NaOH then H₃O⁺: methyl ketone haloform oxidation → acetate → acetic acid (T). Acetic acid is stronger than carbonic acid, so with NaHCO₃ it gives brisk CO₂ effervescence: (4) True. Q + alc. KOH → propene (U), which decolourises bromine water: (5) True. Correct statements: all 6.",
+       "objection": null,
+       "answer_line": "[TYPE: organic reactions] [CALC_VALUE: 6] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "6",
+       "unit": "",
+       "answer_type": "organic reactions",
+       "calc_value": [
+        6.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        6.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "minimax-m3",
+       "model": "minimax/minimax-m3",
+       "working": "P=propane. P+Br2/hν→Q=2-bromopropane (statement 1 TRUE). Q+DMSO/heat→R=acetone (oxidation of 2° alkyl halide). R+Tollens' is negative (statement 2 FALSE, ketone not aldehyde). R+I2/NaOH→S=CHI3 iodoform (statement 3 TRUE; statement 6 TRUE, yellow ppt). R+excess Br2/NaOH then H3O+→T=CHBr3+CH3COOH; acetic acid gives brisk effervescence with NaHCO3 (statement 4 TRUE). Q+alc.KOH/heat→U=propene (E2); propene decolourises bromine water (statement 5 TRUE). Correct statements: 1,3,4,5,6 = 5 statements.",
+       "objection": null,
+       "answer_line": "[TYPE: organic] [CALC_VALUE: 5] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "5",
+       "unit": "",
+       "answer_type": "organic",
+       "calc_value": [
+        5.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        5.0
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [],
+     "first_solver": "minimax-m3"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-19T22:01:42.712129+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "3"
+      },
+      {
+       "member": "glm-5.3-flash",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": true,
+       "answer": "5"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

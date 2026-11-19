@@ -1,0 +1,559 @@
+{
+ "subject": "organic",
+ "saved_at": "20261119T185513",
+ "spend": {
+  "total_cost_usd": 0.04361,
+  "by_role": {
+   "designer": {
+    "calls": 3,
+    "prompt_tokens": 1708,
+    "completion_tokens": 2766,
+    "cost": 0.036608
+   },
+   "generator": {
+    "calls": 3,
+    "prompt_tokens": 1417,
+    "completion_tokens": 1282,
+    "cost": 0.0058702500000000005
+   },
+   "council": {
+    "calls": 9,
+    "prompt_tokens": 6897,
+    "completion_tokens": 3523,
+    "cost": 0.00113281
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkane_to_alkyl_halide_x",
+     "alkyl_halide_to_nitro_compound_agno2silvern"
+    ],
+    "nodes": [
+     "alkane",
+     "alkyl_halide",
+     "nitro_compound"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     0,
+     413,
+     414,
+     415,
+     416,
+     417,
+     285
+    ],
+    "trap_ids": [],
+    "description": "butane → alkyl_halide → nitro_compound"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-19T18:53:56.968664+00:00",
+     "system": "Butane is treated with Br2 in the presence of UV light to give a major monohalogenated product X. Compound X is subsequently reacted with silver nitrite (AgNO2) to yield the major product Y.",
+     "hidden": {
+      "X": "2-bromobutane (CCC(C)Br)",
+      "Y": "2-nitrobutane (CCC(C)[N+](=O)[O-])"
+     },
+     "hidden_link": "The student must deduce the regioselectivity of the radical halogenation to find X, and then understand the specific nucleophilic attack of the ambidentate nitrite ion when paired with silver (Ag+) to find Y.",
+     "route": "First, radical bromination of butane is highly selective for the secondary carbon due to the formation of a more stable 2° radical, yielding 2-bromobutane as X. Second, reacting 2-bromobutane with AgNO2 leads to nucleophilic substitution. Because Ag-O bonds have significant covalent character, the lone pair on nitrogen acts as the nucleophile, leading to a nitroalkane (2-nitrobutane) rather than an alkyl nitrite.",
+     "student_must_notice": "The difference in behavior of ambidentate nucleophiles based on the counterion: AgNO2 yields nitroalkanes (N-attack) while NaNO2 or KNO2 would yield alkyl nitrites (O-attack).",
+     "trap": "sec-butyl nitrite (CCC(C)ON=O) is highly tempting if the student forgets the covalent nature of AgNO2 and assumes O-attack, which happens with ionic nitrites like NaNO2.",
+     "given": "Starting material: Butane. Reagents in sequence: 1. Br2, hν (1 equivalent) -> X (major); 2. AgNO2 -> Y (major).",
+     "asked": "The structure of the final major product Y.",
+     "why_hard": "It combines regioselective radical bromination with a classic but easily confused ambidentate nucleophile trap where the counterion strictly dictates the connectivity of the product.",
+     "format": "mcq_correct",
+     "situation": "Butane is treated with Br2 in the presence of UV light to give a major monohalogenated product X. Compound X is subsequently reacted with silver nitrite (AgNO2) to yield the major product Y.",
+     "insight": "The difference in behavior of ambidentate nucleophiles based on the counterion: AgNO2 yields nitroalkanes (N-attack) while NaNO2 or KNO2 would yield alkyl nitrites (O-attack).",
+     "links": "First, radical bromination of butane is highly selective for the secondary carbon due to the formation of a more stable 2° radical, yielding 2-bromobutane as X. Second, reacting 2-bromobutane with AgNO2 leads to nucleophilic substitution. Because Ag-O bonds have significant covalent character, the lone pair on nitrogen acts as the nucleophile, leading to a nitroalkane (2-nitrobutane) rather than an alkyl nitrite."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T18:54:03.421849+00:00",
+     "attempt": 1,
+     "stem": "Butane is treated with Br2 in the presence of light (hν) to give a major monobromo derivative X. Compound X is then reacted with AgNO2 (silver nitrite) to afford the major product Z. Which of the following is the structure of the final product Z?"
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T18:54:03.421868+00:00",
+     "stem": "Butane is treated with Br2 in the presence of light (hν) to give a major monobromo derivative X. Compound X is then reacted with AgNO2 (silver nitrite) to afford the major product Z. Which of the following is the structure of the final product Z?\nOptions (structures as SMILES):\n(A) CCC(C)Br\n(B) CCCC[N+](=O)[O-]\n(C) CCC(C)[N+](=O)[O-]\n(D) CCC(C)ON=O\nChoose the one correct option.",
+     "answer": "C",
+     "trace": [
+      {
+       "tx": [
+        0,
+        413,
+        414,
+        415,
+        416,
+        417
+       ],
+       "src": "alkane",
+       "dst": "alkyl_halide",
+       "formula": "radical bromination: the most substituted C–H (most stable radical)",
+       "inputs": {
+        "reagents": "Br2, hν"
+       },
+       "outputs": {
+        "product": "CCC(C)Br",
+        "traps": {
+         "less_selective_product": "CCCCBr"
+        }
+       }
+      },
+      {
+       "tx": [
+        285
+       ],
+       "src": "alkyl_halide",
+       "dst": "nitro_compound",
+       "formula": "AgNO2: N-attack gives the nitroalkane",
+       "inputs": {
+        "reagents": "AgNO2 (silver nitrite)"
+       },
+       "outputs": {
+        "product": "CCC(C)[N+](=O)[O-]",
+        "traps": {
+         "alkyl nitrite (NaNO2/KNO2)": "CCC(C)ON=O"
+        }
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionA",
+       "desc": "stops one step early",
+       "wrong_answer": "A"
+      },
+      {
+       "id": "optionB",
+       "desc": "step 1 with the wrong selectivity (less_selective_product), then the later steps",
+       "wrong_answer": "B"
+      },
+      {
+       "id": "optionD",
+       "desc": "step 2 with the wrong selectivity (alkyl nitrite (NaNO2/KNO2)), then the later steps",
+       "wrong_answer": "D"
+      }
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T18:54:08.219313+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Butane (C4H10) undergoes free-radical bromination with Br2 under light to give the major monobromo product X. In alkanes, bromination occurs preferentially at the most stable radical site; for butane, the secondary C-H (on the central carbons) is more stable than primary. Thus the major monobromo derivative X is 2-bromobutane (CH3-CHBr-CH2-CH3). Reaction of a bromide with silver nitrite (AgNO2) typically leads to SN1 substitution where the bromide leaves and the silver nitrite acts as a mild oxidant/nucleophile source; however, silver nitrite in aqueous solution can promote solvolysis of alkyl bromides via SN1 to give the corresponding nitrite salt of the alkyl cation, which then picks up nitrite to form an alkyl nitrite. For 2-bromobutane, the most stable carbocation formed is the secondary 2° carbocation (CH3-CH+ -CH2-CH3). This carbocation reacts with nitrite ion (NO2-) to give the corresponding alkyl nitrite: CH3-CH(NO2)-CH2-CH3, i.e., 2-butyl nitrite. Among the SMILES options: (A) CCC(C)Br corresponds to 1-bromobutane (primary bromide), not the major monobromo product; (B) CCCC[N+](=O)[O-] is nitromethane-like (no correct alkyl); (C) CCC(C)[N+](=O)[O-] corresponds to CH3-CH(NO2)-CH2-CH3 (i.e., 2-butyl nitrite); (D) CCC(C)ON=O is also an alkyl nitrosamine? Actually ON=O is peroxide? Option C matches the expected product Z. Therefore correct option is C.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: C] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "C",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "C"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "C"
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "minimax-m3"
+     ],
+     "first_solver": "granite-4.2-8b"
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkyl_halide_to_alkane_zn",
+     "alkane_to_alkyl_halide_x",
+     "alkyl_halide_to_grignard_mg"
+    ],
+    "nodes": [
+     "alkyl_halide",
+     "alkane",
+     "alkyl_halide",
+     "grignard"
+    ],
+    "chapters": [
+     "Alkyl Halides",
+     "Hydrocarbons",
+     "Organometallics & Grignard"
+    ],
+    "txs": [
+     18,
+     0,
+     413,
+     414,
+     415,
+     416,
+     417,
+     19
+    ],
+    "trap_ids": [],
+    "description": "3-bromo-3-methylpentane → alkane → alkyl_halide → grignard"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-19T18:54:18.624536+00:00",
+     "system": "3-bromo-3-methylpentane is treated with Zn/H⁺ to give compound X. Compound X is then treated with Br₂ in the presence of light to yield compound Y as the major product. Finally, compound Y is reacted with Mg turnings in dry ether.",
+     "hidden": {
+      "X": "3-methylpentane",
+      "Y": "3-bromo-3-methylpentane"
+     },
+     "hidden_link": "X is an alkane. Bromination of X is highly regioselective for the tertiary carbon, regenerating the original carbon-halogen framework.",
+     "route": "Zn/H⁺ reduces the tertiary bromide to the corresponding alkane, 3-methylpentane. Photochemical bromination (Br₂, hν) is highly selective for the tertiary C-H bond, producing 3-bromo-3-methylpentane as the major product. Insertion of magnesium in dry ether forms the tertiary Grignard reagent, (1-ethyl-1-methylpropyl)magnesium bromide.",
+     "student_must_notice": "The extreme regioselectivity of radical bromination for tertiary C-H bonds compared to secondary or primary C-H bonds.",
+     "trap": "A student might mistakenly think the bromination occurs at a secondary or primary position to avoid steric hindrance, leading to a secondary or primary Grignard reagent (e.g., sec-alkylmagnesium bromide). Also, stopping at Y instead of forming the Grignard is a trap.",
+     "given": "Starting material: 3-bromo-3-methylpentane. Reagents in sequence: (i) Zn/H⁺, (ii) Br₂, hν, (iii) Mg, dry ether.",
+     "asked": "The structure of the final major product.",
+     "why_hard": "The student must recognize that a dehalogenation followed by halogenation regenerates the original substitution pattern due to the thermodynamic stability of the tertiary radical intermediate.",
+     "format": "mcq_correct",
+     "situation": "3-bromo-3-methylpentane is treated with Zn/H⁺ to give compound X. Compound X is then treated with Br₂ in the presence of light to yield compound Y as the major product. Finally, compound Y is reacted with Mg turnings in dry ether.",
+     "insight": "The extreme regioselectivity of radical bromination for tertiary C-H bonds compared to secondary or primary C-H bonds.",
+     "links": "Zn/H⁺ reduces the tertiary bromide to the corresponding alkane, 3-methylpentane. Photochemical bromination (Br₂, hν) is highly selective for the tertiary C-H bond, producing 3-bromo-3-methylpentane as the major product. Insertion of magnesium in dry ether forms the tertiary Grignard reagent, (1-ethyl-1-methylpropyl)magnesium bromide."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T18:54:22.492926+00:00",
+     "attempt": 1,
+     "stem": "3-bromo-3-methylpentane is subjected to the following sequence of reactions:\n\nStep 1: Treatment with Zn / H+ gives compound X.\nStep 2: Compound X is reacted with Br2 in the presence of light (hν) to yield compound Y as the major product.\nStep 3: Compound Y is treated with Mg in dry ether to form compound Z.\n\nThe major product Z is:"
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T18:54:22.492944+00:00",
+     "stem": "3-bromo-3-methylpentane is subjected to the following sequence of reactions:\n\nStep 1: Treatment with Zn / H+ gives compound X.\nStep 2: Compound X is reacted with Br2 in the presence of light (hν) to yield compound Y as the major product.\nStep 3: Compound Y is treated with Mg in dry ether to form compound Z.\n\nThe major product Z is:\nOptions (structures as SMILES):\n(A) CC[C](C)(CC)[Mg][Br]\n(B) CCC(C)(Br)CC\n(C) CCC(C)C[CH2][Mg][Br]\n(D) CCC(C)[CH](C)[Mg][Br]\nChoose the one correct option.",
+     "answer": "A",
+     "trace": [
+      {
+       "tx": [
+        18
+       ],
+       "src": "alkyl_halide",
+       "dst": "alkane",
+       "formula": "Zn/H+ reduces C–X to C–H",
+       "inputs": {
+        "reagents": "Zn; H⁺"
+       },
+       "outputs": {
+        "product": "CCC(C)CC",
+        "traps": {}
+       }
+      },
+      {
+       "tx": [
+        0,
+        413,
+        414,
+        415,
+        416,
+        417
+       ],
+       "src": "alkane",
+       "dst": "alkyl_halide",
+       "formula": "radical bromination: the most substituted C–H (most stable radical)",
+       "inputs": {
+        "reagents": "Br2, hν"
+       },
+       "outputs": {
+        "product": "CCC(C)(Br)CC",
+        "traps": {
+         "less_selective_product": "CCC(C)C(C)Br",
+         "less_selective_product_2": "CCC(C)CCBr",
+         "less_selective_product_3": "CCC(CC)CBr"
+        }
+       }
+      },
+      {
+       "tx": [
+        19
+       ],
+       "src": "alkyl_halide",
+       "dst": "grignard",
+       "formula": "Mg in dry ether inserts into C–X",
+       "inputs": {
+        "reagents": "Mg; dry ether"
+       },
+       "outputs": {
+        "product": "CC[C](C)(CC)[Mg][Br]",
+        "traps": {}
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionB",
+       "desc": "stops one step early",
+       "wrong_answer": "B"
+      },
+      {
+       "id": "optionC",
+       "desc": "step 2 with the wrong selectivity (less_selective_product_2), then the later steps",
+       "wrong_answer": "C"
+      },
+      {
+       "id": "optionD",
+       "desc": "step 2 with the wrong selectivity (less_selective_product), then the later steps",
+       "wrong_answer": "D"
+      }
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T18:54:29.315856+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Step 1: Zn/H+ reduces the C–Br bond in 3‑bromo‑3‑methylpentane to give 3‑methylpentane (the bromine is replaced by H). Step 2: Br2 under light adds across the C–C bond adjacent to the methyl group (radical bromination) giving the more stable allylic bromide as major product, i.e., 2‑bromo‑3‑methylpentane (or 3‑bromo‑2‑methylpentane depending on regiochemistry; the major product is the bromide at the carbon bearing the methyl). Step 3: Treatment with Mg in dry ether forms the Grignard reagent at the carbon bearing the bromide (the bromide is replaced by MgBr). Thus the resulting organomagnesium compound is a bromomagnesium halide at the carbon adjacent to the methyl group. Among the SMILES options, only (A) CC[C](C)(CC)[Mg][Br] corresponds to a MgBr attached to the central carbon of 3‑methylpentane (i.e., the carbon bearing the methyl and two ethyl groups), which matches the expected Grignard formation. Therefore option A is correct.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: A] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "A",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "A"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "A"
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "minimax-m3"
+     ],
+     "first_solver": "granite-4.2-8b"
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aniline_to_substituted_benzene_carosacidh2s",
+     "substituted_benzene_to_substituted_benzene_conchno3"
+    ],
+    "nodes": [
+     "aniline",
+     "substituted_benzene",
+     "substituted_benzene"
+    ],
+    "chapters": [
+     "Amines",
+     "Aromatic Compounds"
+    ],
+    "txs": [
+     100,
+     382,
+     395,
+     572
+    ],
+    "trap_ids": [],
+    "description": "aniline → substituted_benzene → substituted_benzene"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-19T18:54:41.115792+00:00",
+     "system": "Aniline is treated with Caro's acid (H2SO5) to yield compound X. Compound X is subsequently reacted with a nitrating mixture (conc. HNO3 and conc. H2SO4) under stepwise increasing temperature to yield compound Y as the major product.",
+     "hidden": {
+      "X": "Nitrosobenzene (O=Nc1ccccc1)",
+      "Y": "1-nitro-4-nitrosobenzene (O=Nc1ccc([N+](=O)[O-])cc1)"
+     },
+     "hidden_link": "The selective oxidation of aniline to nitrosobenzene by Caro's acid, followed by electrophilic aromatic substitution on a ring bearing a nitroso group.",
+     "route": "Aniline reacts with Caro's acid to form nitrosobenzene (X). The nitroso group (-N=O) has a strong -I effect but a +R effect due to the lone pair on nitrogen, making it a deactivating group that is nevertheless ortho/para directing. Nitration of X yields mainly the para-substituted product due to steric hindrance at the ortho position, giving p-nitro-nitrosobenzene (Y).",
+     "student_must_notice": "The student must recognize that the -N=O group is ortho/para directing despite being strongly deactivating, unlike the -NO2 group which is meta directing.",
+     "trap": "The meta-nitrated product (1-nitro-3-nitrosobenzene) is a very tempting trap because students often conflate the directing effects of -N=O with -NO2, assuming both are meta-directing due to strong electron withdrawal.",
+     "given": "Starting material (aniline) and the exact sequence of reagents: 1. Caro's acid (H2SO5), 2. conc. HNO3, conc. H2SO4, heat.",
+     "asked": "The structure of the major final product Y.",
+     "why_hard": "It combines a specific and easily forgotten oxidation (Caro's acid on aniline) with the highly counter-intuitive directing effects of the nitroso group.",
+     "format": "mcq_correct",
+     "situation": "Aniline is treated with Caro's acid (H2SO5) to yield compound X. Compound X is subsequently reacted with a nitrating mixture (conc. HNO3 and conc. H2SO4) under stepwise increasing temperature to yield compound Y as the major product.",
+     "insight": "The student must recognize that the -N=O group is ortho/para directing despite being strongly deactivating, unlike the -NO2 group which is meta directing.",
+     "links": "Aniline reacts with Caro's acid to form nitrosobenzene (X). The nitroso group (-N=O) has a strong -I effect but a +R effect due to the lone pair on nitrogen, making it a deactivating group that is nevertheless ortho/para directing. Nitration of X yields mainly the para-substituted product due to steric hindrance at the ortho position, giving p-nitro-nitrosobenzene (Y)."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T18:54:47.280124+00:00",
+     "attempt": 1,
+     "stem": "Aniline is treated with Caro's acid (H2SO5) to give an intermediate X. Compound X is then reacted with a mixture of conc. HNO3 and conc. H2SO4 under stepwise increasing temperature to yield the major product Z. Which of the following represents the structure of the major product Z?"
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T18:54:47.280152+00:00",
+     "stem": "Aniline is treated with Caro's acid (H2SO5) to give an intermediate X. Compound X is then reacted with a mixture of conc. HNO3 and conc. H2SO4 under stepwise increasing temperature to yield the major product Z. Which of the following represents the structure of the major product Z?\nOptions (structures as SMILES):\n(A) O=Nc1ccccc1[N+](=O)[O-]\n(B) O=Nc1cccc([N+](=O)[O-])c1\n(C) O=Nc1ccccc1\n(D) O=Nc1ccc([N+](=O)[O-])cc1\nChoose the one correct option.",
+     "answer": "D",
+     "trace": [
+      {
+       "tx": [
+        100
+       ],
+       "src": "aniline",
+       "dst": "substituted_benzene",
+       "formula": "Caro's acid oxidises ArNH2 to ArN=O",
+       "inputs": {
+        "reagents": "Caro's acid (H2SO5)"
+       },
+       "outputs": {
+        "product": "O=Nc1ccccc1",
+        "traps": {}
+       }
+      },
+      {
+       "tx": [
+        382,
+        395,
+        572
+       ],
+       "src": "substituted_benzene",
+       "dst": "substituted_benzene",
+       "formula": "nitration: the substituent is an ortho/para director; para major",
+       "inputs": {
+        "reagents": "conc HNO3; conc H2SO4; stepwise increasing temperature"
+       },
+       "outputs": {
+        "product": "O=Nc1ccc([N+](=O)[O-])cc1",
+        "traps": {
+         "ortho_product": "O=Nc1ccccc1[N+](=O)[O-]",
+         "meta_product": "O=Nc1cccc([N+](=O)[O-])c1"
+        }
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionA",
+       "desc": "step 2 with the wrong selectivity (ortho_product), then the later steps",
+       "wrong_answer": "A"
+      },
+      {
+       "id": "optionB",
+       "desc": "step 2 with the wrong selectivity (meta_product), then the later steps",
+       "wrong_answer": "B"
+      },
+      {
+       "id": "optionC",
+       "desc": "stops one step early",
+       "wrong_answer": "C"
+      }
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T18:55:05.574454+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Aniline treated with Caro's acid (H2SO5) oxidizes the amine to a nitroso compound (nitrosaniline) or possibly a diazonium salt? Caro's acid is a mild oxidizing agent that can oxidize primary amines to nitroso compounds under certain conditions. However, typical reaction of aniline with Caro's acid in presence of H2SO5 gives the nitrosylated product (nitrosaniline). Then reaction with conc. HNO3/H2SO4 (mixed acid) under stepwise increasing temperature leads to electrophilic aromatic nitration. The nitrosyl group can be protonated to give a good leaving group, allowing nitration at the para position relative to the nitroso group. The major product after nitration of nitrosaniline is para-nitro-nitrosaniline? But the options given are SMILES of nitroaniline derivatives with a [N+](=O)[O-] group (likely representing a nitro group? Actually [N+](=O)[O-] is the representation of a nitro group? No, nitro is O=N-O-? Typically nitro is O=N-O-? In SMILES, nitro is 'NO2' or 'N=O'? The pattern [N+](=O)[O-] represents a nitro group (N+ with double bond O and single bond O-). So options include a nitro group attached to aromatic ring with an O=N? Option A: O=Nc1ccccc1[N+](=O)[O-] suggests a nitro group attached to the ring? Actually O=Nc1ccccc1 is a nitroso group (N=O) attached to benzene? O=N-c1... then [N+](=O)[O-] separate? Might represent a nitro group at para? Option B: O=Nc1cccc([N+](=O)[O-])c1 suggests nitro at ortho? Option C: O=Nc1ccccc1 is just nitrosaniline (no nitro). Option D: O=Nc1ccc([N+](=O)[O-])cc1 meta. The major product after nitration of nitrosaniline would be para-nitro-nitrosaniline, but among options only nitroaniline (no nitroso) appear? Option C lacks nitro, so likely not. The reaction sequence: aniline -> X (likely nitrosaniline), then nitration gives nitro substitution on ring. The nitroso group can be oxidized to nitro? Under strong acid nitration, the nitrosyl group may be replaced? However typical nitration of aniline gives nitroaniline (para major). Caro's acid may protect the amine as a nitroso group which is less activating, leading to nitration at para. The major product Z would be para-nitroaniline (i.e., nitro group para to amino). But SMILES for nitroaniline would be 'NO2' attached? Option C O=Nc1ccccc1 is nitrosaniline, not nitroaniline. Option A includes both N=O and NO2? Might represent nitroso and nitro? Unclear. Given limited options, the most plausible major product from nitration of nitrosaniline is para-nitro-nitrosaniline, which would have nitro group para to nitroso. Among options, A (para) seems correct. Choose A.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: A] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "A",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "A"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "A"
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Aniline is oxidized by Caro's acid (H2SO5) to nitrosobenzene (X, Ph–N=O). In the nitroso group, the –N=O substituent is deactivating but ortho/para-directing (resonance donation of the N lone pair dominates orientation). Nitration of nitrosobenzene with conc. HNO3/H2SO4 therefore gives mainly the para-nitro product (steric hindrance suppresses the ortho isomer), i.e., p-nitrosobenzene... actually p-nitro-nitrosobenzene: O=N–C6H4–NO2 (para). This matches option D.",
+       "objection": null,
+       "answer_line": "[TYPE: organic-reaction] [CALC_VALUE: D] [CALC_UNIT: none] [SUBSTANCE: O=Nc1ccc([N+](=O)[O-])cc1]",
+       "final_answer": "D",
+       "unit": "",
+       "answer_type": "organic-reaction",
+       "calc_value": [
+        "D"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "D"
+       ],
+       "substance": [
+        "O=Nc1ccc([N+](=O)[O-])cc1"
+       ],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-19T18:55:13.698078+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out each intermediate in order; at each step decide the selectivity (which carbon, which product is major) before going on.",
+       "solved": true,
+       "answer": "D"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
