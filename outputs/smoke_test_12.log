@@ -1,0 +1,61 @@
+Question kind this run: chains
+Physical Chemistry: 7 accepted so far.
+
+╔═══ CHAIN 1: equilibrium_constant → equilibrium_constant → delta_h → temperature  (txs [155, 136, 133]) ═══╗
+  [inputs] generator proposes values...
+  [engine] answer 327 K; traps: ['power_sign', 'units_mixed']
+  [stem] round 0: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [llama-3.3-70b] 749 K  → failed (wrong, genuine_difficulty)
+    [glm-5.3-flash] 258 K  → failed (reference_wrong)
+    [gpt-6-luna] 258 K  → failed (reference_wrong)
+
+╔═══ CHAIN 2: gas_state → partial_pressure → extent_of_adsorption  (txs [92, 286]) ═══╗
+  [inputs] generator proposes values...
+  [engine] answer 1.96; traps: ['adds_tension', 'power_n']
+  [stem] round 0: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [llama-3.3-70b] 1.96  → solved (correct)
+    ladder: llama-3.3-70b solved it → too easy
+  [refine] too easy → new_inputs: The problem trivially reduced to subtracting water vapor pressure and evaluating a single Freundlich formula; replace it with a system where
+  [engine] new answer 1.44
+  [stem] round 1: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [council] meta-llama/llama-3.3-70b-instruct: answer line unusable ('mmol/g' cannot be converted to ''); restated as '1.44'
+    [llama-3.3-70b] 1.44  → solved (correct)
+    ladder: llama-3.3-70b solved it → too easy
+  [refine] too easy → new_inputs: Specify a rigid closed vessel of fixed volume and mass of adsorbent so that gas-phase depletion occurs upon adsorption, requiring students t
+  [engine] new answer 2.4
+  [stem] round 2: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [council] meta-llama/llama-3.3-70b-instruct: answer line unusable ('mol/g' cannot be converted to ''); restated as '1.403'
+    [llama-3.3-70b] 1.403  → solved (wrong, slip)
+    ladder: llama-3.3-70b solved it → too easy
+  [refine] too easy → new_inputs: Switch from an open, fixed-pressure system to a closed batch adsorption vessel of known volume where the final equilibrium pressure is not c
+  [engine] new answer 2.52
+  [stem] round 3: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [council] meta-llama/llama-3.3-70b-instruct: answer line unusable ('mol/g' cannot be converted to ''); restated as '2.52'
+    [llama-3.3-70b] 2.52  → solved (correct)
+    ladder: llama-3.3-70b solved it → too easy
+  ✗ 3 refinements used; dropping this chain
+
+╔═══ CHAIN 3: degree_of_dissociation → equilibrium_constant → delta_h → temperature  (txs [160, 136, 133]) ═══╗
+  [inputs] generator proposes values...
+  [engine] answer 356.1 K; traps: ['forgets_total_moles', 'units_mixed']
+  [stem] round 0: writing the question...
+    gate mismatch (1/3): temperature T₁: the question states 600, it must be 450; the question does not state K at T₂ (should be 12.0); temperature T₂: the question states 450, it must be 600
+    gate passed (attempt 2)
+  [council] closed-book solves (cheaper members first)...
+    [llama-3.3-70b] 2125 K  → failed (wrong, genuine_difficulty)
+    [glm-5.3-flash] 475 K  → failed (wrong, genuine_difficulty)
+    [gpt-6-luna] 515 K  → failed (wrong, genuine_difficulty)
+
+✗ No question accepted this run.
+
+Spend this run: $0.0988  {"total_cost_usd": 0.0988, "by_role": {"generator": {"calls": 10, "prompt_tokens": 9242, "completion_tokens": 10298, "cost": 0.04555}, "extractor": {"calls": 7, "prompt_tokens": 3930, "completion_tokens": 6993, "cost": 0.00201}, "council": {"calls": 13, "prompt_tokens": 7372, "completion_tokens": 9944, "cost": 0.006204}, "verifier": {"calls": 10, "prompt_tokens": 20569, "completion_tokens": 11404, "cost": 0.007759}, "refiner": {"calls": 6, "prompt_tokens": 4681, "completion_tokens": 9005, "cost": 0.03728}}}

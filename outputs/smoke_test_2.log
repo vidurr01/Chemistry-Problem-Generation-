@@ -1,0 +1,63 @@
+Question kind this run: chains
+Physical Chemistry: 1 accepted so far.
+
+╔═══ CHAIN 1: delta_g → equilibrium_constant → delta_h → temperature  (txs [135, 136, 133]) ═══╗
+  [inputs] generator proposes values...
+  [engine] answer 416.7 K; traps: ['log10_as_ln', 'kJ_not_converted', 'units_mixed']
+  [stem] round 0: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [council] unusable reply (empty completion) — asking again (1/2)
+    [gpt-6-luna] 447.9 K → failed (reference_wrong)
+    [glm-5.3-flash] 416.8 K → solved (correct)
+    [qwen3.8-flash] None  → failed (wrong, genuine_difficulty)
+
+╔═══ CHAIN 2: radial_peaks → orbital_label → orbital_angular_momentum  (txs [326, 78]) ═══╗
+  [inputs] generator proposes values...
+Traceback (most recent call last):
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 340, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 310, in main
+    outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\flow.py", line 396, in run
+    print("  no question ideas available")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\flow.py", line 103, in _propose
+    out = stages.propose_inputs(adapter.config["display_name"], adapter.chain_text(cand["_plan"]),
+                                spec, refine=refine, errors=errors or None)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\stages.py", line 106, in propose_inputs
+    out = models.ask_json(role, model,
+                          "You design chemistry problems. Output JSON only.", prompt,
+                          max_tokens=3000, temperature=0.8)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\models.py", line 105, in ask_json
+    return call_json(create, parse_json, label=role)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\llm.py", line 181, in call_json
+    resp = call_with_retry(create, retries=retries, base_wait=base_wait, label=label)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\llm.py", line 165, in call_with_retry
+    return fn()
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\models.py", line 93, in create
+    resp = _client().chat.completions.create(
+        model=model,
+    ...<4 lines>...
+        extra_body=extra,
+    )
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\chat\completions\completions.py", line 1192, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<47 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.APIStatusError: Error code: 402 - {'error': {'message': "This request requires more credits, or fewer max_tokens. You requested up to 3000 tokens, but can only afford 2152. To increase, visit https://openrouter.ai/workspaces/default/keys/8a8300e0378448e60f0300aa7adf6138ca404d1c247f05be938ec017d5930b7a and adjust the key's total limit", 'code': 402, 'metadata': {'limit_source': 'openrouter_credits', 'remedy_hint': 'Add credits at https://openrouter.ai/settings/credits, or lower max_tokens / prompt size to fit your remaining balance.', 'provider_name': None, 'previous_errors': [{'code': 402, 'message': "This request requires more credits, or fewer max_tokens. You requested up to 3000 tokens, but can only afford 2152. To increase, visit https://openrouter.ai/workspaces/default/keys/8a8300e0378448e60f0300aa7adf6138ca404d1c247f05be938ec017d5930b7a and adjust the key's total limit"}]}}, 'user_id': 'user_REDACTED'}
+exit=1
