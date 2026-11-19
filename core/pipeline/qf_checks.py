@@ -12,6 +12,7 @@ import re
 
 from core import answers
 from core.pipeline import gate
+from core.pipeline.qf_draw import calibration_path
 from core.pipeline.qf_text import _scaled_equal, _trivial, stated_numbers, too_close_to_past
 from core.pipeline.qf_writer import preview_text
 
@@ -108,12 +109,11 @@ def _pct(xs, p):
     return xs[lo] + (xs[hi] - xs[lo]) * (k - lo)
 
 
-def _coherence_cuts(percentile=None) -> dict:
-    """Per-question cut-offs calibrated on real JEE Advanced questions and known bad ones
+def _coherence_cuts(percentile=None, subject: str = "physical") -> dict:
+    """Per-question cut-offs calibrated on real JEE Advanced questions of the subject and known bad ones
     (tools/calibrate_coherence.py), else COHERENCE_REJECT_AT for each. percentile: that percentile of the
     calibration's real scores instead of the stored cut-offs."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "knowledge",
-                        "coherence_calibration_physical.json")
+    path = calibration_path("coherence", subject)
     try:
         with open(path, encoding="utf-8") as f:
             cal = json.load(f)
@@ -135,7 +135,8 @@ def coherence_scores(stem: str) -> dict | None:
         return None
 
 
-def coherence_problems(stem: str, scores: dict | None = None, percentile="default") -> list:
+def coherence_problems(stem: str, scores: dict | None = None, percentile="default",
+                       subject: str = "physical") -> list:
     """Jev's verdict on whether the question is real chemistry: [] if it is (or if Jev cannot be
     reached: this check never blocks a run), else what to fix. scores: Jev's, if already asked;
     percentile: the cut-offs to judge them by (default COHERENCE_PERCENTILE)."""
@@ -144,7 +145,7 @@ def coherence_problems(stem: str, scores: dict | None = None, percentile="defaul
         return []
     out = []
     pct = COHERENCE_PERCENTILE if percentile == "default" else percentile
-    cut = _coherence_cuts() if pct is None else _coherence_cuts(pct)
+    cut = _coherence_cuts(subject=subject) if pct is None else _coherence_cuts(pct, subject)
     if p.get("invented_relation", 0) >= cut["invented_relation"]:
         out.append(f"it links quantities by an invented relation (Jev: {p['invented_relation']:.0%}); use only the "
                    f"formulas listed and standard relations, or return impossible")
@@ -171,9 +172,9 @@ LEVEL_INSTRUCTIONS = ("How hard is this chemistry exam question for a well-prepa
                       "reasoning it requires, not the length of the arithmetic.")
 
 
-def _level_floor() -> float | None:
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "knowledge",
-                        "level_calibration_physical.json")
+def _level_floor(subject: str = "physical") -> float | None:
+    """The level floor calibrated on real JEE papers of the subject (tools/calibrate_level.py); None: not calibrated."""
+    path = calibration_path("level", subject)
     try:
         with open(path, encoding="utf-8") as f:
             return float(json.load(f)["threshold"])
@@ -192,10 +193,10 @@ def jev_level(text: str) -> float | None:
         return None
 
 
-def level_problem(q: dict) -> str | None:
+def level_problem(q: dict, subject: str = "physical") -> str | None:
     """Why the written question is below JEE Advanced level, or None (at level, not calibrated, or Jev
     down). Said to the writer in terms it can act on."""
-    floor = _level_floor()
+    floor = _level_floor(subject)
     if floor is None:
         return None
     score = jev_level(preview_text(q))

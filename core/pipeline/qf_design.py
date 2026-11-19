@@ -11,7 +11,7 @@ import re
 
 from core import models
 from core.llm import CutOffError
-from core.pipeline.qf_draw import TWISTS
+from core.pipeline.qf_draw import TWISTS, calibration_path
 from core.pipeline.qf_checks import COHERENCE_QUESTIONS, COHERENCE_REJECT_AT
 
 
@@ -329,13 +329,13 @@ def design_plan_text(d: dict) -> str:
             f"Route: {d.get('route') or d.get('links', '')}\nGiven: {d.get('given', '')}\nAsked: {d.get('asked', '')}")
 
 
-def design_problems(design: dict) -> str | None:
+def design_problems(design: dict, subject: str = "physical") -> str | None:
     """Jev's coherence verdict on a DESIGN, before anything is written, with cut-offs calibrated on reviewed
-    reverse-designs of real JEE Advanced questions (knowledge/design_coherence_calibration_physical.json).
-    None when it is coherent, when there is no calibration (no check: an uncalibrated design check
-    rejected good designs) or when Jev cannot be reached."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "knowledge",
-                        "design_coherence_calibration_physical.json")
+    reverse-designs of real JEE Advanced questions of the subject
+    (knowledge/design_coherence_calibration_{subject}.json). None when it is coherent, when the subject has
+    no calibration (no check: an uncalibrated design check rejected good designs; never another subject's
+    cut-offs) or when Jev cannot be reached."""
+    path = calibration_path("design_coherence", subject)
     try:
         with open(path, encoding="utf-8") as f:
             cuts = {k: float(v) for k, v in json.load(f)["thresholds"].items()}

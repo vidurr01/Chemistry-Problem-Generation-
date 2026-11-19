@@ -874,13 +874,13 @@ class FitFloor(unittest.TestCase):
         scores = counted(seq)
         ad = SimpleNamespace(random_formulas=draw)
         bb = SimpleNamespace(tried_edges=lambda: set())
-        with mock.patch.object(qf_draw, "_fit_floor", lambda: 0.5), \
+        with mock.patch.object(qf_draw, "_fit_floor", lambda *a, **k: 0.5), \
                 mock.patch.object(qf_draw, "formulas_fit", safe(scores)), mock.patch("builtins.print"):
             best = qfirst.best_draw(ad, None, bb, lambda rec: None)
         self.assertEqual(best["_fit"], 0.6)                                     # second batch reached it
         self.assertLessEqual(calls["n"], 12)                                    # no third batch
         scores2 = iter([0.1] * 18)
-        with mock.patch.object(qf_draw, "_fit_floor", lambda: 0.5), mock.patch.object(qf_draw, "FIT_BATCHES", 3), \
+        with mock.patch.object(qf_draw, "_fit_floor", lambda *a, **k: 0.5), mock.patch.object(qf_draw, "FIT_BATCHES", 3), \
                 mock.patch.object(qf_draw, "formulas_fit", safe(scores2)), mock.patch("builtins.print"):
             best = qfirst.best_draw(ad, None, bb, lambda rec: None)
         self.assertIsNotNone(best)                                             # never stalls
@@ -1135,17 +1135,17 @@ class LevelCheck(unittest.TestCase):
         self.assertEqual(qfirst.preview_text(self.Q), "A 2.50 g sample gives … L of gas. Find M.")
 
     def test_off_until_calibrated_then_below_the_floor_goes_back_to_the_writer(self):
-        with mock.patch.object(qf_checks, "_level_floor", lambda: None):
+        with mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: None):
             self.assertIsNone(qfirst.level_problem(self.Q))                 # no calibration: never blocks
-        with mock.patch.object(qf_checks, "_level_floor", lambda: 2.8), \
+        with mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: 2.8), \
                 mock.patch.object(qf_checks, "jev_level", lambda text: 1.4), mock.patch("builtins.print"):
             why = qfirst.level_problem(self.Q)
         self.assertIn("JEE Main", why)
         self.assertIn("non-obvious", why)
-        with mock.patch.object(qf_checks, "_level_floor", lambda: 2.8), \
+        with mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: 2.8), \
                 mock.patch.object(qf_checks, "jev_level", lambda text: 3.3), mock.patch("builtins.print"):
             self.assertIsNone(qfirst.level_problem(self.Q))
-        with mock.patch.object(qf_checks, "_level_floor", lambda: 2.8), \
+        with mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: 2.8), \
                 mock.patch.object(qf_checks, "jev_level", lambda text: None):
             self.assertIsNone(qfirst.level_problem(self.Q))                 # Jev down: never blocks
 
@@ -1170,9 +1170,9 @@ class CoherenceCuts(unittest.TestCase):
         from core.pipeline import refine
         p = {"invented_relation": 0.30, "glued_parts": 0.30, "arbitrary_condition": 0.30}
         with mock.patch.object(refine, "jev_decide", lambda *a, **k: p):
-            with mock.patch.object(qf_checks, "_coherence_cuts", lambda: {k: 0.5 for k in qfirst.COHERENCE_QUESTIONS}):
+            with mock.patch.object(qf_checks, "_coherence_cuts", lambda *a, **k: {k: 0.5 for k in qfirst.COHERENCE_QUESTIONS}):
                 self.assertEqual(qfirst.coherence_problems("q"), [])                 # 30 % < 50 %
-            with mock.patch.object(qf_checks, "_coherence_cuts", lambda: {"invented_relation": 0.25, "glued_parts": 0.9,
+            with mock.patch.object(qf_checks, "_coherence_cuts", lambda *a, **k: {"invented_relation": 0.25, "glued_parts": 0.9,
                                                                        "arbitrary_condition": 0.9}):
                 probs = qfirst.coherence_problems("q")
         self.assertEqual(len(probs), 1)
@@ -1189,7 +1189,7 @@ class HonestLabels(unittest.TestCase):
     def _label(self, floor, level):
         from core.pipeline import flow
         captured = {}
-        with mock.patch.object(qf_checks, "_level_floor", lambda: floor), \
+        with mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: floor), \
                 mock.patch.object(qf_checks, "jev_level", lambda text: level), mock.patch("builtins.print"):
             # the labelling lines of flow._judge, run on their own
             label = models.DIFFICULTY_LABELS.get("glm-5.3-flash", "hard_advanced")
@@ -1226,7 +1226,7 @@ class Budget(unittest.TestCase):
 class Coherence(unittest.TestCase):
     def setUp(self):
         # fixed cut-offs: these tests check the logic, not whatever knowledge/coherence_calibration_physical.json holds
-        p = mock.patch.object(qf_checks, "_coherence_cuts", lambda: {k: 0.5 for k in qfirst.COHERENCE_QUESTIONS})
+        p = mock.patch.object(qf_checks, "_coherence_cuts", lambda *a, **k: {k: 0.5 for k in qfirst.COHERENCE_QUESTIONS})
         p.start()
         self.addCleanup(p.stop)
 
@@ -1401,8 +1401,8 @@ class QuestionFirstFlow(unittest.TestCase):
             mock.patch.object(adapters.PhysicalAdapter, "random_formulas", fixed),
             mock.patch.object(qfirst, "REQUIRE_PLACEHOLDERS", False),
             mock.patch.object(qf_draw, "FIT_CANDIDATES", 1),            # self.draws counts writing draws
-            mock.patch.object(qf_checks, "_level_floor", lambda: None),   # tests never call Jev's level check
-            mock.patch.object(qfirst, "coherence_problems", lambda stem: []),
+            mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: None),   # tests never call Jev's level check
+            mock.patch.object(qfirst, "coherence_problems", lambda stem, *a, **k: []),
             # never reach the real Jev from a test (the .env key is real): unavailable unless a test says
             mock.patch("core.pipeline.refine.jev_decide", self._jev_down),
             mock.patch("core.pipeline.refine.jev_choose", self._jev_down),
@@ -1515,7 +1515,7 @@ class QuestionFirstFlow(unittest.TestCase):
             raise ValueError("stop here")                    # only the writer's input is under test
         bb = mock.Mock(current=None)
         with mock.patch.object(qfirst, "design_question", lambda *a, **k: dict(design)), \
-                mock.patch.object(qfirst, "design_problems", lambda d: None), \
+                mock.patch.object(qfirst, "design_problems", lambda d, *a, **k: None), \
                 mock.patch.object(qfirst, "DESIGN_GATES", False), \
                 mock.patch.object(qfirst, "write_question", write), \
                 mock.patch.object(qfirst, "accepted_questions", lambda c: []), \

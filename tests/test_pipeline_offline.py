@@ -78,7 +78,7 @@ class _Env:
         self.patches = [
             mock.patch.object(entry, "get_subject_config", lambda s: self.cfg),
             mock.patch.object(models, "key_is_set", lambda *a: True),
-            mock.patch("core.pipeline.qf_checks._level_floor", lambda: None),   # never Jev's level check in tests
+            mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: None),   # never Jev's level check in tests
             mock.patch.object(dedup, "STORE", __import__("pathlib").Path(self.tmp, "seen.json")),
             mock.patch.object(queues, "_OUT", self.tmp),
             mock.patch.object(forms_layer, "FORM_WEIGHTS", {"forward": 1}),   # these fakes answer the forward chain

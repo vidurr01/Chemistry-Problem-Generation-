@@ -527,7 +527,7 @@ def _judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
         # level check, calibrated on real papers (tools/calibrate_level.py), decides; until it is calibrated
         # the label says the level is undecided. Acceptance does not change.
         from core.pipeline import qf_checks
-        floor = qf_checks._level_floor()
+        floor = qf_checks._level_floor(adapter.subject)
         if floor is None:
             label = "advanced_or_mains_hard"
         else:

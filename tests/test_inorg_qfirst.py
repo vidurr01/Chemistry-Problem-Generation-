@@ -109,8 +109,8 @@ class EndToEnd(unittest.TestCase):
                   mock.patch.object(queues, "_OUT", self.tmp),
                   mock.patch("tools.results.promote", lambda *a, **k: 0),
                   mock.patch.object(entry, "compute_meta_tags_for_subject", lambda *a, **k: {"stub": True}),
-                  mock.patch("core.pipeline.qf_design.design_problems", lambda d: None),
-                  mock.patch("core.pipeline.qf_checks._level_floor", lambda: None),
+                  mock.patch("core.pipeline.qf_design.design_problems", lambda d, *a, **k: None),
+                  mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: None),
                   mock.patch.object(IQ, "draw", lambda *a, **k: dict(self.cand))]
         for x in self.p:
             x.start()
@@ -161,6 +161,48 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(r["subject"], "inorganic")
         self.assertEqual(len(r["options"]), 4)
         self.assertIn("(A) opt0", r["question"])
+
+
+class CalibrationPerSubject(unittest.TestCase):
+    """Each subject reads its own calibration files; one without them gets no calibrated check, never
+    physical's numbers (until 2026-11-19 every loader hard-coded *_physical.json)."""
+
+    def setUp(self):
+        from core.pipeline import qf_draw
+        self.tmp = tempfile.TemporaryDirectory()
+        os.makedirs(os.path.join(self.tmp.name, "knowledge"))
+        for kind, body in (("level", {"threshold": 2.8}), ("fit", {"threshold": 0.5}),
+                           ("design_coherence", {"thresholds": {"glued_parts": 0.1}}),
+                           ("coherence", {"thresholds": {"glued_parts": 0.2}})):
+            with open(os.path.join(self.tmp.name, "knowledge", f"{kind}_calibration_physical.json"), "w") as f:
+                json.dump(body, f)
+        self.root = mock.patch.object(qf_draw, "_ROOT", self.tmp.name)
+        self.root.start()
+
+    def tearDown(self):
+        self.root.stop()
+        self.tmp.cleanup()
+
+    def test_physical_reads_its_own_files(self):
+        from core.pipeline import qf_checks, qf_draw
+        self.assertEqual(qf_checks._level_floor("physical"), 2.8)
+        self.assertEqual(qf_draw._fit_floor("physical"), 0.5)
+        self.assertEqual(qf_checks._coherence_cuts(subject="physical")["glued_parts"], 0.2)
+
+    def test_inorganic_never_borrows_physical(self):
+        from core.pipeline import qf_checks, qf_design, qf_draw
+        self.assertIsNone(qf_checks._level_floor("inorganic"))
+        self.assertIsNone(qf_draw._fit_floor("inorganic"))
+        self.assertEqual(qf_checks._coherence_cuts(subject="inorganic")["glued_parts"],
+                         qf_checks.COHERENCE_REJECT_AT)
+        with mock.patch("core.pipeline.refine.jev_decide", side_effect=AssertionError("Jev called")):
+            self.assertIsNone(qf_design.design_problems({"system": "x"}, "inorganic"))
+
+    def test_inorganic_reads_its_own_file_once_written(self):
+        from core.pipeline import qf_checks
+        with open(os.path.join(self.tmp.name, "knowledge", "level_calibration_inorganic.json"), "w") as f:
+            json.dump({"threshold": 1.9}, f)
+        self.assertEqual(qf_checks._level_floor("inorganic"), 1.9)
 
 
 if __name__ == "__main__":

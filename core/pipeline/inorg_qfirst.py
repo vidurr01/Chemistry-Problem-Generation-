@@ -344,7 +344,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             continue
         bb.note("design", **{k: v for k, v in design.items() if not k.startswith("_")})
         print(f"  [design] hides {design['hidden']}; format {design['format']}; trap: {str(design.get('trap'))[:110]}")
-        problem = design_problems(design)
+        problem = design_problems(design, adapter.subject)
         if problem:
             bb.note("design_rejected", problem=problem)
             print(f"    design rejected: {problem[:160]}")

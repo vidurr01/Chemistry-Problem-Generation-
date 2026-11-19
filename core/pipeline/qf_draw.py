@@ -15,6 +15,20 @@ _ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 EXEMPLARS = os.path.join(_ROOT, "knowledge", "jee_adv_twist_exemplars_physical.json")
 
 
+_UNCALIBRATED_SEEN: set = set()
+
+
+def calibration_path(kind: str, subject: str = "physical") -> str:
+    """knowledge/{kind}_calibration_{subject}.json: each subject has its own calibrations (real JEE questions of
+    that subject). A subject without one gets no calibrated check; it never borrows another subject's numbers.
+    Says so once per run, so a missing calibration is never silent."""
+    path = os.path.join(_ROOT, "knowledge", f"{kind}_calibration_{subject}.json")
+    if not os.path.exists(path) and (kind, subject) not in _UNCALIBRATED_SEEN:
+        _UNCALIBRATED_SEEN.add((kind, subject))
+        print(f"    note: no {kind} calibration for {subject} ({os.path.basename(path)}): that check is off")
+    return path
+
+
 TWISTS = {
     "inverse": "Run the chain backwards: give a later result (one a student would normally be asked "
                "for) and ask for an INPUT of one of the formulas, so the solver has to work back "
@@ -70,13 +84,12 @@ FIT_BATCHES = 30
 FIT_PARALLEL = 3         # Jev calls in flight at once: queued sets after a hit are cancelled, not paid
 
 
-def _fit_floor() -> float | None:
-    """FIT_FLOOR, else the floor calibrated on real JEE Advanced formula sets (tools/calibrate_fit.py),
-    else None (the best of one batch is written)."""
+def _fit_floor(subject: str = "physical") -> float | None:
+    """FIT_FLOOR, else the floor calibrated on real JEE Advanced formula sets of the subject
+    (tools/calibrate_fit.py), else None (the best of one batch is written)."""
     if FIT_FLOOR is not None:
         return FIT_FLOOR
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "knowledge",
-                        "fit_calibration_physical.json")
+    path = calibration_path("fit", subject)
     try:
         with open(path, encoding="utf-8") as f:
             return float(json.load(f)["threshold"])
@@ -105,7 +118,7 @@ def best_draw(adapter, chapter, bb, log):
     with none: another batch (at most FIT_BATCHES), then the best set seen. With no floor, or Jev
     down: the best of one batch. Returns the candidate with "_fit"."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    floor = _fit_floor()
+    floor = _fit_floor(getattr(adapter, "subject", "physical"))
     best, best_p, seen = None, None, set()
     for batch in range(FIT_BATCHES):
         cands = []

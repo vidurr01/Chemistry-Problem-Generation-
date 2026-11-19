@@ -4,6 +4,14 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-19
 
+### Calibrations are per subject
+- Every calibration loader hard-coded `knowledge/*_calibration_physical.json`, so the inorganic run judged its designs by physical's design cut-offs (`qf_design.design_problems`) and labelled `advanced` vs `mains_hard` by physical's level floor (`flow._judge` → `qf_checks._level_floor`). The live inorganic question GEN_20261119T135749 was labelled with physical's floor.
+- `core/pipeline/qf_draw.py`: `calibration_path(kind, subject)` → `knowledge/{kind}_calibration_{subject}.json`; a missing file prints a note once per run. `_fit_floor`, `qf_checks._coherence_cuts`, `coherence_problems`, `_level_floor`, `level_problem` and `qf_design.design_problems` take `subject` (default `physical`; physical behaviour unchanged). `best_draw` passes `adapter.subject`; `inorg_qfirst.run` and `flow._judge` pass theirs.
+- A subject with no calibration file gets no calibrated check (design check off, level label `advanced_or_mains_hard`, generic coherence cut-off), never another subject's numbers. Inorganic has none yet.
+- `tools/calibrate_level.py --subject {physical,inorganic,organic}`: scores that subject's real numerical questions (inorganic: 33 Main, 43 Advanced) and writes `level_calibration_{subject}.json`. `calibrate_coherence.py` and `calibrate_design.py` stay physical-only: their bad examples and reverse designs are physical and need the user's review for other subjects.
+- `tests/test_inorg_qfirst.py`: `CalibrationPerSubject` (3). Test patches of the loaders accept the new argument. 478 tests pass.
+- Inorganic level calibrated (`knowledge/level_calibration_inorganic.json`, log `outputs/calib_level_inorganic.log`): floor 1.59 (80 % of 43 real Advanced reach it, 33 % of 33 real Main do); physical's floor is 1.16, so the old borrowing was far too lenient for inorganic. GEN_20261119T135749 scores 1.62: still `advanced`, just above the floor. Two runs (the first crashed printing "≥" to a cp1252 pipe before writing; `calibrate_level.py` now reconfigures stdout to UTF-8): floors 1.61 and 1.59. $0.0032 ≈ ₹0.28 at ₹88/$.
+
 ### First live inorganic run
 - $0.0503 ≈ ₹4.4: draw 1 (MgCl₂·6H₂O → MgCl₂ → Mg, msq) too easy (Granite solved); draw 2 (B₂H₆ → H₃BO₃ → HBF₄, msq, X and Y hidden) accepted as GEN_20261119T135749, key AB computed by code (B is +3 in both; hand check agrees), Granite failed (A), GLM solved → advanced (Jev level 1.62), Granite solved after the insight hint. The pipeline works end to end. The question is shallow: for H₃BO₃ and HBF₄ code can compute only oxidation states (VSEPR does not take OH groups or the HBF₄ salt form), so all four options were about one property.
 
