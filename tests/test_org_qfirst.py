@@ -1,10 +1,10 @@
-"""Organic question-first flow (core/pipeline/org_qfirst.py): the draw, code-made options and key, the stem checks,
-and one run end to end with scripted models. Offline. Run: python -m unittest tests.test_org_qfirst"""
+"""Organic question-first flow (core/pipeline/org_qfirst.py) and the property functions it checks claims with
+(core/engine/organic/props.py): tree draws, the code key, and one run end to end with scripted models. Offline.
+Run: python -m unittest tests.test_org_qfirst"""
 
 import json
 import os
 import random
-import re
 import sys
 import tempfile
 import unittest
@@ -14,7 +14,10 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core import dedup, models                                  # noqa: E402
-from core.engine.organic.mol import canon, classes              # noqa: E402
+from core.engine.organic import props as OP                     # noqa: E402
+from core.engine.organic import rules as R                      # noqa: E402
+from core.engine.organic.labels import REAGENT_LABEL            # noqa: E402
+from core.engine.organic.mol import classes                     # noqa: E402
 from core.pipeline import org_qfirst as OQ, queues              # noqa: E402
 from subject_config import get_subject_config                   # noqa: E402
 
@@ -25,33 +28,72 @@ def _adapter():
     return SimpleNamespace(config=dict(CFG, display_name="Organic Chemistry"), subject="organic")
 
 
+class Props(unittest.TestCase):
+    def a(self, s):
+        return OP.askable(s)
+
+    def test_stereo(self):
+        self.assertEqual((self.a("CC(O)C(C)O")["stereocentres"], self.a("CC(O)C(C)O")["stereoisomers"]), (2, 3))  # meso
+        self.assertTrue(self.a("CC=CC")["geometrical_isomerism"])
+        self.assertFalse(self.a("C=CC")["geometrical_isomerism"])
+
+    def test_tests(self):
+        self.assertTrue(self.a("CCO")["iodoform_test"])
+        self.assertTrue(self.a("CC=O")["iodoform_test"])
+        self.assertFalse(self.a("CCCO")["iodoform_test"])
+        self.assertTrue(self.a("O=Cc1ccccc1")["tollens_test"])
+        self.assertFalse(self.a("O=Cc1ccccc1")["fehling_test"])
+        self.assertTrue(self.a("O=Cc1ccccc1")["dnp_test"])
+        self.assertEqual(self.a("CC(C)(C)O")["lucas_test"], "immediate turbidity")
+        self.assertEqual(self.a("CNC")["amine_class"], "secondary")
+        self.assertEqual(self.a("Oc1ccccc1")["pi_bonds"], 3)
+
+    def test_compare(self):
+        self.assertTrue(OP.compare("stereoisomers", 3, "3"))
+        self.assertTrue(OP.compare("iodoform_test", True, "positive"))
+        self.assertTrue(OP.compare("structure", "CCO", "OCC"))
+        self.assertTrue(OP.compare("molecular_formula", "C2H6O", "C2H6O"))
+        self.assertFalse(OP.compare("functional_group", ["alcohol"], "ketone"))
+
+
 class Draw(unittest.TestCase):
-    def test_draws_are_computed_chains_with_code_options(self):
+    def test_tree_draws(self):
         ad, rng = _adapter(), random.Random(0)
         for _ in range(10):
             c = OQ.draw(ad, rng)
             self.assertIsNotNone(c)
-            self.assertGreaterEqual(len(c["_path"]), OQ.CHAIN_MIN)
-            self.assertIn(c["_path"][-1]["to"], classes(c["_final"]))       # the product is in the end node
-            self.assertGreaterEqual(len(c["_wrong"]), 3)
-            self.assertNotIn(canon(c["_final"]), c["_wrong"])
-            self.assertTrue(any("selectivity" in w for w in c["_wrong"].values()))
+            n = len(c["_order"]) - 1
+            self.assertTrue(OQ.STEPS_MIN <= n <= OQ.STEPS_MAX, n)
+            parents = [c["_comps"][k]["parent"] for k in c["_order"][1:]]
+            self.assertTrue(any(parents.count(p) >= 2 for p in parents))                # a branch point
+            for k in c["_order"][1:]:
+                comp = c["_comps"][k]
+                self.assertIn(comp["edge"]["to"], classes(comp["smiles"]))
+            self.assertNotIn("[", OQ.scheme_text(c).split("\n")[0])
 
-    def test_evaluate_key_and_stem_checks(self):
+    def test_every_rule_has_a_label(self):
+        self.assertEqual(set(R.RULES), set(REAGENT_LABEL))
+
+    def test_evaluate_claims(self):
         c = OQ.draw(_adapter(), random.Random(3))
-        name = c["_start"][0]
-        res, probs = OQ.evaluate(c, {"stem": f"{name} is treated in turn with the reagents; X, Y; Z is"}, random.Random(1))
+        lab = c["_order"][-1]
+        f = c["_props"][lab]["molecular_formula"]
+        claims = [{"text": "t", "compound": lab, "property": "molecular_formula", "value": f},
+                  {"text": "f", "compound": lab, "property": "molecular_formula", "value": "C99H1"},
+                  {"text": "f", "compound": "P", "property": "stereocentres", "value": "7"},
+                  {"text": "f", "compound": "P", "property": "rings", "value": "9"}]
+        res, probs = OQ.evaluate(c, {"format": "msq", "lead": "x", "ask": "Which?", "claims": claims})
         self.assertEqual(probs, [])
-        self.assertEqual(len(res.options), 4)
-        self.assertEqual(res.options["ABCD".index(res.answer)], c["_final"])
-        _, probs = OQ.evaluate(c, {"stem": f"{name} gives {c['_final']}"}, random.Random(1))
-        self.assertTrue(any("shows a product" in p for p in probs))
-        _, probs = OQ.evaluate(c, {"stem": "some compound is treated"}, random.Random(1))
-        self.assertTrue(any("starting compound" in p for p in probs))
+        self.assertEqual(res.answer, "A")
+        _, probs = OQ.evaluate(c, {"format": "msq", "lead": "x", "ask": "Which?", "claims": claims[1:]})
+        self.assertTrue(probs)
+        res, probs = OQ.evaluate(c, {"format": "integer", "lead": "", "ask": "How many?",
+                                     "claims": [{"compound": lab, "property": "stereoisomers"}]})
+        self.assertEqual(res.answer, c["_props"][lab]["stereoisomers"])
 
 
 class EndToEnd(unittest.TestCase):
-    """A whole organic run: draw -> designer -> writer -> code options and key -> ladder -> saved."""
+    """A whole organic run: tree draw -> designer -> writer claims -> code key -> ladder -> saved."""
 
     def setUp(self):
         import run_groundup_final as entry
@@ -61,6 +103,7 @@ class EndToEnd(unittest.TestCase):
                         pending_file=os.path.join(self.tmp, "pending.json"),
                         coverage_state_file=os.path.join(self.tmp, "cov.json"))
         self.cand = OQ.draw(_adapter(), random.Random(5))
+        self.lab = self.cand["_order"][-1]
         self.p = [mock.patch.object(entry, "get_subject_config", lambda s: self.cfg),
                   mock.patch.object(models, "key_is_set", lambda *a: True),
                   mock.patch.object(dedup, "STORE", __import__("pathlib").Path(self.tmp, "seen.json")),
@@ -83,23 +126,20 @@ class EndToEnd(unittest.TestCase):
         for x in reversed(self.p):
             x.stop()
 
-    def _key(self, text):
-        for letter, smi in re.findall(r"\(([ABCD])\) (\S+)", text):
-            if canon(smi) == canon(self.cand["_final"]):
-                return letter
-        return "A"
-
     def fake(self, role, model, system, user, **kw):
         if role == "designer":
-            return {"system": "a sequence", "hidden": {"X": "step 1 product"}, "hidden_link": "X from the reagents",
-                    "route": "each step", "student_must_notice": "the selectivity", "trap": "the other isomer",
-                    "given": "start and reagents", "asked": "the final product"}
-        if role == "generator" and "Write the STEM" in user:
-            return {"stem": f"{self.cand['_start'][0]} is treated with the reagents in order, giving X and then Z. Z is"}
+            return {"system": "a scheme", "hidden": {"Q": "an intermediate"}, "hidden_link": "each compound",
+                    "route": "follow the scheme", "student_must_notice": "the branch", "trap": "a wrong formula",
+                    "given": "the scheme", "asked": "formulas", "format": "msq"}
+        if role == "generator" and "Write ONE JEE Advanced" in user:
+            f = self.cand["_props"][self.lab]["molecular_formula"]
+            claims = [{"text": f"{self.lab} is {f}", "compound": self.lab, "property": "molecular_formula", "value": f},
+                      {"text": "wrong", "compound": self.lab, "property": "molecular_formula", "value": "C99H1"},
+                      {"text": "wrong", "compound": "P", "property": "rings", "value": "9"},
+                      {"text": "wrong", "compound": "P", "property": "stereocentres", "value": "7"}]
+            return {"lead": "Consider the scheme.", "ask": "Which statements are correct?", "claims": claims}
         if role == "council":
-            right = self._key(user)
-            ans = "D" if right != "D" else "C"
-            ans = right if model != models.LADDER[0][1] else ans
+            ans = "B" if model == models.LADDER[0][1] else "A"
             return {"working": "w", "answer": ans, "final_answer": ans}
         if role in ("solution_writer", "generator"):
             return {"solution": "Step 1 ...", "hint": "h"}
@@ -117,9 +157,8 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(len(recs), 1)
         r = recs[0]
         self.assertEqual(r["subject"], "organic")
-        self.assertEqual(len(r["options"]), 4)
-        keyed = r["options"]["ABCD".index(r["answer"])]
-        self.assertEqual(canon(re.sub(r"^\([ABCD]\)\s*", "", keyed)), canon(self.cand["_final"]))   # key by code
+        self.assertEqual(r["answer"], "A")                          # computed by code
+        self.assertIn("P = ", r["question"])                        # the scheme is printed by code
 
 
 if __name__ == "__main__":

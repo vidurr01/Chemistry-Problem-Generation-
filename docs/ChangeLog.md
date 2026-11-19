@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-20
 
+### Organic questions: 5–8 step schemes with branches, and statements about any compound
+- The user's direction: organic questions are long reaction chains (5–8 steps for a tough question), with branches from any compound along the chain (P → Q → R, then R → S and R → T, each possibly going on); no joins; statements may be about the properties of any compound, start, middle or end.
+- `core/engine/organic/props.py` (new): properties computed by RDKit for one compound: molecular formula, molar mass, DBE, π bonds, rings, sp/sp²/sp³ carbons, stereocentres, stereoisomers (meso counted once), geometrical isomerism, aromatic, functional group, structure, and the tests JEE uses (iodoform, Tollens', Fehling's, NaHCO₃, neutral FeCl₃, carbylamine, 2,4-DNP, bromine water, Lucas, class of amine). Optical activity is left out: a racemic product makes "is optically active" ambiguous.
+- `core/pipeline/org_qfirst.py` rewritten: the draw builds a scheme of 5–8 steps (a main chain of 3+ steps and 1–2 branch points, branches going on at random), compounds labelled P, Q, R ...; code prints the scheme; the designer chooses the compounds, properties, format (msq, mcq_correct, count, integer) and trap; the writer writes the lead, the question line and each option as a claim (compound, property, value); code decides every claim, so the key is code's. Tempting wrong structures (a step's selectivity trap carried to each later compound) are shown to the designer and writer for false claims.
+- `core/engine/organic/labels.py` (new): an exam-style reagent label for every ruled edge (reagents and conditions, no reaction names); the graph's own reagent text was noisy ("BAc2, most common basic hydrolysis, IRREVERSIBLE") or incomplete ("CH3OH" for oxymercuration).
+- `tests/test_org_qfirst.py` rewritten (7): property values against standard answers, tree draws, claims and the integer format, a whole run with scripted models.
+
 ### First live organic run, and the fixes it showed
 - `outputs/live_organic_1.log`: $0.0464 ≈ ₹4.1 (₹88/$). Draw 1 (butane → 2-bromobutane → 2-nitrobutane) too easy (Granite solved); draw 2 too easy; draw 3 accepted as GEN_20261119T185523 (aniline → nitrosobenzene → nitration, key D = 1-nitro-4-nitrosobenzene by code; Granite failed, GLM solved → advanced_or_mains_hard; Granite solved after the insight hint). The pipeline works end to end with real models.
 - Fixed: the nitration rule nitrated nitrosobenzene, but conc. HNO3 oxidises Ar–N=O to Ar–NO2; the rule now refuses Ar–N=O (the accepted question rests on this).

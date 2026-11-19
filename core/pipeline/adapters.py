@@ -601,7 +601,7 @@ class OrganicAdapter:
 
     @staticmethod
     def answer_format(result):
-        return None
+        return "Give the answer as an integer." if result.kind == "count" else None
 
 
 ADAPTERS = {"physical": PhysicalAdapter, "inorganic": InorganicAdapter, "organic": OrganicAdapter}
