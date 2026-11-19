@@ -1,8 +1,16 @@
-# Organic graph: suspect edges (for approval)
+# Organic graph: suspect edges (decided 2026-11-20)
 
-These edges of `knowledge/reaction_graph.json` look wrong. Each has a proposed fix. None has a rule, so a walk
-never uses them; nothing in the graph file changes until you approve. Mark each line **OK** (apply the fix),
-**NO** (keep as is, I write a rule), or give your own fix.
+The user approved every proposed fix on 2026-11-20. Applied to `knowledge/reaction_graph.json` (199 → 179 edges):
+
+- **Deleted (20):** the 19 edges whose fix below is "remove", plus `nitro_compound_to_substituted_benzene_snhcl`
+  (a duplicate once the nitro → aniline edge uses Sn/HCl).
+- **Product, start or reagent fixed and given a rule (12):** the Cannizzaro, Zn dehalogenation, 2-naphthol coupling,
+  diol diacetate, ketal, CH2N2 ring expansion, Cu dehydrogenation, picric acid, alcohol + NH3, Sn/HCl, exhaustive
+  methylation and o-xylene → phthalic anhydride edges. Edge ids are unchanged; each edge's `notes` starts with
+  "fixed 2026-11-20".
+- **Moved to the polymer lookups (1):** `lactam_to_lactam_heat` (caprolactam → Nylon-6, not 6,6).
+
+The original list, as reviewed:
 
 | # | Edge | Graph says | Proposed fix |
 |---|---|---|---|

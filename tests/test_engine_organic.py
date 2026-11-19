@@ -56,11 +56,24 @@ class Edges(unittest.TestCase):
         import audit_organic
         rep = audit_organic.audit()
         self.assertEqual((rep["missing"], rep["no_molecule"], rep["wrong_class"], rep["crashed"]), ([], [], [], []))
-        self.assertGreater(rep["rules"], 140)
+        self.assertGreater(rep["rules"], 150)
 
-    def test_suspect_edges_have_no_rule(self):
+    def test_suspect_edges_resolved(self):
+        # the user's 2026-11-20 decisions: 20 deleted, 12 fixed with rules, 1 moved to the polymer lookups
+        self.assertEqual(edges.SUSPECT, {})
+        self.assertEqual(len(GRAPH["edges"]), 179)
+        self.assertNotIn("ketone_to_phenol_h", EDGE)
+        self.assertEqual(EDGE["vicinal_dihalide_to_alkyne_zndeltaexces"]["to"], "alkene")
+
+    def test_fixed_edges(self):
+        self.assertTrue(same(run("vicinal_dihalide_to_alkyne_zndeltaexces", "CC(Br)CBr").product, "C=CC"))
+        self.assertTrue(same(run("aldehyde_to_substituted_benzene_naohaqueouss", "O=Cc1ccccc1").product, "OCc1ccccc1"))
         with self.assertRaises(EngineError):
-            rules.apply(EDGE["vicinal_dihalide_to_alkyne_zndeltaexces"], "BrCCBr")
+            run("aldehyde_to_substituted_benzene_naohaqueouss", "CCC=O")         # α-H: aldol, not Cannizzaro
+        self.assertTrue(same(run("ketone_to_lactone_diazomethane", "O=C1CCCCC1").product, "O=C1CCCCCC1"))
+        self.assertTrue(same(run("substituted_benzene_to_phenol_1conch2so4de", "Oc1ccccc1").product,
+                             "O=[N+]([O-])c1cc([N+](=O)[O-])c(O)c([N+](=O)[O-])c1"))
+        self.assertTrue(same(run("amine_to_amine_heatsn2", "CCN").product, "CC[N+](C)(C)C"))
 
 
 class Selectivity(unittest.TestCase):

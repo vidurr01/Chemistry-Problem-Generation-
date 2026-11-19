@@ -1038,7 +1038,7 @@ def _azobenzene(s):
     return Result(smi(p[0]), why="Zn/NaOH: bimolecular reduction to the azo compound")
 
 
-@rule("nitro_compound_to_substituted_benzene_snhcl")
+@rule("nitro_compound_to_aniline_znnaoh2molor")
 def _sn_hcl(s):
     _need(s, "c[N+](=O)[O-]", "ArNO2")
     return Result(exhaust("[c:1][N+](=O)[O-]>>[c:1]N", s), why="Sn/HCl reduces ArNO2 to ArNH2")
@@ -1137,3 +1137,97 @@ def apply(edge: dict, smiles: str) -> Result:
     if edge["to"] not in classes(r.product):
         raise EngineError(f"{edge['id']}: {smiles} gives {r.product}, which is not a {edge['to']}")
     return r
+
+
+
+# ── edges fixed on 2026-11-20 (user-approved, docs/organic_suspect_edges.md) ──
+
+@rule("aldehyde_to_substituted_benzene_naohaqueouss")
+def _cannizzaro(s):
+    _need(s, "[CX3H1,CX3H2]=O", "CHO")
+    if not (_has(s, "[CX3H2]=O") or _has(s, "c[CX3H1]=O") or _has(s, "[CX4;H0]([#6])([#6])([#6])[CX3H1]=O")):
+        raise EngineError(f"{s}: Cannizzaro is modelled for HCHO, aromatic aldehydes and R3C–CHO (no α-H)")
+    alcohol = one("[CX3;H1,H2:1]=[O:2]>>[C:1][O:2]", s).product
+    acid = one("[CX3;H1,H2:1]=[O:2]>>[C:1](=[O:2])O", s).product
+    r = Result(alcohol, coproducts=[acid], why="Cannizzaro: no α-H, so the aldehyde disproportionates")
+    r.traps = {"carboxylic acid (the other half)": acid}
+    return r
+
+
+@rule("vicinal_dihalide_to_alkyne_zndeltaexces")
+def _zn_dehalogenate(s):
+    _need(s, "[Cl,Br,I][CX4][CX4][Cl,Br,I]", "vicinal dihalide")
+    return one("[Cl,Br,I][CX4:1][CX4:2][Cl,Br,I]>>[C:1]=[C:2]", s, why="Zn removes both halogens: the alkene")
+
+
+@rule("diazonium_salt_to_naphthalene_alkalinecoup")
+def _naphthol_couple(s):
+    _need(s, DIAZO, "ArN2+")
+    main = [x for x in canon(s).split(".") if _has(x, DIAZO)][0]
+    p = run("[c:1][N+]#N.[OH:2][c:3]1[cH:4][cH:10][c:11]2[cH:5][cH:6][cH:7][cH:8][c:9]2[cH:12]1>>"
+            "[c:1]/N=N/[c:12]1[c:3]([O:2])[c:4][c:10][c:11]2[c:5][c:6][c:7][c:8][c:9]21", main, "Oc1ccc2ccccc2c1")
+    if not p:
+        raise EngineError("coupling with 2-naphthol failed")
+    return Result(smi(p[0]), why="coupling at C-1 of 2-naphthol (alkaline): an orange-red azo dye")
+
+
+@rule("diol_to_diol_2eqchcooh")
+def _diacetate(s):
+    _need(s, "[CX4][OX2H1]", "OH")
+    return Result(exhaust("[CX4:1][OX2H1:2]>>[C:1][O:2]C(C)=O", s), why="every OH is acetylated (diester)")
+
+
+@rule("ketone_to_ether_roh", "CH3OH (excess), dry HCl")
+def _ketal(s):
+    _need(s, KET, "ketone")
+    return one("[#6:3][CX3:1](=O)[#6:4]>>[#6:3][C:1](OC)(OC)[#6:4]", s, why="two CH3OH add to C=O: the ketal")
+
+
+@rule("ketone_to_lactone_diazomethane")
+def _ring_expand(s):
+    _need(s, "[#6;R][CX3;R](=O)[CH2;R]", "cyclic ketone with an α-CH2")
+    prods = run("[#6;R:3][CX3;R:1](=[O:2])[CH2;R:4]>>[#6:3][C:1](=[O:2])C[C:4]", s)
+    return pick(prods, lambda p: 0, "CH2N2 inserts CH2 next to C=O: the ring grows by one", "other_insertion")
+
+
+@rule("diol_to_aldehyde_cu")
+def _cu_dehydrogenate(s):
+    _need(s, P_OH, "primary OH")
+    return one("[CX4;H2:1]([#6:2])[OX2H1]>>[C:1](=O)[#6:2]", s, why="Cu/573 K dehydrogenates a 1° alcohol to the aldehyde")
+
+
+@rule("substituted_benzene_to_phenol_1conch2so4de")
+def _picric(s):
+    if canon(s) != canon("Oc1ccccc1"):
+        raise EngineError("picric acid is made from phenol itself")
+    return Result(canon("O=[N+]([O-])c1cc([N+](=O)[O-])c(O)c([N+](=O)[O-])c1"),
+                  traps={"mononitration only": canon("O=[N+]([O-])c1ccc(O)cc1")},
+                  why="sulphonation then nitration: 2,4,6-trinitrophenol (picric acid)")
+
+
+@rule("alcohol_to_amine_al2o3450c")
+def _ammonolysis_alcohol(s):
+    _need(s, P_OH, "primary OH")
+    return one("[CX4;H2:1][OX2H1]>>[C:1]N", s, why="NH3 over Al2O3: the primary amine")
+
+
+@rule("amine_to_amine_heatsn2", "CH3I (excess)")
+def _quaternise(s):
+    _need(s, "[NX3;!$(NC=O)]([CX4])", "aliphatic amine")
+    cur = canon(s)
+    while True:
+        p = run("[NX3;!$(NC=O);!H0:1]>>[N:1]C", cur)
+        if not p:
+            break
+        cur = smi(p[0])
+    p = run("[NX3;H0;!$(NC=O):1]>>[N+:1]C", cur)
+    if not p:
+        raise EngineError(f"{s}: nothing to quaternise")
+    return Result(smi(p[0]), coproducts=["[I-]"], why="exhaustive methylation: quaternary ammonium iodide")
+
+
+@rule("substituted_benzene_to_anhydride_seecondition")
+def _oxylene(s):
+    if canon(s) != canon("Cc1ccccc1C"):
+        raise EngineError("modelled for o-xylene")
+    return Result(canon("O=C1OC(=O)c2ccccc21"), why="V2O5/air oxidises o-xylene to phthalic anhydride")

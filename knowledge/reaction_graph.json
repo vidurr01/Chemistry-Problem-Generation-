@@ -612,50 +612,6 @@
       "notes": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
-      "id": "acid_chloride_to_ester_alclfriedelc",
-      "from": "acid_chloride",
-      "to": "ester",
-      "reagents": [
-        "AlCl₃ (Friedel-Crafts-like acylium mechanism)"
-      ],
-      "conditions": "AlCl₃ (Lewis acid); RT; anhydrous CH₂Cl₂ or CS₂. R''COCl + AlCl₃ → acylium (R''CO⁺) → attacks ether O → cleaves one C-O bond → ester + R'X. Friedel-Crafts-like mechanism on ether. Anhydrous conditions required.",
-      "firing_condition": null,
-      "chapter": "Carboxylic Acids & Derivatives",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        139,
-        204
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "EtOH (2 equiv)"
-          ],
-          "conditions": "2 EtOH + COCl₂ → EtOCOOEt + 2 HCl; base (Et₃N or pyridine) to neutralise HCl; anhydrous; RT. Phosgene reacts with two alcohols sequentially → diethyl carbonate (carbonate ester). Highly toxic — handle in fume hood. Alternatively use dimethyl carbonate (DMC) as safer phosgene equivalent.",
-          "to": "ester",
-          "tx_index": 204,
-          "note": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-        }
-      },
-      "notes": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
       "id": "acid_chloride_to_ketone_dimethylcupr",
       "from": "acid_chloride",
       "to": "ketone",
@@ -931,9 +887,10 @@
       "from": "alcohol",
       "to": "amine",
       "reagents": [
-        "Al2O3/450°C"
+        "NH₃",
+        "Al₂O₃, 633 K"
       ],
-      "conditions": "450°C; Al₂O₃ catalyst; gas phase; high temperature. Mechanism: dehydration of alcohol → alkene (or ether) → then amine formation via Leuckart mechanism or direct substitution. Al₂O₃ catalyses both dehydration and amine synthesis. Preferentially gives tertiary amine (thermodynamic product at high T). Industrial route to triethylamine from ethanol + NH₃.",
+      "conditions": "Ammonolysis of an alcohol over Al₂O₃ (primary amine shown; industrially a mixture).",
       "firing_condition": null,
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
@@ -968,7 +925,7 @@
           "note": "Carbocation intermediate: check for rearrangement (1,2-H or 1,2-alkyl shift) if a more stable cation is accessible."
         }
       },
-      "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Carbocation intermediate: check for rearrangement (1,2-H or 1,2-alkyl shift) if a more stable cation is accessible."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): reagent was Al2O3 alone (that dehydrates); NH3 added. Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Carbocation intermediate: check for rearrangement (1,2-H or 1,2-alkyl shift) if a more stable cation is accessible."
     },
     {
       "id": "alcohol_to_carbene_chndiazometh",
@@ -1802,11 +1759,12 @@
     {
       "id": "aldehyde_to_substituted_benzene_naohaqueouss",
       "from": "aldehyde",
-      "to": "substituted_benzene",
+      "to": "alcohol",
       "reagents": [
-        "NaOH (aqueous, strong base)"
+        "conc. NaOH (aq)",
+        "then H₃O⁺"
       ],
-      "conditions": "NaOH (aq); RT; Cannizzaro reaction for aldehyde without α-H. Actually this is decarboxylation/elimination: (2,4,6-trinitrophenyl)methanal → on treatment with base, the aldehyde undergoes benzylic carbanion-type elimination → 1,3,5-trinitrobenzene + HCOO⁻? Or: Cannizzaro disproportionation → 50% alcohol + 50% acid. TNT-related aldehyde → strained system. More likely: base eliminates formyl group → TNB.",
+      "conditions": "Cannizzaro reaction: an aldehyde with no α-H disproportionates into the alcohol and the carboxylic acid (as its salt).",
       "firing_condition": null,
       "chapter": "Aldehydes & Ketones",
       "archetype": [
@@ -1841,7 +1799,7 @@
           "note": "Steric crowding deformylation: (2,6-dimethylphenyl)methanal (2,6-dimethylbenzaldehyde) + NaOH → 1,3-dimethylbenzene (m-xylene) + HCOONa (sodium formate); reason = STERIC CROWDING around the CHO group; the two ortho-methyl groups (2,6-positions) flank the CHO from both sides → OH⁻ cannot attack the C=O normally (too crowded, steric hindrance prevents nucleophilic approach) → instead, the aldehyde undergoes deformylation (C-CHO bond cleavage) → Ar⁻ + HCOO⁻; NOTE: this compound does NOT give Cannizzaro reaction despite having no α-H; REASON: Cannizzaro requires OH⁻ to attack C=O (step 1), which is blocked by steric crowding; deformylation is the alternative pathway; 2,6-disubstituted benzaldehyde is specifically noted as a Cannizzaro exception 'due to crowding'"
         }
       },
-      "notes": "Deformylation reaction: (2,4,6-trinitrophenyl)methanal (2,4,6-trinitrobenzaldehyde) + NaOH → 1,3,5-trinitrobenzene + HCOO⁻ (sodium formate); DEFORMYLATION = the C-CHO bond breaks, the CHO group is cleaved as HCOO⁻ (formate) and the aryl group leaves as Ar⁻ (aryl anion, stabilized by the three EWG NO₂ groups); mechanism: OH⁻ attacks C=O of ArCHO → [Ar-CH(OH)(O⁻)] tetrahedral intermediate → Ar⁻ migrates (1,2-anionic shift of Ar⁻ = aryl carbanion, stabilized by EWG) → HCOO⁻ remains → Ar⁻ + H⁺ → ArH (1,3,5-trinitrobenzene); ANALOGY: same as chloral anomaly (CCl₃⁻ migration from CCl₃CHO) but now Ar⁻ migrates instead of CCl₃⁻; GENERAL RULE: ArCHO with ≥2 EWG groups (NO₂, Cl, Br in ortho/para positions) → deformylation under NaOH; NO Cannizzaro products obtained; NOTE: single EWG (like p-NO₂-PhCHO alone) gives slow Cannizzaro (not deformylation); requires multiple or strong EWG for deformylation pathway | Steric crowding deformylation: (2,6-dimethylphenyl)methanal (2,6-dimethylbenzaldehyde) + NaOH → 1,3-dimethylbenzene (m-xylene) + HCOONa (sodium formate); reason = STERIC CROWDING around the CHO group; the two ortho-methyl groups (2,6-positions) flank the CHO from both sides → OH⁻ cannot attack the C=O normally (too crowded, steric hindrance prevents nucleophilic approach) → instead, the aldehyde undergoes deformylation (C-CHO bond cleavage) → Ar⁻ + HCOO⁻; NOTE: this compound does NOT give Cannizzaro reaction despite having no α-H; REASON: Cannizzaro requires OH⁻ to attack C=O (step 1), which is blocked by steric crowding; deformylation is the alternative pathway; 2,6-disubstituted benzaldehyde is specifically noted as a Cannizzaro exception 'due to crowding'"
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'substituted_benzene'; Cannizzaro gives the alcohol. Deformylation reaction: (2,4,6-trinitrophenyl)methanal (2,4,6-trinitrobenzaldehyde) + NaOH → 1,3,5-trinitrobenzene + HCOO⁻ (sodium formate); DEFORMYLATION = the C-CHO bond breaks, the CHO group is cleaved as HCOO⁻ (formate) and the aryl group leaves as Ar⁻ (aryl anion, stabilized by the three EWG NO₂ groups); mechanism: OH⁻ attacks C=O of ArCHO → [Ar-CH(OH)(O⁻)] tetrahedral intermediate → Ar⁻ migrates (1,2-anionic shift of Ar⁻ = aryl carbanion, stabilized by EWG) → HCOO⁻ remains → Ar⁻ + H⁺ → ArH (1,3,5-trinitrobenzene); ANALOGY: same as chloral anomaly (CCl₃⁻ migration from CCl₃CHO) but now Ar⁻ migrates instead of CCl₃⁻; GENERAL RULE: ArCHO with ≥2 EWG groups (NO₂, Cl, Br in ortho/para positions) → deformylation under NaOH; NO Cannizzaro products obtained; NOTE: single EWG (like p-NO₂-PhCHO alone) gives slow Cannizzaro (not deformylation); requires multiple or strong EWG for deformylation pathway | Steric crowding deformylation: (2,6-dimethylphenyl)methanal (2,6-dimethylbenzaldehyde) + NaOH → 1,3-dimethylbenzene (m-xylene) + HCOONa (sodium formate); reason = STERIC CROWDING around the CHO group; the two ortho-methyl groups (2,6-positions) flank the CHO from both sides → OH⁻ cannot attack the C=O normally (too crowded, steric hindrance prevents nucleophilic approach) → instead, the aldehyde undergoes deformylation (C-CHO bond cleavage) → Ar⁻ + HCOO⁻; NOTE: this compound does NOT give Cannizzaro reaction despite having no α-H; REASON: Cannizzaro requires OH⁻ to attack C=O (step 1), which is blocked by steric crowding; deformylation is the alternative pathway; 2,6-disubstituted benzaldehyde is specifically noted as a Cannizzaro exception 'due to crowding'"
     },
     {
       "id": "diol_to_aldehyde_hio4periodic",
@@ -2040,70 +1998,6 @@
         "distractor_plausibility": 2
       },
       "notes": "catalytic reforming/aromatization; also Mo2O3/delta; dehydrogenation + cyclization of alkane"
-    },
-    {
-      "id": "alkane_to_carboxylic_acid_conch2so4",
-      "from": "alkane",
-      "to": "substituted_benzene",
-      "reagents": [
-        "conc H2SO4",
-        "delta (heat)"
-      ],
-      "conditions": "Conc H₂SO₄; Δ (heat); electrophilic sulphonation. (CH₃)₃CH + H₂SO₄ → (CH₃)₃C-SO₃H. Mechanism: electrophilic attack of SO₃ (from H₂SO₄ equilibrium) on 3° C-H? More likely: SO₃ as electrophile in Markovnikov addition to isobutene → sulphonation. Or: conc H₂SO₄ direct sulphonation of alkane (harsh). Tertiary C-H most reactive.",
-      "firing_condition": null,
-      "chapter": "Hydrocarbons",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        418
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 3,
-        "semantic_obfuscation": 4,
-        "distractor_plausibility": 4
-      },
-      "notes": "Vapour-phase sulphonation of 2-methylpropane (isobutane); mechanism same as nitration = free radical; 2-methylpropane + conc H2SO4/Δ → 2-methylpropane-2-sulfonic acid (major, 3° position) + minor 1° product; rate of sulphonation: 3° > 2° >> 1° (same selectivity trend as FSR and nitration); also C-C bonds cleave at high temp giving shorter-chain sulfonic acids"
-    },
-    {
-      "id": "alkane_to_cycloalkane_electrolysis",
-      "from": "alkane",
-      "to": "cycloalkane",
-      "reagents": [
-        "electrolysis",
-        "5A current"
-      ],
-      "conditions": "Kolbe intramolecular electrolysis: disodium glutarate (glutaric acid Na₂ salt); electrolysis; 5A current; Pt anode. Anode: two –COO⁻ → two carboxyl radicals → lose 2CO₂ → trimethylene diradical → ring closure → cyclopropane. Intramolecular Kolbe: adipate (n=6 dicarboxylate) → cyclobutane; glutarate (n=5) → cyclopropane; pimelate (n=7) → cyclopentane.",
-      "firing_condition": null,
-      "chapter": "Hydrocarbons",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        407
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 3,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Intramolecular Kolbe electrolysis; NaOOC-(CH2)3-COONa (pentanedioate, glutarate) + 5A → both carboxylates lose CO2 → •CH2-CH2-CH2• (1,3-diradical) → intramolecular coupling → cyclopropane + 2CO2; general rule: NaOOC-(CH2)n-COONa → cycloalkane with n carbons; Q11-type: n=3 → cyclopropane; n=4 → cyclobutane; n=5 → cyclopentane"
     },
     {
       "id": "alkene_to_alcohol_ho",
@@ -2944,12 +2838,12 @@
     {
       "id": "vicinal_dihalide_to_alkyne_zndeltaexces",
       "from": "vicinal_dihalide",
-      "to": "alkyne",
+      "to": "alkene",
       "reagents": [
-        "Zn/Delta (excess Zn, heat)",
-        "2 equivalents Zn"
+        "Zn dust",
+        "CH₃OH, heat"
       ],
-      "conditions": "ALKYNE SYNTHESIS BY DOUBLE ZN DEHALOGENATION (RM lec 11, page 6):\n\nTEACHER Q18 (page 6): Br-chain-Br (dibromo or more) + Zn → 'n≡n' (= alkyne, H≡H type shown)\n\nROUTE:\n  Option 1: 1,1,2,2-Tetrahalide (gem-gem dihalide on two adjacent C's) + 2Zn → alkyne\n    R-CBr₂-CBr₂-R' + 2Zn → R-C≡C-R' + 2ZnBr₂\n    Each Zn removes one pair of geminal Br's → generates one triple-bond component\n    OR: removes both vicinal pairs in two steps\n  Option 2: Sequential treatment\n    Step 1: R-CBr₂-CBr₂-R' + Zn → R-CB",
+      "conditions": "Dehalogenation: Zn removes both halogens of a vicinal dihalide to give the alkene.",
       "firing_condition": null,
       "chapter": "Alkyl Halides",
       "archetype": [
@@ -2971,7 +2865,7 @@
         "semantic_obfuscation": 3,
         "distractor_plausibility": 3
       },
-      "notes": "Elimination: specify Saytzeff (small base, more substituted) vs Hofmann (bulky base/Hofmann exhaustive/N-oxide, less substituted) product."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'alkyne'; Zn on a vicinal dihalide gives the alkene. Elimination: specify Saytzeff (small base, more substituted) vs Hofmann (bulky base/Hofmann exhaustive/N-oxide, less substituted) product."
     },
     {
       "id": "alkyl_halide_to_amine_excessnh",
@@ -3131,50 +3025,6 @@
       "notes": "1,3-dibromopropane (Br-CH₂-CH₂-CH₂-Br, n=3, α,ω-dihaloalkane) + Mg/ether → cyclopropane; MECHANISM: Mg inserts into one C-Br → Br-CH₂-CH₂-CH₂-MgBr (monoGrignard) → the carbanion at C1 does intramolecular SN2 on C3-Br (3-exo-tet ring closure) → cyclopropane + MgBr₂; RING SIZE RULE for X-(CH₂)n-X + Mg: n=3 → 3-membered ring (cyclopropane); n=4 → 4-membered ring (cyclobutane); n=5 → 5-membered ring (cyclopentane); GENERAL: number of carbons in ring = n (the number of CH₂ groups between the two halogens); LONGER CHAINS: 1,5-dihalo + Mg(1eq)/Δ → cyclopentane (heat required for longer chains to overcome kinetic barrier; ring closure is thermally assisted for 5- and 6-membered rings)"
     },
     {
-      "id": "alkyl_halide_to_ester_naoet",
-      "from": "alkyl_halide",
-      "to": "ester",
-      "reagents": [
-        "NaOEt",
-        "heat"
-      ],
-      "conditions": "NaOEt (sodium ethoxide); heat (reflux in EtOH). CHCl₃ + 3 NaOEt → HC(OEt)₃ (triethyl orthoformate) + 3 NaCl. Mechanism: NaOEt displaces Cl (SN2) three times on CHCl₃ → HC(OEt)₃. Anhydrous conditions. Orthoformate used as formyl-equivalent, protecting group, and in synthesis.",
-      "firing_condition": null,
-      "chapter": "Alkyl Halides",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        208,
-        284
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 4
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "KNO2 (potassium nitrite)"
-          ],
-          "conditions": "AMBIDENT NUCLEOPHILE — NO2- FROM KNO2 ATTACKS VIA OXYGEN: Nitrite ion (NO2- = O-N=O-) is ambident: it can attack from either O or N. With KNO2 (free nitrite anion), the O-end attacks R-X preferentially → gives ALKYL NITRITE R-ONO (also written R-O-N=O). The product is an ester of nitrous acid (HO-N=",
-          "to": "ester",
-          "tx_index": 284,
-          "note": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-        }
-      },
-      "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
       "id": "alkyl_halide_to_ether_rona",
       "from": "alkyl_halide",
       "to": "ether",
@@ -3216,69 +3066,6 @@
         }
       },
       "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
-      "id": "alkyl_halide_to_geminal_dihalide_rliorganolit",
-      "from": "alkyl_halide",
-      "to": "geminal_dihalide",
-      "reagents": [
-        "RLi (organolithium)",
-        "RNa (organosodium)",
-        "n-BuLi",
-        "PhLi"
-      ],
-      "conditions": "CARBENE FROM GEM-DIHALIDE CYCLIC COMPOUNDS + RLi/RNa:\n\nREACTION TYPE: 1,1 α-elimination mediated by organolithium/organosodium (metal-halogen exchange then α-elimination).\n\nEXAMPLE 1: Gem-dibromocyclopropane (C₃H₄Br₂, Br₂ on same C of a cyclopropane ring) + RLi:\nStep 1: Li-Br exchange: RLi (the R⁻ carbanion of organolithium) + C-Br → R-Br + C-Li (lithium-carbon bond forms). The gem-diBr becomes gem-BrLi (one Br replaced by Li → Li carbanion at that C, with one Br still on same C).\nStep 2: 1,1 α-",
-      "firing_condition": null,
-      "chapter": "Alkyl Halides",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        319,
-        322,
-        365
-      ],
-      "meta_tags": {
-        "question_length_scope": 3,
-        "model_solution_length": 3,
-        "conceptual_fragility": 3,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 3,
-        "distractor_plausibility": 3
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "Mg/Delta (carbanion mechanism)",
-            "Zn/Delta (radical mechanism)",
-            "NaI/acetone/Delta",
-            "Zn/EtOH",
-            "Mg/ether"
-          ],
-          "conditions": "DEHALOGENATION: 1,n-DIHALIDE + METAL → CYCLIC PRODUCTS OR ALKENE:\n\nMECHANISM OPTIONS (for dehalogenation):\n① Mg/Δ → THINK CARBANION: Mg inserts into one C-X bond (Grignard-like) → organometallic carbanion at one C (C⁻ character) → the carbanion expels the other halide from the same or adjacent C → a",
-          "to": "geminal_dihalide",
-          "tx_index": 322,
-          "note": "Radical mechanism: initiation required (hν or ROOR). Chain process — omitting any propagation step loses marks in mechanism questions."
-        },
-        "reagent_2": {
-          "reagents": [
-            "Zn (zinc metal)",
-            "Zn/Delta (zinc with heat)",
-            "Zn-Cu (zinc-copper couple for more reactive substrates)"
-          ],
-          "conditions": "ZN/DELTA REDUCTIVE DEHALOGENATION — FUNCTION OF Zn (RM lec 11, pages 1-3):\n\nTEACHER HEADER: 'Funtion of Zn/Delta' (underlined, page 1)\nMECHANISM: Zn → Zn²⁺ + 2e⁻ (written explicitly by teacher)\nThe two electrons from Zn are used to break the two C-X bonds simultaneously.\n\nSUBSTRATE: Any vicinal 1,2-",
-          "to": "geminal_dihalide",
-          "tx_index": 365,
-          "note": "Elimination: specify Saytzeff (small base, more substituted) vs Hofmann (bulky base/Hofmann exhaustive/N-oxide, less substituted) product."
-        }
-      },
-      "notes": "Elimination: specify Saytzeff (small base, more substituted) vs Hofmann (bulky base/Hofmann exhaustive/N-oxide, less substituted) product. | Radical mechanism: initiation required (hν or ROOR). Chain process — omitting any propagation step loses marks in mechanism questions."
     },
     {
       "id": "alkyl_halide_to_grignard_mg",
@@ -3789,38 +3576,6 @@
       "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
-      "id": "amine_to_aldehyde_kmno4overoxi",
-      "from": "amine",
-      "to": "aldehyde",
-      "reagents": [
-        "KMnO4 (over-oxidation)"
-      ],
-      "conditions": "KMnO₄ (acidic, hot, conc); over-oxidation: R-CH₂-NH₂ → R-CH=NH (aldiimine) → R-CHO (hydrolysis) → R-COOH (further oxidation). Note: KMnO₄ with primary amines is vigorous and gives complex mixtures; the product depends on conditions. Hot acidic KMnO₄ tends to give carboxylic acid. Mild oxidation (CuO, 300°C) gives nitrile.",
-      "firing_condition": null,
-      "chapter": "Amines",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        101
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 2,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 3,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
       "id": "amine_to_amide_rcocl",
       "from": "amine",
       "to": "amide",
@@ -3880,9 +3635,10 @@
       "from": "amine",
       "to": "amine",
       "reagents": [
-        "heat/SN2"
+        "CH₃I (excess)",
+        "heat"
       ],
-      "conditions": "Heat; SN2 at primary alkyl halide; sealed tube or pressure vessel; excess R-X. Each successive alkylation requires R-X and heat. Control: (1) excess NH₃ favours primary; (2) excess R-X drives quaternary. Separation difficult — use Gabriel synthesis for pure primary amine. Hoffmann exhaustive methylation (CH₃I excess → quaternary ammonium salt → Ag₂O/H₂O → base → Hofmann elimination).",
+      "conditions": "Exhaustive methylation: every N–H is replaced and the quaternary ammonium iodide forms.",
       "firing_condition": null,
       "chapter": "Amines",
       "archetype": [
@@ -3947,97 +3703,7 @@
           "note": "EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
         }
       },
-      "notes": "Archetype ['I', 'II'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Radical mechanism: initiation required (hν or ROOR). Chain process — omitting any propagation step loses marks in mechanism questions. | EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
-    },
-    {
-      "id": "amine_to_aniline_heat200chofm",
-      "from": "amine",
-      "to": "aniline",
-      "reagents": [
-        "heat 200°C (Hofmann-Martius rearrangement)"
-      ],
-      "conditions": "Hofmann-Martius rearrangement: dry heat 200°C (neat or high-boiling solvent); no acid needed (salt itself rearranges on heating). Mechanism: N-alkyl cleaves → free alkyl cation (or tight ion pair) → electrophilic alkylation of ring at ortho (kinetic) or para (thermodynamic) position. Product: o- and p-alkylanilines. Used to interconvert N-alkyl and C-alkyl anilines.",
-      "firing_condition": null,
-      "chapter": "Amines",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        97,
-        98
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 5,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 4
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "HCl/heat (Fischer-Hepp rearrangement)"
-          ],
-          "conditions": "Fischer-Hepp rearrangement: dilute HCl (aqueous); RT or mild heat; N-nitroso compound (R-N(NO)-Ph or Ar). Mechanism: N-nitroso protonated → nitrosyl cation (NO⁺) migrates intramolecularly to para position of ring → para-nitroso aniline derivative. Requires secondary aromatic amine with at least one ",
-          "to": "aniline",
-          "tx_index": 98,
-          "note": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-        }
-      },
-      "notes": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
-      "id": "amine_to_diazonium_salt_nano",
-      "from": "amine",
-      "to": "diazonium_salt",
-      "reagents": [
-        "NaNO₂",
-        "HCl",
-        "0-5°C"
-      ],
-      "conditions": "0–5°C (CRITICAL: must maintain 0–5°C; >5°C → diazonium decomposes, PhN₂⁺ → phenol); aqueous HCl (or HBF₄); NaNO₂. Mechanism: HNO₂ (in situ from NaNO₂ + HCl) + ArNH₂ → ArN₂⁺Cl⁻ (diazonium salt). Primary aromatic amines only (aliphatic diazonium too unstable). Maintain cold strictly. ArN₂⁺ is electrophile for coupling; or undergoes Sandmeyer, Balz-Schiemann, Gattermann reactions.",
-      "firing_condition": null,
-      "chapter": "Amines",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        50,
-        249
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 2,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "NaNO₂ (sodium nitrite)",
-            "dil. HCl (dilute hydrochloric acid)"
-          ],
-          "conditions": "0-5°C (ice bath essential: aliphatic diazonium is unstable at higher temperature)",
-          "to": "diazonium_salt",
-          "tx_index": 249,
-          "note": "Temperature critical: 0–5°C for stable arenediazonium. Aliphatic diazonium decomposes immediately. Coupling requires alkaline medium."
-        }
-      },
-      "notes": "Temperature critical: 0–5°C for stable arenediazonium. Aliphatic diazonium decomposes immediately. Coupling requires alkaline medium."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): reagent was 'heat/SN2' (no reagent). Archetype ['I', 'II'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Radical mechanism: initiation required (hν or ROOR). Chain process — omitting any propagation step loses marks in mechanism questions. | EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
     },
     {
       "id": "amine_to_imine_rcho",
@@ -4166,37 +3832,6 @@
         "distractor_plausibility": 2
       },
       "notes": "LAH reduction of cyclic anhydride → diol: butanedioic anhydride (succinic anhydride, 5-membered ring with 2 C=O and 1 O in ring) + excess LiAlH₄ → butane-1,4-diol (HO-CH₂CH₂CH₂CH₂-OH, 1,4-diol); GENERAL: cyclic anhydride + LiAlH₄ → diol (ring opened, both C=O → CH₂-OH, and the ring O is released as water in workup); MECHANISM: first LiAlH₄ equivalent opens one C=O of the anhydride (ring opens: the O in ring becomes an alkoxide that is part of the chain) → forms a hydroxy acid intermediate; second LAH equivalent reduces the remaining C=O → diol; H₂O workup → diol; COMPARISON: succinic anhydride (5-membered) + LAH → 1,4-butanediol; glutaric anhydride (6-membered) + LAH → 1,5-pentanediol; PATTERN: n-membered ring anhydride → n-membered chain diol (ring opened, O in ring is removed/replaced by the chain)"
-    },
-    {
-      "id": "anhydride_to_ester_alcllewisaci",
-      "from": "anhydride",
-      "to": "ester",
-      "reagents": [
-        "AlCl₃ (Lewis acid)"
-      ],
-      "conditions": "AlCl₃; RT to mild heat; anhydrous. (R''CO)₂O + AlCl₃ → acylium attacks ether → both C-O bonds eventually cleaved → two esters. Similar to acid chloride cleavage above.",
-      "firing_condition": null,
-      "chapter": "Carboxylic Acids & Derivatives",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        140
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 2,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "aniline_to_diazonium_salt_nano2hclat05",
@@ -4808,37 +4443,6 @@
         "distractor_plausibility": 3
       },
       "notes": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
-      "id": "carbanion_to_nitro_compound_kmno4",
-      "from": "carbanion",
-      "to": "nitro_compound",
-      "reagents": [
-        "KMnO4"
-      ],
-      "conditions": "KMnO₄ (neutral or mildly basic, aqueous); RT to mild heat. Mechanism: oxidation of NH₂ → NHOH → NO₂ (successive 2e⁻ oxidations). 3° primary amine → 3° nitro compound (no alpha H for elimination side reactions). KMnO₄ less prone to over-oxidation for these substrates.",
-      "firing_condition": null,
-      "chapter": "GOC",
-      "archetype": [
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        102
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 3,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Archetype ['III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "carbanion_to_substituted_benzene_ohdelta",
@@ -5515,51 +5119,6 @@
       "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | CO₂ gas evolution = diagnostic test for RCOOH. Sulfonic acids (R-SO₃H) also react. p-Nitrophenol (pKa≈7.2) does NOT react with NaHCO₃ even though it's more acidic than regular phenol. | Ethanoic acid (CH3COOH) → CH3COO⁻ + H⁺; pKa = 4.76; contrast with homolytic which would give radical R-COO• + H• | AAc2 = Acid-catalysed, Acyl-O cleavage, bimolecular. Key proof: ¹⁸O label on alcohol R'-¹⁸OH → ¹⁸O retained in ester (R-CO-¹⁸O-R'). This means ACYL-O bond of the acid is broken (the acid OH is lost as water), and the ALCOHOL-O bond is retained in ester. 8 possible ester hydrolysis mechanisms: [Acid: AAc1, AAc2, AAL1, AAL2] + [Base: BAc1, BAc2, BAL1, BAL2]. Most common: AAc2 (esterification), BAc2 (saponification)."
     },
     {
-      "id": "cycloalkane_to_cycloalkane_diazomethane",
-      "from": "cycloalkane",
-      "to": "cycloalkane",
-      "reagents": [
-        "diazomethane (CH2N2)",
-        "UV light"
-      ],
-      "conditions": "CH₂N₂ (diazomethane); UV (hν); ring expansion. Diazomethane + cyclopentane → cyclopentyl carbene intermediate? More likely: :CH₂ (singlet carbene from hν/CH₂N₂) inserts into C-H bond → methylcyclopentane, not cyclohexane. Actually ring expansion: cyclopentylmethyl carbene → ring expansion → cyclohexane via 1,2-H shift. UV light generates :CH₂ from CH₂N₂ → C-H insertion into cyclopentane ring → cyclohexane (ring expansion by one C).",
-      "firing_condition": null,
-      "chapter": "Hydrocarbons",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        419,
-        519
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "ring rigidity restricts rotation",
-            "NOT interconvertible at RT"
-          ],
-          "conditions": "Geometric isomers (cis/trans) of 1,2-dimethylcyclopropane. Ring is rigid (no free rotation about C-C in ring). Cis: both CH₃ on same face; trans: CH₃ on opposite faces. NOT interconvertible at RT (would require ring opening = breaking C-C bond, ~80 kcal/mol). Trans isomer has C₂ symmetry (chiral, tw",
-          "to": "cycloalkane",
-          "tx_index": 519,
-          "note": "Geometric isomerism in cycloalkanes: the ring is RIGID (restricted rotation about ring C-C bonds) → GI possible for substituted cycloalkanes; CONDITION: each ring carbon bearing a substituent must have TWO DIFFERENT groups (the substituent and H are different → satisfied for monosubstituted carbons in the ring); CIS = both substituents on SAME FACE of the ring plane (same side = cis); TRANS = substituents on OPPOSITE FACES of ring plane; EXAMPLES: 1,2-dimethylcyclopropane: cis-1,2-dimethylcyclopropane (both Me same face) vs trans-1,2-dimethylcyclopropane (Me on opposite faces); 1,2-cyclobutanedicarboxylic acid: cis (both COOH same side) and trans (opposite); 1,2-dimethylcyclobutane: cis and trans; KEY: for 1,1-disubstituted cycloalkanes (both substituents on same C): that C has two groups to compare → if they are the SAME (e.g., 1,1-dimethyl) → no GI (C has identical groups); if different (e.g., 1-methyl-1-ethyl) → still just one carbon with different groups → still need second substituted carbon for GI comparison; GENERAL: ring system provides rigidity; GI exists when substituents can be either syn or anti relative to ring plane"
-        }
-      },
-      "notes": "Methylene insertion reaction; CH2N2 + UV → :CH2: (methylene carbene) + N2; :CH2: inserts into C-C bond of cyclopentane (ring expansion) → cyclohexane; ALSO :CH2: inserts into C-H bonds → methylcyclopentane (two products from cyclopentane + CH2N2/UV); both C-H insertion and C-C insertion are non-selective; ring expansion: cyclopentane (5-membered) → cyclohexane (6-membered) via C-C carbene insertion; another example: n-butane + CH2N2/UV → pentane + isopentane (C-H at 1° → pentane; C-H at 2° → isopentane; C-C insertion → methylbutane) | Geometric isomerism in cycloalkanes: the ring is RIGID (restricted rotation about ring C-C bonds) → GI possible for substituted cycloalkanes; CONDITION: each ring carbon bearing a substituent must have TWO DIFFERENT groups (the substituent and H are different → satisfied for monosubstituted carbons in the ring); CIS = both substituents on SAME FACE of the ring plane (same side = cis); TRANS = substituents on OPPOSITE FACES of ring plane; EXAMPLES: 1,2-dimethylcyclopropane: cis-1,2-dimethylcyclopropane (both Me same face) vs trans-1,2-dimethylcyclopropane (Me on opposite faces); 1,2-cyclobutanedicarboxylic acid: cis (both COOH same side) and trans (opposite); 1,2-dimethylcyclobutane: cis and trans; KEY: for 1,1-disubstituted cycloalkanes (both substituents on same C): that C has two groups to compare → if they are the SAME (e.g., 1,1-dimethyl) → no GI (C has identical groups); if different (e.g., 1-methyl-1-ethyl) → still just one carbon with different groups → still need second substituted carbon for GI comparison; GENERAL: ring system provides rigidity; GI exists when substituents can be either syn or anti relative to ring plane"
-    },
-    {
       "id": "cycloalkene_to_alkane_o3",
       "from": "cycloalkene",
       "to": "aldehyde",
@@ -5604,38 +5163,6 @@
         }
       },
       "notes": "Reductive ozonolysis of cyclopentene; cyclopentene + O3 → monozonide (C-O-O-O-C, 5-membered) → ozonide (1,2,4-trioxolane) → Zn/H2O cleaves ozonide reductively → pentane-1,5-dial (OHC-(CH2)3-CHO, glutaraldehyde); KEY: cyclic alkene gives ONE bifunctional product (the ring opens to give a linear dialdehyde, NOT two separate pieces); reductive workup (Zn or DMS) → aldehyde, not acid; Zn reduces O-O peroxide to ZnO | Oxidative ozonolysis of cyclopentene; cyclopentene + O3 → ozonide → H2O2 cleaves ozonide oxidatively → pentanedioic acid (glutaric acid, HOOC-(CH2)3-COOH); oxidative workup (H2O2 or Ag2O): aldehydes are OXIDIZED to carboxylic acids; the two aldehyde groups from reductive ozonolysis are oxidized to COOH; cyclic alkene → diacid (ONE molecule, ring opened); contrast with reductive: Zn/H2O → pentane-1,5-dial (dialdehyde); H2O2 → pentanedioic acid (diacid)"
-    },
-    {
-      "id": "diazonium_salt_to_alcohol_howaterasnuc",
-      "from": "diazonium_salt",
-      "to": "alcohol",
-      "reagents": [
-        "H₂O (water as nucleophile)"
-      ],
-      "conditions": "Aqueous medium; aliphatic diazonium → instant N₂ loss even at 0°C (unlike aryl diazonium)",
-      "firing_condition": null,
-      "chapter": "Amines",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        250
-      ],
-      "meta_tags": {
-        "question_length_scope": 3,
-        "model_solution_length": 3,
-        "conceptual_fragility": 3,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 3,
-        "distractor_plausibility": 3
-      },
-      "notes": "Carbocation intermediate: check for rearrangement (1,2-H or 1,2-alkyl shift) if a more stable cation is accessible."
     },
     {
       "id": "diazonium_salt_to_aryl_halide_cuxsandmeyer",
@@ -5715,11 +5242,12 @@
     {
       "id": "diazonium_salt_to_naphthalene_alkalinecoup",
       "from": "diazonium_salt",
-      "to": "naphthalene",
+      "to": "azo_compound",
       "reagents": [
-        "alkaline coupling"
+        "2-naphthol",
+        "NaOH (aq), 0–5 °C"
       ],
-      "conditions": "0–5°C; alkaline aqueous (NaOH or Na₂CO₃, pH 9–10); coupling at para position of β-naphthol. Electrophilic aromatic substitution: ArN₂⁺ (electrophile) + β-naphthol (highly activated ring, coupling at C-1, para to OH) → azo dye. Alkaline pH keeps naphthol as phenoxide (more nucleophilic). Acidic → protonates coupling partner → slower. Product: intensely coloured orange-red azo compound.",
+      "conditions": "Azo coupling with 2-naphthol at C-1 gives an orange-red azo dye.",
       "firing_condition": null,
       "chapter": "Amines",
       "archetype": [
@@ -5741,7 +5269,7 @@
         "semantic_obfuscation": 2,
         "distractor_plausibility": 2
       },
-      "notes": "Temperature critical: 0–5°C for stable arenediazonium. Aliphatic diazonium decomposes immediately. Coupling requires alkaline medium."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'naphthalene'; coupling gives an azo dye. Temperature critical: 0–5°C for stable arenediazonium. Aliphatic diazonium decomposes immediately. Coupling requires alkaline medium."
     },
     {
       "id": "diazonium_salt_to_nitrile_nacn",
@@ -5924,13 +5452,13 @@
     },
     {
       "id": "diol_to_aldehyde_cu",
-      "from": "diol",
+      "from": "alcohol",
       "to": "aldehyde",
       "reagents": [
         "Cu",
-        "300°C"
+        "573 K"
       ],
-      "conditions": "Cu catalyst; 300°C; air/O₂; catalytic oxidative dehydrogenation. HOCH₂CH₂OH → OHC-CHO (glyoxal) + 2H₂O. Industrial. Alternatively: KMnO₄ (mild, partial oxidation stops at aldehyde before carboxylic acid if carefully controlled). Also: HIO₄ cleaves 1,2-diols → 2 HCHO (not glyoxal, since vicinal diol cleaved).",
+      "conditions": "Dehydrogenation: a primary alcohol over hot Cu gives the aldehyde (a secondary one, the ketone).",
       "firing_condition": null,
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
@@ -5978,7 +5506,7 @@
           "note": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
         }
       },
-      "notes": "Stereochemistry: syn-diol from OsO₄ or cold KMnO₄; anti-diol from epoxide then H₂O/base. Specify workup conditions explicitly in answers. | Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): start was 'diol'; Cu/573 K dehydrogenates an alcohol. Stereochemistry: syn-diol from OsO₄ or cold KMnO₄; anti-diol from epoxide then H₂O/base. Specify workup conditions explicitly in answers. | Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "diol_to_alkane_redp",
@@ -6122,12 +5650,12 @@
     {
       "id": "diol_to_diol_2eqchcooh",
       "from": "diol",
-      "to": "diol",
+      "to": "ester",
       "reagents": [
-        "2 eq CH₃COOH",
-        "or Ac₂O"
+        "(CH₃CO)₂O (excess)",
+        "pyridine"
       ],
-      "conditions": "Acetic acid (2 equiv) or Ac₂O (2 equiv carefully); RT to 60°C; no special catalyst. 1° OH groups (C-1, C-3) are less hindered than 2° OH (C-2) → preferential esterification at positions 1 and 3. Selective under mild conditions. Can also use enzymatic acylation for strict regioselectivity.",
+      "conditions": "Every OH is acetylated: the diacetate (diester).",
       "firing_condition": null,
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
@@ -6149,7 +5677,7 @@
         "semantic_obfuscation": 2,
         "distractor_plausibility": 3
       },
-      "notes": "Archetype ['III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'diol'; acetylation gives the ester. Archetype ['III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "diol_to_ester_conchno",
@@ -6432,39 +5960,6 @@
       "notes": "DIBALH (diisobutylaluminium hydride) reduces ester to ALDEHYDE (stops at aldehyde, does NOT over-reduce to alcohol); ethyl ethanoate + DIBALH → ethanal (acetaldehyde); DIBALH is the MOST PREFERRED reagent for ester → aldehyde conversion; also: nitrile + DIBALH → aldehyde (after hydrolysis); amide + DIBALH → aldehyde (good yield); acyl halide + DIBALH → aldehyde; key: DIBALH stops at aldehyde stage because the aluminum alkoxide product is stable at -78°C and does not allow further reduction until workup"
     },
     {
-      "id": "ester_to_alkyl_halide_i2",
-      "from": "ester",
-      "to": "alkyl_halide",
-      "reagents": [
-        "I2",
-        "NaOH"
-      ],
-      "conditions": "I₂ + NaOH (aq, excess); reflux. First: saponification of ethyl acetate (NaOH, reflux) → ethanol + acetate. Then: ethanol (CH₃CH₂OH) undergoes iodoform test positive (CH₃CH₂OH → CH₃CHO → CH₃CO- → CHI₃ + formate) — or NaOI oxidises EtOH → acetaldehyde → CH₃CO- → CHI₃. Net: ethyl acetate → acetate (from saponification) + iodoform (from ethanol fragment).",
-      "firing_condition": null,
-      "chapter": "Carboxylic Acids & Derivatives",
-      "archetype": [
-        "II",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        218
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 2,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Archetype ['II', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
       "id": "ester_to_carboxylic_acid_h3odiluteaci",
       "from": "ester",
       "to": "carboxylic_acid",
@@ -6611,50 +6106,6 @@
         }
       },
       "notes": "Rearrangement step: product carbon skeleton differs from substrate. Always verify whether migration occurs before assigning product structure. | Strict anhydrous conditions required. Proton source (H₂O, ROH) destroys Grignard before reaction with substrate."
-    },
-    {
-      "id": "ester_to_substituted_benzene_alcl3",
-      "from": "ester",
-      "to": "substituted_benzene",
-      "reagents": [
-        "AlCl3"
-      ],
-      "conditions": "Fries rearrangement: AlCl₃ (Lewis acid, excess); heat (Δ, >150°C); anhydrous nitrobenzene or neat. High temperature → para product (4'-hydroxyacetophenone, 4-hydroxyphenyl ethanone). Low temperature → ortho product. AlCl₃ cleaves ester O-CO → acetyl group migrates to ring at para (high T). Used in synthesis of hydroxyphenyl ketones (sunscreen components).",
-      "firing_condition": null,
-      "chapter": "Carboxylic Acids & Derivatives",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        380,
-        439
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 5,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 4
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "AlCl3 (aluminium trichloride)",
-            "heat (Delta)"
-          ],
-          "conditions": "Fries rearrangement at low T (ortho product): AlCl₃; anhydrous; CS₂ or PhNO₂ solvent; RT to 100°C → ortho product (1-(2-hydroxyphenyl)ethan-1-one = 2'-hydroxyacetophenone). High T (>150°C) → para product (4'-hydroxyacetophenone). Acyl group migrates from O to ring C-ortho via intramolecular Friedel-",
-          "to": "substituted_benzene",
-          "tx_index": 439,
-          "note": "Fries rearrangement: aryl ester (Ar-O-CO-R) + AlCl3/Delta → hydroxy aryl ketone (acyl group migrates from O-ester to the aromatic ring; OH is exposed on ring); phenyl ethanoate (Ph-O-CO-CH3) + AlCl3/Delta → 1-(2-hydroxyphenyl)ethan-1-one (2-hydroxyacetophenone, ortho) as MAJOR at HIGH TEMP; 4-hydroxyacetophenone (para) MAJOR at LOW TEMP; KEY TEMPERATURE RULE: LOW temp → PARA product (kinetic); HIGH temp → ORTHO product (thermodynamic, chelation stabilization); products: ortho = cyclic chelate favored thermodynamically; para = less steric, kinetically favored; RELATED: Gattermann-Koch also introduces CHO to ring (but without rearrangement)"
-        }
-      },
-      "notes": "Fries rearrangement; phenyl acetate (O-acyl) + AlCl3 → 4-hydroxyacetophenone (C-acyl, para major); O-to-C acyl migration; low T favors para product; contrast: without AlCl3, phenol+CH3COCl gives O-acylation (ester) only | Fries rearrangement: aryl ester (Ar-O-CO-R) + AlCl3/Delta → hydroxy aryl ketone (acyl group migrates from O-ester to the aromatic ring; OH is exposed on ring); phenyl ethanoate (Ph-O-CO-CH3) + AlCl3/Delta → 1-(2-hydroxyphenyl)ethan-1-one (2-hydroxyacetophenone, ortho) as MAJOR at HIGH TEMP; 4-hydroxyacetophenone (para) MAJOR at LOW TEMP; KEY TEMPERATURE RULE: LOW temp → PARA product (kinetic); HIGH temp → ORTHO product (thermodynamic, chelation stabilization); products: ortho = cyclic chelate favored thermodynamically; para = less steric, kinetically favored; RELATED: Gattermann-Koch also introduces CHO to ring (but without rearrangement)"
     },
     {
       "id": "ether_to_alkyl_halide_conchxhihbra",
@@ -7118,38 +6569,6 @@
       "notes": "Archetype ['II', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
-      "id": "ketone_to_amine_hheat",
-      "from": "ketone",
-      "to": "amine",
-      "reagents": [
-        "H+/heat"
-      ],
-      "conditions": "Mannich reaction: aqueous EtOH or MeOH; slight acidity (pH 4–5, AcOH); RT to mild heat (50°C). Three components: ketone (with α-H) + HCHO + NH₃ (or primary/secondary amine). Mechanism: HCHO + NH₃ → iminium (H₂C=NH₂⁺) → enol attacks iminium → Mannich base (β-amino carbonyl). Product: β-aminoketone. Quaternary if 2° amine used (Mannich base with no N-H).",
-      "firing_condition": null,
-      "chapter": "Aldehydes & Ketones",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        89
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
       "id": "ketone_to_carbene_methylenepho",
       "from": "ketone",
       "to": "alkene",
@@ -7295,12 +6714,12 @@
     {
       "id": "ketone_to_ether_roh",
       "from": "ketone",
-      "to": "ether",
+      "to": "acetal",
       "reagents": [
-        "ROH",
-        "H⁺"
+        "CH₃OH (excess)",
+        "dry HCl"
       ],
-      "conditions": "RT to reflux; acid catalyst (H⁺, p-TsOH, or BF₃); excess alcohol; Dean-Stark or molecular sieves (remove H₂O). Mechanism: acid protonates ketone → oxocarbenium → alcohol attacks → β-alkoxy alcohol → loss of H₂O → enol ether. Enol ethers stable to base but hydrolysed easily by aqueous acid → ketone. Used as protecting groups for ketones.",
+      "conditions": "Two ROH add to C=O with loss of water: the ketal (acetal of a ketone).",
       "firing_condition": null,
       "chapter": "Aldehydes & Ketones",
       "archetype": [
@@ -7322,7 +6741,7 @@
         "semantic_obfuscation": 2,
         "distractor_plausibility": 2
       },
-      "notes": "Archetype ['III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'ether'; ROH/H+ on a ketone gives a ketal. Archetype ['III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "ketone_to_ketone_x2",
@@ -7418,11 +6837,12 @@
     {
       "id": "ketone_to_lactone_diazomethane",
       "from": "ketone",
-      "to": "lactone",
+      "to": "ketone",
       "reagents": [
-        "diazomethane (CH₂N₂)"
+        "CH₂N₂",
+        "BF₃·Et₂O"
       ],
-      "conditions": "Mechanism: CH₂N₂ adds to C=O as nucleophile → diazonium zwitterion intermediate (R₁-C(-O⁻)(-CH₂N₂⁺)-R₂). Loss of N₂ → 1,2-shift of group anti-periplanar to N₂ → chain-elongated ketone. Migration aptitude H > Ph > R. Examples: Ph-CO-CH₃ + CH₂N₂ → CH₃-CO-CH₂-Ph (Ph migrates); RCHO (aldehyde, H on C=O) + CH₂N₂ → R-CO-CH₃ (H migrates → methyl ketone). For cyclic ketones: ring expansion by one CH₂.",
+      "conditions": "Ring expansion (Tiffeneau–Demjanov type): CH₂ is inserted next to C=O of a cyclic ketone, giving the next larger cyclic ketone.",
       "firing_condition": null,
       "chapter": "Aldehydes & Ketones",
       "archetype": [
@@ -7444,7 +6864,7 @@
         "semantic_obfuscation": 3,
         "distractor_plausibility": 3
       },
-      "notes": "In the diazonium intermediate, the group ANTI-PERIPLANAR to N₂ migrates (like Beckmann rearrangement where anti group migrates). Priority: H > Ph > R — H migrates fastest because C-H bond is most easily donated (hyperconjugation-like). Ph > R because Ph can delocalize the developing positive charge. Contrast with Baeyer-Villiger where H also migrates fastest, but phenyl migrates LESS than 2° alkyl in BV (different mechanisms). CH₂N₂ + ketone is NOT the same as Arndt-Eistert (which uses acyl halide + CH₂N₂ → ketene → homologated acid)."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'lactone'; CH2N2 ring-expands to a ketone. In the diazonium intermediate, the group ANTI-PERIPLANAR to N₂ migrates (like Beckmann rearrangement where anti group migrates). Priority: H > Ph > R — H migrates fastest because C-H bond is most easily donated (hyperconjugation-like). Ph > R because Ph can delocalize the developing positive charge. Contrast with Baeyer-Villiger where H also migrates fastest, but phenyl migrates LESS than 2° alkyl in BV (different mechanisms). CH₂N₂ + ketone is NOT the same as Arndt-Eistert (which uses acyl halide + CH₂N₂ → ketene → homologated acid)."
     },
     {
       "id": "ketone_to_oxime_nhohhcl",
@@ -7478,52 +6898,6 @@
         "distractor_plausibility": 4
       },
       "notes": "Archetype ['I', 'II'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-    },
-    {
-      "id": "ketone_to_phenol_h",
-      "from": "ketone",
-      "to": "phenol",
-      "reagents": [
-        "H⁺",
-        "Δ"
-      ],
-      "conditions": "Dienone-Phenol rearrangement: H⁺ (conc H₂SO₄ or HCl), heat (Δ). Mechanism: protonation of C=O → allylic cation at C-4 → 1,2-shift of better migrating group (COOEt > Ph > Me) → dienyl cation → loss of H⁺ → aromatic phenol. Driving force: aromatisation. Acid catalyst essential. Migration aptitude: COOEt > Ph > Me.",
-      "firing_condition": null,
-      "chapter": "Aldehydes & Ketones",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        114,
-        654
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 5,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 4
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "H⁺ (acid catalysis)",
-            "heat"
-          ],
-          "conditions": "Mechanism: H⁺ protonates enone → allylic carbocation at C-4 → 1,2-migration of the better-migrating group (COOEt > Ph > Me) from C-4 to the adjacent C-3 → dienyl cation → loss of proton → phenol (aromatization). The group that MIGRATES is the one with better migratory aptitude; the remaining group s",
-          "to": "phenol",
-          "tx_index": 654,
-          "note": "Migration aptitude in Dienone-Phenol: COOEt (ethoxycarbonyl) > Ph (phenyl) > Me (methyl). The migrating group moves with its bonding electrons (nucleophilic migration). EWG-containing group (COOEt) migrates fastest because it stabilises the developing carbanion character at the migration terminus. Contrast with SN1 where EDG-Ar migrates fastest. Product is a phenol (thermodynamically stable aromatic compound drives rearrangement)."
-        }
-      },
-      "notes": "Rearrangement step: product carbon skeleton differs from substrate. Always verify whether migration occurs before assigning product structure. | Migration aptitude in Dienone-Phenol: COOEt (ethoxycarbonyl) > Ph (phenyl) > Me (methyl). The migrating group moves with its bonding electrons (nucleophilic migration). EWG-containing group (COOEt) migrates fastest because it stabilises the developing carbanion character at the migration terminus. Contrast with SN1 where EDG-Ar migrates fastest. Product is a phenol (thermodynamically stable aromatic compound drives rearrangement)."
     },
     {
       "id": "lactam_to_amine_lah",
@@ -7560,12 +6934,12 @@
     {
       "id": "lactam_to_lactam_heat",
       "from": "lactam",
-      "to": "lactam",
+      "to": "polymer",
       "reagents": [
-        "heat (Δ)",
-        "n H₂O eliminated (Nylon-6,6)"
+        "H₂O (trace)",
+        "heat, 533 K"
       ],
-      "conditions": "Nylon-6,6: two bifunctional monomers each with 6 carbons → co-polymer; 6,6 means 6C diamine + 6C diacid. Nylon-6: single monomer caprolactam (6-membered cyclic lactam) → homo-polymer via ring-opening at Δ. Both form amide bonds (-CO-NH-).",
+      "conditions": "Ring-opening polymerisation of caprolactam: Nylon-6.",
       "firing_condition": null,
       "chapter": "Carboxylic Acids & Derivatives",
       "archetype": [
@@ -7587,7 +6961,7 @@
         "semantic_obfuscation": 3,
         "distractor_plausibility": 3
       },
-      "notes": "Key differences: Nylon-6,6 = copolymer; Nylon-6 = homo-polymer. Both = condensation polymers, polyamides, fibres. Amide linkage is same in both but arrangement differs (Nylon-6,6: alternating 6C+6C; Nylon-6: uniform 6C). Properties: high tensile strength (H-bonding between amide groups → crystalline). Nylon-6 melting point lower than Nylon-6,6 (430°C vs 455°C) because of different H-bond geometry."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): product was 'lactam' and the polymer was called Nylon-6,6; it is Nylon-6 (polymer lookup). Key differences: Nylon-6,6 = copolymer; Nylon-6 = homo-polymer. Both = condensation polymers, polyamides, fibres. Amide linkage is same in both but arrangement differs (Nylon-6,6: alternating 6C+6C; Nylon-6: uniform 6C). Properties: high tensile strength (H-bonding between amide groups → crystalline). Nylon-6 melting point lower than Nylon-6,6 (430°C vs 455°C) because of different H-bond geometry."
     },
     {
       "id": "naphthalene_to_anhydride_o2",
@@ -7890,45 +7264,15 @@
       "notes": "Anionic polymerisation key feature: NO spontaneous chain termination → called 'living polymerisation'. The chain keeps growing as long as monomer is available. On addition of new monomer (even different type) → block copolymers can be formed. Examples: Buna-type synthetic rubbers, polyacrylonitrile, polyisoprene (anionic). Requires electron-poor monomers (C=C adjacent to EWG like -CN, -CHO, -COOR) to stabilise the carbanion intermediate."
     },
     {
-      "id": "nitrile_to_substituted_benzene_1ch3mgbr",
-      "from": "nitrile",
-      "to": "ketone",
-      "reagents": [
-        "(1) CH3MgBr",
-        "(2) H3O+"
-      ],
-      "conditions": "Step 1: CH₃MgBr (methylmagnesium bromide, Grignard) + PhCN (benzonitrile) in dry ether/THF, 0°C → imine-MgBr complex (N=C of nitrile + Grignard → imine anion: Ph-C(=NMgBr)-CH₃). Step 2: H₃O⁺ workup → imine → hydrolysis → ketone (Ph-CO-CH₃, acetophenone). Net: RC≡N + RMgX → imine → ketone (one more C from Grignard). Useful for ketone synthesis from nitrile.",
-      "firing_condition": null,
-      "chapter": "Amines",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        397
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 2,
-        "conceptual_fragility": 3,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 4,
-        "distractor_plausibility": 2
-      },
-      "notes": "Nitrile + Grignard → ketone; benzonitrile (PhCN) + CH3MgBr → Ph-C(=N-MgBr)-CH3 (ketimine metal salt, stops here) → H3O+ → Ph-C(=NH)-CH3 (imine) → H2O → 1-phenylethan-1-one (acetophenone, PhCOCH3) + NH3; ONE Grignard adds (imine C=N less electrophilic than nitrile C≡N, second addition blocked); product is KETONE not alcohol"
-    },
-    {
       "id": "nitro_compound_to_aniline_znnaoh2molor",
       "from": "nitro_compound",
       "to": "aniline",
       "reagents": [
-        "Zn/NaOH (2 mol) or LAH"
+        "Sn",
+        "conc. HCl",
+        "then NaOH"
       ],
-      "conditions": "2 equiv Zn (or excess) or LiAlH₄; aqueous NaOH (strongly basic); reflux. 4e⁻ reduction: each ArNO₂ → ArNH•, then bimolecular coupling → ArNH-NHAr (hydrazobenzene). Acid-catalysed rearrangement of hydrazobenzene → benzidine (4,4'-diaminobiphenyl). LiAlH₄ in dry ether also gives hydrazobenzene.",
+      "conditions": "Sn/HCl reduces Ar–NO₂ to Ar–NH₂ (anilinium salt, freed by base).",
       "firing_condition": null,
       "chapter": "Amines",
       "archetype": [
@@ -7963,7 +7307,7 @@
           "note": "EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
         }
       },
-      "notes": "EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): reagent was Zn/NaOH or LiAlH4 (those give azo/hydrazo compounds). EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
     },
     {
       "id": "nitro_compound_to_azo_compound_znnaoh1mol",
@@ -8008,50 +7352,6 @@
         }
       },
       "notes": "EAS: product regiochemistry determined by existing substituent(s). Check for conflicting or cooperating directors before assigning major product."
-    },
-    {
-      "id": "nitro_compound_to_substituted_benzene_snhcl",
-      "from": "nitro_compound",
-      "to": "substituted_benzene",
-      "reagents": [
-        "Sn/HCl"
-      ],
-      "conditions": "Reflux in aqueous ethanol or aqueous HCl; Sn/HCl (tin in conc HCl) or Fe/HCl or Zn/HCl or H₂/Pd. Mechanism: 6e⁻ reduction; Sn or Fe acts as electron source in acid. Industrial: H₂/catalyst (Cu-Cr oxide or Ni, 200°C). Lab: Sn/conc HCl → amine-SnCl₂ complex → basify (NaOH) → free amine. Also: catalytic hydrogenation (H₂, Pd/C, RT, 1 atm).",
-      "firing_condition": null,
-      "chapter": "Amines",
-      "archetype": [
-        "I",
-        "III"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        75,
-        76
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 4,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 1,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "conditions_variants": {
-        "reagent_1": {
-          "reagents": [
-            "Zn/NH4Cl/H2O (neutral)"
-          ],
-          "conditions": "RT; aqueous ammonium chloride (NH₄Cl, weakly acidic/neutral pH); Zn dust. Mechanism: 4e⁻ reduction; controlled by pH — neutral conditions stop at hydroxylamine. More basic → further reduction to amine. Zn/NH₄Cl: neutral reducing conditions. Product: N-arylhydroxylamine. Used for Bamberger rearrangem",
-          "to": "substituted_benzene",
-          "tx_index": 76,
-          "note": "Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
-        }
-      },
-      "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry. | Archetype ['I', 'III'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "oxime_to_oxime_notinterconv",
@@ -8115,37 +7415,6 @@
         "distractor_plausibility": 3
       },
       "notes": "Vanillin synthesis; 2-methoxyphenol has OCH3 occupying one ortho position → RTR :CCl2 attacks PARA instead of ortho; RTR rule: one ortho blocked → major product is PARA; 4-hydroxy-3-methoxybenzaldehyde = vanillin (flavoring, IUPAC name)"
-    },
-    {
-      "id": "phenol_to_anhydride_ovoindustria",
-      "from": "phenol",
-      "to": "anhydride",
-      "reagents": [
-        "O₂/V₂O₅/Δ (industrial)"
-      ],
-      "conditions": "Industrial: V₂O₅ catalyst; 400–450°C; O₂ (air); gas phase. Phenol vapour + O₂ → ring-opened oxidation → maleic anhydride (C₄H₂O₃). Also: benzene → maleic anhydride via V₂O₅/O₂/400°C. Side products: CO₂, H₂O. High temperature, high oxygen. Catalyst: vanadium pentoxide on support (Al₂O₃ or SiO₂). Industrial scale only.",
-      "firing_condition": null,
-      "chapter": "Alcohols, Phenols & Ethers",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        126
-      ],
-      "meta_tags": {
-        "question_length_scope": 2,
-        "model_solution_length": 2,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 2,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Archetype ['I'] transformation. Verify conditions carefully; the reagent identity determines mechanism and hence product regiochemistry/stereochemistry."
     },
     {
       "id": "phenol_to_aryl_halide_pclslowreact",
@@ -8707,45 +7976,14 @@
       "notes": "Reimer-Tiemann reaction; CHCl3+NaOH → :CCl2 (dichlorocarbene); :CCl2 attacks ortho carbanion of phenoxide → -Cl-/-H+ → salicylaldehyde (2-hydroxybenzaldehyde, MAJOR); ortho selectivity due to carbene attack on o-carbanion of phenoxide | Etard reaction; methylbenzene + CrO2Cl2/CS2 → [Ph-CH(OCr(OH)Cl2)2] complex intermediate → H3O+ → benzaldehyde (Ph-CHO); SELECTIVE: stops at aldehyde (not COOH); contrast: KMnO4 goes to benzoic acid; Etard specific to benzylic CH3 → CHO"
     },
     {
-      "id": "substituted_benzene_to_alkane_o3",
-      "from": "substituted_benzene",
-      "to": "ketone",
-      "reagents": [
-        "O3",
-        "Zn (reductive ozonolysis)"
-      ],
-      "conditions": "O₃; Zn (reductive workup); –78°C; CH₂Cl₂. 1,2-Dimethylbenzene (o-xylene) ozonolysis → ring opening → glyoxal-like fragments + butane-2,3-dione (2,3-butanedione = diacetyl = biacetyl, CH₃COCOCH₃). Complete ring opening of the ortho-substituted aromatic system? More precisely: per-ozonolysis of all C=C in ring of o-xylene → multiple carbonyl fragments including CH₃CO-COCH₃ (butane-2,3-dione). Vigorous conditions for aromatic ozonolysis.",
-      "firing_condition": null,
-      "chapter": "Aromatic Compounds",
-      "archetype": [
-        "I"
-      ],
-      "chemoselectivity": {
-        "requires_absent": [],
-        "node_redirect": {},
-        "priority_ref": null
-      },
-      "tx_ids": [
-        428
-      ],
-      "meta_tags": {
-        "question_length_scope": 4,
-        "model_solution_length": 2,
-        "conceptual_fragility": 2,
-        "number_of_exceptions": 3,
-        "semantic_obfuscation": 2,
-        "distractor_plausibility": 2
-      },
-      "notes": "Ozonolysis of o-xylene (1,2-dimethylbenzene); treating benzene ring as Kekulé structure with 3 C=C bonds: o-xylene + O3/Zn → butane-2,3-dione (diacetyl, CH3-CO-CO-CH3) + ethanedial (glyoxal, OHC-CHO); the two C=C bonds adjacent to the two CH3 groups give the CH3-CO-CO-CH3 fragment; the third C=C gives OHC-CHO; general rule for benzene ozonolysis: treat as Kekulé structure, cleave each C=C → sum of fragments; for plain benzene: 3x ethanedial (glyoxal) = 3x OHC-CHO"
-    },
-    {
       "id": "substituted_benzene_to_anhydride_seecondition",
       "from": "substituted_benzene",
       "to": "anhydride",
       "reagents": [
-        "see conditions"
+        "O₂ (air)",
+        "V₂O₅, 773 K"
       ],
-      "conditions": "-M power determined by: electrophilicity of carbonyl/sp carbon + stabilisation of negative charge in -M structure. Anhydride has two C=O competing for electrons. Carboxylate (COO⁻) weakest because negative charge already stabilised.",
+      "conditions": "o-Xylene is oxidised to phthalic anhydride.",
       "firing_condition": null,
       "chapter": "Aromatic Compounds",
       "archetype": [
@@ -8768,7 +8006,7 @@
         "semantic_obfuscation": 3,
         "distractor_plausibility": 3
       },
-      "notes": "Practical ordering for ring electron density comparison: NO₂ strongest -M (both -M and -I); COO⁻ weakest -M (compensating negative charge). Amide (-CONH₂) weaker -M than ester (-COOR) because N lone pair donates back into C=O."
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): reagent was 'see conditions'. Practical ordering for ring electron density comparison: NO₂ strongest -M (both -M and -I); COO⁻ weakest -M (compensating negative charge). Amide (-CONH₂) weaker -M than ester (-COOR) because N lone pair donates back into C=O."
     },
     {
       "id": "substituted_benzene_to_carboxylic_acid_1naoh",
@@ -8862,13 +8100,13 @@
     },
     {
       "id": "substituted_benzene_to_phenol_1conch2so4de",
-      "from": "substituted_benzene",
+      "from": "phenol",
       "to": "phenol",
       "reagents": [
-        "(1)conc H2SO4/delta",
-        "(2)conc HNO3/conc H2SO4"
+        "(1) conc. H₂SO₄, heat",
+        "(2) conc. HNO₃"
       ],
-      "conditions": "Step 1: conc H₂SO₄, Δ → sulphonation at ortho/para → 2,4-disulphophenol (blocks ring). Step 2: conc HNO₃/H₂SO₄ → nitration replaces sulphonate groups + nitrates at remaining positions → 2,4,6-trinitrophenol (picric acid). Alternative: direct fuming HNO₃ on phenol carefully. Picric acid: very acidic (pKa 0.4), yellow explosive solid (keep moist).",
+      "conditions": "Phenol is sulphonated, then nitration replaces the SO₃H groups: 2,4,6-trinitrophenol (picric acid).",
       "firing_condition": null,
       "chapter": "Aromatic Compounds",
       "archetype": [
@@ -8890,7 +8128,7 @@
         "semantic_obfuscation": 2,
         "distractor_plausibility": 2
       },
-      "notes": "Picric acid synthesis (good yield); step 1: phenol + conc H2SO4/delta → 2,4-phenoldisulfonic acid (SO3H blocks C-2 and C-4); step 2: + conc HNO3/H2SO4 → NO2 displaces SO3H at 2, 4, 6 → 2,4,6-trinitrophenol (picric acid); direct HNO3 on phenol gives LOW YIELD due to oxidation of OH by HNO3"
+      "notes": "fixed 2026-11-20 (user-approved, docs/organic_suspect_edges.md): start was 'substituted_benzene'; picric acid is made from phenol. Picric acid synthesis (good yield); step 1: phenol + conc H2SO4/delta → 2,4-phenoldisulfonic acid (SO3H blocks C-2 and C-4); step 2: + conc HNO3/H2SO4 → NO2 displaces SO3H at 2, 4, 6 → 2,4,6-trinitrophenol (picric acid); direct HNO3 on phenol gives LOW YIELD due to oxidation of OH by HNO3"
     },
     {
       "id": "substituted_benzene_to_substituted_benzene_conchno3",

@@ -2,6 +2,13 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-11-20
+
+### Organic graph: the 32 suspect edges decided (user-approved)
+- `knowledge/reaction_graph.json`: 199 → 179 edges. 20 deleted (chemically wrong or duplicates, incl. `nitro_compound_to_substituted_benzene_snhcl`, a duplicate of the fixed Sn/HCl edge). 12 fixed in place (ids kept, `notes` says what changed): Cannizzaro → alcohol; Zn on a vicinal dihalide → alkene; 2-naphthol coupling → azo compound; diol + Ac2O → ester; ketone + CH3OH/HCl → acetal; CH2N2 ring expansion → ketone; Cu/573 K starts from an alcohol; picric acid starts from phenol; alcohol → amine with NH3/Al2O3; nitro → aniline with Sn/HCl; amine + excess CH3I → quaternary salt; o-xylene + V2O5/air → phthalic anhydride. Caprolactam → Nylon-6 (was "6,6") moved to the polymer lookups.
+- `core/engine/organic/rules.py`: rules for the 12 fixed edges (Cannizzaro only without α-H: HCHO, ArCHO, R3C–CHO). `edges.SUSPECT` is now empty; `mol.py` counts quaternary ammonium ions as amines; `pool.py` adds o-xylene.
+- 155 of 179 edges have a rule, 24 are concept/polymer edges. Audit: 674 products, 0 problems. `docs/organic_suspect_edges.md` records the decisions.
+
 ## 2026-11-19
 
 ### Organic question-first pipeline (same pattern as inorganic)

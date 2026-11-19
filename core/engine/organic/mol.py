@@ -73,7 +73,7 @@ _NODE_SMARTS = {
     "anhydride": ["[CX3](=O)[OX2][CX3](=O)"],
     "lactone": ["[#6;R][CX3;R](=O)[OX2;R][#6;R]"],
     "lactam": ["[#6;R][CX3;R](=O)[NX3;R][#6;R]"],
-    "amine": ["[NX3;H2,H1,H0;!$(N-C=O);!$(N=*);!$(N-N);!$(N-O);!$(N-S)]([CX4])"],
+    "amine": ["[NX3;H2,H1,H0;!$(N-C=O);!$(N=*);!$(N-N);!$(N-O);!$(N-S)]([CX4])", "[NX4+]([CX4])([CX4])([CX4])[CX4]"],
     "aniline": ["c[NX3H2]"],
     "diazonium_salt": ["c[N+]#N"],
     "nitrile": ["[CX2]#[NX1]"],
