@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-19
 
+### Organic engine (RDKit), step 1: rules for the reaction edges
+- `core/engine/organic/` (new): `mol.py` (canonical SMILES, `same`, formulas, `classes`: which graph nodes a molecule is in), `pool.py` (starting molecules with SMILES for every walkable node; the names already in `molecule_constructor.json` keep their formulas, checked by test), `react.py` (reaction SMARTS runner and the JEE selectivity rankings: Markovnikov, Saytzeff/Hofmann, EAS o/p vs meta on a monosubstituted ring), `rules.py` (one rule per reaction edge; each returns the product, co-products and traps = the products of the wrong selectivity), `edges.py` (edges with no rule: 23 concept/intermediate/polymer edges, 32 suspect edges).
+- 144 of 199 edges have a rule. `rules.apply(edge, smiles)` refuses a molecule the edge does not apply to, one with no single major product (two equally favoured regioisomers), and one whose product falls outside the edge's end node (Clemmensen on benzaldehyde gives toluene, not an alkane).
+- Generic reagents are fixed to the simplest member (CH3COCl, CH3OH, CH3NH2, CH3I, HBr, Br2) and listed in `rules.REAGENT_USED` so the question can state them. Phenols and anilines are refused by the generic EAS rules (they tribrominate, oxidise or protonate).
+- `docs/organic_suspect_edges.md`: the 32 suspect edges with proposed fixes, for the user's approval. They have no rule until approved.
+- `tools/audit_organic.py`: every rule on every pool molecule of its start node; 639 products, 0 crashes, every rule works on at least one molecule. `tests/test_engine_organic.py` (15). RDKit 2026.09.2 installed in `.venv`.
+
 ### Inorganic: wider species properties (questions were shallow)
 - `core/engine/inorganic/species.py`: three new property families, all computed by rule, none typed in:
   - **Oxoacids and oxoanions** with one central atom (H2SO4, H3PO3, HNO2, H3BO3, HCO3⁻): `central_shape`, `central_hybridisation`, `basicity`. Each O–H is modelled as a single-bonded group; P keeps its P–H bonds (5-valent P: H3PO3 one, H3PO2 two, so dibasic and monobasic); boric acid is monobasic (Lewis acid). Peroxo acids (H2SO5) and organic acids (HCOOH) are refused.
