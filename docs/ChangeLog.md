@@ -4,6 +4,15 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-19
 
+### Inorganic: wider species properties (questions were shallow)
+- `core/engine/inorganic/species.py`: three new property families, all computed by rule, none typed in:
+  - **Oxoacids and oxoanions** with one central atom (H2SO4, H3PO3, HNO2, H3BO3, HCO3⁻): `central_shape`, `central_hybridisation`, `basicity`. Each O–H is modelled as a single-bonded group; P keeps its P–H bonds (5-valent P: H3PO3 one, H3PO2 two, so dibasic and monobasic); boric acid is monobasic (Lewis acid). Peroxo acids (H2SO5) and organic acids (HCOOH) are refused.
+  - **Salts' ions** (KClO3, CaSO4·2H2O, Ca(HCO3)2, NH4NO3, HBF4): `anion_shape`, `anion_hybridisation`, `cation_shape`, `cation_hybridisation`.
+  - **3d metal ions** in simple ions and salts (Fe²⁺, FeCl3, Cr2(SO4)3, K2MnO4, CuCl): `metal_ion_d_electrons`, `metal_ion_unpaired` (free ion, Hund), `metal_ion_magnetism`, `metal_ion_spin_only_moment`. Averaged states (Fe3O4) and 4d/5d metals are not computed.
+- Fixed: HNO2 (and other oxoacids) got a plain-VSEPR `shape` with the H bonded to the central atom (HNO2 "trigonal planar"); that shape is now dropped for oxoacids.
+- Graph species with a property beyond oxidation state: 79 → 191 of 354 (any property: 236 → 269).
+- `tests/test_engine_inorganic.py`: `SpeciesWider` (5).
+
 ### Calibrations are per subject
 - Every calibration loader hard-coded `knowledge/*_calibration_physical.json`, so the inorganic run judged its designs by physical's design cut-offs (`qf_design.design_problems`) and labelled `advanced` vs `mains_hard` by physical's level floor (`flow._judge` → `qf_checks._level_floor`). The live inorganic question GEN_20261119T135749 was labelled with physical's floor.
 - `core/pipeline/qf_draw.py`: `calibration_path(kind, subject)` → `knowledge/{kind}_calibration_{subject}.json`; a missing file prints a note once per run. `_fit_floor`, `qf_checks._coherence_cuts`, `coherence_problems`, `_level_floor`, `level_problem` and `qf_design.design_problems` take `subject` (default `physical`; physical behaviour unchanged). `best_draw` passes `adapter.subject`; `inorg_qfirst.run` and `flow._judge` pass theirs.

@@ -24,6 +24,10 @@ PROPERTIES = {
     "complex_oxidation_state": "number", "complex_d_electrons": "number", "complex_unpaired": "number",
     "complex_magnetism": "text", "complex_geometry": "text", "complex_hybridisation": "hybrid",
     "complex_spin_only_moment": "number",
+    "central_shape": "text", "central_hybridisation": "hybrid", "basicity": "number",
+    "anion_shape": "text", "anion_hybridisation": "hybrid", "cation_shape": "text", "cation_hybridisation": "hybrid",
+    "metal_ion_d_electrons": "number", "metal_ion_unpaired": "number", "metal_ion_magnetism": "text",
+    "metal_ion_spin_only_moment": "number",
     # "oxidation_state:<El>" for any element of the species
 }
 DESCRIPTIONS = {
@@ -33,8 +37,24 @@ DESCRIPTIONS = {
     "complex_d_electrons": "d electrons of the metal", "complex_unpaired": "unpaired electrons",
     "complex_magnetism": "magnetic behaviour", "complex_geometry": "geometry",
     "complex_hybridisation": "hybridisation of the metal", "complex_spin_only_moment": "spin-only moment (BM)",
+    "central_shape": "shape around the central atom of the oxoacid or oxoanion",
+    "central_hybridisation": "hybridisation of the central atom of the oxoacid or oxoanion",
+    "basicity": "basicity of the oxoacid (number of replaceable H)",
+    "anion_shape": "shape of the salt's anion",
+    "anion_hybridisation": "hybridisation of the central atom of the salt's anion",
+    "cation_shape": "shape of the salt's polyatomic cation",
+    "cation_hybridisation": "hybridisation of the central atom of the salt's polyatomic cation",
+    "metal_ion_d_electrons": "d electrons of the metal ion", "metal_ion_unpaired": "unpaired electrons of the metal ion",
+    "metal_ion_magnetism": "magnetic behaviour of the metal ion",
+    "metal_ion_spin_only_moment": "spin-only moment of the metal ion (BM)",
 }
 _CATIONS = {"H": 1, "Li": 1, "Na": 1, "K": 1, "Rb": 1, "Cs": 1, "NH4": 1, "Mg": 2, "Ca": 2, "Sr": 2, "Ba": 2}
+# fixed-charge cations of salts whose anion is looked at (not H: an acid is not a salt)
+_SALT_CATIONS = {**{k: v for k, v in _CATIONS.items() if k != "H"}, "Be": 2, "Al": 3, "Ag": 1, "Zn": 2}
+# anions whose charge is fixed, for the metal's oxidation state in a simple salt (FeSO4, Cr2(SO4)3, CuCN)
+_SALT_ANIONS = {"F": -1, "Cl": -1, "Br": -1, "I": -1, "O": -2, "S": -2, "OH": -1, "CN": -1, "SCN": -1,
+                "NO3": -1, "NO2": -1, "SO4": -2, "SO3": -2, "S2O3": -2, "CO3": -2, "HCO3": -1, "C2O4": -2,
+                "PO4": -3, "ClO3": -1, "ClO4": -1, "OCl": -1}
 _ANIONS = {"Cl": -1, "Br": -1, "I": -1, "F": -1, "NO3": -1, "OH": -1, "SO4": -2, "CO3": -2}
 
 
@@ -84,6 +104,108 @@ def _complex_text(sid: str):
     return entity + ("" if q == 0 else f"{abs(q)}{'+' if q > 0 else '-'}")
 
 
+def _charged(body: str, charge: int) -> str:
+    return body + ("" if charge == 0 else f"^{abs(charge)}{'+' if charge > 0 else '-'}")
+
+
+def _max_ox(el: str) -> int:
+    g = P.group_of(el)
+    return g - 10 if g >= 13 else g
+
+
+def _oxo_text(body: str, charge: int):
+    """An oxoacid or oxoanion with ONE central atom X (H2SO4, H3PO3, HNO2, H3BO3, HCO3-, ClO4-) as a VSEPR text
+    about X: each O-H is a single-bonded group (written F, which bonds the same way), every other O a terminal
+    O, and P's own P-H bonds stay H (P is 5-valent in its oxoacids: H3PO3 has one P-H, H3PO2 two).
+    Returns (text, X, number of O-H), or None when the species is not of that kind (two centres, peroxo,
+    organic, HOCl whose centre is O)."""
+    counts = parse_formula(body)[0]
+    others = [e for e in counts if e not in ("H", "O")]
+    if len(others) != 1 or counts[others[0]] != 1 or "O" not in counts:
+        return None
+    x = others[0]
+    if P.is_transition(x) or P.group_of(x) in (1, 2, 18):
+        return None
+    try:
+        ox = P.oxidation_state(_charged(body, charge), x)
+    except EngineError:
+        return None
+    if ox.denominator != 1 or ox > _max_ox(x) or (x == "C" and ox != 4):   # H2SO5 (+8 by the rules), HCOOH
+        return None
+    n_xh = (5 - int(ox)) // 2 if x == "P" and int(ox) in (1, 3) else 0
+    n_oh = counts.get("H", 0) - n_xh
+    n_oxo = counts["O"] - n_oh
+    if n_oh < 0 or n_oxo < 0 or (n_oxo == 0 and P.group_of(x) == 17):
+        return None
+    text = x + (f"O{n_oxo}" if n_oxo else "") + (f"F{n_oh}" if n_oh else "") + (f"H{n_xh}" if n_xh else "")
+    return _charged(text, charge), x, n_oh
+
+
+def _split(body: str, head: str):
+    """'Ca(HCO3)2' with head 'Ca' -> (1, 'HCO3', 2); 'K2Cr2O7' with 'K' -> (2, 'Cr2O7', 1); else None."""
+    m = re.fullmatch(re.escape(head) + r"(\d*)(?:\((.+)\)(\d*)|(.+))", body)
+    if not m:
+        return None
+    rest, n_rest = (m.group(2), int(m.group(3) or 1)) if m.group(2) else (m.group(4), 1)
+    if re.search(r"[()\[\]·]", rest) or not rest[:1].isupper():
+        return None
+    return int(m.group(1) or 1), rest, n_rest
+
+
+def _salt_parts(body: str):
+    """'KClO3' -> ('K', 'ClO3', -1); 'Ca(HCO3)2' -> ('Ca', 'HCO3', -1). None when the cation's charge is not
+    fixed or the rest is not one anion."""
+    for cat in sorted(_SALT_CATIONS, key=len, reverse=True):
+        sp = _split(body, cat)
+        if not sp:
+            continue
+        n_cat, anion, n_an = sp
+        q, r = divmod(-_SALT_CATIONS[cat] * n_cat, n_an)
+        if r or q >= 0:
+            return None
+        return cat, anion, q
+    return None
+
+
+def _ion_props(body: str, charge: int, prefix: str) -> dict:
+    """Shape and hybridisation of a polyatomic ion: oxoanions by _oxo_text, others (NH4+, BF4-, I3-) by VSEPR."""
+    try:
+        oxo = _oxo_text(body, charge)
+        v = P.vsepr(oxo[0], central=oxo[1]) if oxo else P.vsepr(_charged(body, charge))
+    except EngineError:
+        return {}
+    return {f"{prefix}_shape": v["shape"], f"{prefix}_hybridisation": v["hybridisation"]}
+
+
+def _metal_ion(body: str, charge: int) -> dict:
+    """d electrons, unpaired electrons (free ion, Hund's rule), magnetism and spin-only moment of the one 3d
+    metal in a simple ion or salt (Fe2+, FeCl3, Cr2(SO4)3, K2MnO4, CuCl). Complexes go to complex_info;
+    averaged states (Fe3O4) and 4d/5d metals (spin state not fixed by free-ion rules) are not computed."""
+    counts = parse_formula(body)[0]
+    metals = [e for e in counts if P.is_transition(e)]
+    if len(metals) != 1 or P.row_of(metals[0]) != 3:
+        return {}
+    m = metals[0]
+    if len(counts) == 1:
+        ox = Fraction(charge) if charge > 0 else None
+    else:
+        try:
+            ox = P.oxidation_state(_charged(body, charge), m)
+        except EngineError:
+            ox, sp = None, _split(body, m) if charge == 0 else None
+            if sp and sp[1] in _SALT_ANIONS:
+                ox = Fraction(-_SALT_ANIONS[sp[1]] * sp[2], sp[0])
+    if ox is None or ox.denominator != 1 or ox < 1:
+        return {}
+    d = P.group_of(m) - int(ox)
+    if not 0 <= d <= 10:
+        return {}
+    n = d if d <= 5 else 10 - d
+    return {"metal_ion_d_electrons": d, "metal_ion_unpaired": n,
+            "metal_ion_magnetism": "paramagnetic" if n else "diamagnetic",
+            "metal_ion_spin_only_moment": round((n * (n + 2)) ** 0.5, 2)}
+
+
 def askable(sid: str) -> dict:
     """Every property code can compute for the species: {key: value}. Empty if none."""
     out = {}
@@ -110,6 +232,36 @@ def askable(sid: str) -> dict:
     try:
         m = P.mo_diatomic(text)
         out.update({"bond_order": m["bond_order"], "mo_magnetism": m["magnetism"], "mo_unpaired": m["unpaired"]})
+    except EngineError:
+        pass
+    oxo = None
+    try:
+        oxo = _oxo_text(body, charge)
+        if oxo:
+            for k in ("shape", "hybridisation", "polarity"):   # plain VSEPR put the H on X (HNO2 "trigonal planar")
+                out.pop(k, None)
+            v = P.vsepr(oxo[0], central=oxo[1])
+            out.update({"central_shape": v["shape"], "central_hybridisation": v["hybridisation"]})
+            if charge == 0:
+                # boric acid is a Lewis acid (B(OH)3 + OH- -> B(OH)4-): monobasic whatever its O-H count
+                out["basicity"] = 1 if P.group_of(oxo[1]) == 13 else oxo[2]
+    except EngineError:
+        pass
+    try:
+        parts = _salt_parts(body) if charge == 0 else None
+    except EngineError:
+        parts = None
+    if not parts and charge == 0 and not oxo:
+        sp = _split(body, "H")                     # HBF4, HPF6: H+ and a complex anion
+        if sp and sp[2] == 1:
+            parts = ("H", sp[1], -sp[0])
+    if parts:
+        cat, anion, q = parts
+        out.update(_ion_props(anion, q, "anion"))
+        if cat == "NH4":
+            out.update(_ion_props("NH4", 1, "cation"))
+    try:
+        out.update(_metal_ion(body, charge))
     except EngineError:
         pass
     try:

@@ -125,5 +125,51 @@ class OxidationState(unittest.TestCase):
             self.assertEqual(P.oxidation_state(f, e, **kw), want, f)
 
 
+class SpeciesWider(unittest.TestCase):
+    """Oxoacids, salts' ions and 3d metal ions (core/engine/inorganic/species.py), against standard JEE answers."""
+
+    def a(self, sid):
+        from core.engine.inorganic import species as S
+        return S.askable(sid)
+
+    def test_oxoacids(self):
+        for sid, shape, hyb, basic in (("H2SO4", "tetrahedral", "sp3", 2), ("H3PO4", "tetrahedral", "sp3", 3),
+                                       ("H3PO3", "tetrahedral", "sp3", 2), ("H3PO2", "tetrahedral", "sp3", 1),
+                                       ("HNO3", "trigonal planar", "sp2", 1), ("HNO2", "bent", "sp2", 1),
+                                       ("H3BO3", "trigonal planar", "sp2", 1), ("H2SO3", "trigonal pyramidal", "sp3", 2),
+                                       ("HClO4", "tetrahedral", "sp3", 1), ("H2CO3", "trigonal planar", "sp2", 2)):
+            a = self.a(sid)
+            self.assertEqual((a.get("central_shape"), a.get("central_hybridisation"), a.get("basicity")),
+                             (shape, hyb, basic), sid)
+            self.assertNotIn("shape", a, sid)          # plain VSEPR would put the H on the central atom
+
+    def test_not_oxoacids(self):
+        for sid in ("H2SO5", "HCOOH", "H2S2O7"):
+            self.assertNotIn("basicity", self.a(sid), sid)
+
+    def test_salt_ions(self):
+        self.assertEqual(self.a("KClO3")["anion_shape"], "trigonal pyramidal")
+        self.assertEqual(self.a("CaSO4·2H2O")["anion_shape"], "tetrahedral")
+        self.assertEqual(self.a("Ca(HCO3)2")["anion_shape"], "trigonal planar")
+        self.assertEqual(self.a("NaNO2")["anion_shape"], "bent")
+        self.assertEqual(self.a("HBF4")["anion_shape"], "tetrahedral")
+        self.assertEqual(self.a("NH4NO3")["cation_shape"], "tetrahedral")
+
+    def test_metal_ions(self):
+        for sid, d, n in (("Fe2+", 6, 4), ("FeCl3", 5, 5), ("CuCl", 10, 0), ("CuSO4", 9, 1),
+                          ("Cr2(SO4)3", 3, 3), ("K2MnO4", 1, 1), ("K2Cr2O7", 0, 0), ("KMnO4", 0, 0)):
+            a = self.a(sid)
+            self.assertEqual((a["metal_ion_d_electrons"], a["metal_ion_unpaired"]), (d, n), sid)
+        self.assertAlmostEqual(self.a("FeCl3")["metal_ion_spin_only_moment"], 5.92)
+        self.assertEqual(self.a("Zn2+")["metal_ion_magnetism"], "diamagnetic")
+        self.assertNotIn("metal_ion_unpaired", self.a("Fe3O4"))       # averaged state: not computed
+
+    def test_claims(self):
+        from core.engine.inorganic import species as S
+        self.assertTrue(S.check_claim("H3PO3", "basicity", "2"))
+        self.assertFalse(S.check_claim("H3PO3", "basicity", "3"))
+        self.assertTrue(S.check_claim("FeSO4", "metal_ion_spin_only_moment", "4.9 BM"))
+
+
 if __name__ == "__main__":
     unittest.main()
