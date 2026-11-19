@@ -306,6 +306,7 @@ def _cyanide(s):
 @rule("alkyl_halide_to_nitro_compound_agno2silvern")
 def _agno2(s):
     _need(s, HAL, "C–X")
+    _no(s, "[CX4]([#6])([#6])([#6])[Cl,Br,I]", "a tertiary halide reacts by SN1/E1 with AgNO2 (nitrite, alkene)")
     r = one("[CX4:1][Cl,Br,I]>>[C:1][N+](=O)[O-]", s, why="AgNO2: N-attack gives the nitroalkane")
     r.traps = {"alkyl nitrite (NaNO2/KNO2)": smi(run("[CX4:1][Cl,Br,I]>>[C:1]ON=O", s)[0])}
     return r

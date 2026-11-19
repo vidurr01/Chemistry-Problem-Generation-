@@ -4,6 +4,15 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-19
 
+### Organic question-first pipeline (same pattern as inorganic)
+- `core/pipeline/org_qfirst.py` (new): draw → design → write → evaluate → `flow.judge` → save.
+  - **draw**: a starting molecule from `core/engine/organic/pool.py` and a walk of 2–3 ruled edges, every step computed by `rules.apply`; kept only with at least 3 code-made distractors, one from a selectivity trap.
+  - **options and key by code**: the final product, plus the products of one wrong turn (a step's selectivity trap carried through the later steps, a step ignored, stopping one step early). Printed as SMILES (a name could be wrong; a SMILES is the structure). The key is the letter of the code's product.
+  - **design and write**: the shared designer plans the hidden intermediates and the trap; the writer writes the stem only (start compound by name, reagents in order, X/Y/Z), and code rejects a stem that does not name the start or shows a product.
+- `OrganicAdapter` (`ADAPTERS["organic"]`, kind `org_qfirst`); `flow.run` dispatches to it, so `run_groundup_final.py --subject organic` runs. Organic has no level/design calibration yet, so those checks are off for it (per-subject calibrations).
+- `rules.py`: AgNO2 refuses tertiary halides (SN1/E1, nitrite).
+- `tests/test_org_qfirst.py` (3): computed draws with code options, stem checks and key, a whole run to a saved question with scripted models.
+
 ### Organic engine (RDKit), step 1: rules for the reaction edges
 - `core/engine/organic/` (new): `mol.py` (canonical SMILES, `same`, formulas, `classes`: which graph nodes a molecule is in), `pool.py` (starting molecules with SMILES for every walkable node; the names already in `molecule_constructor.json` keep their formulas, checked by test), `react.py` (reaction SMARTS runner and the JEE selectivity rankings: Markovnikov, Saytzeff/Hofmann, EAS o/p vs meta on a monosubstituted ring), `rules.py` (one rule per reaction edge; each returns the product, co-products and traps = the products of the wrong selectivity), `edges.py` (edges with no rule: 23 concept/intermediate/polymer edges, 32 suspect edges).
 - 144 of 199 edges have a rule. `rules.apply(edge, smiles)` refuses a molecule the edge does not apply to, one with no single major product (two equally favoured regioisomers), and one whose product falls outside the edge's end node (Clemmensen on benzaldehyde gives toluene, not an alkane).

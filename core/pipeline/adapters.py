@@ -587,7 +587,24 @@ class InorganicAdapter:
         return "Give the answer as an integer." if result.kind == "count" else None
 
 
-ADAPTERS = {"physical": PhysicalAdapter, "inorganic": InorganicAdapter}
+class OrganicAdapter:
+    """Organic computed questions, question first (core/pipeline/org_qfirst.py): a starting molecule and a walk of
+    reaction edges, every step computed by core/engine/organic (RDKit); options and key made by code."""
+    subject = "organic"
+    kind = "org_qfirst"
+    refine_modes = ("new_inputs",)
+
+    def __init__(self, config: dict, rng=None):
+        self.config = config
+        self.graph = load_graph(config["graph_path"])
+        self.rng = rng or random.Random()
+
+    @staticmethod
+    def answer_format(result):
+        return None
+
+
+ADAPTERS = {"physical": PhysicalAdapter, "inorganic": InorganicAdapter, "organic": OrganicAdapter}
 FACT_ADAPTERS = {"physical": PhysicalFactsAdapter, "inorganic": InorganicFactsAdapter}
 
 

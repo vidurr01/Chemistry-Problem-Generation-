@@ -623,6 +623,9 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     if adapter.kind == "inorg_qfirst":
         from core.pipeline import inorg_qfirst      # inorganic: reaction-chain draw, claims checked by code
         return inorg_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
+    if adapter.kind == "org_qfirst":
+        from core.pipeline import org_qfirst        # organic: molecule + reaction walk, RDKit rules, code options
+        return org_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
     if adapter.kind == "chains" and adapter.config.get("question_first", False):
         from core.pipeline import qfirst            # run_groundup_final.py sets it (default --flow question)
         return qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
