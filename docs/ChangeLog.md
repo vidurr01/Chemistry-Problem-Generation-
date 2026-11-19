@@ -4,6 +4,11 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-20
 
+### Second live organic run (first scheme question)
+- `outputs/live_organic_2.log`: $0.0498 ≈ ₹4.4 (₹88/$). One draw, accepted as GEN_20261119T193056: a 7-step scheme from 2,2-dimethylpropane with a branch at Q, msq, key ABC by code; Granite failed, GLM solved → advanced_or_mains_hard.
+- Fixed: the scheme took neopentyl bromide through SN2 (CH3ONa → the methyl ether), which a neopentyl halide does not do. The SN2-type rules (aq. NaOH, NaI, NH3, CH3ONa, NaCN, AgNO2) now refuse neopentyl halides. Statement A of the accepted question rests on that step.
+- The flawed nitroso question of the first run (GEN_20261119T185523) was removed from outputs/ and results/ and from the duplicate store (user's decision).
+
 ### Organic questions: 5–8 step schemes with branches, and statements about any compound
 - The user's direction: organic questions are long reaction chains (5–8 steps for a tough question), with branches from any compound along the chain (P → Q → R, then R → S and R → T, each possibly going on); no joins; statements may be about the properties of any compound, start, middle or end.
 - `core/engine/organic/props.py` (new): properties computed by RDKit for one compound: molecular formula, molar mass, DBE, π bonds, rings, sp/sp²/sp³ carbons, stereocentres, stereoisomers (meso counted once), geometrical isomerism, aromatic, functional group, structure, and the tests JEE uses (iodoform, Tollens', Fehling's, NaHCO₃, neutral FeCl₃, carbylamine, 2,4-DNP, bromine water, Lucas, class of amine). Optical activity is left out: a racemic product makes "is optically active" ambiguous.

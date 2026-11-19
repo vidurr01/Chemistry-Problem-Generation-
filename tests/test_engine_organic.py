@@ -114,6 +114,8 @@ class Selectivity(unittest.TestCase):
         with self.assertRaises(EngineError):
             run("alkyl_halide_to_ether_rona", "CC(C)(C)Br")       # tertiary: E2, not Williamson
         with self.assertRaises(EngineError):
+            rules._williamson("CC(C)(C)CBr")                       # neopentyl: no SN2
+        with self.assertRaises(EngineError):
             run("ketone_to_alkyl_halide_i2", "CCC(=O)CC")          # no CH3CO: no iodoform
         self.assertEqual(canon(run("ketone_to_alkyl_halide_i2", "CC(C)=O").product), canon("IC(I)I"))
 

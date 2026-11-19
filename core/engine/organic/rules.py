@@ -228,10 +228,16 @@ def _alkyne_hx(s):
 # ── Alkyl halides ────────────────────────────────────────────────────────────
 
 HAL = "[CX4][Cl,Br,I]"
+NEOPENTYL = "[CH2]([CX4]([#6])([#6])[#6])[Cl,Br,I]"
+
+
+def _no_neopentyl(s):
+    _no(s, NEOPENTYL, "a neopentyl halide does not undergo SN2 (the β-tert-butyl group blocks the backside)")
 
 
 @rule("alkyl_halide_to_alcohol_naoh")
 def _hydrolyse(s):
+    _no_neopentyl(s)
     _need(s, HAL, "C–X")
     return Result(exhaust("[CX4:1][Cl,Br,I]>>[C:1]O", s), why="substitution of X by OH")
 
@@ -253,12 +259,14 @@ def _e2(s):
 
 @rule("alkyl_halide_to_alkyl_halide_nai")
 def _finkelstein(s):
+    _no_neopentyl(s)
     _need(s, "[CX4][Cl,Br]", "C–Cl or C–Br")
     return Result(exhaust("[CX4:1][Cl,Br]>>[C:1]I", s), why="Finkelstein: NaI in acetone (NaCl/NaBr precipitate)")
 
 
 @rule("alkyl_halide_to_amine_excessnh")
 def _ammonolysis(s):
+    _no_neopentyl(s)
     _need(s, HAL, "C–X")
     _no(s, "[CX4]([#6])([#6])([#6])[Cl,Br,I]", "a tertiary halide eliminates with NH3")
     return Result(exhaust("[CX4:1][Cl,Br,I]>>[C:1]N", s), why="excess NH3 gives the primary amine")
@@ -275,6 +283,7 @@ def _intramolecular_wurtz(s):
 
 @rule("alkyl_halide_to_ether_rona", "CH3ONa")
 def _williamson(s):
+    _no_neopentyl(s)
     _need(s, HAL, "C–X")
     _no(s, "[CX4]([#6])([#6])([#6])[Cl,Br,I]", "a tertiary halide gives the alkene with an alkoxide (E2)")
     return one("[CX4:1][Cl,Br,I]>>[C:1]OC", s, why="Williamson synthesis (SN2)")
@@ -296,6 +305,7 @@ def _kornblum(s):
 
 @rule("alkyl_halide_to_nitrile_nacn")
 def _cyanide(s):
+    _no_neopentyl(s)
     _need(s, HAL, "C–X")
     _no(s, "[CX4]([#6])([#6])([#6])[Cl,Br,I]", "a tertiary halide eliminates with CN-")
     r = one("[CX4:1][Cl,Br,I]>>[C:1]C#N", s, why="NaCN: SN2, C-attack gives the nitrile")
@@ -305,6 +315,7 @@ def _cyanide(s):
 
 @rule("alkyl_halide_to_nitro_compound_agno2silvern")
 def _agno2(s):
+    _no_neopentyl(s)
     _need(s, HAL, "C–X")
     _no(s, "[CX4]([#6])([#6])([#6])[Cl,Br,I]", "a tertiary halide reacts by SN1/E1 with AgNO2 (nitrite, alkene)")
     r = one("[CX4:1][Cl,Br,I]>>[C:1][N+](=O)[O-]", s, why="AgNO2: N-attack gives the nitroalkane")
