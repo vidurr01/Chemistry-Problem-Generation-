@@ -509,9 +509,12 @@ class PhysicalFactsAdapter:
     kind = "facts"
     refine_modes = ("new_inputs", "reword")
 
-    def __init__(self, config: dict, rng=None):
+    def _load(self):
         from core.engine.physical.facts_data import BY_ID, FACTS
-        self.facts, self.by_id = FACTS, BY_ID
+        return FACTS, BY_ID
+
+    def __init__(self, config: dict, rng=None):
+        self.facts, self.by_id = self._load()
         self.config = config
         self.graph = load_graph(config["graph_path"])       # for --chapter validation only
         self.rng = rng or random.Random()
@@ -532,7 +535,7 @@ class PhysicalFactsAdapter:
                 continue
             w = coverage.weight(None, src.topic, [key[0]], [str(t) for t in src.tx])
             out.append({"edges": [key[0]], "nodes": [src.id], "chapters": [src.topic], "txs": list(src.tx),
-                        "trap_ids": [], "weight": w, "description": src.title, "_fact": fq})
+                        "trap_ids": [], "weight": w, "description": src.title, "_fact": fq, "_source": src})
         out.sort(key=lambda x: (-x["weight"], self.rng.random()))
         return out[:n]
 
@@ -543,6 +546,7 @@ class PhysicalFactsAdapter:
         prev = set(cand["_fact"].options)
         cand = dict(cand)
         cand["_fact"] = build(src, self.rng.choice(MODES), self.rng, avoid=prev)
+        cand["_source"] = src
         return cand
 
     @staticmethod
@@ -556,8 +560,35 @@ class PhysicalFactsAdapter:
                            traps=list(fq.traps), constants=[])
 
 
-ADAPTERS = {"physical": PhysicalAdapter}
-FACT_ADAPTERS = {"physical": PhysicalFactsAdapter}
+class InorganicFactsAdapter(PhysicalFactsAdapter):
+    """MCQ/MSQ questions about complexes, molecules and diatomics, every statement's truth computed by
+    core/engine/inorganic/properties.py (tables in core/engine/inorganic/tables.py)."""
+    subject = "inorganic"
+
+    def _load(self):
+        from core.engine.inorganic.tables import BY_ID, FACTS
+        return FACTS, BY_ID
+
+
+class InorganicAdapter:
+    """Inorganic computed questions, question first (core/pipeline/inorg_qfirst.py): a random walk of reactions in
+    the inorganic graph, the designer, the writer's claims, the key computed by core/engine/inorganic."""
+    subject = "inorganic"
+    kind = "inorg_qfirst"
+    refine_modes = ("new_inputs",)
+
+    def __init__(self, config: dict, rng=None):
+        self.config = config
+        self.graph = load_graph(config["graph_path"])
+        self.rng = rng or random.Random()
+
+    @staticmethod
+    def answer_format(result):
+        return "Give the answer as an integer." if result.kind == "count" else None
+
+
+ADAPTERS = {"physical": PhysicalAdapter, "inorganic": InorganicAdapter}
+FACT_ADAPTERS = {"physical": PhysicalFactsAdapter, "inorganic": InorganicFactsAdapter}
 
 
 def adapter_for(subject: str, config: dict, rng=None, kind: str = "chains"):

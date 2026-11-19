@@ -4,6 +4,23 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-19
 
+### First live inorganic run
+- $0.0503 ≈ ₹4.4: draw 1 (MgCl₂·6H₂O → MgCl₂ → Mg, msq) too easy (Granite solved); draw 2 (B₂H₆ → H₃BO₃ → HBF₄, msq, X and Y hidden) accepted as GEN_20261119T135749, key AB computed by code (B is +3 in both; hand check agrees), Granite failed (A), GLM solved → advanced (Jev level 1.62), Granite solved after the insight hint. The pipeline works end to end. The question is shallow: for H₃BO₃ and HBF₄ code can compute only oxidation states (VSEPR does not take OH groups or the HBF₄ salt form), so all four options were about one property.
+
+### Inorganic question-first pipeline (same pattern as physical)
+- `core/pipeline/inorg_qfirst.py` (new): draw → design → write → evaluate → `flow.judge` → save, as physical's `qfirst.run`. Only two parts differ from physical:
+  - **draw**: a random connected walk of 2–4 reactions in the inorganic graph, kept when a species formed has a property code can compute;
+  - **the answer key ("coder")**: the writer gives every option or item as a claim (species or hidden label, property key, value); code decides each with `core/engine/inorganic` and builds the key (letters, or an integer for count questions). Unreadable claims go back to the writer once with the exact problems.
+- The designer (models.DESIGNER, cut-off designs finished, Jev's design check) plans which species are hidden, what is told, the format (msq, mcq_correct, mcq_incorrect, count, identify) and the trap. The writer may not name a hidden species in the stem (checked by code).
+- `core/engine/inorganic/species.py` (new): graph ids → formula and charge (the graph writes `C2O42-` for C₂O₄²⁻, `NO2-` for NO₂⁻), complex charge from counter-ions (K₄[Fe(CN)₆] → [Fe(CN)₆]⁴⁻), `askable` (every computable property of a species: 236 of 354 graph species have one), `compare` / `check_claim`.
+- Wiring: `InorganicAdapter` (`ADAPTERS["inorganic"]`, kind `inorg_qfirst`; fact questions stay available with `--kind facts`), `flow.run` dispatches to it, `flow.insight_hint` uses a flow's own hint, `build_record` keeps options from any run that supplies them. Parked inorganic questions cannot be recomputed yet: they go on hold, not lost.
+- `tests/test_inorg_qfirst.py` (5): connected askable draws; graph charges; claims true/false by code, count answers, format rules, hidden species named in the stem; a whole run to a saved question with scripted models. A first version of the run test wrote its fake question into the real duplicate store (the store's default path was bound before the temporary path was patched): the entry was removed and the test fixed. 475 tests pass; physical engine audit 0 flags.
+
+### Inorganic engine, step 2: fact questions wired into the pipeline
+- `core/engine/inorganic/tables.py` (new): 12 fact tables (complex magnetism, unpaired electrons, hybridisation, geometry, spin-only moment; molecular shape, hybridisation, polarity; MO bond order and magnetism; geometrical and stereo isomers) over 27 complexes, 36 molecules and ions, 19 diatomics and 10 isomer sets. Every value is computed by `properties.py`; nothing is typed in. [Cu(NH₃)₄]²⁺ is left out (JEE calls it square planar, the d⁸ rule does not).
+- `core/pipeline/adapters.py`: `InorganicFactsAdapter` (the physical fact adapter with the inorganic tables; `FACT_ADAPTERS["inorganic"]`); candidates carry their table (`_source`). `core/pipeline/flow.py` `_fact_source` reads it (physical candidates parked earlier still resolve). `run_groundup_final.py`: a subject with fact questions only (inorganic) makes a fact question on every run instead of stopping with "not wired".
+- Physical unchanged: its fact adapter loads the same table, and the start-up switch never applies to it. `tests/test_pipeline_offline.py`: `InorganicFactQuestions` (an inorganic run end to end with scripted models). 470 tests pass; engine audit 0 flags.
+
 ### Inorganic engine, step 1: property functions
 - `core/engine/inorganic/properties.py` (new), exact and offline, refusing (EngineError) what they cannot decide:
   - `vsepr(species)`: steric number, lone pairs, shape, hybridisation, polarity of a main-group molecule or discrete ion (central atom found by code; odd-electron species such as NO₂; ionic and transition-metal solids refused).

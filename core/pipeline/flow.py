@@ -166,13 +166,22 @@ def checked_solution(stem: str, result) -> tuple:
 
 
 def _fact_source(cand):
+    """The fact table a question was built from: carried on the candidate (any subject), else the physical
+    table of that id (candidates parked before 2026-11-19)."""
+    if cand.get("_source") is not None:
+        return cand["_source"]
     from core.engine.physical.facts_data import BY_ID
-    return BY_ID[cand["nodes"][0]]
+    if cand["nodes"][0] in BY_ID:
+        return BY_ID[cand["nodes"][0]]
+    from core.engine.inorganic.tables import BY_ID as INORG
+    return INORG[cand["nodes"][0]]
 
 
 def insight_hint(cand, failed_step) -> str:
     """Names the kind of step, never the result: written by code from the step and one
     of its listed mistakes."""
+    if cand.get("_hint"):                          # a flow that writes its own hint (inorganic)
+        return cand["_hint"]
     if "_fact" in cand:
         return (f"Judge each statement on its own against what you know about {_fact_source(cand).title}; "
                 f"check every detail of a statement, not just its general idea.")
@@ -611,6 +620,9 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     Try up to MAX_CHAINS question ideas (chains, or fact sources for a fact adapter).
     Returns {"status": "accepted", "payload"} or {"status": "none"}. Raises Parked."""
     rng = rng or random.Random()
+    if adapter.kind == "inorg_qfirst":
+        from core.pipeline import inorg_qfirst      # inorganic: reaction-chain draw, claims checked by code
+        return inorg_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
     if adapter.kind == "chains" and adapter.config.get("question_first", False):
         from core.pipeline import qfirst            # run_groundup_final.py sets it (default --flow question)
         return qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)

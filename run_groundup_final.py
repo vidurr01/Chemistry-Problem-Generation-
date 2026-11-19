@@ -202,7 +202,8 @@ def build_record(subject, config, payload, bb):
                    "form_note": getattr(result, "form_note", ""),
                    "solver_code": getattr(result, "solver_code", None)},
         **({"options": [f"({chr(65 + i)}) {o}" for i, o in enumerate(payload["values"]["options"])],
-            "fact_mode": payload["values"]["mode"]} if "_fact" in cand else {}),
+            "fact_mode": payload["values"]["mode"]} if "_fact" in cand or isinstance(payload["values"], dict)
+           and "options" in payload["values"] and "mode" in payload["values"] else {}),
         "rounds": bb.current["rounds"],
         "meta_tags": meta,
         **({"meta_tags_error": meta_error} if meta_error else {}),
@@ -389,12 +390,17 @@ def main():
     rng = random.Random(args.seed)
     config = {**config, "question_first": args.flow == "question",
               "max_run_spend": args.max_run_spend or None}
+    facts_only = False
     try:
         adapter = adapter_for(args.subject, config, rng)
     except NotImplementedError as e:
-        print(f"ERROR: {e}.")
-        return EXIT_CONFIG_ERROR
-    kind = args.kind
+        if args.subject not in FACT_ADAPTERS or args.kind == "chains":
+            print(f"ERROR: {e}.")
+            return EXIT_CONFIG_ERROR
+        # a subject with only fact questions so far (inorganic, 2026-11-19): every run makes one
+        adapter = adapter_for(args.subject, config, rng, kind="facts")
+        facts_only = True
+    kind = "facts" if facts_only else args.kind
     if kind == "auto":
         # a fact_share on a subject with no fact engine is ignored, not a configuration error
         wants_fact = rng.random() < config.get("fact_share", 0.0)
