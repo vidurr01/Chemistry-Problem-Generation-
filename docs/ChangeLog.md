@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-20
 
+### First live organic run, and the fixes it showed
+- `outputs/live_organic_1.log`: $0.0464 ≈ ₹4.1 (₹88/$). Draw 1 (butane → 2-bromobutane → 2-nitrobutane) too easy (Granite solved); draw 2 too easy; draw 3 accepted as GEN_20261119T185523 (aniline → nitrosobenzene → nitration, key D = 1-nitro-4-nitrosobenzene by code; Granite failed, GLM solved → advanced_or_mains_hard; Granite solved after the insight hint). The pipeline works end to end with real models.
+- Fixed: the nitration rule nitrated nitrosobenzene, but conc. HNO3 oxidises Ar–N=O to Ar–NO2; the rule now refuses Ar–N=O (the accepted question rests on this).
+- Fixed: draw 2 went in a circle (3-bromo-3-methylpentane → Zn/H+ → Br2/hν → the same compound); a draw that revisits a molecule is now skipped.
+- Fixed: reaction products kept the fixed H counts of template atoms, so a chiral reacting carbon could fail to sanitise and its product was silently lost ((R)-butan-2-ol + PCC, (R)-2-bromobutane + DMSO now give butan-2-one). Audit: 676 products, 0 problems.
+
 ### Organic graph: the 32 suspect edges decided (user-approved)
 - `knowledge/reaction_graph.json`: 199 → 179 edges. 20 deleted (chemically wrong or duplicates, incl. `nitro_compound_to_substituted_benzene_snhcl`, a duplicate of the fixed Sn/HCl edge). 12 fixed in place (ids kept, `notes` says what changed): Cannizzaro → alcohol; Zn on a vicinal dihalide → alkene; 2-naphthol coupling → azo compound; diol + Ac2O → ester; ketone + CH3OH/HCl → acetal; CH2N2 ring expansion → ketone; Cu/573 K starts from an alcohol; picric acid starts from phenol; alcohol → amine with NH3/Al2O3; nitro → aniline with Sn/HCl; amine + excess CH3I → quaternary salt; o-xylene + V2O5/air → phthalic anhydride. Caprolactam → Nylon-6 (was "6,6") moved to the polymer lookups.
 - `core/engine/organic/rules.py`: rules for the 12 fixed edges (Cannizzaro only without α-H: HCHO, ArCHO, R3C–CHO). `edges.SUSPECT` is now empty; `mol.py` counts quaternary ammonium ions as amines; `pool.py` adds o-xylene.

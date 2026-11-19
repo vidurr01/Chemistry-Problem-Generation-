@@ -118,6 +118,9 @@ def draw(adapter, rng, tried=()):
                 break
         if len(path) < CHAIN_MIN or not _single(steps[-1].product):
             continue
+        seen = [canon(start)] + [canon(r.product) for r in steps]
+        if len(set(seen)) < len(seen):          # a step undoes an earlier one (Zn/H+ then Br2/hν back to the start)
+            continue
         key = tuple(e["id"] for e in path)
         if key in tried:
             continue

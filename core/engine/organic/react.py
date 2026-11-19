@@ -42,6 +42,10 @@ def _rxn(smarts: str):
 
 def _clean(m):
     m = Chem.Mol(m)
+    for a in m.GetAtoms():            # template atoms come out with fixed H counts ("[C]", "[Mg][Br]"): let RDKit
+        if a.GetNoImplicit() and not a.GetIsAromatic() and a.GetFormalCharge() == 0                 and a.GetNumRadicalElectrons() == 0:      # recompute them, as for any parsed molecule
+            a.SetNoImplicit(False)
+            a.SetNumExplicitHs(0)
     try:
         Chem.SanitizeMol(m)
     except Exception:  # noqa: BLE001  (RDKit raises several types for impossible valences)

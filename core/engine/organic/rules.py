@@ -923,6 +923,7 @@ def _fenton(s):
 
 @rule("benzene_to_substituted_benzene_conchno")
 def _nitrate(s):
+    _no(s, "c[NX2]=O", "conc. HNO3 oxidises Ar–N=O to Ar–NO2 rather than nitrating the ring")
     return eas(s, "[N+](=O)[O-]", "nitration")
 
 

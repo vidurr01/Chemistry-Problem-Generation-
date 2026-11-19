@@ -1,0 +1,53 @@
+Question kind this run: chains
+Organic Chemistry: 4 accepted so far.
+
+╔═══ DRAW 1: butane → alkyl_halide → nitro_compound (Hydrocarbons, Alkyl Halides) ═══╗
+  Start: butane (CCCC)
+  Step 1: [Br2, hν] → CCC(C)Br   (radical bromination: the most substituted C–H (most stable radical))   wrong turns: less_selective_product: CCCCBr
+  Step 2: [AgNO2 (silver nitrite)] → CCC(C)[N+](=O)[O-]   (AgNO2: N-attack gives the nitroalkane)   wrong turns: alkyl nitrite (NaNO2/KNO2): CCC(C)ON=O
+  [design] hides {'X': '2-bromobutane (CCC(C)Br)', 'Y': '2-nitrobutane (CCC(C)[N+](=O)[O-])'}; trap: sec-butyl nitrite (CCC(C)ON=O) is highly tempting if the student forgets the covalent nature of AgNO2 and assu
+    note: no design_coherence calibration for organic (design_coherence_calibration_organic.json): that check is off
+  [key] C = CCC(C)[N+](=O)[O-] (computed by code)
+    [granite-4.2-8b] C  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  ✗ too_easy; next draw
+
+╔═══ DRAW 2: 3-bromo-3-methylpentane → alkane → alkyl_halide → grignard (Alkyl Halides, Hydrocarbons, Organometallics & Grignard) ═══╗
+  Start: 3-bromo-3-methylpentane (CCC(C)(Br)CC)
+  Step 1: [Zn; H⁺] → CCC(C)CC   (Zn/H+ reduces C–X to C–H)
+  Step 2: [Br2, hν] → CCC(C)(Br)CC   (radical bromination: the most substituted C–H (most stable radical))   wrong turns: less_selective_product: CCC(C)C(C)Br; less_selective_product_2: CCC(C)CCBr; less_selective_product_3: CCC(CC)CBr
+  Step 3: [Mg; dry ether] → CC[C](C)(CC)[Mg][Br]   (Mg in dry ether inserts into C–X)
+  [design] hides {'X': '3-methylpentane', 'Y': '3-bromo-3-methylpentane'}; trap: A student might mistakenly think the bromination occurs at a secondary or primary position to avoid steric hin
+  [key] A = CC[C](C)(CC)[Mg][Br] (computed by code)
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [granite-4.2-8b] A  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  ✗ too_easy; next draw
+
+╔═══ DRAW 3: aniline → substituted_benzene → substituted_benzene (Amines, Aromatic Compounds) ═══╗
+  Start: aniline (Nc1ccccc1)
+  Step 1: [Caro's acid (H2SO5)] → O=Nc1ccccc1   (Caro's acid oxidises ArNH2 to ArN=O)
+  Step 2: [conc HNO3; conc H2SO4; stepwise increasing temperature] → O=Nc1ccc([N+](=O)[O-])cc1   (nitration: the substituent is an ortho/para director; para major)   wrong turns: ortho_product: O=Nc1ccccc1[N+](=O)[O-]; meta_product: O=Nc1cccc([N+](=O)[O-])c1
+  [design] hides {'X': 'Nitrosobenzene (O=Nc1ccccc1)', 'Y': '1-nitro-4-nitrosobenzene (O=Nc1ccc([N+](=O)[O-])cc1)'}; trap: The meta-nitrated product (1-nitro-3-nitrosobenzene) is a very tempting trap because students often conflate t
+  [key] D = O=Nc1ccc([N+](=O)[O-])cc1 (computed by code)
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [granite-4.2-8b] A  → failed
+    [glm-5.3-flash] D  → solved
+    note: no level calibration for organic (level_calibration_organic.json): that check is off
+    ladder: granite-4.2-8b failed; first solved by glm-5.3-flash → advanced_or_mains_hard
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [hint] granite-4.2-8b: insight → solved (difficulty confirmed)
+
+✓ ACCEPTED GEN_20261119T185523 — answer D; difficulty advanced_or_mains_hard (first solved by glm-5.3-flash); tags {'knowledge': 'closed_book', 'trap_types': ['optionA', 'optionB', 'optionC']}
+============================================================
+Aniline is treated with Caro's acid (H2SO5) to give an intermediate X. Compound X is then reacted with a mixture of conc. HNO3 and conc. H2SO4 under stepwise increasing temperature to yield the major product Z. Which of the following represents the structure of the major product Z?
+Options (structures as SMILES):
+(A) O=Nc1ccccc1[N+](=O)[O-]
+(B) O=Nc1cccc([N+](=O)[O-])c1
+(C) O=Nc1ccccc1
+(D) O=Nc1ccc([N+](=O)[O-])cc1
+Choose the one correct option.
+============================================================
+
+Spend this run: $0.0464  {"total_cost_usd": 0.04636, "by_role": {"designer": {"calls": 3, "prompt_tokens": 1708, "completion_tokens": 2766, "cost": 0.03661}, "generator": {"calls": 3, "prompt_tokens": 1417, "completion_tokens": 1282, "cost": 0.00587}, "council": {"calls": 9, "prompt_tokens": 6897, "completion_tokens": 3523, "cost": 0.001133}, "solution_writer": {"calls": 1, "prompt_tokens": 549, "completion_tokens": 528, "cost": 0.002392}, "solution_checker": {"calls": 1, "prompt_tokens": 1147, "completion_tokens": 491, "cost": 0.0003602}}}
