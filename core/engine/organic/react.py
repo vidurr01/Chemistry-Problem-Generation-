@@ -74,14 +74,31 @@ def smi(m) -> str:
     return canon(Chem.MolToSmiles(m))
 
 
+def sites(smarts: str, smiles: str) -> int:
+    """How many distinct sites of the molecule the rule's (first) reactant template matches."""
+    tmpl = _rxn(smarts).GetReactantTemplate(0)
+    return len(mol(smiles).GetSubstructMatches(tmpl, uniquify=True))
+
+
 def one(smarts: str, *reactants: str, why: str = "") -> Result:
-    """The rule has one product whatever site it acts on (symmetric or single site)."""
+    """The rule's product. With several sites (two CH2OH, two CH2Cl, two NH2) the reagent, used in excess as a
+    question states it, reacts at EVERY site: the rule is applied once per site of the starting molecule (a
+    product that only then matches again, such as a second α-H, is not touched)."""
+    n = sites(smarts, reactants[0])
     prods = {smi(p) for p in run(smarts, *reactants)}
     if not prods:
         raise EngineError(f"the reaction does not apply to {reactants[0]}")
-    if len(prods) > 1:
-        raise EngineError(f"{reactants[0]} has several reacting sites giving different products: no single product")
-    return Result(prods.pop(), why=why)
+    if n <= 1:
+        if len(prods) > 1:
+            raise EngineError(f"{reactants[0]}: several products from one site: no single product")
+        return Result(prods.pop(), why=why)
+    cur = canon(reactants[0])
+    for _ in range(n):
+        p = run(smarts, cur, *reactants[1:])
+        if not p:
+            break
+        cur = smi(p[0])
+    return Result(cur, why=why + (f" (at all {n} sites)" if why else ""))
 
 
 def exhaust(smarts: str, smiles: str, limit: int = 12) -> str:
@@ -187,8 +204,8 @@ def eas(smiles: str, group: str, name: str) -> Result:
     ring = set(rings[0])
     subst = [i for i in ring if any(nb.GetIdx() not in ring and nb.GetAtomicNum() > 1
                                     for nb in m0.GetAtomWithIdx(i).GetNeighbors())]
-    if not subst:
-        return one(f"[cH:1]>>[c:1]{group}", smiles, why=f"{name} of benzene")
+    if not subst:                               # benzene: six equivalent sites, ONE substitution
+        return Result(smi(prods[0]), why=f"{name} of benzene")
     if len(subst) > 1:
         raise EngineError(f"{smiles}: EAS directing is modelled for one substituent only")
     kind = _director(m0.GetAtomWithIdx(subst[0]), ring)

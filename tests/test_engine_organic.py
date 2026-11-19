@@ -119,6 +119,17 @@ class Selectivity(unittest.TestCase):
             run("ketone_to_alkyl_halide_i2", "CCC(=O)CC")          # no CH3CO: no iodoform
         self.assertEqual(canon(run("ketone_to_alkyl_halide_i2", "CC(C)=O").product), canon("IC(I)I"))
 
+    def test_every_site_reacts(self):
+        # live run 3 (GEN_20261119T215055): one of two identical groups reacted, so code's key was wrong
+        self.assertTrue(same(run("alkyl_halide_to_nitrile_nacn", "ClCc1ccccc1CCl").product, "N#CCc1ccccc1CC#N"))
+        self.assertTrue(same(run("alcohol_to_carboxylic_acid_kmno", "OCc1ccccc1CO").product, "OC(=O)c1ccccc1C(=O)O"))
+        self.assertTrue(same(run("amine_to_alcohol_nano", "NCc1ccccc1CN").product, "OCc1ccccc1CO"))
+        self.assertTrue(same(run("benzene_to_substituted_benzene_conchno", "c1ccccc1").product,
+                             "O=[N+]([O-])c1ccccc1"))                                    # EAS: one substitution
+        self.assertTrue(same(run("carboxylic_acid_to_carboxylic_acid_x", "CC(=O)O").product, "OC(=O)CBr"))
+        with self.assertRaises(EngineError):
+            run("alkyl_halide_to_nitrile_nacn", "ClC(Cl)Cl")                             # gem-polyhalide
+
     def test_product_outside_end_node_refused(self):
         with self.assertRaises(EngineError):
             run("aldehyde_to_alkane_znhg", "O=Cc1ccccc1")          # toluene is not an alkane node member

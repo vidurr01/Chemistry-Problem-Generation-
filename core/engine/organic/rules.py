@@ -76,6 +76,7 @@ def _aromatise(s):
 
 @rule("alkene_to_alcohol_ho")
 def _hydration(s):
+    _one_group(s, ALKENE, "C=C")
     _need(s, ALKENE, "C=C")
     return pick(run("[C:1]=[C:2]>>[C:1](O)[C:2]", s), markovnikov,
                 "acid-catalysed hydration: OH on the more substituted carbon (Markovnikov)", "anti_markovnikov_product")
@@ -107,6 +108,7 @@ def _hydrogenate(s):
 
 @rule("alkene_to_alkyl_halide_hx", "HBr (no peroxide)")
 def _hx_add(s):
+    _one_group(s, ALKENE, "C=C")
     _need(s, ALKENE, "C=C")
     return pick(run("[C:1]=[C:2]>>[C:1](Br)[C:2]", s), markovnikov,
                 "HBr addition via the more stable carbocation (Markovnikov)", "anti_markovnikov_product")
@@ -151,6 +153,7 @@ def _epoxidise(s):
 
 @rule("alkene_to_ether_hgoacrohorhg", "CH3OH")
 def _alkoxymercuration(s):
+    _one_group(s, ALKENE, "C=C")
     _need(s, ALKENE, "C=C")
     return pick(run("[C:1]=[C:2]>>[C:1](OC)[C:2]", s), markovnikov,
                 "alkoxymercuration–demercuration: OR on the more substituted carbon, no rearrangement",
@@ -159,6 +162,7 @@ def _alkoxymercuration(s):
 
 @rule("alkene_to_halohydrin_br")
 def _halohydrin(s):
+    _one_group(s, ALKENE, "C=C")
     _need(s, ALKENE, "C=C")
     return pick(run("[C:1]=[C:2]>>[C:1](O)[C:2]Br", s), markovnikov,
                 "bromonium ion opened by water at the more substituted carbon", "regio_reversed_product")
@@ -205,6 +209,7 @@ def _alkyne_cleave(s):
 
 @rule("alkyne_to_geminal_dihalide_hxexcess2equ", "HBr (2 equiv)")
 def _alkyne_2hx(s):
+    _one_group(s, "[CX2]#[CX2]", "C≡C")
     _need(s, "[CX2]#[CX2]", "C≡C")
     return pick(run("[C:1]#[C:2]>>[C:1](Br)(Br)[C:2]", s), markovnikov,
                 "two HBr add Markovnikov: both Br on the same (more substituted) carbon", "anti_markovnikov_product")
@@ -212,6 +217,7 @@ def _alkyne_2hx(s):
 
 @rule("alkyne_to_ketone_ho")
 def _alkyne_hydration(s):
+    _one_group(s, "[CX2]#[CX2]", "C≡C")
     _need(s, "[CX2]#[CX2]", "C≡C")
     return pick(run("[C:1]#[C:2]>>[C:1](=O)[C:2]", s), markovnikov,
                 "HgSO4/H2SO4 hydration: Markovnikov enol tautomerises to the ketone (ethyne gives ethanal)",
@@ -220,6 +226,7 @@ def _alkyne_hydration(s):
 
 @rule("alkyne_to_vinyl_halide_hx1equiv", "HBr (1 equiv)")
 def _alkyne_hx(s):
+    _one_group(s, "[CX2]#[CX2]", "C≡C")
     _need(s, "[CX2]#[CX2]", "C≡C")
     return pick(run("[C:1]#[C:2]>>[C:1](Br)=[C:2]", s), markovnikov, "Markovnikov addition of one HBr",
                 "anti_markovnikov_product")
@@ -233,6 +240,14 @@ NEOPENTYL = "[CH2]([CX4]([#6])([#6])[#6])[Cl,Br,I]"
 
 def _no_neopentyl(s):
     _no(s, NEOPENTYL, "a neopentyl halide does not undergo SN2 (the β-tert-butyl group blocks the backside)")
+    _no(s, "[CX4]([Cl,Br,I])[Cl,Br,I]", "a gem-polyhalide (CHCl3, CH2Cl2) is not an SN2 substrate here")
+
+
+def _one_group(s, smarts: str, what: str):
+    """Selectivity rules rank one group's two ends; two such groups compete: no single major product."""
+    n = len(mol(s).GetSubstructMatches(Chem.MolFromSmarts(smarts), uniquify=True))
+    if n != 1:
+        raise EngineError(f"{s}: {n} {what} groups compete: modelled for one")
 
 
 @rule("alkyl_halide_to_alcohol_naoh")
@@ -446,12 +461,14 @@ def _nitrate_ester(s):
 
 @rule("epoxide_to_alcohol_rnh", "CH3NH2")
 def _epoxide_amine(s):
+    _one_group(s, "C1OC1", "epoxide")
     _need(s, "C1OC1", "epoxide")
     return pick(run("[C:1]1O[C:2]1>>[C:1](NC)[C:2]O", s), anti_markovnikov,
                 "amine (basic) opens the epoxide at the less hindered carbon (SN2)", "more_hindered_attack")
 
 
 def _epoxide_acid(s, nu: str, what: str):
+    _one_group(s, "C1OC1", "epoxide")
     _need(s, "C1OC1", "epoxide")
     prods = run(f"[C:1]1O[C:2]1>>[C:1]({nu})[C:2]O", s)
     tertiary = any(carbon_degree(atom_by_map(p, 1)) >= 3 for p in prods)
@@ -646,6 +663,7 @@ def _nabh4_ket(s):
 
 @rule("ketone_to_aldehyde_seo2selenium")
 def _seo2(s):
+    _one_group(s, KET, "ketone C=O")
     _need(s, "[CH3][CX3](=O)[#6]", "methyl ketone")
     return pick(run("[CH3:1][CX3:2](=[O:3])[#6:4]>>[CH1:1](=O)[C:2](=[O:3])[#6:4]", s), lambda p: 0,
                 "SeO2 oxidises the α-CH3 to CHO", "other")
@@ -688,6 +706,7 @@ _MIGRATE = {3: 4, 2: 3, 1: 1, 0: 0}   # carbons on the migrating C (after it mov
 
 @rule("ketone_to_ester_mcpbametachl")
 def _baeyer_villiger(s):
+    _one_group(s, KET, "ketone C=O")
     _need(s, KET, "ketone")
     prods = run("[#6:3][CX3:1](=[O:2])[#6:4]>>[#6:3][C:1](=[O:2])O[#6:4]", s)
 
@@ -700,6 +719,7 @@ def _baeyer_villiger(s):
 
 @rule("ketone_to_ketone_x2", "Br2, CH3COONa")
 def _alpha_halo(s):
+    _one_group(s, "[CX3](=O)", "C=O")
     _need(s, "[CX4;!H0][CX3](=O)", "α-H")
     return pick(run("[CX4;!H0:1][CX3:2](=O)>>[C:1](Br)[C:2]=O", s), markovnikov,
                 "acid-catalysed α-halogenation through the more substituted enol", "less_substituted_alpha")

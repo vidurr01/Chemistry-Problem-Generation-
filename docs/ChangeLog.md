@@ -4,6 +4,10 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-20
 
+### Third live organic run: a wrong key from one-site reactions (fixed)
+- `outputs/live_organic_3.log`: $0.0636 ≈ ₹5.6 (₹88/$). Draw 1 (propan-1-ol, 5 steps) too easy. Draw 2 (phthalic acid, 6 steps) accepted as GEN_20261119T215055, "hard_advanced" because no model solved it, but code's key was wrong: on benzene-1,2-dimethanol and its derivatives the rules reacted at ONE of two identical groups (S kept a CH2Cl, T a CH2OH, V an NH2). All three models answered as if both groups reacted, which is what the reagents (in excess) do. The question was removed from outputs/ and results/ and the duplicate store (removed, not held: its key is wrong).
+- `core/engine/organic/react.py`: `one()` now applies a rule at every site of the starting molecule (dinitrile, diacid, diol, diester, diamide); `react.sites` counts them. Benzene EAS stays a single substitution. `rules.py`: SN2-type rules refuse gem-polyhalides (CHCl3 had become HC(CN)3); selectivity rules (Markovnikov, alkyne hydration, epoxide opening, Baeyer–Villiger, α-halogenation, SeO2) refuse molecules with two competing groups. Audit: 670 products, 0 problems. Regression test `test_every_site_reacts`.
+
 ### Second live organic run (first scheme question)
 - `outputs/live_organic_2.log`: $0.0498 ≈ ₹4.4 (₹88/$). One draw, accepted as GEN_20261119T193056: a 7-step scheme from 2,2-dimethylpropane with a branch at Q, msq, key ABC by code; Granite failed, GLM solved → advanced_or_mains_hard.
 - Fixed: the scheme took neopentyl bromide through SN2 (CH3ONa → the methyl ether), which a neopentyl halide does not do. The SN2-type rules (aq. NaOH, NaI, NH3, CH3ONa, NaCN, AgNO2) now refuse neopentyl halides. Statement A of the accepted question rests on that step.
