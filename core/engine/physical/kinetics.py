@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from core.engine.base import EngineError, Param, Step, Trap, ln, log10
+from core.engine.base import Derive, EngineError, Param, Step, Trap, ln, log10
 from core.engine.chem import C, SYMBOLS, const
 
 P = Param
@@ -90,14 +90,19 @@ def _order_step(tx, order, name, formula):
         formula=formula, asks=f"rate constant of the {name} reaction")
 
 
-def _gas_k(v, use_total=False):
+def _gas_k(v, use_total=False, per_reactant=False):
+    """The first-order rate constant from pressures. JEE defines k for the REACTION: for aA → products,
+    rate = −(1/a) d[A]/dt = k[A], so A itself goes at a·k and k = (1/(a t)) ln(P₀/P_A) (2019P2_Q13: 2N₂O₅,
+    k = 5×10⁻⁴ s⁻¹, Y = 2.30). a = 1 (the default) is the reactant's own constant, as before.
+    per_reactant=True leaves out a (the typical mistake)."""
     n, p0, pt = v["moles_of_gaseous_products"], v["initial_pressure"], v["total_pressure"]
     if n <= 1:
         raise EngineError("need more than one mole of gaseous product per mole of reactant")
     pa = pt if use_total else (n * p0 - pt) / (n - 1)
     if not 0 < pa < p0:
         raise EngineError("these pressures are not reachable")
-    return ln(p0 / pa) / v["time"]
+    a = 1 if per_reactant else v.get("reactant_coefficient", 1)
+    return ln(p0 / pa) / (a * v["time"])
 
 
 STEPS = [
@@ -106,16 +111,21 @@ STEPS = [
                 P("final_concentration", "mol L⁻¹", "concentration of A after the interval", lo=0.001, hi=2),
                 P("time", "s", "length of the interval", lo=1, hi=1e4),
                 P("coefficient", "", "stoichiometric coefficient of A", kind="posint", lo=1, hi=4)),
-         answer="reaction_rate", unit="mol L⁻¹ s⁻¹", kind="positive",
-         fn=lambda v: {"reaction_rate": (v["molarity"] - v["final_concentration"]) / (v["coefficient"] * v["time"])},
+         # the rate of the REACTION (already divided by a): not −d[A]/dt, which tx 201 reads.
+         # [A] at the start goes on as run 1's concentration (tx 202), so it is not stated twice.
+         answer="reaction_rate", unit="mol L⁻¹ s⁻¹", kind="positive", gives=("concentration",),
+         roles={"reaction_rate": "rate of reaction"},
+         fn=lambda v: {"reaction_rate": (v["molarity"] - v["final_concentration"]) / (v["coefficient"] * v["time"]),
+                       "concentration": v["molarity"]},
          traps=(Trap("forgets_coefficient", "reports −Δ[A]/Δt without dividing by the coefficient",
                      lambda v: (v["molarity"] - v["final_concentration"]) / v["time"]),),
          formula="rate = −(1/a) Δ[A]/Δt", asks="average rate of the reaction (mol L⁻¹ s⁻¹)"),
     Step(tx=201, src="reaction_rate", dst="reaction_rate",
-         needs=(P("reaction_rate", "mol L⁻¹ s⁻¹", "rate of disappearance of A, −d[A]/dt", lo=1e-6, hi=1),
+         needs=(P("reaction_rate", "mol L⁻¹ s⁻¹", "rate of disappearance of A, −d[A]/dt", lo=1e-6, hi=1,
+                  role="rate of one species"),
                 P("coefficient_A", "", "coefficient of A", kind="posint", lo=1, hi=4),
                 P("coefficient_C", "", "coefficient of product C", kind="posint", lo=1, hi=4)),
-         answer="reaction_rate", unit="mol L⁻¹ s⁻¹", kind="positive",
+         answer="reaction_rate", unit="mol L⁻¹ s⁻¹", kind="positive", roles={"reaction_rate": "rate of one species"},
          fn=lambda v: {"reaction_rate": v["reaction_rate"] * v["coefficient_C"] / v["coefficient_A"]},
          traps=(Trap("inverted_ratio", "multiplies by a/c", lambda v: v["reaction_rate"] * v["coefficient_A"] / v["coefficient_C"]),),
          formula="−(1/a) d[A]/dt = (1/c) d[C]/dt", asks="rate of formation of C (mol L⁻¹ s⁻¹)"),
@@ -144,12 +154,19 @@ STEPS = [
          needs=(P("initial_pressure", "atm", "initial pressure of the gaseous reactant (alone)", lo=0.1, hi=10),
                 P("total_pressure", "atm", "total pressure at time t", lo=0.1, hi=30),
                 P("moles_of_gaseous_products", "", "n in A(g) → n mol of gaseous products", kind="real", lo=1.5, hi=4),
-                P("time", "s", "time elapsed", lo=1, hi=1e5)),
+                P("time", "s", "time elapsed", lo=1, hi=1e5),
+                P("reactant_coefficient", "", "coefficient a of A in the balanced equation, when the rate constant is "
+                  "the REACTION's (rate = −(1/a) d[A]/dt = k[A], as JEE defines it for 2N₂O₅ → ...); 1 when k is "
+                  "A's own", kind="posint", lo=1, hi=2)),
+         derive=(Derive("reactant_coefficient", (), lambda v: 1),),     # left out: k is A's own, as before
          answer="rate_constant", unit="s⁻¹", kind="positive", roles={"rate_constant": "reaction"},
          fn=lambda v: {"rate_constant": _gas_k(v)},
          traps=(Trap("total_as_reactant", "uses the total pressure as the reactant's pressure",
-                     lambda v: _gas_k(v, use_total=True)),),
-         formula="k = (1/t) ln(P₀/P_A), P_A = (nP₀ − P_t)/(n − 1)", asks="first-order rate constant (s⁻¹)"),
+                     lambda v: _gas_k(v, use_total=True)),
+                Trap("coefficient_ignored", "takes k as the reactant's own rate constant, leaving out its coefficient "
+                     "(rate = −(1/a) d[A]/dt)", lambda v: _gas_k(v, per_reactant=True))),
+         formula="k = (1/(a t)) ln(P₀/P_A), P_A = (nP₀ − P_t)/(n − 1); a = 1 unless k is the reaction's for aA → ...",
+         asks="first-order rate constant (s⁻¹)"),
     Step(tx=209, src="fraction_remaining", dst="time_elapsed",
          needs=(P("fraction_remaining", "", "fraction of the sample remaining", kind="open_fraction", lo=0.01, hi=0.95),
                 P("half_life", "s", "half-life", lo=1, hi=1e9)),

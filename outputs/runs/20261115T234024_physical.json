@@ -1,0 +1,466 @@
+{
+ "subject": "physical",
+ "saved_at": "20261115T234024",
+ "spend": {
+  "total_cost_usd": 0.16854,
+  "by_role": {
+   "designer": {
+    "calls": 2,
+    "prompt_tokens": 1639,
+    "completion_tokens": 4281,
+    "cost": 0.017283
+   },
+   "coder": {
+    "calls": 20,
+    "prompt_tokens": 68421,
+    "completion_tokens": 13501,
+    "cost": 0.02962404
+   },
+   "generator": {
+    "calls": 6,
+    "prompt_tokens": 18251,
+    "completion_tokens": 28778,
+    "cost": 0.12160575
+   },
+   "coherence_check": {
+    "calls": 1,
+    "prompt_tokens": 650,
+    "completion_tokens": 0,
+    "cost": 2.73e-05
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "balanced_equation_to_equilibrium_moles_nnforeverysp",
+     "balanced_equation_to_moles_molemethodni",
+     "molarity_to_cell_emf_ee00591nlogq",
+     "moles_to_molarity_vnmwdmnvl",
+     "redox_skeleton_to_balanced_equation_ionelectronm"
+    ],
+    "nodes": [
+     "balanced_equation",
+     "moles",
+     "redox_skeleton",
+     "equilibrium_moles",
+     "molarity",
+     "cell_emf"
+    ],
+    "chapters": [
+     "Stoichiometry",
+     "Chemical Equilibrium",
+     "Electrochemistry"
+    ],
+    "txs": [
+     12,
+     32,
+     361,
+     374,
+     239
+    ],
+    "trap_ids": [
+     "ignores_atom_count",
+     "ignores_coefficients",
+     "inverted_Q",
+     "solvent_volume"
+    ],
+    "description": "amount of the target species (mol) [POAC: n_known × atoms(known) = n_target × atoms(target)] | the balanced equation [balance atoms and charge (ion-electron method)] | equilibrium amount of the species (mol) [n = n₀ + νξ for every species] | molarity (mol L⁻¹) [V = (n₂M₂ + w₁)/d; M = n₂/V(L)] | EMF of the cell at 298 K (V) [E = E° − (0.0591/n) log Q (ions of equal charge)]",
+    "twist": "inverse"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:35:24.571095+00:00",
+     "try_": 1,
+     "situation": "A metallurgical sample containing mixed iron oxides (Fe3O4 and Fe2O3) is processed by complete dissolution and reduction, then partially oxidized by acidic potassium dichromate to establish an Fe2+/Fe3+ mixture. This mixture is equilibrated with thiocyanate (SCN-) to form [Fe(SCN)]2+, and the remaining free Fe3+ and Fe2+ in the dense solution constitute the cathode compartment of a Pt|Fe2+, Fe3+ || Zn2+|Zn galvanic cell at 298 K.",
+     "links": "The measured cell EMF gives the ratio [Fe3+]/[Fe2+] via the Nernst equation (Formula 5). Using the known [Fe2+], density, and solvent mass, the solution volume and molarity yield the exact equilibrium amount n(Fe3+) (Formula 4). The equilibrium extent equation n = n0 - ξ relates free Fe3+ back to the pre-complexation amount n0(Fe3+) produced from the redox step (Formula 3). The balanced redox stoichiometry between Fe2+ and Cr2O7^2- (via ion-electron method) determines total iron converted (Formula 2). Finally, POAC on iron atoms across the original mixed oxide sample determines the mass percentage of Fe3O4 in the ore (Formula 1).",
+     "insight": "During dissolution and subsequent complexation, SCN- coordinates solely with Fe3+ and not Fe2+, but the volume of the solution is altered by the high solute mass of dissolved salts, making the density-to-volume conversion (Formula 4) deviate significantly from the simple sum of liquid volumes.",
+     "asked": "The mass percentage of Fe3O4 in the initial 5.00 g ore sample.",
+     "wrong_answers": "Assuming solution volume is simply additive (V = V_water) rather than using density/solute mass; neglecting the consumed Fe3+ in the thiocyanate equilibrium and using the Nernst-derived Fe3+ directly in the redox stoichiometry; incorrectly balancing the Cr2O7^2- to Fe2+ electron exchange."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:36:12.764411+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2014P2_Chem_Q31",
+      "2016P2_Chem_Q21"
+     ],
+     "stem": "An 8.000 g sample of an iron ore containing magnetite (Fe₃O₄) and inert gangue is completely dissolved and reduced to Fe²⁺ ions in an acidic solution. This resulting Fe²⁺ solution is completely reacted with potassium dichromate (K₂Cr₂O₇) in acidic medium to produce Cr³⁺ ions according to the balanced ion-electron equation. The generated Cr³⁺ solution is subsequently treated with potassium oxalate, establishing the complexation equilibrium: Cr³⁺(aq) + 3C₂O₄²⁻(aq) ⇌ [Cr(C₂O₄)₃]³⁻(aq), yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium. The resulting solution contains 208.96 g of water as solvent and has a density of 1.050 g mL⁻¹. This solution is placed in the anode compartment of a galvanic cell operating at 298 K: Cr(s) | Cr³⁺(aq) || In³⁺(aq, 0.010 M) | In(s). The measured EMF of this cell at 298 K is 0.3803 V. Calculate the mass percentage of Fe₃O₄ in the initial ore sample. (Given: E°(cell) = 0.4000 V; 2.303RT/F = 0.0591 V at 298 K; atomic masses in g mol⁻¹: Fe = 56.0, Cr = 52.0, O = 16.0)",
+     "asks": "the mass percentage of Fe₃O₄ in the ore sample",
+     "unit": "%"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:36:22.186605+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Step 1: Calculate the moles of [Cr(C₂O₄)₃]³⁻\n    moles_CrC2O43 = given(0.0100, \"yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium\")\n    \n    # Step 2: Calculate the moles of Cr³⁺ from the complexation equilibrium\n    balanced_equation = given(\"Cr³⁺(aq) + 3C₂O₄²⁻(aq) ⇌ [Cr(C₂O₄)₃]³⁻(aq)\", \"the complexation equilibrium\")\n    initial_amounts = {\"Cr³⁺\": 0, \"C₂O₄²⁻\": 0, \"[Cr(C₂O₄)₃]³⁻\": moles_CrC2O43}\n    known_species = given(\"[Cr(C₂O₄)₃]³⁻\", \"yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium\")\n    known_equilibrium_amount = moles_CrC2O43\n    species_asked = given(\"Cr³⁺\", \"the complexation equilibrium\")\n    result = step_361(balanced_equation=balanced_equation, initial_amounts=initial_amounts, known_species=known_species, known_equilibrium_amount=known_equilibrium_amount, species_asked=species_asked)\n    moles_Cr3plus = result[\"equilibrium_moles\"]\n    \n    # Step 3: Calculate the moles of Fe²⁺ from the reaction with K₂Cr₂O₇\n    balanced_equation = given(\"Fe²⁺ + Cr₂O₇²⁻ + 14H⁺ -> Fe³⁺ + 2Cr³⁺ + 7H₂O\", \"the balanced ion-electron equation\")\n    known_species = given(\"Cr³⁺\", \"the balanced ion-electron equation\")\n    moles_known = moles_Cr3plus\n    target_species = given(\"Fe²⁺\", \"the balanced ion-electron equation\")\n    element = given(\"Fe\", \"the balanced ion-electron equation\")\n    result = step_12(balanced_equation=balanced_equation, known_species=known_species, moles_known=moles_known, target_species=target_species, element=element)\n    moles_Fe2plus = result[\"moles\"]\n    \n    # Step 4: Calculate the moles of Fe₃O₄ from the reaction with Fe²⁺\n    balanced_equation = given(\"Fe₃O₄ + 8H⁺ -> 3Fe²⁺ + 4H₂O\", \"the reaction with Fe²⁺\")\n    known_species = given(\"Fe²⁺\", \"the reaction with Fe²⁺\")\n    moles_known = moles_Fe2plus\n    target_species = given(\"Fe₃O₄\", \"the reaction with Fe²⁺\")\n    element = given(\"Fe\", \"the reaction with Fe²⁺\")\n    result = step_12(balanced_equation=balanced_equation, known_species=known_species, moles_known=moles_known, target_species=target_species, element=element)\n    moles_Fe3O4 = result[\"moles\"]\n    \n    # Step 5: Calculate the mass of Fe₃O₄\n    molar_mass_Fe3O4 = 3 * given(56.0, \"atomic masses in g mol⁻¹: Fe = 56.0\") + 4 * given(16.0, \"atomic masses in g mol⁻¹: O = 16.0\")\n    mass_Fe3O4 = moles_Fe3O4 * molar_mass_Fe3O4\n    \n    # Step 6: Calculate the mass percentage of Fe₃O₄ in the ore sample\n    mass_ore = given(8.000, \"An 8.000 g sample of an iron ore\")\n    mass_percentage_Fe3O4 = (mass_Fe3O4 / mass_ore) * 100\n    \n    return mass_percentage_Fe3O4",
+     "ok": false,
+     "problems": [
+      "step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:36:31.226865+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Step 1: Calculate the moles of [Cr(C₂O₄)₃]³⁻\n    moles_CrC2O43 = given(0.0100, \"yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium\")\n    \n    # Step 2: Calculate the moles of Cr³⁺ from the complexation equilibrium\n    balanced_equation = given(\"Cr³⁺(aq) + 3C₂O₄²⁻(aq) ⇌ [Cr(C₂O₄)₃]³⁻(aq)\", \"the complexation equilibrium\")\n    initial_amounts = {\"Cr³⁺\": 0, \"C₂O₄²⁻\": 0, \"[Cr(C₂O₄)₃]³⁻\": moles_CrC2O43}\n    known_species = given(\"[Cr(C₂O₄)₃]³⁻\", \"yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium\")\n    known_equilibrium_amount = moles_CrC2O43\n    species_asked = given(\"Cr³⁺\", \"the complexation equilibrium\")\n    result = step_361(balanced_equation=balanced_equation, initial_amounts=initial_amounts, known_species=known_species, known_equilibrium_amount=known_equilibrium_amount, species_asked=species_asked)\n    moles_Cr3plus = result[\"equilibrium_moles\"]\n    \n    # Step 3: Calculate the moles of Fe²⁺ from the reaction with K₂Cr₂O₇\n    balanced_equation = given(\"Fe²⁺ + Cr₂O₇²⁻ + 14H⁺ -> Fe³⁺ + 2Cr³⁺ + 7H₂O\", \"the balanced ion-electron equation\")\n    known_species = given(\"Cr³⁺\", \"the balanced ion-electron equation\")\n    moles_known = moles_Cr3plus\n    target_species = given(\"Fe²⁺\", \"the balanced ion-electron equation\")\n    element = given(\"Fe\", \"the balanced ion-electron equation\")\n    result = step_12(balanced_equation=balanced_equation, known_species=known_species, moles_known=moles_known, target_species=target_species, element=element)\n    moles_Fe2plus = result[\"moles\"]\n    \n    # Step 4: Calculate the moles of Fe₃O₄ from the reaction with Fe²⁺\n    balanced_equation = given(\"Fe₃O₄ + 8H⁺ -> 3Fe²⁺ + 4H₂O\", \"the reaction with Fe²⁺\")\n    known_species = given(\"Fe²⁺\", \"the reaction with Fe²⁺\")\n    moles_known = moles_Fe2plus\n    target_species = given(\"Fe₃O₄\", \"the reaction with Fe²⁺\")\n    element = given(\"Fe\", \"the reaction with Fe²⁺\")\n    result = step_12(balanced_equation=balanced_equation, known_species=known_species, moles_known=moles_known, target_species=target_species, element=element)\n    moles_Fe3O4 = result[\"moles\"]\n    \n    # Step 5: Calculate the mass of Fe₃O₄\n    molar_mass_Fe3O4 = 3 * given(56.0, \"atomic masses in g mol⁻¹: Fe = 56.0\") + 4 * given(16.0, \"atomic masses in g mol⁻¹: O = 16.0\")\n    mass_Fe3O4 = moles_Fe3O4 * molar_mass_Fe3O4\n    \n    # Step 6: Calculate the mass percentage of Fe₃O₄ in the ore sample\n    mass_ore = given(8.000, \"An 8.000 g sample of an iron ore\")\n    mass_percentage_Fe3O4 = (mass_Fe3O4 / mass_ore) * 100\n    \n    return mass_percentage_Fe3O4",
+     "ok": false,
+     "problems": [
+      "step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:36:39.705829+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Step 1: Calculate the moles of [Cr(C₂O₄)₃]³⁻\n    moles_CrC2O43 = given(0.0100, \"yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium\")\n    \n    # Step 2: Calculate the moles of Cr³⁺ from the complexation equilibrium\n    balanced_equation = given(\"Cr³⁺(aq) + 3C₂O₄²⁻(aq) ⇌ [Cr(C₂O₄)₃]³⁻(aq)\", \"the complexation equilibrium\")\n    initial_amounts = {\"Cr³⁺\": 0, \"C₂O₄²⁻\": 0, \"[Cr(C₂O₄)₃]³⁻\": moles_CrC2O43}\n    known_species = given(\"[Cr(C₂O₄)₃]³⁻\", \"yielding 0.0100 mol of [Cr(C₂O₄)₃]³⁻ at equilibrium\")\n    known_equilibrium_amount = moles_CrC2O43\n    species_asked = given(\"Cr³⁺\", \"the complexation equilibrium\")\n    result = step_361(balanced_equation=balanced_equation, initial_amounts=initial_amounts, known_species=known_species, known_equilibrium_amount=known_equilibrium_amount, species_asked=species_asked)\n    moles_Cr3plus = result[\"equilibrium_moles\"]\n    \n    # Step 3: Calculate the moles of Fe²⁺ from the reaction with K₂Cr₂O₇\n    balanced_equation = given(\"Fe²⁺ + Cr₂O₇²⁻ + 14H⁺ -> Fe³⁺ + 2Cr³⁺ + 7H₂O\", \"the balanced ion-electron equation\")\n    known_species = given(\"Cr³⁺\", \"the balanced ion-electron equation\")\n    moles_known = moles_Cr3plus\n    target_species = given(\"Fe²⁺\", \"the balanced ion-electron equation\")\n    element = given(\"Fe\", \"the balanced ion-electron equation\")\n    result = step_12(balanced_equation=balanced_equation, known_species=known_species, moles_known=moles_known, target_species=target_species, element=element)\n    moles_Fe2plus = result[\"moles\"]\n    \n    # Step 4: Calculate the moles of Fe₃O₄ from the reaction with Fe²⁺\n    balanced_equation = given(\"Fe₃O₄ + 8H⁺ -> 3Fe²⁺ + 4H₂O\", \"the reaction with Fe²⁺\")\n    known_species = given(\"Fe²⁺\", \"the reaction with Fe²⁺\")\n    moles_known = moles_Fe2plus\n    target_species = given(\"Fe₃O₄\", \"the reaction with Fe²⁺\")\n    element = given(\"Fe\", \"the reaction with Fe²⁺\")\n    result = step_12(balanced_equation=balanced_equation, known_species=known_species, moles_known=moles_known, target_species=target_species, element=element)\n    moles_Fe3O4 = result[\"moles\"]\n    \n    # Step 5: Calculate the mass of Fe₃O₄\n    molar_mass_Fe3O4 = 3 * given(56.0, \"atomic masses in g mol⁻¹: Fe = 56.0\") + 4 * given(16.0, \"atomic masses in g mol⁻¹: O = 16.0\")\n    mass_Fe3O4 = moles_Fe3O4 * molar_mass_Fe3O4\n    \n    # Step 6: Calculate the mass percentage of Fe₃O₄ in the ore sample\n    mass_ore = given(8.000, \"An 8.000 g sample of an iron ore\")\n    mass_percentage_Fe3O4 = (mass_Fe3O4 / mass_ore) * 100\n    \n    return mass_percentage_Fe3O4",
+     "ok": false,
+     "problems": [
+      "step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:36:39.706044+00:00",
+     "attempt": 1,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:37:02.170998+00:00",
+     "attempt": 2,
+     "twist": "inverse",
+     "examples": [
+      "2022P1_Chem_Q2",
+      "2020P1_Chem_Q15"
+     ],
+     "stem": "A 2.000 g sample of an iron ore containing magnetite (Fe₃O₄) and inert impurities is completely dissolved and reduced to Fe²⁺ ions in an acidic solution. The resulting Fe²⁺ is completely reacted with an acidic solution of potassium dichromate (K₂Cr₂O₇) to generate Cr³⁺ ions according to the balanced ion-electron equation. The generated Cr³⁺ solution (as CrCl₃, molar mass = 158.5 g mol⁻¹) is then treated with potassium thiocyanate (KSCN), establishing the complexation equilibrium: Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq), at which 0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium. The final equilibrium solution contains 209.683 g of water as solvent and has a density of 1.050 g mL⁻¹. This solution is used as the anode compartment of a galvanic cell operating at 298 K: Cr(s) | Cr³⁺(aq) || In³⁺(aq, 0.100 M) | In(s). The measured EMF of this cell at 298 K is 0.4197 V. Calculate the mass percentage of Fe₃O₄ in the initial ore sample. (Given: E°(cell) = 0.4000 V; 2.303RT/F = 0.0591 V at 298 K; atomic masses in g mol⁻¹: Fe = 56.0, O = 16.0, Cr = 52.0, Cl = 35.5)",
+     "asks": "the mass percentage of Fe₃O₄ in the initial ore sample",
+     "unit": "%"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:37:09.889503+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Step 1: Calculate the amount of Cr³⁺ ions generated\n    step_12_result = step_12(\n        balanced_equation=given(\"Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)\", \"the complexation equilibrium\"),\n        known_species=given(\"[Cr(SCN)]²⁺(aq)\", \"0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium\"),\n        moles_known=given(0.00300, \"0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium\"),\n        target_species=given(\"Cr³⁺(aq)\", \"the complexation equilibrium\"),\n        element=given(\"Cr\", \"the complexation equilibrium\")\n    )\n    moles_Cr3_plus = step_12_result[\"moles\"]\n    \n    # Step 2: Calculate the mass of CrCl₃\n    mass_CrCl3 = moles_Cr3_plus * given(158.5, \"molar mass = 158.5 g mol⁻¹\")\n    \n    # Step 3: Calculate the molarity of the Cr³⁺ solution\n    step_374_result = step_374(\n        moles=moles_Cr3_plus,\n        solute_molar_mass=given(158.5, \"molar mass = 158.5 g mol⁻¹\"),\n        solvent_mass=given(209.683, \"209.683 g of water as solvent\"),\n        density=given(1.050, \"density of 1.050 g mL⁻¹\")\n    )\n    molarity_Cr3_plus = step_374_result[\"molarity\"]\n    \n    # Step 4: Calculate the EMF of the cell\n    step_239_result = step_239(\n        standard_emf=given(0.4000, \"E°(cell) = 0.4000 V\"),\n        molarity=molarity_Cr3_plus,\n        cathode_ion_concentration=given(0.100, \"In³⁺(aq, 0.100 M)\"),\n        electrons=given(3, \"the balanced ion-electron equation\")\n    )\n    cell_emf = step_239_result[\"cell_emf\"]\n    \n    # Step 5: Calculate the amount of Fe²⁺ ions generated\n    step_12_result_2 = step_12(\n        balanced_equation=given(\"Fe³⁺(aq) + 3e⁻ -> Fe²⁺(aq)\", \"the balanced ion-electron equation\"),\n        known_species=given(\"Fe²⁺(aq)\", \"the balanced ion-electron equation\"),\n        moles_known=moles_Cr3_plus,\n        target_species=given(\"Fe³⁺(aq)\", \"the balanced ion-electron equation\"),\n        element=given(\"Fe\", \"the balanced ion-electron equation\")\n    )\n    moles_Fe2_plus = step_12_result_2[\"moles\"]\n    \n    # Step 6: Calculate the mass of Fe₃O₄\n    mass_Fe3O4 = moles_Fe2_plus * (given(56.0, \"Fe = 56.0\") * 3 + given(16.0, \"O = 16.0\") * 4)\n    \n    # Step 7: Calculate the mass percentage of Fe₃O₄ in the initial ore sample\n    mass_percentage_Fe3O4 = (mass_Fe3O4 / given(2.000, \"2.000 g sample of an iron ore\")) * 100\n    \n    return mass_percentage_Fe3O4",
+     "ok": false,
+     "problems": [
+      "step_12: '[Cr(SCN)]²⁺(aq)' does not appear in 'Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)' -- an impossible result usually means an input is in the wrong unit: give moles_known in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:37:18.014886+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Step 1: Calculate the amount of Cr³⁺ ions generated\n    step_12_result = step_12(\n        balanced_equation=given(\"Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)\", \"the complexation equilibrium\"),\n        known_species=given(\"[Cr(SCN)]²⁺(aq)\", \"0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium\"),\n        moles_known=given(0.00300, \"0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium\"),\n        target_species=given(\"Cr³⁺(aq)\", \"the complexation equilibrium\"),\n        element=given(\"Cr\", \"the complexation equilibrium\")\n    )\n    moles_Cr3_plus = step_12_result[\"moles\"]\n    \n    # Step 2: Calculate the mass of CrCl₃\n    mass_CrCl3 = moles_Cr3_plus * given(158.5, \"molar mass = 158.5 g mol⁻¹\")\n    \n    # Step 3: Calculate the molarity of the Cr³⁺ solution\n    step_374_result = step_374(\n        moles=moles_Cr3_plus,\n        solute_molar_mass=given(158.5, \"molar mass = 158.5 g mol⁻¹\"),\n        solvent_mass=given(209.683, \"209.683 g of water as solvent\"),\n        density=given(1.050, \"density of 1.050 g mL⁻¹\")\n    )\n    molarity_Cr3_plus = step_374_result[\"molarity\"]\n    \n    # Step 4: Calculate the EMF of the cell\n    step_239_result = step_239(\n        standard_emf=given(0.4000, \"E°(cell) = 0.4000 V\"),\n        molarity=molarity_Cr3_plus,\n        cathode_ion_concentration=given(0.100, \"In³⁺(aq, 0.100 M)\"),\n        electrons=given(3, \"the balanced ion-electron equation\")\n    )\n    cell_emf = step_239_result[\"cell_emf\"]\n    \n    # Step 5: Calculate the amount of Fe²⁺ ions generated\n    step_12_result_2 = step_12(\n        balanced_equation=given(\"Fe³⁺(aq) + 3e⁻ -> Fe²⁺(aq)\", \"the balanced ion-electron equation\"),\n        known_species=given(\"Fe²⁺(aq)\", \"the balanced ion-electron equation\"),\n        moles_known=moles_Cr3_plus,\n        target_species=given(\"Fe³⁺(aq)\", \"the balanced ion-electron equation\"),\n        element=given(\"Fe\", \"the balanced ion-electron equation\")\n    )\n    moles_Fe2_plus = step_12_result_2[\"moles\"]\n    \n    # Step 6: Calculate the mass of Fe₃O₄\n    mass_Fe3O4 = moles_Fe2_plus * (given(56.0, \"Fe = 56.0\") * 3 + given(16.0, \"O = 16.0\") * 4)\n    \n    # Step 7: Calculate the mass percentage of Fe₃O₄ in the initial ore sample\n    mass_percentage_Fe3O4 = (mass_Fe3O4 / given(2.000, \"2.000 g sample of an iron ore\")) * 100\n    \n    return mass_percentage_Fe3O4",
+     "ok": false,
+     "problems": [
+      "step_12: '[Cr(SCN)]²⁺(aq)' does not appear in 'Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)' -- an impossible result usually means an input is in the wrong unit: give moles_known in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:37:25.775142+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Step 1: Calculate the amount of Cr³⁺ ions generated\n    step_12_result = step_12(\n        balanced_equation=given(\"Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)\", \"the complexation equilibrium\"),\n        known_species=given(\"[Cr(SCN)]²⁺(aq)\", \"0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium\"),\n        moles_known=given(0.00300, \"0.00300 mol of [Cr(SCN)]²⁺ is present at equilibrium\"),\n        target_species=given(\"Cr³⁺(aq)\", \"the complexation equilibrium\"),\n        element=given(\"Cr\", \"the complexation equilibrium\")\n    )\n    moles_Cr3_plus = step_12_result[\"moles\"]\n    \n    # Step 2: Calculate the mass of CrCl₃\n    mass_CrCl3 = moles_Cr3_plus * given(158.5, \"molar mass = 158.5 g mol⁻¹\")\n    \n    # Step 3: Calculate the molarity of the Cr³⁺ solution\n    step_374_result = step_374(\n        moles=moles_Cr3_plus,\n        solute_molar_mass=given(158.5, \"molar mass = 158.5 g mol⁻¹\"),\n        solvent_mass=given(209.683, \"209.683 g of water as solvent\"),\n        density=given(1.050, \"density of 1.050 g mL⁻¹\")\n    )\n    molarity_Cr3_plus = step_374_result[\"molarity\"]\n    \n    # Step 4: Calculate the EMF of the cell\n    step_239_result = step_239(\n        standard_emf=given(0.4000, \"E°(cell) = 0.4000 V\"),\n        molarity=molarity_Cr3_plus,\n        cathode_ion_concentration=given(0.100, \"In³⁺(aq, 0.100 M)\"),\n        electrons=given(3, \"the balanced ion-electron equation\")\n    )\n    cell_emf = step_239_result[\"cell_emf\"]\n    \n    # Step 5: Calculate the amount of Fe²⁺ ions generated\n    step_12_result_2 = step_12(\n        balanced_equation=given(\"Fe³⁺(aq) + 3e⁻ -> Fe²⁺(aq)\", \"the balanced ion-electron equation\"),\n        known_species=given(\"Fe²⁺(aq)\", \"the balanced ion-electron equation\"),\n        moles_known=moles_Cr3_plus,\n        target_species=given(\"Fe³⁺(aq)\", \"the balanced ion-electron equation\"),\n        element=given(\"Fe\", \"the balanced ion-electron equation\")\n    )\n    moles_Fe2_plus = step_12_result_2[\"moles\"]\n    \n    # Step 6: Calculate the mass of Fe₃O₄\n    mass_Fe3O4 = moles_Fe2_plus * (given(56.0, \"Fe = 56.0\") * 3 + given(16.0, \"O = 16.0\") * 4)\n    \n    # Step 7: Calculate the mass percentage of Fe₃O₄ in the initial ore sample\n    mass_percentage_Fe3O4 = (mass_Fe3O4 / given(2.000, \"2.000 g sample of an iron ore\")) * 100\n    \n    return mass_percentage_Fe3O4",
+     "ok": false,
+     "problems": [
+      "step_12: '[Cr(SCN)]²⁺(aq)' does not appear in 'Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)' -- an impossible result usually means an input is in the wrong unit: give moles_known in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:37:25.775364+00:00",
+     "attempt": 2,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_12: '[Cr(SCN)]²⁺(aq)' does not appear in 'Cr³⁺(aq) + SCN⁻(aq) ⇌ [Cr(SCN)]²⁺(aq)' -- an impossible result usually means an input is in the wrong unit: give moles_known in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:37:43.246194+00:00",
+     "attempt": 3,
+     "twist": "inverse",
+     "examples": [
+      "2020P1_Chem_Q15",
+      "2019P1_Chem_Q16"
+     ],
+     "stem": "A 3.000 g sample of an iron ore containing magnetite (Fe₃O₄) and inert impurities is completely dissolved in acid to convert all iron into Fe³⁺ ions. The resulting Fe³⁺ is completely reduced to Fe²⁺ using Sn²⁺ according to the balanced redox equation: Sn²⁺(aq) + 2Fe³⁺(aq) → Sn⁴⁺(aq) + 2Fe²⁺(aq). The generated Fe²⁺ (isolated as FeSO₄, molar mass = 152.0 g mol⁻¹) is then treated with an oxalate ligand solution to establish the complexation equilibrium: Fe²⁺(aq) + C₂O₄²⁻(aq) ⇌ [Fe(C₂O₄)](aq), at which exactly 0.0100 mol of [Fe(C₂O₄)] is present at equilibrium. The final equilibrium solution contains 200.96 g of water as solvent and has a density of 1.020 g mL⁻¹. This solution serves as the anode compartment of a galvanic cell operating at 298 K: Fe(s) | Fe²⁺(aq) || Cu²⁺(aq, 1.00 M) | Cu(s). The measured EMF of the cell is 0.8096 V. Calculate the mass percentage of Fe₃O₄ in the initial ore sample. (Given: E°(cell) = 0.7800 V; 2.303RT/F = 0.0591 V at 298 K; atomic masses in g mol⁻¹: Fe = 56.0, O = 16.0, S = 32.0)",
+     "asks": "the mass percentage of Fe3O4 in the initial ore sample",
+     "unit": "%"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:37:51.261917+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Step 1: Calculate the moles of Fe3O4 in the sample\n    moles_Fe3O4 = step_12(balanced_equation=given(\"Fe3O4 -> Fe3+ + O2\", \"the balanced equation\"),\n                              known_species=given(\"Fe3O4\", \"the sample\"),\n                              moles_known=given(3.000, \"3.000 g sample\") / given(231.5, \"molar mass of Fe3O4\"),\n                              target_species=given(\"Fe3+\", \"all iron into Fe3+ ions\"),\n                              element=given(\"Fe\", \"element conserved\"))[\"moles\"]\n    \n    # Step 2: Calculate the moles of Fe2+ formed\n    moles_Fe2plus = step_12(balanced_equation=given(\"Sn2+ + 2Fe3+ -> Sn4+ + 2Fe2+\", \"the balanced redox equation\"),\n                                  known_species=given(\"Fe3+\", \"all iron into Fe3+ ions\"),\n                                  moles_known=moles_Fe3O4,\n                                  target_species=given(\"Fe2+\", \"the generated Fe2+\"),\n                                  element=given(\"Fe\", \"element conserved\"))[\"moles\"]\n    \n    # Step 3: Calculate the moles of Fe2+ in the equilibrium solution\n    moles_Fe2plus_eq = step_361(balanced_equation=given(\"Fe2+ + C2O42- <=> [Fe(C2O4)]\", \"the complexation equilibrium\"),\n                                  initial_amounts={\"Fe2+\": moles_Fe2plus, \"C2O42-\": 0},\n                                  known_species=given(\"[Fe(C2O4)]\", \"exactly 0.0100 mol of [Fe(C2O4)] is present at equilibrium\"),\n                                  known_equilibrium_amount=given(0.0100, \"exactly 0.0100 mol of [Fe(C2O4)] is present at equilibrium\"),\n                                  species_asked=given(\"Fe2+\", \"the equilibrium amount of Fe2+\"))[\"equilibrium_moles\"]\n    \n    # Step 4: Calculate the molarity of the Fe2+ solution\n    molarity_Fe2plus = step_374(moles=moles_Fe2plus_eq,\n                                    solute_molar_mass=given(152.0, \"molar mass of FeSO4\"),\n                                    solvent_mass=given(200.96, \"200.96 g of water as solvent\"),\n                                    density=given(1.020, \"density of 1.020 g mL⁻¹\"))[\"molarity\"]\n    \n    # Step 5: Calculate the mass percentage of Fe3O4 in the initial ore sample\n    mass_percentage = (moles_Fe3O4 * given(231.5, \"molar mass of Fe3O4\") / given(3.000, \"3.000 g sample\")) * 100\n    \n    return mass_percentage",
+     "ok": false,
+     "problems": [
+      "step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:37:58.363759+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Step 1: Calculate the moles of Fe3O4 in the sample\n    moles_Fe3O4 = step_12(balanced_equation=given(\"Fe3O4 -> Fe3+ + O2\", \"the balanced equation\"),\n                              known_species=given(\"Fe3O4\", \"the sample\"),\n                              moles_known=given(3.000, \"3.000 g sample\") / given(231.5, \"molar mass of Fe3O4\"),\n                              target_species=given(\"Fe3+\", \"all iron into Fe3+ ions\"),\n                              element=given(\"Fe\", \"element conserved\"))[\"moles\"]\n    \n    # Step 2: Calculate the moles of Fe2+ formed\n    moles_Fe2plus = step_12(balanced_equation=given(\"Sn2+ + 2Fe3+ -> Sn4+ + 2Fe2+\", \"the balanced redox equation\"),\n                                  known_species=given(\"Fe3+\", \"all iron into Fe3+ ions\"),\n                                  moles_known=moles_Fe3O4,\n                                  target_species=given(\"Fe2+\", \"the generated Fe2+\"),\n                                  element=given(\"Fe\", \"element conserved\"))[\"moles\"]\n    \n    # Step 3: Calculate the moles of Fe2+ in the equilibrium solution\n    moles_Fe2plus_eq = step_361(balanced_equation=given(\"Fe2+ + C2O42- <=> [Fe(C2O4)]\", \"the complexation equilibrium\"),\n                                  initial_amounts={\"Fe2+\": moles_Fe2plus, \"C2O42-\": 0},\n                                  known_species=given(\"[Fe(C2O4)]\", \"exactly 0.0100 mol of [Fe(C2O4)] is present at equilibrium\"),\n                                  known_equilibrium_amount=given(0.0100, \"exactly 0.0100 mol of [Fe(C2O4)] is present at equilibrium\"),\n                                  species_asked=given(\"Fe2+\", \"the equilibrium amount of Fe2+\"))[\"equilibrium_moles\"]\n    \n    # Step 4: Calculate the molarity of the Fe2+ solution\n    molarity_Fe2plus = step_374(moles=moles_Fe2plus_eq,\n                                    solute_molar_mass=given(152.0, \"molar mass of FeSO4\"),\n                                    solvent_mass=given(200.96, \"200.96 g of water as solvent\"),\n                                    density=given(1.020, \"density of 1.020 g mL⁻¹\"))[\"molarity\"]\n    \n    # Step 5: Calculate the mass percentage of Fe3O4 in the initial ore sample\n    mass_percentage = (moles_Fe3O4 * given(231.5, \"molar mass of Fe3O4\") / given(3.000, \"3.000 g sample\")) * 100\n    \n    return mass_percentage",
+     "ok": false,
+     "problems": [
+      "step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:38:05.780739+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Step 1: Calculate the moles of Fe3O4 in the sample\n    moles_Fe3O4 = step_12(balanced_equation=given(\"Fe3O4 -> Fe3+ + O2\", \"the balanced equation\"),\n                              known_species=given(\"Fe3O4\", \"the sample\"),\n                              moles_known=given(3.000, \"3.000 g sample\") / given(231.5, \"molar mass of Fe3O4\"),\n                              target_species=given(\"Fe3+\", \"all iron into Fe3+ ions\"),\n                              element=given(\"Fe\", \"element conserved\"))[\"moles\"]\n    \n    # Step 2: Calculate the moles of Fe2+ formed\n    moles_Fe2plus = step_12(balanced_equation=given(\"Sn2+ + 2Fe3+ -> Sn4+ + 2Fe2+\", \"the balanced redox equation\"),\n                                  known_species=given(\"Fe3+\", \"all iron into Fe3+ ions\"),\n                                  moles_known=moles_Fe3O4,\n                                  target_species=given(\"Fe2+\", \"the generated Fe2+\"),\n                                  element=given(\"Fe\", \"element conserved\"))[\"moles\"]\n    \n    # Step 3: Calculate the moles of Fe2+ in the equilibrium solution\n    moles_Fe2plus_eq = step_361(balanced_equation=given(\"Fe2+ + C2O42- <=> [Fe(C2O4)]\", \"the complexation equilibrium\"),\n                                  initial_amounts={\"Fe2+\": moles_Fe2plus, \"C2O42-\": 0},\n                                  known_species=given(\"[Fe(C2O4)]\", \"exactly 0.0100 mol of [Fe(C2O4)] is present at equilibrium\"),\n                                  known_equilibrium_amount=given(0.0100, \"exactly 0.0100 mol of [Fe(C2O4)] is present at equilibrium\"),\n                                  species_asked=given(\"Fe2+\", \"the equilibrium amount of Fe2+\"))[\"equilibrium_moles\"]\n    \n    # Step 4: Calculate the molarity of the Fe2+ solution\n    molarity_Fe2plus = step_374(moles=moles_Fe2plus_eq,\n                                    solute_molar_mass=given(152.0, \"molar mass of FeSO4\"),\n                                    solvent_mass=given(200.96, \"200.96 g of water as solvent\"),\n                                    density=given(1.020, \"density of 1.020 g mL⁻¹\"))[\"molarity\"]\n    \n    # Step 5: Calculate the mass percentage of Fe3O4 in the initial ore sample\n    mass_percentage = (moles_Fe3O4 * given(231.5, \"molar mass of Fe3O4\") / given(3.000, \"3.000 g sample\")) * 100\n    \n    return mass_percentage",
+     "ok": false,
+     "problems": [
+      "step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:38:05.780997+00:00",
+     "attempt": 3,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_361: an equilibrium amount comes out zero or negative -- an impossible result usually means an input is in the wrong unit: give initial_amounts in mol; known_equilibrium_amount in mol (for example N × V in mL gives meq, not eq; mg is not g)"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "temperature_to_molecular_speed_urmssqrt3rtm",
+     "temperature_to_molecular_speed_urmssqrt3rtm",
+     "temperature_to_vapour_pressure_xlxgkppxlnp2",
+     "thermodynamic_process_to_temperature_ncvt2t1pextv"
+    ],
+    "nodes": [
+     "temperature",
+     "molecular_speed",
+     "thermodynamic_process",
+     "vapour_pressure"
+    ],
+    "chapters": [
+     "Gaseous State",
+     "Thermodynamics",
+     "Dilute Solutions"
+    ],
+    "txs": [
+     100,
+     98,
+     120,
+     254
+    ],
+    "trap_ids": [
+     "molar_mass_in_grams",
+     "reversible_formula",
+     "sign",
+     "wrong_speed_type"
+    ],
+    "description": "most probable speed of the molecules (m s⁻¹) [u_mp = √(2RT/M)] | rms speed of the molecules (m s⁻¹) [u_rms = √(3RT/M)] | final temperature (K) [nC_v(T₂ − T₁) = −P_ext(V₂ − V₁), V = nRT/P] | vapour pressure at T₂ (mm Hg) [ln(P₂/P₁) = (ΔH_vap/R)(1/T₁ − 1/T₂)]",
+    "twist": "condition"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:38:17.910724+00:00",
+     "try_": 1,
+     "situation": "A closed, insulated cylinder contains dry saturated vapor of a volatile liquid (with known molar heat capacity $C_v$ and enthalpy of vaporization $\\Delta H_{\\text{vap}}$) at initial equilibrium temperature $T_1$ and saturated vapor pressure $P_1$. The vapor is expanded irreversibly against a constant external pressure $P_{\\text{ext}}$ until it reaches mechanical equilibrium at final temperature $T_2$, such that the final root-mean-square speed of the molecules equals the initial most probable speed ($u_{\\text{rms}}(T_2) = u_{\\text{mp}}(T_1)$).",
+     "links": "Equating $u_{\\text{rms}}(T_2) = u_{\\text{mp}}(T_1)$ directly establishes the exact temperature ratio $T_2/T_1 = 2/3$. The irreversible adiabatic work equation $n C_v(T_2 - T_1) = -P_{\\text{ext}}(nRT_2/P_{\\text{ext}} - nRT_1/P_1)$ gives the required constant expansion pressure $P_{\\text{ext}}$ in terms of $P_1$ and $T_1$. Finally, the Clausius-Clapeyron equation evaluates the saturated vapor pressure $P_{\\text{sat}}(T_2)$ at this reduced temperature $T_2$ from $(T_1, P_1)$ to determine whether the expanded vapor is supersaturated, saturated, or unsaturated relative to $P_{\\text{ext}}$.",
+     "insight": "Molar mass $M$ and amount of substance $n$ cancel out completely; additionally, while reversible adiabatic cooling follows $T V^{\\gamma-1} = \\text{const}$, irreversible work against constant $P_{\\text{ext}}$ has $V_2 = nRT_2/P_{\\text{ext}}$, causing $P_{\\text{ext}}$ to enter linearly both in the work expression and as the final state pressure.",
+     "asked": "The ratio of the final pressure of the expanded gas ($P_{\\text{ext}}$) to the equilibrium saturated vapor pressure at the final temperature ($P_{\\text{sat}}(T_2)$), dimensionless.",
+     "wrong_answers": "Assuming reversible adiabatic expansion ($T_1/T_2 = (P_1/P_2)^{(\\gamma-1)/\\gamma}$) instead of the irreversible first-law work formula; confusing the ratio $u_{\\text{rms}}/u_{\\text{mp}} = \\sqrt{3/2}$ and inverting $T_2/T_1$ as $3/2$ instead of $2/3$."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:38:45.749536+00:00",
+     "attempt": 1,
+     "twist": "condition",
+     "examples": [
+      "2017P2_Chem_Q20",
+      "2018P2_Chem_Q12"
+     ],
+     "stem": "A thermally insulated cylinder fitted with a frictionless piston contains dry saturated vapour of a pure volatile liquid at an initial temperature of 375 K and its equilibrium saturated vapour pressure P₁. The vapour behaves as an ideal gas with a constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹. The vapour is allowed to expand irreversibly against a constant external pressure P_ext until mechanical equilibrium is reached at a final temperature T₂. Under these conditions, the root-mean-square speed of the vapour molecules at T₂ is equal to the most probable speed of the vapour molecules at T₁. Assuming the enthalpy of vaporisation ΔH_vap remains constant over this temperature range, calculate the ratio of the final pressure of the expanded vapour (P_ext) to the equilibrium saturated vapour pressure of the liquid at T₂ (P_sat(T₂)).\n(Given: R = 8.314 J K⁻¹ mol⁻¹, ΔH_vap = 18.7065 kJ mol⁻¹, e³ = 20.086)",
+     "asks": "the ratio of the final pressure of the expanded vapour to the equilibrium saturated vapour pressure of the liquid at the final temperature",
+     "unit": ""
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:38:51.538734+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    Cv = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    P1 = given(1, \"equilibrium saturated vapour pressure P₁\")\n    P_ext = given(1, \"constant external pressure P_ext\")\n    Delta_H_vap = given(18.7065, \"enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹\")\n    e3 = given(20.086, \"e³ = 20.086\")\n    \n    def calculate_molar_mass(e3):\n        return round(math.pow(e3, 1/3), 3)\n    \n    molar_mass = calculate_molar_mass(e3)\n    \n    u_mp_T1 = step_100(temperature=T1, molar_mass=molar_mass)[\"molecular_speed\"]\n    \n    def mismatch(T2):\n        u_rms_T2 = step_98(temperature=T2, molar_mass=molar_mass)[\"molecular_speed\"]\n        return u_rms_T2 - u_mp_T1\n    \n    T2 = solve_for(mismatch, 100, 500)\n    \n    final_temperature = step_120(Cv=Cv, T=T1, P1=P1, P2=P_ext)[\"temperature\"]\n    \n    P_sat_T2 = step_254(temperature=T1, vapour_pressure_1=P1, vaporisation_enthalpy=Delta_H_vap, T2=T2)[\"vapour_pressure\"]\n    \n    ratio = P_ext / P_sat_T2\n    \n    return ratio",
+     "ok": false,
+     "problems": [
+      "given(1, 'equilibrium saturated vapour pressure P₁'): the quote does not state 1",
+      "given(1, 'constant external pressure P_ext'): the quote does not state 1",
+      "quote 'enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹' is not in the question (copy the words exactly)",
+      "the question states 18.7065 but the program never takes it with given()"
+     ],
+     "answer": 20.09
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:38:57.307403+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    Cv = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    P1 = given(1, \"equilibrium saturated vapour pressure P₁\")\n    P_ext = given(1, \"constant external pressure P_ext\")\n    Delta_H_vap = given(18.7065, \"the enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹\")\n    e3 = given(20.086, \"e³ = 20.086\")\n    \n    def calculate_molar_mass(e3):\n        return round(math.pow(e3, 1/3), 3)\n    \n    molar_mass = calculate_molar_mass(e3)\n    \n    u_mp_T1 = step_100(temperature=T1, molar_mass=molar_mass)[\"molecular_speed\"]\n    \n    def mismatch(T2):\n        u_rms_T2 = step_98(temperature=T2, molar_mass=molar_mass)[\"molecular_speed\"]\n        return u_rms_T2 - u_mp_T1\n    \n    T2 = solve_for(mismatch, 100, 500)\n    \n    final_temperature = step_120(Cv=Cv, T=T1, P1=P1, P2=P_ext)[\"temperature\"]\n    \n    P_sat_T2 = step_254(temperature=T1, vapour_pressure_1=P1, vaporisation_enthalpy=Delta_H_vap, T2=T2)[\"vapour_pressure\"]\n    \n    ratio = P_ext / P_sat_T2\n    \n    return ratio",
+     "ok": false,
+     "problems": [
+      "given(1, 'equilibrium saturated vapour pressure P₁'): the quote does not state 1",
+      "given(1, 'constant external pressure P_ext'): the quote does not state 1",
+      "quote 'the enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹' is not in the question (copy the words exactly)",
+      "the question states 18.7065 but the program never takes it with given()"
+     ],
+     "answer": 20.09
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:39:02.514094+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    Cv = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    P1 = given(1, \"equilibrium saturated vapour pressure P₁\")\n    P_ext = given(1, \"constant external pressure P_ext\")\n    Delta_H_vap = given(18.7065, \"the enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹\")\n    e3 = given(20.086, \"e³ = 20.086\")\n    \n    def calculate_molar_mass(e3):\n        return round(math.pow(e3, 1/3), 3)\n    \n    molar_mass = calculate_molar_mass(e3)\n    \n    u_mp_T1 = step_100(temperature=T1, molar_mass=molar_mass)[\"molecular_speed\"]\n    \n    def mismatch(T2):\n        u_rms_T2 = step_98(temperature=T2, molar_mass=molar_mass)[\"molecular_speed\"]\n        return u_rms_T2 - u_mp_T1\n    \n    T2 = solve_for(mismatch, 100, 500)\n    \n    final_temperature = step_120(Cv=Cv, T=T1, P1=P1, P2=P_ext)[\"temperature\"]\n    \n    P_sat_T2 = step_254(temperature=T1, vapour_pressure_1=P1, vaporisation_enthalpy=Delta_H_vap, T2=T2)[\"vapour_pressure\"]\n    \n    ratio = P_ext / P_sat_T2\n    \n    return ratio",
+     "ok": false,
+     "problems": [
+      "given(1, 'equilibrium saturated vapour pressure P₁'): the quote does not state 1",
+      "given(1, 'constant external pressure P_ext'): the quote does not state 1",
+      "quote 'the enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹' is not in the question (copy the words exactly)",
+      "the question states 18.7065 but the program never takes it with given()"
+     ],
+     "answer": 20.09
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:39:02.514267+00:00",
+     "attempt": 1,
+     "problems": [
+      "the question could not be solved reliably with the formulas: given(1, 'equilibrium saturated vapour pressure P₁'): the quote does not state 1; given(1, 'constant external pressure P_ext'): the quote does not state 1; quote 'the enthalpy of vaporisation ΔH_vap remains constant over this temperature range, ΔH_vap = 18.7065 kJ mol⁻¹' is not in the question (copy the words exactly); the question states 18.7065 but the program never takes it with given()"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:39:14.648195+00:00",
+     "attempt": 2,
+     "twist": "condition",
+     "examples": [
+      "2020P2_Chem_Q18",
+      "2021P2_Chem_Q17"
+     ],
+     "stem": "A thermally insulated cylinder fitted with a frictionless piston contains dry saturated vapour of a pure volatile liquid at an initial temperature of 375 K and an equilibrium saturated vapour pressure of 760 mm Hg. The vapour behaves as an ideal gas with a constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹. The vapour undergoes an irreversible adiabatic expansion against a constant external pressure P_ext until mechanical equilibrium is reached at a final temperature T₂. Under these conditions, the root-mean-square speed of the vapour molecules at T₂ is equal to the most probable speed of the vapour molecules at 375 K. Calculate the ratio of the final pressure of the expanded vapour (P_ext) to the equilibrium saturated vapour pressure of the liquid at T₂.\n(Given: R = 8.314 J K⁻¹ mol⁻¹, enthalpy of vaporisation ΔH_vap = 18.7065 kJ mol⁻¹, e³ = 20.086)",
+     "asks": "the ratio of the final pressure of the expanded vapour to the equilibrium saturated vapour pressure of the liquid at the final temperature",
+     "unit": ""
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:39:21.290556+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    P1 = given(760, \"equilibrium saturated vapour pressure of 760 mm Hg\")\n    Cv = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    ΔH_vap = given(18.7065, \"enthalpy of vaporisation ΔH_vap = 18.7065 kJ mol⁻¹\")\n    e3 = given(20.086, \"e³ = 20.086\")\n    \n    def find_molar_mass(u_rms, u_mp):\n        return (3 * u_rms**2) / (2 * u_mp**2)\n    \n    def find_T2(u_rms, u_mp, T1):\n        M = find_molar_mass(u_rms, u_mp)\n        u_mp_T1 = step_100(temperature=T1, molar_mass=M)[\"molecular_speed\"]\n        return solve_for(lambda T2: step_98(temperature=T2, molar_mass=M)[\"molecular_speed\"] - u_mp_T1, 100, 500)\n    \n    u_rms_T2 = lambda T2: step_98(temperature=T2, molar_mass=find_molar_mass(step_98(temperature=T2, molar_mass=1)[\"molecular_speed\"], step_100(temperature=T1, molar_mass=1)[\"molecular_speed\"]))[\"molecular_speed\"]\n    u_mp_T1 = step_100(temperature=T1, molar_mass=find_molar_mass(step_98(temperature=T1, molar_mass=1)[\"molecular_speed\"], step_100(temperature=T1, molar_mass=1)[\"molecular_speed\"]))[\"molecular_speed\"]\n    T2 = solve_for(lambda T2: u_rms_T2(T2) - u_mp_T1, 100, 500)\n    \n    P_ext = step_120(Cv=Cv, T=T1, P1=P1 / 760, P2=P1 / 760)[\"temperature\"] * (Cv + 8.314 * (P1 / 760) / (P1 / 760)) / (Cv + 8.314)\n    P2 = step_254(temperature=T1, vapour_pressure_1=P1, vaporisation_enthalpy=ΔH_vap, T2=T2)[\"vapour_pressure\"]\n    \n    return P_ext / P2",
+     "ok": false,
+     "problems": [
+      "solve_for: no root in the bracket (no sign change of f found in or around [lo, hi]; check that f is the mismatch for the unknown)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:39:28.207969+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    P1 = given(760, \"equilibrium saturated vapour pressure of 760 mm Hg\")\n    Cv = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    ΔH_vap = given(18.7065, \"enthalpy of vaporisation ΔH_vap = 18.7065 kJ mol⁻¹\")\n    e3 = given(20.086, \"e³ = 20.086\")\n    \n    def find_molar_mass(u_rms, u_mp):\n        return (3 * u_rms**2) / (2 * u_mp**2)\n    \n    def find_T2(u_rms, u_mp, T1):\n        M = find_molar_mass(u_rms, u_mp)\n        u_mp_T1 = step_100(temperature=T1, molar_mass=M)[\"molecular_speed\"]\n        return solve_for(lambda T2: step_98(temperature=T2, molar_mass=M)[\"molecular_speed\"] - u_mp_T1, 100, 500)\n    \n    u_rms_T2 = lambda T2: step_98(temperature=T2, molar_mass=find_molar_mass(step_98(temperature=T2, molar_mass=1)[\"molecular_speed\"], step_100(temperature=T1, molar_mass=1)[\"molecular_speed\"]))[\"molecular_speed\"]\n    u_mp_T1 = step_100(temperature=T1, molar_mass=find_molar_mass(step_98(temperature=T1, molar_mass=1)[\"molecular_speed\"], step_100(temperature=T1, molar_mass=1)[\"molecular_speed\"]))[\"molecular_speed\"]\n    T2 = solve_for(lambda T2: u_rms_T2(T2) - u_mp_T1, 100, 500)\n    \n    P_ext = step_120(Cv=Cv, T=T1, P1=P1 / 760, P2=P1 / 760)[\"temperature\"] * (Cv + 8.314 * (P1 / 760) / (P1 / 760)) / (Cv + 8.314)\n    P2 = step_254(temperature=T1, vapour_pressure_1=P1, vaporisation_enthalpy=ΔH_vap, T2=T2)[\"vapour_pressure\"]\n    \n    return P_ext / P2",
+     "ok": false,
+     "problems": [
+      "solve_for: no root in the bracket (no sign change of f found in or around [lo, hi]; check that f is the mismatch for the unknown)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:39:35.154561+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    P1 = given(760, \"equilibrium saturated vapour pressure of 760 mm Hg\")\n    Cv = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    ΔH_vap = given(18.7065, \"enthalpy of vaporisation ΔH_vap = 18.7065 kJ mol⁻¹\")\n    e3 = given(20.086, \"e³ = 20.086\")\n\n    def find_molar_mass(u_rms, u_mp):\n        return (3 * u_rms**2) / (2 * u_mp**2)\n\n    def find_T2(u_rms, u_mp, T1):\n        M = find_molar_mass(u_rms, u_mp)\n        u_mp_T1 = step_100(temperature=T1, molar_mass=M)[\"molecular_speed\"]\n        return solve_for(lambda T2: step_98(temperature=T2, molar_mass=M)[\"molecular_speed\"] - u_mp_T1, 100, 500)\n\n    u_rms_T2 = lambda T2: step_98(temperature=T2, molar_mass=find_molar_mass(step_98(temperature=T2, molar_mass=1)[\"molecular_speed\"], step_100(temperature=T1, molar_mass=1)[\"molecular_speed\"]))[\"molecular_speed\"]\n    u_mp_T1 = step_100(temperature=T1, molar_mass=find_molar_mass(step_98(temperature=T1, molar_mass=1)[\"molecular_speed\"], step_100(temperature=T1, molar_mass=1)[\"molecular_speed\"]))[\"molecular_speed\"]\n    T2 = solve_for(lambda T2: u_rms_T2(T2) - u_mp_T1, 100, 500)\n\n    P_ext = step_120(Cv=Cv, T=T1, P1=P1 / 760, P2=P1 / 760)[\"temperature\"] * (Cv + 8.314 * (P1 / 760) / (P1 / 760)) / (Cv + 8.314)\n    P2 = step_254(temperature=T1, vapour_pressure_1=P1, vaporisation_enthalpy=ΔH_vap, T2=T2)[\"vapour_pressure\"]\n\n    return P_ext / P2",
+     "ok": false,
+     "problems": [
+      "solve_for: no root in the bracket (no sign change of f found in or around [lo, hi]; check that f is the mismatch for the unknown)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:39:35.154770+00:00",
+     "attempt": 2,
+     "problems": [
+      "the question could not be solved reliably with the formulas: solve_for: no root in the bracket (no sign change of f found in or around [lo, hi]; check that f is the mismatch for the unknown)"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:40:05.436289+00:00",
+     "attempt": 3,
+     "twist": "condition",
+     "examples": [
+      "2018P2_Chem_Q10",
+      "2017P2_Chem_Q20"
+     ],
+     "stem": "A volatile liquid has a normal boiling point of 300 K at 760 mm Hg. Saturated dry vapour of this liquid is maintained in a thermally insulated cylinder fitted with a frictionless piston at an initial temperature of 375 K. The vapour behaves as an ideal gas with a constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹. The vapour undergoes an irreversible adiabatic expansion against a constant external pressure P_ext until mechanical equilibrium is attained at a final temperature T₂. The expansion is carried out such that the root-mean-square speed of the vapour molecules at T₂ is equal to the most probable speed of the vapour molecules at 375 K. Calculate the value of P_ext (in mm Hg).\n(Given: R = 8.314 J K⁻¹ mol⁻¹, enthalpy of vaporisation ΔH_vap = 13.7005 kJ mol⁻¹, ln 3 = 1.0986)",
+     "asks": "the constant external pressure P_ext",
+     "unit": "mm Hg"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:40:11.577310+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    T_boil = given(300, \"normal boiling point of 300 K\")\n    P_boil = given(760, \"at 760 mm Hg\")\n    C_v = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    ΔH_vap = given(13.7005, \"enthalpy of vaporisation ΔH_vap = 13.7005 kJ mol⁻¹\")\n    \n    def calculate_molar_mass(T, P):\n        return (C.R_J * T) / (P * 101325 / 760)\n    \n    def calculate_final_temperature(P_ext):\n        P1 = step_254(temperature=T_boil, vapour_pressure_1=P_boil, vaporisation_enthalpy=ΔH_vap, T2=T1)[\"vapour_pressure\"] / 760\n        P2 = P_ext / 760\n        return step_120(Cv=C_v, T=T1, P1=P1, P2=P2)[\"temperature\"]\n    \n    def mismatch(P_ext):\n        T2 = calculate_final_temperature(P_ext)\n        molar_mass = calculate_molar_mass(T1, P_boil)\n        u_rms_T2 = step_98(temperature=T2, molar_mass=molar_mass)[\"molecular_speed\"]\n        u_mp_T1 = step_100(temperature=T1, molar_mass=molar_mass)[\"molecular_speed\"]\n        return u_rms_T2 - u_mp_T1\n    \n    P_ext = solve_for(mismatch, 100, 760)\n    return P_ext",
+     "ok": false,
+     "problems": [
+      "NameError: name 'C' is not defined"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:40:17.811626+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    T_boil = given(300, \"normal boiling point of 300 K\")\n    P_boil = given(760, \"at 760 mm Hg\")\n    C_v = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    ΔH_vap = given(13.7005, \"enthalpy of vaporisation ΔH_vap = 13.7005 kJ mol⁻¹\")\n    R_J = 8.314\n\n    def calculate_molar_mass(T, P):\n        return (R_J * T) / (P * 101325 / 760)\n\n    def calculate_final_temperature(P_ext):\n        P1 = step_254(temperature=T_boil, vapour_pressure_1=P_boil, vaporisation_enthalpy=ΔH_vap, T2=T1)[\"vapour_pressure\"] / 760\n        P2 = P_ext / 760\n        return step_120(Cv=C_v, T=T1, P1=P1, P2=P2)[\"temperature\"]\n\n    def mismatch(P_ext):\n        T2 = calculate_final_temperature(P_ext)\n        molar_mass = calculate_molar_mass(T1, P_boil)\n        u_rms_T2 = step_98(temperature=T2, molar_mass=molar_mass)[\"molecular_speed\"]\n        u_mp_T1 = step_100(temperature=T1, molar_mass=molar_mass)[\"molecular_speed\"]\n        return u_rms_T2 - u_mp_T1\n\n    P_ext = solve_for(mismatch, 100, 760)\n    return P_ext",
+     "ok": false,
+     "problems": [
+      "the question states 1.0986 but the program never takes it with given()"
+     ],
+     "answer": 380
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:40:23.621930+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    T1 = given(375, \"initial temperature of 375 K\")\n    T_boil = given(300, \"normal boiling point of 300 K\")\n    P_boil = given(760, \"at 760 mm Hg\")\n    C_v = given(12.471, \"constant molar heat capacity at constant volume C_v = 12.471 J K⁻¹ mol⁻¹\")\n    ΔH_vap = given(13.7005, \"enthalpy of vaporisation ΔH_vap = 13.7005 kJ mol⁻¹\")\n    ln_3 = given(1.0986, \"ln 3 = 1.0986\")\n    R_J = 8.314\n\n    def calculate_molar_mass(T, P):\n        return (R_J * T) / (P * 101325 / 760)\n\n    def calculate_final_temperature(P_ext):\n        P1 = step_254(temperature=T_boil, vapour_pressure_1=P_boil, vaporisation_enthalpy=ΔH_vap, T2=T1)[\"vapour_pressure\"] / 760\n        P2 = P_ext / 760\n        return step_120(Cv=C_v, T=T1, P1=P1, P2=P2)[\"temperature\"]\n\n    def mismatch(P_ext):\n        T2 = calculate_final_temperature(P_ext)\n        molar_mass = calculate_molar_mass(T1, P_boil)\n        u_rms_T2 = step_98(temperature=T2, molar_mass=molar_mass)[\"molecular_speed\"]\n        u_mp_T1 = step_100(temperature=T1, molar_mass=molar_mass)[\"molecular_speed\"]\n        return u_rms_T2 - u_mp_T1\n\n    P_ext = solve_for(mismatch, 100, 760)\n    return P_ext",
+     "ok": true,
+     "problems": [],
+     "answer": 380
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:40:24.644888+00:00",
+     "attempt": 3,
+     "problems": [
+      "it links its parts by an arbitrary condition (Jev: 63%); connect them by what physically follows in one situation (the same gas, the same sample, the same current)"
+     ]
+    }
+   ]
+  }
+ ]
+}

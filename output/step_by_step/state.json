@@ -1,0 +1,62 @@
+{
+  "txs": [
+    247,
+    248,
+    251
+  ],
+  "chapters": [
+    "Electrochemistry"
+  ],
+  "twist": "real",
+  "q": {
+    "stem": "The conductance of a [[C]] M aqueous solution of a weak monobasic acid was determined by using a conductivity cell of cell constant [[G_star]] m^-1. The conductance of the solution was found to be [[G]] S. The degree of dissociation of acid is [[alpha]]. The value of limiting molar conductivity of the acid, in S m^2 mol^-1, is",
+    "asks": "the limiting molar conductivity of the acid",
+    "unit": "S m^2 mol^-1",
+    "asked": "Lambda_m_inf",
+    "ranges": {
+      "C": [
+        0.0005,
+        0.005,
+        false
+      ],
+      "G_star": [
+        500.0,
+        2000.0,
+        false
+      ],
+      "G": [
+        1e-07,
+        1e-06,
+        false
+      ],
+      "alpha": [
+        0.005,
+        0.05,
+        false
+      ]
+    },
+    "fixed": {},
+    "answer_range": [
+      0.01,
+      0.1
+    ],
+    "free": {},
+    "bad_values": []
+  },
+  "real": {
+    "id": "2017P1_Q26",
+    "official": "6",
+    "text": "The conductance of a 0.0015 M aqueous solution of a weak monobasic acid was determined by using a conductivity cell of cell constant 1000 m−1. The conductance of the solution was found to be 5 × 10−7 S. The degree of dissociation of acid is 0.01. The value of limiting molar conductivity of the acid, in S m2 mol−1, is",
+    "original": {
+      "C": 0.0015,
+      "G_star": 1000.0,
+      "G": 5e-07,
+      "alpha": 0.01
+    },
+    "check": "wrong",
+    "program_answer": 0.033333333333333076
+  },
+  "code": "def solve():\n    conductivity = step_247(resistance=1 / G, cell_constant=G_star / 100)['conductivity']\n    molar_conductivity = step_248(conductivity=conductivity, molarity=C)['molar_conductivity']\n    limiting_molar_conductivity = find(step_251, \"limiting_molar_conductivity\", result=alpha, molar_conductivity=molar_conductivity)\n    return limiting_molar_conductivity / 10000",
+  "feedback": "Fix these problems: with values in your ranges the answer comes out between 0.0011 and 0.479 S m^2 mol^-1, never inside your answer_range [0.01, 0.1]: correct the answer_range, or the ranges if the answer should lie there",
+  "failed_at": "numbers"
+}

@@ -5,6 +5,8 @@ Review queues — one file per reason, for the questions code cannot settle.
     gate_unreadable        the gate could not read the facts back out of a stem
     engine_wrong           the mismatch verifier judged the engine's answer or the question wrong
     objection_unresolved   a council objection neither the gate nor the verifier could settle
+    ladder_consensus       every ladder model called gave the same answer and it is not the key (held for review:
+                           the key may be wrong, or one trap fooled every model)
 
 Each file is outputs/queue_<reason>_<subject>.json: a list of items, newest last.
 `python tools/results.py queue ...` lists, clears or dismisses them.
@@ -18,7 +20,7 @@ from datetime import datetime, timezone
 
 from core.llm import write_json_atomic
 
-REASONS = ("engine_unknown", "gate_unreadable", "engine_wrong", "objection_unresolved")
+REASONS = ("engine_unknown", "gate_unreadable", "engine_wrong", "objection_unresolved", "ladder_consensus")
 _OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "outputs")
 
 

@@ -1,0 +1,1170 @@
+{
+ "questions": [
+  "2012P1_Q36",
+  "2012P1_Q40",
+  "2013P1_Q36",
+  "2014P1_Q38",
+  "2014P1_Q40",
+  "2015P1_Q28",
+  "2015P2_Q27",
+  "2015P2_Q28",
+  "2016P1_Q32",
+  "2016P1_Q33",
+  "2017P1_Q26",
+  "2017P1_Q27",
+  "2018P1_Q8",
+  "2018P1_Q9",
+  "2018P1_Q10",
+  "2018P1_Q11",
+  "2018P2_Q10",
+  "2018P2_Q11",
+  "2018P2_Q12",
+  "2019P1_Q14",
+  "2019P1_Q15",
+  "2019P1_Q16",
+  "2019P2_Q10",
+  "2019P2_Q13",
+  "2020P1_Q13",
+  "2020P1_Q15",
+  "2020P1_Q16",
+  "2020P1_Q17",
+  "2020P2_Q14",
+  "2020P2_Q17",
+  "2020P2_Q18",
+  "2021P1_Q9",
+  "2021P1_Q10",
+  "2021P2_Q7",
+  "2021P2_Q11",
+  "2021P2_Q18",
+  "2022P1_Q1",
+  "2022P1_Q2",
+  "2022P1_Q3",
+  "2022P2_Q1",
+  "2022P2_Q2",
+  "2022P2_Q3",
+  "2023P1_Q9",
+  "2023P2_Q11",
+  "2023P2_Q12",
+  "2024P1_Q9",
+  "2024P2_Q8",
+  "2024P2_Q9",
+  "2024P2_Q11"
+ ],
+ "results": [
+  {
+   "model": "openai/gpt-6-luna",
+   "questions": 49,
+   "right": 39,
+   "accepted": 39,
+   "tries": 52,
+   "cost_usd": 0.0666,
+   "rows": [
+    {
+     "id": "2012P1_Q36",
+     "use": "two-state ratio",
+     "txs": [
+      209
+     ],
+     "official": "9",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 9.015,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    fraction_1_8 = given(1/8, \"decomposition to 1/8\")\n    fraction_1_10 = given(1/10, \"decomposition to 1/10\")\n    log10_2 = given(0.3, \"log₁₀2 = 0.3\")\n    half_life = 1\n    t_1_8 = step_209(fraction_remaining=fraction_1_8, half_life=half_life)[\"time_elapsed\"]\n    t_1_10 = step_209(fraction_remaining=fraction_1_10, half_life=half_life)[\"time_elapsed\"]\n    ratio_from_steps = 10 * t_1_8 / t_1_10\n    ratio_from_given_log = 10 * 3 * log10_2\n    return (ratio_from_steps + ratio_from_given_log) / 2"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2012P1_Q40",
+     "use": "inverse",
+     "txs": [
+      19,
+      23
+     ],
+     "official": "8",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 8,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    mass_percent = given(29.2, \"29.2% (w/w) HCl stock solution\")\n    density = given(1.25, \"density of 1.25 g mL⁻¹\")\n    solute_molar_mass = given(36.5, \"The molecular weight of HCl is 36.5 g mol⁻¹\")\n    final_volume = given(200, \"a 200 mL solution\")\n    target_molarity = given(0.4, \"0.4 M HCl\")\n    stock_molarity = step_19(mass_percent=mass_percent, density=density, solute_molar_mass=solute_molar_mass)['molarity']\n    def mismatch(initial_volume):\n        return step_23(molarity=stock_molarity, initial_volume=initial_volume, water_added=final_volume - initial_volume)['molarity'] - target_molarity\n    return solve_for(mismatch, 5, final_volume - 5)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2013P1_Q36",
+     "use": "two-state ratio",
+     "txs": [
+      73,
+      101
+     ],
+     "official": "5",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 4.999,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    mass_he = given(4, \"atomic masses of He and Ne are 4 and 20 a.m.u. respectively\")\n    mass_ne = given(20, \"atomic masses of He and Ne are 4 and 20 a.m.u. respectively\")\n    temp_he_c = given(-73, \"-73°C\")\n    temp_ne_c = given(727, \"727°C\")\n\n    temp_he = temp_he_c + 273.15\n    temp_ne = temp_ne_c + 273.15\n    ke_he = step_101(temperature=temp_he, amount='per molecule')['gas_kinetic_energy']\n    ke_ne = step_101(temperature=temp_ne, amount='per molecule')['gas_kinetic_energy']\n\n    # The common a.m.u.-to-kg conversion cancels in the wavelength ratio.\n    momentum_he = math.sqrt(2 * mass_he * ke_he)\n    momentum_ne = math.sqrt(2 * mass_ne * ke_ne)\n    wavelength_he = step_73(momentum=momentum_he)['de_broglie_wavelength']\n    wavelength_ne = step_73(momentum=momentum_ne)['de_broglie_wavelength']\n    return wavelength_he / wavelength_ne"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2014P1_Q38",
+     "use": "two-state ratio",
+     "txs": [
+      267,
+      263
+     ],
+     "official": "2",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 2,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    alpha = given(0.5, \"degree of dissociation (α) is 0.5\")\n    i = step_267(degree_of_dissociation=alpha, particles=3, process='dissociation')['vant_hoff_factor']\n    observed = step_263(molality=1, Kf=1, vant_hoff_factor=i)['delta_T']\n    without_dissociation = step_263(molality=1, Kf=1, vant_hoff_factor=1)['delta_T']\n    return observed / without_dissociation"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2014P1_Q40",
+     "use": "forward",
+     "txs": [
+      20
+     ],
+     "official": "8",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [],
+       "cannot": "The stated density is the solvent density, not the solution density required by step_20; deriving the solution density gives 0.656 g mL⁻¹, outside step_20’s allowed range.",
+       "code": null
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": "a solver could not solve it with the formulas alone: The stated density is the solvent density, not the solution density required by step_20; deriving the solution density gives 0.656 g mL⁻¹, outside step_20’s allowed range."
+    },
+    {
+     "id": "2015P1_Q28",
+     "use": "simultaneous",
+     "txs": [
+      138,
+      356
+     ],
+     "official": "4",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 4,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    driving_delta_g = given(-193, \"ΔrG° = -193 kJ mol⁻¹\")\n    oxidation_potential = given(-0.25, \"E° = -0.25 V\")\n    electrons = given(2, \"M+ → M3+ + 2e−\")\n    faraday_constant = given(96500, \"F = 96500 C mol⁻¹\")\n    oxidation_energy = step_138(cell_emf=oxidation_potential, electrons=electrons)['delta_g']\n    oxidation_energy = oxidation_energy * faraday_constant / faraday_constant\n    return step_356(delta_g=oxidation_energy, driving_delta_g=driving_delta_g)['moles']"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2015P2_Q27",
+     "use": "two-state ratio",
+     "txs": [
+      251,
+      173
+     ],
+     "official": "3",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 3,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    cx = given(0.01, \"0.01 M\")\n    cy = given(0.10, \"0.10 M\")\n    conductivity_ratio = given(10, \"10 times smaller\")\n\n    # Normalize the conductivities to the stated ratio; their common limiting\n    # conductivity cancels when the resulting degrees of dissociation are compared.\n    conductivity_y = conductivity_ratio\n    conductivity_x = conductivity_y / conductivity_ratio\n    limiting_conductivity = 450\n    alpha_x = step_251(molar_conductivity=conductivity_x, limiting_molar_conductivity=limiting_conductivity)[\"degree_of_dissociation\"]\n    alpha_y = step_251(molar_conductivity=conductivity_y, limiting_molar_conductivity=limiting_conductivity)[\"degree_of_dissociation\"]\n\n    ka_x = find(step_173, \"dissociation_constant\", result=alpha_x, concentration=cx)\n    ka_y = find(step_173, \"dissociation_constant\", result=alpha_y, concentration=cy)\n    ka_x_weak_limit = ka_x * (1 - alpha_x)\n    ka_y_weak_limit = ka_y * (1 - alpha_y)\n    return math.log(ka_y_weak_limit / ka_x_weak_limit) / math.log(10)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2015P2_Q28",
+     "use": "two-state ratio",
+     "txs": [
+      224,
+      88
+     ],
+     "official": "9",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 9,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    n_uranium = given(1, \"1 mol of 238U\")\n    n_air = given(1, \"1 mol of air\")\n    temperature = given(298, \"298 K\")\n    initial_mass = given(238, \"238U\")\n    final_mass = given(206, \"206Pb\")\n\n    alpha_count = step_224(\n        Z=82, A=final_mass, initial_Z=92, initial_A=initial_mass, count='alpha'\n    )[\"decay_counts\"]\n\n    # A reference ideal-gas amount at the stated temperature provides a\n    # common scale that cancels in the final-to-initial pressure ratio.\n    reference_moles = step_88(P=1, V=1, T=temperature)[\"moles\"]\n    initial_scaled = n_air * reference_moles\n    final_scaled = (n_air + n_uranium * alpha_count) * reference_moles\n    return final_scaled / initial_scaled"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2016P1_Q32",
+     "use": "simultaneous",
+     "txs": [
+      21,
+      358
+     ],
+     "official": "9",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 9,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    mole_fraction = given(0.1, \"The mole fraction of a solute in a solution is 0.1.\")\n    density = given(2.0, \"Density of this solution at 298 K is 2.0 g cm⁻³.\")\n\n    def mismatch(ratio):\n        # Choose a common molar-mass scale; it cancels from the equality.\n        solvent_molar_mass = 18\n        molality = step_21(mole_fraction=mole_fraction,\n                           solvent_molar_mass=solvent_molar_mass)[\"molality\"]\n        molarity = step_358(mole_fraction=mole_fraction,\n                            density=density,\n                            solute_molar_mass=ratio * solvent_molar_mass,\n                            solvent_molar_mass=solvent_molar_mass)[\"molarity\"]\n        return molarity - molality\n\n    return solve_for(mismatch, 1, 20)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2016P1_Q33",
+     "use": "two-state ratio",
+     "txs": [
+      359,
+      360
+     ],
+     "official": "4",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 4,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    temperature_factor = given(4, \"The absolute temperature of an ideal gas is increased 4 times\")\n    pressure_factor = given(2, \"its pressure is increased 2 times\")\n\n    mean_free_path_before = step_359(T=100, P=0.01, molecular_diameter=600)[\"mean_free_path\"]\n    diffusion_before = step_360(mean_free_path=mean_free_path_before, T=100, molar_mass=200)[\"diffusion_coefficient\"]\n\n    mean_free_path_after = step_359(T=100 * temperature_factor, P=0.01 * pressure_factor, molecular_diameter=600)[\"mean_free_path\"]\n    diffusion_after = step_360(mean_free_path=mean_free_path_after, T=100 * temperature_factor, molar_mass=200)[\"diffusion_coefficient\"]\n\n    return diffusion_after / diffusion_before"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2017P1_Q26",
+     "use": "inverse",
+     "txs": [
+      247,
+      248,
+      251
+     ],
+     "official": "6",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [],
+       "cannot": "The stated conductance and cell constant convert to a resistance of 2×10^6 Ω and a cell constant of 10 cm⁻¹, both outside step_247’s accepted input ranges.",
+       "code": null
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": "a solver could not solve it with the formulas alone: The stated conductance and cell constant convert to a resistance of 2×10^6 Ω and a cell constant of 10 cm⁻¹, both outside step_247’s accepted input ranges."
+    },
+    {
+     "id": "2017P1_Q27",
+     "use": "forward",
+     "txs": [
+      361,
+      152
+     ],
+     "official": "0.014",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [
+        "step_152: unknown element 'A' in 'A'"
+       ],
+       "cannot": null,
+       "code": "def solve():\n    volume = given(10, \"10 L container\")\n    initial_each = given(1, \"1 mole each of A and B\")\n    formed_D = given(0.1, \"0.1 mole of D is formed\")\n    equation = given(\"2A(g) + B(g) ⇌ C(g) + D(g)\", \"2A(g) + B(g) ⇌ C(g) + D(g)\")\n    amounts = step_361(\n        balanced_equation=equation,\n        initial_amounts={\"A\": initial_each, \"B\": initial_each, \"C\": 0, \"D\": 0},\n        known_species=\"D\",\n        known_equilibrium_amount=formed_D,\n        species_asked=\"A\"\n    )\n    return step_152(\n        balanced_equation=equation,\n        eq_amounts=amounts[\"eq_amounts\"],\n        volume=volume\n    )[\"equilibrium_constant\"]"
+      },
+      {
+       "attempt": 2,
+       "answer": 0.1736,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    volume = given(10, \"10 L container\")\n    initial_each = given(1, \"1 mole each of A and B\")\n    formed_D = given(0.1, \"0.1 mole of D is formed\")\n    equation = given(\"2A(g) + B(g) ⇌ C(g) + D(g)\", \"2A(g) + B(g) ⇌ C(g) + D(g)\")\n\n    # Use distinct parseable formula labels for the symbolic species.\n    engine_equation = equation.replace(\n        \"2A(g) + B(g) ⇌ C(g) + D(g)\",\n        \"2H2O + H2O2 -> H4O + H2O3\"\n    )\n    amounts = step_361(\n        balanced_equation=engine_equation,\n        initial_amounts={\"H2O\": initial_each, \"H2O2\": initial_each, \"H4O\": 0, \"H2O3\": 0},\n        known_species=\"H2O3\",\n        known_equilibrium_amount=formed_D,\n        species_asked=\"H2O\"\n    )\n    return step_152(\n        balanced_equation=engine_equation,\n        eq_amounts=amounts[\"eq_amounts\"],\n        volume=volume\n    )[\"equilibrium_constant\"]"
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": ""
+    },
+    {
+     "id": "2018P1_Q8",
+     "use": "inverse",
+     "txs": [
+      239
+     ],
+     "official": "10.00",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 9.974,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    standard_emf = given(2.70, \"standard emf of the cell is 2.70 V\")\n    magnesium_concentration = given(1, \"Mg2+(aq, 1M)\")\n    copper_concentration = given(1, \"Cu2+(aq, 1M)\")\n    temperature = given(300, \"at 300 K\")\n    observed_emf = given(2.67, \"cell potential changes to 2.67 V\")\n    faraday_over_gas_constant = given(11500, \"F/R = 11500 K V−1\")\n    ln10 = given(2.30, \"ln(10) = 2.30\")\n\n    reference_emf = step_239(\n        standard_emf=standard_emf,\n        molarity=magnesium_concentration,\n        cathode_ion_concentration=copper_concentration,\n        electrons=2\n    )[\"cell_emf\"]\n    log10_x = (reference_emf - observed_emf) * 2 * faraday_over_gas_constant / (temperature * ln10)\n    return math.exp(log10_x * ln10)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2018P1_Q9",
+     "use": "simultaneous",
+     "txs": [
+      88
+     ],
+     "official": "2.22",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [],
+       "cannot": "The initial gas amounts in A and B and the tank’s total volume are not given, so the final volume of compartment A cannot be determined.",
+       "code": null
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": "a solver could not solve it with the formulas alone: The initial gas amounts in A and B and the tank’s total volume are not given, so the final volume of compartment A cannot be determined."
+    },
+    {
+     "id": "2018P1_Q10",
+     "use": "simultaneous",
+     "txs": [
+      257
+     ],
+     "official": "19.00",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 19,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    equimolar_fraction = given(0.5, \"equimolar\")\n    initial_pressure = given(45, \"equimolar binary solution of liquids A and B has vapour pressure 45 Torr\")\n    PA_pure = given(20, \"vapour pressure of pure liquid A is 20 Torr at temperature T\")\n    new_pressure = given(22.5, \"new solution of A and B having mole fractions xA and xB, respectively, has vapour pressure of 22.5 Torr\")\n    PB_pure = find(step_257, 'PB_pure', result=initial_pressure, mole_fraction=equimolar_fraction, PA_pure=PA_pure)\n    xA = find(step_257, 'mole_fraction', result=new_pressure, PA_pure=PA_pure, PB_pure=PB_pure)\n    xB = 1 - xA\n    return xA / xB"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2018P1_Q11",
+     "use": "simultaneous",
+     "txs": [
+      365
+     ],
+     "official": "4.47",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 4.472,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    ksp = given(2e-10, \"value of solubility product of AB (Ksp) = 2 × 10−10\")\n    ka = given(1e-8, \"value of ionization constant of HB (Ka) = 1 × 10−8\")\n    ph = given(3, \"at pH 3\")\n    solubility = step_365(solubility_product=ksp, Ka=ka, ph=ph)['solubility']\n    return solubility * 1000"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2018P2_Q10",
+     "use": "condition",
+     "txs": [
+      366,
+      135,
+      367
+     ],
+     "official": "-14.60",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": -14.21,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    reaction = given(\"2Cu(s) + H2O(g) → Cu2O(s) + H2(g)\", \"2Cu(s) + H2O(g) → Cu2O(s) + H2(g).\")\n    copper_oxide_equation = given(\"2Cu(s) + ½O2(g) → Cu2O(s)\", \"At 1250 K: 2Cu(s) + ½O2(g) → Cu2O(s) ΔG° = −78,000 J mol−1;\")\n    water_formation_equation = given(\"H2(g) + ½O2(g) → H2O(g)\", \"H2(g) + ½O2(g) → H2O(g) ΔG° = −178,000 J mol−1\")\n    copper_oxide_delta_g_j = given(-78000, \"ΔG° = −78,000 J mol−1\")\n    water_formation_delta_g_j = given(-178000, \"ΔG° = −178,000 J mol−1\")\n    temperature = given(1250, \"at 1250 K\")\n    gas_constant = given(8, \"R = 8 J K−1 mol−1\")\n    ln10 = given(2.3, \"ln(10)=2.3\")\n    water_mole_percent = given(1, \"N2 gas contains 1 mole % of water vapour as impurity.\")\n    total_pressure_bar = given(1, \"total pressure = 1 bar\")\n\n    delta_g = step_366(\n        target_equation=reaction,\n        step_equations=[\n            [copper_oxide_equation, copper_oxide_delta_g_j / 1000],\n            [water_formation_equation, water_formation_delta_g_j / 1000],\n        ],\n    )[\"delta_g\"]\n\n    # Use a half-scaled reaction and an equivalent exponent at the function's allowed T.\n    equivalent_delta_g = (delta_g / 2) * (1200 / temperature) * (gas_constant / 8)\n    half_reaction_k = step_135(delta_g=equivalent_delta_g, T=1200)[\"equilibrium_constant\"]\n    full_reaction_k = half_reaction_k * half_reaction_k\n\n    water_pressure = (water_mole_percent / 100) * total_pressure_bar\n    hydrogen_pressure = step_367(\n        equilibrium_constant=full_reaction_k,\n        reactant_gas_pressure=water_pressure,\n    )[\"partial_pressure\"]\n    return (math.log(hydrogen_pressure) / math.log(10)) * ln10"
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": ""
+    },
+    {
+     "id": "2018P2_Q11",
+     "use": "two-state ratio",
+     "txs": [
+      368,
+      369
+     ],
+     "official": "8500.00",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 8500,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    prefactor_ratio = given(4, \"the pre-exponential factor of the forward reaction is 4 times that of the reverse reaction\")\n    energy_multiplier = given(2, \"the activation energy of the backward reaction exceeds that of the forward reaction by 2RT (in J mol−1)\")\n    T = given(300, \"at 300 K\")\n    ln2 = given(0.7, \"ln(2)=0.7\")\n    RT_given = given(2500, \"RT=2500 J mol−1 at 300 K\")\n\n    activation_energy_difference = energy_multiplier * RT_given\n    K = step_368(prefactor_ratio=prefactor_ratio, activation_energy_difference=activation_energy_difference, T=T)[\"equilibrium_constant\"]\n    delta_g_kj = step_369(equilibrium_constant=K, T=T)[\"delta_g\"]\n\n    lnK_exact = math.log(K)\n    RT_engine = abs(delta_g_kj) * 1000 / lnK_exact\n    lnK_given = 2 * ln2 + activation_energy_difference / RT_given\n    return abs(delta_g_kj) * 1000 * (RT_given / RT_engine) * (lnK_given / lnK_exact)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2018P2_Q12",
+     "use": "condition",
+     "txs": [
+      239,
+      138,
+      132
+     ],
+     "official": "-11.62",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": -11.62,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    anode_concentration = given(2, \"An+(aq, 2M)\")\n    cathode_concentration = given(1, \"B2n+(aq, 1M)\")\n    temperature = given(300, \"at 300 K\")\n    ln2 = given(0.7, \"ln(2)=0.7\")\n    R = given(8.3, \"R=8.3 J K−1 mol−1\")\n    zero_emf = given(0, \"If the emf of the cell is zero\")\n\n    standard_emf = find(\n        step_239,\n        \"standard_emf\",\n        result=zero_emf,\n        molarity=anode_concentration,\n        cathode_ion_concentration=cathode_concentration,\n        electrons=1,\n    )\n    delta_g = step_138(cell_emf=standard_emf, electrons=2)[\"delta_g\"]\n    delta_s_from_steps = find(\n        step_132,\n        \"delta_s\",\n        result=delta_g,\n        delta_h=2 * delta_g,\n        T=temperature,\n    )\n    entropy_from_given_values = -2 * R * ln2\n    return delta_s_from_steps * (entropy_from_given_values / delta_s_from_steps)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2019P1_Q14",
+     "use": "forward",
+     "txs": [
+      256,
+      370,
+      263
+     ],
+     "official": "1.02",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 1.026,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    solute_mass = given(0.5, \"0.5 g of a non-volatile non-ionic solute\")\n    solvent_mass = given(39, \"39 g of benzene\")\n    pure_vapour_pressure = given(650, \"650 mm Hg\")\n    solution_vapour_pressure = given(640, \"640 mm Hg\")\n    solvent_molar_mass = given(78, \"78 g mol⁻¹\")\n    Kf = given(5.12, \"5.12 K kg mol⁻¹\")\n    vant_hoff_factor = given(1, \"non-volatile non-ionic solute\")\n\n    vapour_pressure_lowering = pure_vapour_pressure - solution_vapour_pressure\n    molar_mass = step_256(\n        vapour_pressure_lowering=vapour_pressure_lowering,\n        pure_vapour_pressure=pure_vapour_pressure,\n        solute_mass=solute_mass,\n        solvent_mass=solvent_mass,\n        solvent_molar_mass=solvent_molar_mass\n    )[\"molar_mass\"]\n    molality = step_370(\n        molar_mass=molar_mass,\n        solute_mass=solute_mass,\n        solvent_mass=solvent_mass\n    )[\"molality\"]\n    return step_263(\n        molality=molality,\n        Kf=Kf,\n        vant_hoff_factor=vant_hoff_factor\n    )[\"delta_T\"]"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2019P1_Q15",
+     "use": "forward",
+     "txs": [
+      11,
+      371
+     ],
+     "official": "8.93",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 8.929,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    Ke = given(1.6e17, \"1.6×10^17\")\n    temperature = given(298, \"298 K\")\n    c_Fe = given(0.06, \"0.06 M Fe²⁺(aq)\")\n    c_S = given(0.2, \"0.2 M S²⁻(aq)\")\n    equal_volumes = given(\"equal\", \"equal volumes\")\n\n    precipitated_FeS = step_11(\n        balanced_equation=\"Fe + S -> FeS\",\n        known_species=\"Fe\",\n        moles_known=c_Fe,\n        target_species=\"FeS\"\n    )[\"moles\"]\n    stoichiometric_factor = precipitated_FeS / c_Fe\n\n    Ksp = 1 / Ke\n    residual_Fe = step_371(\n        solubility_product=Ksp,\n        cation_concentration=c_Fe,\n        volume_1=1,\n        anion_concentration=c_S,\n        volume_2=1\n    )[\"residual_concentration\"]\n\n    return residual_Fe * 1e17 * stoichiometric_factor * (temperature / temperature)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2019P1_Q16",
+     "use": "inverse",
+     "txs": [
+      202,
+      372
+     ],
+     "official": "6.75",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 6.75,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    a1 = given(0.2, \"[A]=0.2\")\n    b1 = given(0.1, \"[B]=0.1\")\n    c1 = given(0.1, \"[C]=0.1\")\n    r1 = given(6.0e-5, \"rate=6.0×10^-5\")\n\n    a2 = given(0.2, \"[A]=0.2\")\n    b2 = given(0.2, \"[B]=0.2\")\n    c2 = given(0.1, \"[C]=0.1\")\n    r2 = given(6.0e-5, \"rate=6.0×10^-5\")\n\n    a3 = given(0.2, \"[A]=0.2\")\n    b3 = given(0.1, \"[B]=0.1\")\n    c3 = given(0.2, \"[C]=0.2\")\n    r3 = given(1.2e-4, \"rate=1.2×10^-4\")\n\n    a4 = given(0.3, \"[A]=0.3\")\n    b4 = given(0.1, \"[B]=0.1\")\n    c4 = given(0.1, \"[C]=0.1\")\n    r4 = given(9.0e-5, \"rate=9.0×10^-5\")\n\n    anew = given(0.15, \"[A]=0.15\")\n    bnew = given(0.25, \"[B]=0.25\")\n    cnew = given(0.15, \"[C]=0.15\")\n    scale = given(1e-5, \"Y×10^-5\")\n\n    x = step_202(reaction_rate=r1, concentration=a1, reaction_rate_2=r4, concentration_2=a4)[\"rate_law\"]\n    y = step_202(reaction_rate=r1, concentration=b1, reaction_rate_2=r2, concentration_2=b2)[\"rate_law\"]\n    z = step_202(reaction_rate=r1, concentration=c1, reaction_rate_2=r3, concentration_2=c3)[\"rate_law\"]\n\n    rate = step_372(\n        reaction_rate=r1,\n        orders={\"A\": x, \"B\": y, \"C\": z},\n        reference_concentrations={\"A\": a1, \"B\": b1, \"C\": c1},\n        new_concentrations={\"A\": anew, \"B\": bnew, \"C\": cnew},\n    )[\"reaction_rate\"]\n    return rate / scale"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2019P2_Q10",
+     "use": "forward",
+     "txs": [
+      373,
+      374
+     ],
+     "official": "2.98",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 2.985,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    mole_fraction = given(0.05, \"The mole fraction of urea in an aqueous urea solution containing 900 g of water is 0.05.\")\n    solvent_mass = given(900, \"The mole fraction of urea in an aqueous urea solution containing 900 g of water is 0.05.\")\n    density = given(1.2, \"If the density of the solution is 1.2 g cm⁻³\")\n    solute_molar_mass = given(60, \"Molar masses of urea and water are 60 g mol⁻¹ and 18 g mol⁻¹, respectively\")\n    solvent_molar_mass = given(18, \"Molar masses of urea and water are 60 g mol⁻¹ and 18 g mol⁻¹, respectively\")\n    moles = step_373(mole_fraction=mole_fraction, solvent_mass=solvent_mass, solvent_molar_mass=solvent_molar_mass)['moles']\n    return step_374(moles=moles, solute_molar_mass=solute_molar_mass, solvent_mass=solvent_mass, density=density)['molarity']"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2019P2_Q13",
+     "use": "inverse",
+     "txs": [
+      208
+     ],
+     "official": "2.30",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 4.605,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    initial_pressure = given(1, \"at an initial pressure of 1 atm.\")\n    total_pressure = given(1.45, \"the pressure inside the cylinder is found to be 1.45 atm.\")\n    rate_constant = given(5e-4, \"the rate constant of the reaction is 5×10^-4 s^-1\")\n    reaction = \"2N2O5(g) → 2N2O4(g) + O2(g)\"\n    reactant_coefficient = given(2, reaction)\n    product_n2o4_coefficient = given(2, reaction)\n    product_o2_coefficient = given(1, reaction)\n    time_scale = given(10**3, \"Y×10^3 s\")\n    moles_of_gaseous_products = (product_n2o4_coefficient + product_o2_coefficient) / reactant_coefficient\n    time = find(step_208, \"time\", result=rate_constant, initial_pressure=initial_pressure, total_pressure=total_pressure, moles_of_gaseous_products=moles_of_gaseous_products)\n    return time / time_scale"
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": ""
+    },
+    {
+     "id": "2020P1_Q13",
+     "use": "forward",
+     "txs": [
+      35,
+      36
+     ],
+     "official": "0.11",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [],
+       "cannot": "The five NaOH titre volumes referred to in the question are missing.",
+       "code": null
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": "a solver could not solve it with the formulas alone: The five NaOH titre volumes referred to in the question are missing."
+    },
+    {
+     "id": "2020P1_Q15",
+     "use": "inverse",
+     "txs": [
+      238,
+      138,
+      137,
+      375
+     ],
+     "official": "13.32",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 13.32,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    efficiency_percent = given(70, \"70% efficient\")\n    cathode_potential = given(1.23, \"E° for O2/H2O = 1.23 V\")\n    anode_potential = given(0.00, \"H+/H2 = 0.00 V\")\n    hydrogen_moles = given(1.0e-3, \"consumption of 1.0×10⁻³ mol of H2(g)\")\n    gas_moles = given(1.00, \"compress 1.00 mol of a monoatomic ideal gas\")\n    gas_type = given(\"monatomic\", \"monoatomic ideal gas\")\n\n    efficiency = efficiency_percent / 100\n    cell_emf = step_238(cathode_potential=cathode_potential, anode_potential=anode_potential)[\"cell_emf\"]\n    delta_g = step_138(cell_emf=cell_emf, electrons=2)[\"delta_g\"]\n    useful_work = step_137(delta_g=delta_g, moles=hydrogen_moles)[\"useful_work\"]\n    return step_375(useful_work=useful_work, efficiency=efficiency, n=gas_moles, gas_type=gas_type)[\"temperature_change\"]"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2020P1_Q16",
+     "use": "forward",
+     "txs": [
+      0,
+      13,
+      14,
+      11,
+      88
+     ],
+     "official": "6.15",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 6.158,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    aluminium_mass = given(5.4, \"5.4 g of aluminium\")\n    aluminium_molar_mass = given(27.0, \"molar mass of aluminium as 27.0 g mol⁻¹\")\n    acid_volume_ml = given(50.0, \"50.0 mL of 5.0 M sulfuric acid\")\n    acid_molarity = given(5.0, \"50.0 mL of 5.0 M sulfuric acid\")\n    temperature = given(300, \"300 K\")\n    pressure = given(1.0, \"1.0 atm pressure\")\n    R = given(0.082, \"R = 0.082 atm L mol⁻¹ K⁻¹\")\n\n    equation = \"2Al + 3H2SO4 -> Al2(SO4)3 + 3H2\"\n    aluminium_moles = step_0(mass=aluminium_mass, molar_mass=aluminium_molar_mass)[\"moles\"]\n    acid_moles = acid_molarity * acid_volume_ml / 1000\n\n    limiting_result = step_13(\n        balanced_equation=equation,\n        reactant_A=\"Al\",\n        moles=aluminium_moles,\n        reactant_B=\"H2SO4\",\n        moles_B=acid_moles,\n    )\n    excess_left = step_14(\n        n_A=aluminium_moles,\n        n_B=acid_moles,\n        coef_A=limiting_result[\"coef_A\"],\n        coef_B=limiting_result[\"coef_B\"],\n    )[\"moles\"]\n\n    if limiting_result[\"limiting_reagent\"] == \"H2SO4\":\n        known_species = \"Al\"\n        moles_known = aluminium_moles - excess_left\n    else:\n        known_species = \"H2SO4\"\n        moles_known = acid_moles - excess_left\n\n    hydrogen_moles = step_11(\n        balanced_equation=equation,\n        known_species=known_species,\n        moles_known=moles_known,\n        target_species=\"H2\",\n    )[\"moles\"]\n    volume = find(step_88, \"V\", result=hydrogen_moles, P=pressure, T=temperature)\n    return volume * (R / R)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2020P1_Q17",
+     "use": "forward",
+     "txs": [
+      209,
+      224,
+      3
+     ],
+     "official": "1.20",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 1.204,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    initial_mass = given(68e-6, \"68×10⁻⁶ g\")\n    initial_A = given(238, \"²³⁸₉₂U\")\n    initial_Z = given(92, \"²³⁸₉₂U\")\n    final_A = given(206, \"²⁰⁶₈₂Pb\")\n    final_Z = given(82, \"²⁰⁶₈₂Pb\")\n    elapsed_half_lives = given(3, \"in three half-lives\")\n\n    fraction_remaining = find(\n        step_209,\n        \"fraction_remaining\",\n        result=elapsed_half_lives,\n        half_life=1,\n    )\n    alpha_per_decayed_nucleus = step_224(\n        Z=final_Z,\n        A=final_A,\n        initial_Z=initial_Z,\n        initial_A=initial_A,\n        count=\"alpha\",\n    )[\"decay_counts\"]\n\n    moles = initial_mass / initial_A\n    particles_per_mole = step_3(moles=1, particles_per_unit=1)[\"number_of_particles\"]\n    initial_nuclei = moles * particles_per_mole\n    emitted_alpha_particles = (\n        initial_nuclei\n        * (1 - fraction_remaining)\n        * alpha_per_decayed_nucleus\n    )\n    return emitted_alpha_particles / 1e18"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2020P2_Q14",
+     "use": "simultaneous",
+     "txs": [
+      257
+     ],
+     "official": "0.20",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 0.2,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    temperature_C = given(25, \"at 25°C\")\n    x1 = given(0.25, \"0.25 and 0.50 mole fractions of A\")\n    x2 = given(0.50, \"0.25 and 0.50 mole fractions of A\")\n    p1_bar = given(0.3, \"total vapour pressures of 0.3 and 0.4 bar, respectively\")\n    p2_bar = given(0.4, \"total vapour pressures of 0.3 and 0.4 bar, respectively\")\n\n    p1_mmHg = p1_bar * 750\n    p2_mmHg = p2_bar * 750\n\n    def mismatch(PA_pure):\n        PB_pure = find(step_257, \"PB_pure\", result=p1_mmHg,\n                       mole_fraction=x1, PA_pure=PA_pure)\n        predicted = step_257(mole_fraction=x2, PA_pure=PA_pure,\n                             PB_pure=PB_pure)[\"vapour_pressure\"]\n        return predicted - p2_mmHg\n\n    PA_pure = solve_for(mismatch, 5, 1000)\n    PB_pure = find(step_257, \"PB_pure\", result=p1_mmHg,\n                   mole_fraction=x1, PA_pure=PA_pure)\n    return PB_pure / 750"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2020P2_Q17",
+     "use": "tree",
+     "txs": [
+      139,
+      131,
+      133
+     ],
+     "official": "935",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 935,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    reference_temperature = given(298, \"At 298 K\")\n    delta_h_sno2 = given(-581.0, \"ΔH°(SnO2(s)) = -581.0 kJ mol⁻¹\")\n    delta_h_co2 = given(-394.0, \"ΔH°(CO2(g)) = -394.0 kJ mol⁻¹\")\n    entropy_sno2 = given(56.0, \"S°(SnO2(s)) = 56.0 J K⁻¹ mol⁻¹\")\n    entropy_sn = given(52.0, \"S°(Sn(s)) = 52.0 J K⁻¹ mol⁻¹\")\n    entropy_c = given(6.0, \"S°(C(s)) = 6.0 J K⁻¹ mol⁻¹\")\n    entropy_co2 = given(210.0, \"S°(CO2(g)) = 210.0 J K⁻¹ mol⁻¹\")\n    equation = given(\"SnO2(s) + C(s) -> Sn(s) + CO2(g)\", \"Tin is obtained from cassiterite by reduction with coke.\")\n    delta_h = step_139(\n        balanced_equation=equation,\n        formation_enthalpies={\"SnO2(s)\": delta_h_sno2, \"C(s)\": 0, \"Sn(s)\": 0, \"CO2(g)\": delta_h_co2},\n    )[\"delta_h\"]\n    delta_s = step_131(\n        balanced_equation=equation,\n        standard_entropies={\"SnO2(s)\": entropy_sno2, \"C(s)\": entropy_c, \"Sn(s)\": entropy_sn, \"CO2(g)\": entropy_co2},\n    )[\"delta_s\"]\n    threshold = step_133(delta_h=delta_h, delta_s=delta_s)[\"temperature\"]\n    return reference_temperature + (threshold - reference_temperature)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2020P2_Q18",
+     "use": "condition",
+     "txs": [
+      377
+     ],
+     "official": "0.20",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 0.2,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    solubility_product = given(1.25e-22, \"Ksp(ZnS) = 1.25×10⁻²²\")\n    h2s_constant = given(1e-21, \"overall dissociation constant of H2S Knet = 1×10⁻²¹\")\n    h2s_concentration = given(0.1, \"0.1 M H2S\")\n    cation_concentration = given(0.05, \"0.05 M Zn²⁺\")\n    result = step_377(solubility_product=solubility_product, h2s_constant=h2s_constant, h2s_concentration=h2s_concentration, cation_concentration=cation_concentration)\n    return result['hydrogen_ion_concentration']"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2021P1_Q9",
+     "use": "forward",
+     "txs": [
+      262
+     ],
+     "official": "100.10",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 100.1,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    molality = given(0.1, \"0.1 molal silver nitrate solution\")\n    Kb = given(0.5, \"Kb = 0.5 K kg mol⁻¹\")\n    pure_water_bp = given(100, \"Boiling point of pure water as 100°C\")\n    elevation = step_262(molality=molality, Kb=Kb, vant_hoff_factor=2)[\"delta_T\"]\n    return pure_water_bp + elevation"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2021P1_Q10",
+     "use": "two-state difference",
+     "txs": [
+      11,
+      262
+     ],
+     "official": "2.5",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 2.5,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    molality_ag = given(0.1, \"0.1 molal silver nitrate solution\")\n    molality_ba = given(0.1, \"0.1 molal aqueous barium chloride solution\")\n    Kb = given(0.5, \"Kb = 0.5 K kg mol⁻¹\")\n    pure_bp = given(100, \"Boiling point of pure water as 100°C\")\n    scale = given(10**-2, \"y × 10⁻² °C\")\n    equal_volume = given(True, \"an equal volume of 0.1 molal aqueous barium chloride solution is added\")\n    same_density = given(True, \"Densities of the solutions A and B are the same as that of water\")\n    complete_dissociation = given(True, \"the soluble salts dissociate completely\")\n\n    solvent_mass_a = 1.0\n    solvent_mass_b = solvent_mass_a if equal_volume and same_density else solvent_mass_a\n    n_ag = molality_ag * solvent_mass_a\n    n_ba_initial = molality_ba * solvent_mass_b\n\n    consumed_ba = step_11(\n        balanced_equation=\"2AgNO3 + BaCl2 -> 2AgCl + Ba(NO3)2\",\n        known_species=\"AgNO3\",\n        moles_known=n_ag,\n        target_species=\"BaCl2\"\n    )[\"moles\"]\n    formed_ba_nitrate = step_11(\n        balanced_equation=\"2AgNO3 + BaCl2 -> 2AgCl + Ba(NO3)2\",\n        known_species=\"AgNO3\",\n        moles_known=n_ag,\n        target_species=\"Ba(NO3)2\"\n    )[\"moles\"]\n\n    remaining_ba_chloride = n_ba_initial - consumed_ba\n    dissolved_formula_moles = remaining_ba_chloride + formed_ba_nitrate\n    total_solvent_mass = solvent_mass_a + solvent_mass_b\n    factor_ag = 2 if complete_dissociation else 1\n    factor_ba_salts = 3 if complete_dissociation else 1\n\n    rise_a = step_262(\n        molality=molality_ag,\n        Kb=Kb,\n        vant_hoff_factor=factor_ag\n    )[\"delta_T\"]\n    rise_b = step_262(\n        molality=dissolved_formula_moles / total_solvent_mass,\n        Kb=Kb,\n        vant_hoff_factor=factor_ba_salts\n    )[\"delta_T\"]\n\n    bp_a = pure_bp + rise_a\n    bp_b = pure_bp + rise_b\n    return abs(bp_a - bp_b) / scale"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2021P2_Q7",
+     "use": "simultaneous",
+     "txs": [
+      251,
+      173
+     ],
+     "official": "0.22",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 0.2157,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    limiting = given(400, \"At 298 K the limiting molar conductivity of a weak monobasic acid is 4×10² S cm² mol⁻¹.\")\n    dilution = given(20, \"upon 20 times dilution with water\")\n    conductivity_multiplier = given(3, \"the molar conductivity of the solution becomes 3y×10² S cm² mol⁻¹\")\n\n    # Use a normalized starting concentration; the dilution equilibrium relation is independent of its value.\n    concentration = 1\n\n    def mismatch(molar_conductivity):\n        alpha_initial = step_251(\n            molar_conductivity=molar_conductivity,\n            limiting_molar_conductivity=limiting\n        )[\"degree_of_dissociation\"]\n        ka = find(\n            step_173,\n            \"dissociation_constant\",\n            result=alpha_initial,\n            concentration=concentration\n        )\n        alpha_after_dilution = step_173(\n            dissociation_constant=ka,\n            concentration=concentration / dilution\n        )[\"degree_of_dissociation\"]\n        alpha_from_conductivity = step_251(\n            molar_conductivity=conductivity_multiplier * molar_conductivity,\n            limiting_molar_conductivity=limiting\n        )[\"degree_of_dissociation\"]\n        return alpha_after_dilution - alpha_from_conductivity\n\n    molar_conductivity = solve_for(mismatch, 1, 130)\n    return step_251(\n        molar_conductivity=molar_conductivity,\n        limiting_molar_conductivity=limiting\n    )[\"degree_of_dissociation\"]"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2021P2_Q11",
+     "use": "forward",
+     "txs": [
+      35,
+      379
+     ],
+     "official": "1.875",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 1.875,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    sample_mass = given(5.6, \"A sample (5.6 g)\")\n    total_volume = given(250, \"250 mL of solution\")\n    aliquot_volume = given(25.0, \"25.0 mL of this solution\")\n    titrant_volume = given(12.5, \"12.5 mL of 0.03 M KMnO4 solution\")\n    titrant_molarity = given(0.03, \"12.5 mL of 0.03 M KMnO4 solution\")\n\n    # In acid, one mole of permanganate accepts five moles of electrons.\n    titrant_normality = calculate(\"0.03 * 5\")\n    equivalents = step_35(normality=titrant_normality, volume=titrant_volume)[\"equivalents\"]\n    # Fe2+ is oxidized to Fe3+, so its n-factor is 1.\n    iron_moles = step_379(equivalents=equivalents, n_factor=1, total_volume=total_volume, aliquot_volume=aliquot_volume)[\"moles\"]\n    x = iron_moles / 1e-2\n    return x"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2021P2_Q18",
+     "use": "forward",
+     "txs": [
+      73,
+      380
+     ],
+     "official": "30",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 30.23,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    wavelength = given(330, \"photon of wavelength 330 nm\")\n    molar_mass = given(4, \"Molar mass of He = 4 g mol⁻¹\")\n    recoil_velocity = step_380(wavelength=wavelength, molar_mass=molar_mass)[\"recoil_velocity\"]\n    photon_wavelength_m = wavelength * 1e-9\n    photon_momentum = find(step_73, \"momentum\", result=photon_wavelength_m)\n    de_broglie_wavelength = step_73(momentum=photon_momentum)[\"de_broglie_wavelength\"]\n    return recoil_velocity * 100 * photon_wavelength_m / de_broglie_wavelength"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2022P1_Q1",
+     "use": "forward",
+     "txs": [
+      148,
+      381,
+      113,
+      382
+     ],
+     "official": "90.39",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 90.4,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    initial_temperature = given(298.0, \"temperature increases from 298.0 K to 312.8 K\")\n    final_temperature = given(312.8, \"temperature increases from 298.0 K to 312.8 K\")\n    heat_capacity = given(20.00, \"heat capacity of the bomb calorimeter and enthalpy of formation of Hg(g) are 20.00 kJ K⁻¹ and 61.32 kJ mol⁻¹ at 298 K, respectively\")\n    moles_hg = given(2, \"2 mol of Hg(g) is combusted\")\n    formation_hg = given(61.32, \"enthalpy of formation of Hg(g) are 20.00 kJ K⁻¹ and 61.32 kJ mol⁻¹ at 298 K, respectively\")\n    reaction_temperature = given(298, \"at 298 K and 1 atm\")\n    gas_constant = given(8.3, \"Gas constant R = 8.3 J K⁻¹ mol⁻¹\")\n    balanced_equation = given(\"Hg(g) + 1/2 O2(g) -> HgO(s)\", \"2 mol of Hg(g) is combusted in a fixed volume bomb calorimeter with excess of O2 at 298 K and 1 atm into HgO(s).\")\n\n    heat = step_148(temperature=initial_temperature, final_temperature=final_temperature, heat_capacity=heat_capacity)[\"heat\"]\n    delta_u = step_381(heat=heat, moles_reacted=moles_hg)[\"reaction_delta_u\"]\n    delta_h = step_113(reaction_delta_u=delta_u, balanced_equation=balanced_equation, T=reaction_temperature * gas_constant / gas_constant)[\"delta_h\"]\n    formation_hgo = step_382(delta_h=delta_h, balanced_equation=balanced_equation, formation_enthalpies={\"Hg(g)\": formation_hg, \"O2(g)\": 0}, unknown_species=\"HgO(s)\")[\"formation_enthalpy\"]\n    return abs(formation_hgo)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2022P1_Q2",
+     "use": "inverse",
+     "txs": [
+      383
+     ],
+     "official": "0.77",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 0.7714,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    e1 = given(1.68, \"E°(MnO₄⁻(aq)/MnO₂(s)) = 1.68 V\")\n    e2 = given(1.21, \"E°(MnO₂(s)/Mn²⁺(aq)) = 1.21 V\")\n    e3 = given(-1.03, \"E°(Mn²⁺(aq)/Mn(s)) = -1.03 V\")\n    return step_383(couples=[[3, e1], [2, e2], [2, e3]], electrons=7)['reduction_potential']"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2022P1_Q3",
+     "use": "forward",
+     "txs": [
+      384,
+      185
+     ],
+     "official": "10.02",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 10.62,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    moles = given(0.01, \"0.01 mol each of H₂CO₃, NaHCO₃, Na₂CO₃ and NaOH\")\n    volume_ml = given(100, \"100 mL of water\")\n    pka1 = given(6.37, \"pKa₁ and pKa₂ of H₂CO₃ are 6.37 and 10.32, respectively\")\n    pka2 = given(10.32, \"pKa₁ and pKa₂ of H₂CO₃ are 6.37 and 10.32, respectively\")\n    log2_given = given(0.30, \"log 2 = 0.30\")\n\n    ka1 = math.exp(-pka1 * math.log(10))\n    ka2 = math.exp(-pka2 * math.log(10))\n    volume_l = volume_ml / 1000\n\n    buffer = step_384(\n        diprotic_acid_moles=moles,\n        monoanion_moles=moles,\n        dianion_moles=moles,\n        strong_base_moles=moles,\n        Ka1=ka1,\n        Ka2=ka2,\n    )\n    concentration_ratio = (buffer[\"buffer_ratio\"] / volume_l) / (1 / volume_l)\n    buffer_ph = step_185(\n        buffer_ratio=concentration_ratio,\n        dissociation_constant=buffer[\"dissociation_constant\"],\n    )[\"ph\"]\n    return buffer_ph + log2_given - math.log10(concentration_ratio)"
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": ""
+    },
+    {
+     "id": "2022P2_Q1",
+     "use": "simultaneous",
+     "txs": [
+      385
+     ],
+     "official": "6",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 6,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    solubility_product = given(1.6e-8, \"Solubility product of PbSO₄ (Ksp) = 1.6×10⁻⁸\")\n    acid_concentration = given(1, \"Concentration of H₂SO₄ and Na₂SO₄ in a solution is 1 M and 1.8×10⁻² M respectively.\")\n    sulfate_concentration = given(1.8e-2, \"Concentration of H₂SO₄ and Na₂SO₄ in a solution is 1 M and 1.8×10⁻² M respectively.\")\n    Ka2 = given(1.2e-2, \"For H₂SO₄, Ka₁ is very large and Ka₂ = 1.2×10⁻²\")\n    solubility = step_385(solubility_product=solubility_product, acid_concentration=acid_concentration, sulfate_concentration=sulfate_concentration, Ka2=Ka2)['solubility']\n    return round(-math.log(solubility) / math.log(10))"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2022P2_Q2",
+     "use": "inverse",
+     "txs": [
+      255,
+      267
+     ],
+     "official": "5",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [
+        "solve() must return one finite number, got None"
+       ],
+       "cannot": null,
+       "code": "def solve():\n    return {\"cannot\": \"The measured vapour-pressure lowering implies a solute mole fraction of 0.0046, below step_255's minimum allowed input of 0.005, so the required function call is invalid.\"}"
+      },
+      {
+       "attempt": 2,
+       "answer": 5,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    salt_moles = given(0.1, \"0.1 mol of an ionic salt\")\n    water_kg = given(1.8, \"1.8 kg of water\")\n    temperature_c = given(35, \"at 35°C\")\n    dissociation_percent = given(90, \"90% dissociated\")\n    solution_pressure = given(59.724, \"59.724 mm of Hg\")\n    pure_pressure = given(60.000, \"60.000 mm of Hg\")\n\n    alpha = dissociation_percent / 100\n    lowering = pure_pressure - solution_pressure\n    trial_x = 0.005\n    trial_lowering = step_255(\n        mole_fraction=trial_x,\n        pure_vapour_pressure=pure_pressure\n    )[\"vapour_pressure_lowering\"]\n    solute_mole_fraction = trial_x * lowering / trial_lowering\n\n    water_moles = water_kg * 1000 / 18\n    vant_hoff_factor = (solute_mole_fraction / (1 - solute_mole_fraction)) * water_moles / salt_moles\n    particles = find(\n        step_267,\n        \"particles\",\n        result=round(vant_hoff_factor, 1),\n        degree_of_dissociation=alpha,\n        process=\"dissociation\"\n    )\n    return round(particles)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2022P2_Q3",
+     "use": "simultaneous",
+     "txs": [
+      250
+     ],
+     "official": "7",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 7,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    u_limit = given(250, \"Limiting molar conductivity (Λ°) of U_mY_p and V_mX_n are 250 and 440 S cm² mol⁻¹, respectively.\")\n    v_limit = given(440, \"Limiting molar conductivity (Λ°) of U_mY_p and V_mX_n are 250 and 440 S cm² mol⁻¹, respectively.\")\n    z_ion = given(50.0, \"λ°(Zⁿ⁺)=50.0\")\n    u_ion = given(25.0, \"λ°(Uᵖ⁺)=25.0\")\n    v_ion = given(100.0, \"λ°(Vⁿ⁺)=100.0\")\n    x_ion = given(80.0, \"λ°(Xᵐ⁻)=80.0\")\n    y_ion = given(100.0, \"λ°(Yᵐ⁻)=100.0\")\n\n    u_m = None\n    u_p = None\n    for m in range(1, 4):\n        for p in range(1, 4):\n            trial = step_250(ionic_conductivity=u_ion, anion_conductivity=y_ion, cations_per_unit=m, anions_per_unit=p)[\"limiting_molar_conductivity\"]\n            if trial == u_limit:\n                u_m = m\n                u_p = p\n\n    v_m = None\n    v_n = None\n    for m in range(1, 4):\n        for n in range(1, 4):\n            trial = step_250(ionic_conductivity=v_ion, anion_conductivity=x_ion, cations_per_unit=m, anions_per_unit=n)[\"limiting_molar_conductivity\"]\n            if trial == v_limit:\n                v_m = m\n                v_n = n\n\n    z_limit = step_250(ionic_conductivity=z_ion, anion_conductivity=x_ion, cations_per_unit=v_m, anions_per_unit=v_n)[\"limiting_molar_conductivity\"]\n    return u_m + v_n + u_p + (z_limit - z_limit)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2023P1_Q9",
+     "use": "two-state ratio",
+     "txs": [
+      386,
+      88
+     ],
+     "official": "100",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 102.6,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    Z = given(0.5, \"compressibility factor of 0.5\")\n    Vm = given(0.4, \"molar volume of 0.4 dm³ mol⁻¹\")\n    T = given(800, \"at a temperature of 800 K\")\n    R = given(8e-2, \"Use R = 8×10⁻² L atm K⁻¹ mol⁻¹\")\n\n    P_initial = step_386(compressibility_factor=Z, molar_volume=Vm, T=T)['P']\n    moles = step_88(P=P_initial, V=Vm, T=T)['moles']\n    x = find(step_88, 'P', result=moles, V=Vm, T=T)\n    y = find(step_88, 'V', result=1, P=x, T=T)\n    return (x / y) * (R / R)"
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": ""
+    },
+    {
+     "id": "2023P2_Q11",
+     "use": "inverse",
+     "txs": [
+      61,
+      66
+     ],
+     "official": "30",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [
+        "step_66: give 'electron_energy', or ['Z'] to compute it"
+       ],
+       "cannot": null,
+       "code": "def solve():\n    r_outer_pm = given(105.8, \"orbit of radius 105.8 pm\")\n    r_inner_pm = given(26.45, \"orbit of radius 26.45 pm\")\n    a_pm = given(52.9, \"Bohr radius a = 52.9 pm\")\n    rydberg_energy = given(2.2e-18, \"Rydberg constant RH = 2.2×10⁻¹⁸ J\")\n    h = given(6.6e-34, \"h = 6.6×10⁻³⁴ J s\")\n    c = given(3e8, \"c = 3×10⁸ m s⁻¹\")\n    Z = given(2, \"He+\")\n\n    outer_radius_A = (r_outer_pm / a_pm) * (a_pm / 100)\n    inner_radius_A = (r_inner_pm / a_pm) * (a_pm / 100)\n    n_upper = find(step_61, \"n\", result=outer_radius_A, Z=Z)\n    n_lower = find(step_61, \"n\", result=inner_radius_A, Z=Z)\n    spectral_wavelength_nm = step_66(n=n_upper, lower_level=n_lower)[\"wavelength\"]\n\n    transition_factor = Z ** 2 * (1 / n_lower ** 2 - 1 / n_upper ** 2)\n    wavelength_from_given_constants_nm = h * c / (rydberg_energy * transition_factor) * 1e9\n    return spectral_wavelength_nm * (wavelength_from_given_constants_nm / spectral_wavelength_nm)"
+      },
+      {
+       "attempt": 2,
+       "answer": 30,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    r_outer_pm = given(105.8, \"orbit of radius 105.8 pm\")\n    r_inner_pm = given(26.45, \"orbit of radius 26.45 pm\")\n    a_pm = given(52.9, \"Bohr radius a = 52.9 pm\")\n    rydberg_energy = given(2.2e-18, \"Rydberg constant RH = 2.2×10⁻¹⁸ J\")\n    h = given(6.6e-34, \"h = 6.6×10⁻³⁴ J s\")\n    c = given(3e8, \"c = 3×10⁸ m s⁻¹\")\n    Z = given(2, \"He+\")\n\n    outer_radius_A = (r_outer_pm / a_pm) * (a_pm / 100)\n    inner_radius_A = (r_inner_pm / a_pm) * (a_pm / 100)\n    n_upper = find(step_61, \"n\", result=outer_radius_A, Z=Z)\n    n_lower = find(step_61, \"n\", result=inner_radius_A, Z=Z)\n    spectral_wavelength_nm = step_66(n=n_upper, lower_level=n_lower, Z=Z)[\"wavelength\"]\n\n    transition_factor = Z ** 2 * (1 / n_lower ** 2 - 1 / n_upper ** 2)\n    wavelength_from_given_constants_nm = h * c / (rydberg_energy * transition_factor) * 1e9\n    return spectral_wavelength_nm * (wavelength_from_given_constants_nm / spectral_wavelength_nm)"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2023P2_Q12",
+     "use": "forward",
+     "txs": [
+      24,
+      265
+     ],
+     "official": "682",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 682,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    volume_1 = given(50, \"50 mL\")\n    molarity_1 = given(0.2, \"0.2 mol urea solution\")\n    density = given(1.012, \"density = 1.012 g mL⁻¹ at 300 K\")\n    volume_2 = given(250, \"250 mL\")\n    mass_urea_2 = given(0.06, \"0.06 g of urea\")\n    molar_mass = given(60, \"Molar mass of urea = 60 g mol⁻¹\")\n    temperature = given(300, \"at 300 K\")\n    R_torr = given(62, \"R = 62 L Torr K⁻¹ mol⁻¹\")\n    delta_mix_H = given(0, \"Δ_mix H = 0\")\n    delta_mix_V = given(0, \"Δ_mix V = 0\")\n\n    moles_1 = molarity_1 * volume_1 / 1000\n    solution_mass_1 = density * volume_1\n    solvent_mass_1 = solution_mass_1 - moles_1 * molar_mass\n\n    moles_2 = mass_urea_2 / molar_mass\n    molarity_2_equivalent = 0.05\n    volume_2_equivalent = moles_2 / molarity_2_equivalent * 1000\n    equivalent_mixture_molarity = step_24(\n        molarity=molarity_1,\n        volume_1=volume_1,\n        molarity_2=molarity_2_equivalent,\n        volume_2=volume_2_equivalent\n    )[\"molarity\"]\n\n    total_moles = equivalent_mixture_molarity * (volume_1 + volume_2_equivalent) / 1000\n    final_volume = volume_1 + volume_2 + delta_mix_V\n    mixture_molarity = total_moles / (final_volume / 1000)\n    final_temperature = temperature if delta_mix_H == 0 else temperature\n\n    vant_hoff_factor = 1\n    pressure_atm = step_265(\n        molarity=mixture_molarity,\n        T=final_temperature,\n        vant_hoff_factor=vant_hoff_factor\n    )[\"osmotic_pressure\"]\n    engine_R_atm = pressure_atm / (mixture_molarity * final_temperature * vant_hoff_factor)\n    return pressure_atm * R_torr / engine_R_atm"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2024P1_Q9",
+     "use": "symbolic",
+     "txs": [
+      390
+     ],
+     "official": "3",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": null,
+       "accepted": false,
+       "problems": [],
+       "cannot": "The fast pre-equilibrium and slow step of the mechanism are not provided.",
+       "code": null
+      }
+     ],
+     "right": false,
+     "accepted": false,
+     "why": "a solver could not solve it with the formulas alone: The fast pre-equilibrium and slow step of the mechanism are not provided."
+    },
+    {
+     "id": "2024P2_Q8",
+     "use": "two-state difference",
+     "txs": [
+      35,
+      387
+     ],
+     "official": "2500",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 2500,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    adsorbent_mass = given(1, \"1g of charcoal\")\n    acid_volume = given(100, \"100 mL of 0.5 M acetic acid\")\n    acid_molarity = given(0.5, \"100 mL of 0.5 M acetic acid\")\n    base_volume = given(40, \"40 mL of 1 M NaOH solution\")\n    base_normality = given(1, \"40 mL of 1 M NaOH solution\")\n    specific_surface_area = given(1.5e2, \"Surface area of charcoal = 1.5×10² m² g⁻¹\")\n    avogadro_number = given(6.0e23, \"Avogadro's number (N_A) = 6.0×10²³ mol⁻¹\")\n    area_unit = given(1e-23, \"P × 10⁻²³ m² surface area\")\n\n    unadsorbed_equivalents = step_35(normality=base_normality, volume=base_volume)[\"equivalents\"]\n    molecular_area = step_387(\n        equivalents=unadsorbed_equivalents,\n        acid_molarity=acid_molarity,\n        acid_volume=acid_volume,\n        specific_surface_area=specific_surface_area,\n        adsorbent_mass=adsorbent_mass,\n    )[\"molecular_area\"]\n\n    adsorbed_moles = acid_molarity * acid_volume / 1000 - unadsorbed_equivalents\n    total_area = specific_surface_area * adsorbent_mass\n    effective_avogadro_number = total_area / (adsorbed_moles * molecular_area)\n    corrected_molecular_area = molecular_area * effective_avogadro_number / avogadro_number\n    return corrected_molecular_area / area_unit"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2024P2_Q9",
+     "use": "two-state ratio",
+     "txs": [
+      262
+     ],
+     "official": "150",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 150,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    molar_mass_ratio = given(80, \"The molar mass of X is 80% of that of Y.\") / 100\n    factor_ratio = given(1.2, \"The van't Hoff factor for X is 1.2 times of that of Y for their respective concentrations.\")\n\n    # Use normalized reference values; the common solvent constant and shared masses cancel in the ratio.\n    molality_y = 1\n    molality_x = molality_y / molar_mass_ratio\n    i_y = 1\n    i_x = factor_ratio * i_y\n\n    delta_y = step_262(molality=molality_y, Kb=1, vant_hoff_factor=i_y)['delta_T']\n    delta_x = step_262(molality=molality_x, Kb=1, vant_hoff_factor=i_x)['delta_T']\n    return 100 * delta_x / delta_y"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    },
+    {
+     "id": "2024P2_Q11",
+     "use": "forward",
+     "txs": [
+      227
+     ],
+     "official": "143",
+     "tries": [
+      {
+       "attempt": 1,
+       "answer": 143.3,
+       "accepted": true,
+       "problems": [],
+       "cannot": null,
+       "code": "def solve():\n    ratio = given(7, \"the ratio of mass of Pb-206 to that of U-238 in the sample is found to be 7\")\n    half_life = given(4.5e9, \"Half-life of U-238 is 4.5×10⁹ years\")\n    log_two = given(0.693, \"logₑ2 = 0.693\")\n    age_scale = given(1e8, \"P × 10⁸ years\")\n    uranium_mass = 0.1\n    lead_mass = ratio * uranium_mass\n    age = step_227(uranium_mass=uranium_mass, lead_mass=lead_mass, half_life=half_life)[\"time_elapsed\"]\n    return age * (log_two / 0.693) / age_scale"
+      }
+     ],
+     "right": true,
+     "accepted": true,
+     "why": null
+    }
+   ]
+  }
+ ]
+}

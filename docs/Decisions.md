@@ -2,10 +2,63 @@
 
 This file records the reasoning behind meaningful technical choices. Each entry explains why an implementation was chosen, not just what was implemented.
 
+## No mismatch verifier: ladder answers are graded by code only
+
+Date: 2026-11-19
+Context: Claude Haiku 5.5 read every ladder attempt against the program's trace and decided "solved" (with code), the hint, wrong keys and unclear wording. On the flask question it called the right key (50.31 mL: the liquid takes up part of the vessel) wrong, siding with three solvers who all ignored the liquid, so the pipeline dropped the question instead of rewording it.
+Decision (the author's): remove it. Solved = the answer matches the key, by code (within tolerance; letters and text by their shape; an answer code cannot read counts as not solved). Every failed step gets the code-written insight hint. The key's correctness rests on the coder's program (GPT-6 Luna, now shown the design), not on a judge.
+Alternatives: a stronger verifier model (more cost per question); keeping only a wording check.
+Trade-off: a right number reached by wrong reasoning now counts as solved (rare on a hard question); wrong keys and unclear wording are no longer caught at judging; text answers code cannot compare are not matched. Supersedes the strict-grading rule (verdict "correct" required) and the slip and reference-wrong rules.
+
+## Coherence cut-offs: current against a looser one, under trial
+
+Date: 2026-11-18
+Context: a real JEE Advanced question (2020P1_Q15: fuel-cell work used to compress a gas) was rejected by Jev's coherence check (glued parts 18 %, arbitrary condition 45 %). It is in the calibration set and was already rejected there: the cut-offs are the 95th percentile of the real questions' scores, so 9 of 77 real questions are rejected to catch 14 of 14 bad ones.
+Decision: not made yet. `tools/step_by_step.py check` prints Jev's scores once and the verdict under both cut-offs: current (95th percentile) and looser (99th: 2 of 77 real rejected, 14 of 14 bad still caught). The author compares them on random real questions; the pipeline keeps the current one until then (`qf_checks.COHERENCE_PERCENTILE = None`).
+Trade-off: only 14 bad examples; the looser cut-off keeps a thinner margin (a bad question at 0.49 on "arbitrary condition" against 0.52 for the highest real one, caught by another fault). On real questions the looser cut-off can only reject fewer, so the comparison also needs the pipeline's own questions.
+
+## Only the picked values must matter
+
+Date: 2026-11-18
+Context: the rule "every value in the question must change the answer" rejected a real JEE question that states "standard conditions at 1 bar and 298 K" as background, and pushed the coder to fake using the values (`(P / P) * (T / T)`). A bug let the fake pass: the check moved 1 bar to 0, `P / P` failed, and a failure counted as "P matters".
+Decision (the author's): only the values the number step picks (range blanks) must matter; the writer's fixed values may be background. The coder is told never to put a value in only to have used it. A change the program cannot take no longer counts as "matters".
+Alternatives: the rule for every value (real questions with background fail; the writer may never state context).
+Trade-off: a fixed value the answer does not need can stand in a question; it was chosen by the writer, not drawn at random, so it cannot contradict the picked values.
+
+## Numbers are picked by code after the solving program is written
+
+Date: 2026-11-17
+Context: the writer gave the independent values, a number program (Devstral) computed the rest and the intended answer, and the solving program only had to reproduce that answer. The key was fixed before anything independent solved the question: a number program that reversed the copper disproportionation cell (ΔG° +35.5 instead of −35.5) became the answer key.
+Decision (the author's design): the writer leaves every number as a blank with a realistic range, and gives a fixed value only for a value of the substance itself (molar mass, E°, ΔfH°). Coder 2 (GPT-6 Luna) writes the solving program from the blanks, before any number exists. Coder 1, the number step, is code: it draws values in the ranges and runs them through that program. It keeps a set only if the answer is in the writer's answer range, rounding moves it by at most 2 %, at least 2 typical mistakes change it, and every picked value is used. Only then are the numbers printed in the question. No second independent solver ("Luna is already a strong model").
+Alternatives: values picked by code alone (code cannot know which values belong to a substance); values chosen by a model alone (models hallucinate and state data that disagree).
+Trade-off: a new failure, no value set in the ranges works, goes back to the writer in its own terms. On real questions the writer sometimes gives continuous ranges to quantities that exist only at certain values (orbit radii). The engine rejects every such value, so no wrong question comes out, but the round is wasted.
+
+## GPT-6 Luna writes the solving program
+
+Date: 2026-11-17
+Context: the coder writes the program whose run is the answer key. On 8 real JEE Advanced questions (`tools/calibrate_coder.py`, against the official answers): GPT-6 Luna 8/8, Devstral 7/8, Qwen3 Coder Next 6/8, Codestral 2/8. Codestral had made the basic errors of every earlier run (undefined names, find() misused, wrong units).
+Decision: `models.CODER` = GPT-6 Luna; there is no number coder (the numbers are code's).
+Trade-off: Luna is also the ladder's top step, so the program that defines the answer and the strongest solver are one family; the bottom step (Meta), which decides acceptance, and the verifier (Anthropic) stay independent.
+
+## Llama 3.3 70B replaces Phi-4 as the ladder's bottom step
+
+Date: 2026-11-17
+Context: Phi-4 is not on airouter.in, the router used when OpenRouter runs out of credit (OpenRouter needs an international card).
+Decision: Llama 3.3 70B, the only other measured model that separates easy from hard (gap 37.6 points against Phi-4's 38.7; `calibration/ladder_separation.py`).
+Trade-off: it fails 29 % of easy/medium Mains questions against Phi-4's 14 %, so more easy questions reach the GLM label; Jev's level check then decides advanced or hard Mains.
+
+## The designer: Gemini 3.1 Pro at a low thinking level, one design per draw, checked by Jev
+
+Date: 2026-11-17
+Context: cheaper designers failed on stage runs. Gemini 3.8 Flash gave a JEE Main design and an impossible one. Kimi K2.6 ignored its thinking budget. Gemini 3 models ignore numeric thinking budgets, and three designs were cut off at about 6,000 thinking tokens.
+Decision: `models.DESIGNER` = Gemini 3.1 Pro, thinking level "low", reply cap 8000 tokens. Jev checks every design with cut-offs calibrated on reviewed reverse-designs of real JEE Advanced questions: it caught 10 of 10 bad designs and flagged 3 of 28 real ones, all three because of equality wording. A rejected design means a new draw (`DESIGN_TRIES` = 1).
+Trade-off: a design costs a few cents, the largest single cost of a run.
+
 ## Phi-4 as the ladder's bottom step; GPT-6 Luna writes the answer key
 
 Date: 2026-10-14
 Context: the user asked for a bottom step better than Llama 3.3 70B but still clearly below GLM, and for an answer-key writer that is cheap but makes no arithmetic errors (Mistral Small 3.2 botched √2.890625 and a rearrangement in run 13). Five cheap candidates were calibrated on the same 96 real JEE questions (`calibration/ladder_separation.py`; hard Mains = top third by `calculated_difficulty`, counted as Advanced-level): Phi-4 fails 14 % of easy/medium Mains and 53 % of Advanced-level (gap 39 points, $0.00017 per question); Llama 3.3 70B 29 % / 66 % (gap 38, $0.00100); Llama 4 Maverick 14 % / 28 % (gap 14); Llama 4 Scout 43 % / 54 % (gap 12); Granite 4.2 8B 25 % / 65 % but returns `final_answer: null` with an "insufficient data" objection on solvable questions; GLM 14 % / 23 % (gap 9). Phi-4 solves 21 questions Llama 3.3 misses against 8 the other way (paired exact McNemar p = 0.02); GLM solves 29 Phi-4 misses against 9 (p = 0.002).
+Superseded on 2026-11-17: the bottom step is Llama 3.3 70B (see above), and the readable solution is written by Gemini 3.8 Flash (`models.SOLUTION_WRITER`).
 Decision: ladder Phi-4 → GLM-5.3-Flash → GPT-6 Luna (Microsoft, Z.ai, OpenAI). Answer key by GPT-6 Luna (92 % of real Advanced solved, $0.0008 per question); it runs only after acceptance and never grades, so sharing a family with the top ladder step does not matter, and the step verifier (Anthropic) that checks it stays independent.
 Alternatives: keep Llama 3.3 (same separation, but twice as many easy questions accepted as hard, at 6× the cost); Maverick (the user's first choice; fails easy and hard Mains alike); Scout; Granite (refusals look like difficulty).
 Trade-off: Phi-4 is stricter: it solves 47 % of Advanced-level candidates (Llama 3.3: 34 %), so more good questions are refined as "too easy" and generation costs per accepted question rise somewhat; in return only 14 % of easy questions get through (Llama 3.3: 29 %). Phi-4 has a 16k context (its output is capped at 8000 tokens) and its replies occasionally break JSON (handled by `core.llm.parse_json`). Samples are small (28 easy, 68 Advanced-level): ±10 points.

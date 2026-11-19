@@ -1,0 +1,609 @@
+{
+ "subject": "physical",
+ "saved_at": "20261014T091812",
+ "spend": {
+  "total_cost_usd": 0.108,
+  "by_role": {
+   "generator": {
+    "calls": 9,
+    "prompt_tokens": 8741,
+    "completion_tokens": 8953,
+    "cost": 0.0401295
+   },
+   "extractor": {
+    "calls": 9,
+    "prompt_tokens": 5496,
+    "completion_tokens": 30265,
+    "cost": 0.009597689999999999
+   },
+   "council": {
+    "calls": 7,
+    "prompt_tokens": 2859,
+    "completion_tokens": 2984,
+    "cost": 0.00207413
+   },
+   "verifier": {
+    "calls": 7,
+    "prompt_tokens": 13028,
+    "completion_tokens": 3897,
+    "cost": 0.0032512999999999995
+   },
+   "refiner": {
+    "calls": 7,
+    "prompt_tokens": 7267,
+    "completion_tokens": 12665,
+    "cost": 0.052944000000000005
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "balanced_equation_to_moles_molemethodni",
+     "moles_to_limiting_reagent_dividemolesb"
+    ],
+    "nodes": [
+     "balanced_equation",
+     "moles",
+     "limiting_reagent"
+    ],
+    "chapters": [
+     "Stoichiometry"
+    ],
+    "txs": [
+     12,
+     13
+    ],
+    "trap_ids": [
+     "ignores_atom_count",
+     "smaller_amount"
+    ],
+    "weight": 1.0,
+    "description": "amount of the target species (mol) [POAC: n_known × atoms(known) = n_target × atoms(target)] → the limiting reagent [limiting reagent has the smallest n/ν]"
+   },
+   "rounds": 3,
+   "events": [
+    {
+     "stage": "inputs",
+     "at": "2026-10-14T09:09:52.409686+00:00",
+     "values": {
+      "s0.balanced_equation": "Fe3O4 -> Fe2(SO4)3",
+      "s0.known_species": "Fe3O4",
+      "s0.moles_known": 0.45,
+      "s0.target_species": "Fe2(SO4)3",
+      "s0.element": "Fe",
+      "s1.balanced_equation": "Fe2(SO4)3 + 6 NaOH -> 2 Fe(OH)3 + 3 Na2SO4",
+      "s1.reactant_A": "Fe2(SO4)3",
+      "s1.reactant_B": "NaOH",
+      "s1.moles_B": 3.8
+     },
+     "scenario": "Magnetite (Fe3O4) is processed without loss of iron to produce pure iron(III) sulfate, which is subsequently reacted with an aqueous solution of sodium hydroxide to precipitate iron(III) hydroxide.",
+     "answer": "NaOH"
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:10:22.754614+00:00",
+     "attempt": 1,
+     "stem": "In an analytical preparation, 0.45 mol of Fe3O4 is converted completely without any loss of iron into Fe2(SO4)3. The obtained Fe2(SO4)3 is subsequently mixed with 3.8 mol of NaOH in aqueous solution, reacting according to the equation:\nFe2(SO4)3 + 6 NaOH → 2 Fe(OH)3 + 3 Na2SO4\n\nGive the formula of the limiting reagent.",
+     "ok": false,
+     "mismatches": [
+      "the question does not state the reaction (balancing not needed for POAC) (should be Fe3O4 -> Fe2(SO4)3)",
+      "element conserved between the two species: the question states 'iron', it must be 'Fe'"
+     ],
+     "unreadable": false
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:10:58.823568+00:00",
+     "attempt": 2,
+     "stem": "In a chemical process, 0.45 mol of Fe3O4 is converted into Fe2(SO4)3 according to the conversion Fe3O4 -> Fe2(SO4)3, with complete conservation of Fe. The entire amount of Fe2(SO4)3 produced is then allowed to react with 3.8 mol of NaOH in aqueous solution according to the balanced equation:\nFe2(SO4)3 + 6 NaOH -> 2 Fe(OH)3 + 3 Na2SO4\n\nGive the formula of the limiting reagent.",
+     "ok": true,
+     "mismatches": [],
+     "unreadable": false
+    },
+    {
+     "stage": "council",
+     "at": "2026-10-14T09:11:12.056023+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "First, we need to determine the amount of Fe2(SO4)3 produced from 0.45 mol of Fe3O4. The conversion is Fe3O4 -> Fe2(SO4)3, but the stoichiometry is not given. However, we can use the fact that Fe is conserved. The molecular formula for Fe3O4 is Fe3O4, and for Fe2(SO4)3 it is Fe2(SO4)3. From the formulas, 1 mole of Fe3O4 contains 3 moles of Fe, and 1 mole of Fe2(SO4)3 contains 2 moles of Fe. So, the stoichiometry of the conversion can be written as: Fe3O4 -> (3/2) Fe2(SO4)3. Thus, 0.45 mol of Fe3O4 will produce (3/2) * 0.45 = 0.675 mol of Fe2(SO4)3. Now, we look at the reaction of Fe2(SO4)3 with NaOH: Fe2(SO4)3 + 6 NaOH -> 2 Fe(OH)3 + 3 Na2SO4. From the balanced equation, 1 mole of Fe2(SO4)3 reacts with 6 moles of NaOH. We have 0.675 mol of Fe2(SO4)3, which would require 0.675 * 6 = 4.05 mol of NaOH to react completely. However, we only have 3.8 mol of NaOH available. Since 3.8 mol of NaOH is less than the 4.05 mol required, NaOH is the limiting reagent.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: NaOH] [CALC_UNIT: none] [SUBSTANCE: NaOH]",
+       "final_answer": "NaOH",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "NaOH"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "NaOH"
+       ],
+       "substance": [
+        "NaOH"
+       ],
+       "diagnosis": {
+        "answer_equivalent": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "failed_step": null,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly conserved Fe (3 Fe per Fe3O4 becomes 2 Fe per Fe2(SO4)3), giving 0.45 × 3/2 = 0.675 mol Fe2(SO4)3, matching the reference. They then compared the NaOH required (0.675 × 6 = 4.05 mol) with the 3.8 mol available and correctly identified NaOH as limiting, which is the reference answer."
+       },
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": "correct",
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "gpt-6-luna"
+     ],
+     "first_solver": "llama-3.3-70b"
+    },
+    {
+     "stage": "refine",
+     "at": "2026-10-14T09:11:18.195384+00:00",
+     "mode": "new_inputs",
+     "feedback": "Switch from a simple precipitation with iron to an amphoteric metal system such as Al3+ or Cr3+ reacting with NaOH, where excess hydroxide redissolves the precipitate to form a complex ion (e.g., [Al(OH)4]-), so a naive stoichiometric ratio calculation leads to the wrong limiting reagent or product identification."
+    },
+    {
+     "stage": "inputs",
+     "at": "2026-10-14T09:11:40.021495+00:00",
+     "values": {
+      "s0.balanced_equation": "Al(OH)3 -> Al2(SO4)3",
+      "s0.known_species": "Al(OH)3",
+      "s0.moles_known": 1.2,
+      "s0.target_species": "Al2(SO4)3",
+      "s0.element": "Al",
+      "s1.balanced_equation": "Al2(SO4)3 + 8 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4",
+      "s1.reactant_A": "Al2(SO4)3",
+      "s1.reactant_B": "NaOH",
+      "s1.moles_B": 4.2
+     },
+     "scenario": "Aluminium hydroxide is converted into aluminium sulfate, which is then treated with an aqueous sodium hydroxide solution to yield the soluble sodium tetrahydroxidoaluminate complex.",
+     "answer": "NaOH"
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:12:24.970594+00:00",
+     "attempt": 1,
+     "stem": "A sample containing 1.2 mol of Al(OH)3 is quantitatively converted into Al2(SO4)3. The entire amount of Al2(SO4)3 obtained is then treated with 4.2 mol of NaOH in aqueous solution according to the reaction:\nAl2(SO4)3 + 8 NaOH → 2 Na[Al(OH)4] + 3 Na2SO4\n\nGive the formula of the limiting reagent.",
+     "ok": false,
+     "mismatches": [
+      "the question does not state the reaction (balancing not needed for POAC) (should be Al(OH)3 -> Al2(SO4)3)",
+      "the question does not state species whose amount is asked (should be Al2(SO4)3)",
+      "the question does not state element conserved between the two species (should be Al)"
+     ],
+     "unreadable": false
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:13:06.350191+00:00",
+     "attempt": 2,
+     "stem": "A 1.2 mol sample of Al(OH)3 is converted into Al2(SO4)3 via the reaction Al(OH)3 -> Al2(SO4)3, with all the Al conserved in the resulting Al2(SO4)3. The entire amount of Al2(SO4)3 obtained is then treated with 4.2 mol of NaOH according to the balanced chemical equation:\nAl2(SO4)3 + 8 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4\n\nGive the formula of the limiting reagent.",
+     "ok": true,
+     "mismatches": [],
+     "unreadable": false
+    },
+    {
+     "stage": "council",
+     "at": "2026-10-14T09:13:17.933751+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "First, we need to determine the amount of Al2(SO4)3 produced from 1.2 mol of Al(OH)3. The balanced chemical equation for the conversion is: 2 Al(OH)3 -> Al2(SO4)3. From this equation, we can see that 2 mol of Al(OH)3 produce 1 mol of Al2(SO4)3. So, 1.2 mol of Al(OH)3 will produce 1.2 / 2 = 0.6 mol of Al2(SO4)3.\n\nNext, we look at the reaction of Al2(SO4)3 with NaOH: Al2(SO4)3 + 6 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4 is not the balanced equation given, the given equation is Al2(SO4)3 + 8 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4. According to this equation, 1 mol of Al2(SO4)3 reacts with 8 mol of NaOH. We have 0.6 mol of Al2(SO4)3, which would react with 0.6 * 8 = 4.8 mol of NaOH.\n\nHowever, we only have 4.2 mol of NaOH available, which is less than the 4.8 mol required. Therefore, NaOH is the limiting reagent.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: NaOH] [CALC_UNIT: none] [SUBSTANCE: NaOH]",
+       "final_answer": "NaOH",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "NaOH"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "NaOH"
+       ],
+       "substance": [
+        "NaOH"
+       ],
+       "diagnosis": {
+        "answer_equivalent": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "failed_step": null,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly converted 1.2 mol Al(OH)3 to 0.6 mol Al2(SO4)3 by conserving Al, matching the reference POAC step. They then compared the required NaOH (0.6 × 8 = 4.8 mol) with the 4.2 mol available, correctly identifying NaOH as limiting. The student briefly misquoted the equation as having 6 NaOH but explicitly corrected it to the given 8 NaOH, which does not affect the result."
+       },
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": "correct",
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "gpt-6-luna"
+     ],
+     "first_solver": "llama-3.3-70b"
+    },
+    {
+     "stage": "refine",
+     "at": "2026-10-14T09:13:27.625993+00:00",
+     "mode": "reword",
+     "feedback": "Remove the provided balanced equation and the explicit note on aluminum conservation, requiring students to formulate the stoichiometry and identity of the tetrahydroxoaluminate product independently."
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:14:32.489315+00:00",
+     "attempt": 1,
+     "stem": "A 1.2 mol sample of Al(OH)3 is converted quantitatively into Al2(SO4)3. The entire amount of Al2(SO4)3 obtained is then treated with 4.2 mol of NaOH in aqueous solution to yield sodium tetrahydroxidoaluminate and sodium sulfate.\n\nGive the formula of the limiting reagent.",
+     "ok": false,
+     "mismatches": [
+      "the reaction (balancing not needed for POAC): the question states 'Al(OH)3 is converted quantitatively into Al2(SO4)3', it must be 'Al(OH)3 -> Al2(SO4)3'",
+      "the question does not state species whose amount is asked (should be Al2(SO4)3)",
+      "the question does not state element conserved between the two species (should be Al)",
+      "the question does not state the balanced equation (should be Al2(SO4)3 + 8 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4)"
+     ],
+     "unreadable": false
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:15:14.992134+00:00",
+     "attempt": 2,
+     "stem": "In a process, 1.2 mol of Al(OH)3 is converted following the scheme Al(OH)3 -> Al2(SO4)3 with complete conservation of Al. The resulting amount of Al2(SO4)3 is subsequently treated with 4.2 mol of NaOH according to the balanced equation:\nAl2(SO4)3 + 8 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4\n\nGive the formula of the limiting reagent.",
+     "ok": true,
+     "mismatches": [],
+     "unreadable": false
+    },
+    {
+     "stage": "council",
+     "at": "2026-10-14T09:15:25.819118+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "First, we need to determine the amount of Al2(SO4)3 produced from 1.2 mol of Al(OH)3. The balanced equation for the conversion is: 2 Al(OH)3 -> Al2(SO4)3. From this equation, we can see that 2 mol of Al(OH)3 produces 1 mol of Al2(SO4)3. So, 1.2 mol of Al(OH)3 will produce 1.2 / 2 = 0.6 mol of Al2(SO4)3. Next, we look at the reaction of Al2(SO4)3 with NaOH: Al2(SO4)3 + 8 NaOH -> 2 Na[Al(OH)4] + 3 Na2SO4. Here, 1 mol of Al2(SO4)3 reacts with 8 mol of NaOH. We have 0.6 mol of Al2(SO4)3, so it will react with 0.6 * 8 = 4.8 mol of NaOH. However, we only have 4.2 mol of NaOH available. Since we have less NaOH than required for complete reaction with Al2(SO4)3, NaOH is the limiting reagent.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: NaOH] [CALC_UNIT: none] [SUBSTANCE: NaOH]",
+       "final_answer": "NaOH",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "NaOH"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "NaOH"
+       ],
+       "substance": [
+        "NaOH"
+       ],
+       "diagnosis": {
+        "answer_equivalent": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "failed_step": null,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly conserved Al to get 0.6 mol Al2(SO4)3 and compared the required NaOH (4.8 mol) with the available 4.2 mol, identifying NaOH as limiting. Their written 'balanced' conversion equation omits sulfate, but the mole bookkeeping is valid, and the final answer NaOH matches the reference."
+       },
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": "correct",
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "gpt-6-luna"
+     ],
+     "first_solver": "llama-3.3-70b"
+    },
+    {
+     "stage": "refine",
+     "at": "2026-10-14T09:15:32.281614+00:00",
+     "mode": "new_inputs",
+     "feedback": "Remove the provided balanced equation and set the stoichiometry in the intermediate region (between 3:1 and 4:1 OH⁻:Al³⁺ ratio) where precipitation of Al(OH)3 and formation of [Al(OH)4]⁻ compete, forcing the solver to deduce the true mixture of products rather than blindly applying an 8:1 stoichiometry."
+    },
+    {
+     "stage": "inputs",
+     "at": "2026-10-14T09:15:52.147779+00:00",
+     "values": {
+      "s0.balanced_equation": "2 Ca3(PO4)2 + 10 C + 6 SiO2 -> P4 + 6 CaSiO3 + 10 CO",
+      "s0.known_species": "Ca3(PO4)2",
+      "s0.moles_known": 0.75,
+      "s0.target_species": "P4",
+      "s0.element": "P",
+      "s1.balanced_equation": "P4 + 10 Cl2 -> 4 PCl5",
+      "s1.reactant_A": "P4",
+      "s1.reactant_B": "Cl2",
+      "s1.moles_B": 3.6
+     },
+     "scenario": "White phosphorus is extracted from calcium phosphate in an electric arc furnace and subsequently chlorinated to phosphorus pentachloride in excess chlorine gas.",
+     "answer": "Cl2"
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:16:16.879299+00:00",
+     "attempt": 1,
+     "stem": "In an electric arc furnace, 0.75 mol of Ca₃(PO₄)₂ is completely reduced in the presence of carbon and silica according to the following reaction:\n2 Ca₃(PO₄)₂ + 10 C + 6 SiO₂ → P₄ + 6 CaSiO₃ + 10 CO\n\nThe isolated P₄ is then transferred to a reaction vessel containing 3.6 mol of Cl₂ to produce phosphorus pentachloride via the reaction:\nP₄ + 10 Cl₂ → 4 PCl₅\n\nGive the formula of the limiting reagent.",
+     "ok": false,
+     "mismatches": [
+      "the reaction (balancing not needed for POAC): the question states '2 Ca₃(PO₄)₂ + 10 C + 6 SiO₂ → P₄ + 6 CaSiO₃ + 10 CO', it must be '2 Ca3(PO4)2 + 10 C + 6 SiO2 -> P4 + 6 CaSiO3 + 10 CO'",
+      "the question does not state species whose amount is asked (should be P4)",
+      "the question does not state element conserved between the two species (should be P)",
+      "the balanced equation: the question states 'P₄ + 10 Cl₂ → 4 PCl₅', it must be 'P4 + 10 Cl2 -> 4 PCl5'"
+     ],
+     "unreadable": false
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:16:47.486909+00:00",
+     "attempt": 2,
+     "stem": "In an industrial process, 0.75 mol of Ca3(PO4)2 is treated with carbon and silica according to the reaction:\n2 Ca3(PO4)2 + 10 C + 6 SiO2 -> P4 + 6 CaSiO3 + 10 CO\n\nAssuming that all the P atoms from the Ca3(PO4)2 are conserved and converted exclusively into P4, the entire yield of P4 is subsequently reacted with 3.6 mol of Cl2 to synthesize phosphorus pentachloride according to the balanced equation:\nP4 + 10 Cl2 -> 4 PCl5\n\nGive the formula of the limiting reagent.",
+     "ok": true,
+     "mismatches": [],
+     "unreadable": false
+    },
+    {
+     "stage": "council",
+     "at": "2026-10-14T09:17:00.078344+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "First, we need to determine the number of moles of P4 produced from the reaction of Ca3(PO4)2 with carbon and silica. The balanced equation for this reaction is: 2 Ca3(PO4)2 + 10 C + 6 SiO2 -> P4 + 6 CaSiO3 + 10 CO. From the equation, 2 moles of Ca3(PO4)2 produce 1 mole of P4. Given that 0.75 mol of Ca3(PO4)2 is used, the number of moles of P4 produced can be calculated as follows: moles of P4 = (0.75 mol Ca3(PO4)2) * (1 mol P4 / 2 mol Ca3(PO4)2) = 0.375 mol P4. Next, we consider the reaction of P4 with Cl2 to synthesize phosphorus pentachloride: P4 + 10 Cl2 -> 4 PCl5. To determine the limiting reagent, we compare the mole ratio of P4 to Cl2 required by the balanced equation with the mole ratio of P4 to Cl2 available. The balanced equation requires 1 mole of P4 for every 10 moles of Cl2. We have 0.375 mol of P4 and 3.6 mol of Cl2. The number of moles of Cl2 required to react with 0.375 mol of P4 can be calculated as follows: moles of Cl2 required = (0.375 mol P4) * (10 mol Cl2 / 1 mol P4) = 3.75 mol Cl2. Since we have 3.6 mol of Cl2, which is less than the 3.75 mol required, Cl2 is the limiting reagent.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: Cl2] [CALC_UNIT: none] [SUBSTANCE: Cl2]",
+       "final_answer": "Cl2",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "Cl2"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "Cl2"
+       ],
+       "substance": [
+        "Cl2"
+       ],
+       "diagnosis": {
+        "answer_equivalent": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "failed_step": null,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly converted 0.75 mol Ca3(PO4)2 to 0.375 mol P4 using the 2:1 stoichiometry. They then compared the Cl2 required (0.375 × 10 = 3.75 mol) with the Cl2 available (3.6 mol) and correctly identified Cl2 as limiting, matching the reference answer by sound reasoning."
+       },
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": "correct",
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "gpt-6-luna"
+     ],
+     "first_solver": "llama-3.3-70b"
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "limiting_reagent_to_moles_molesexcessi",
+     "moles_to_mass_cr2o72n6oxid",
+     "mass_to_density_densitymassv"
+    ],
+    "nodes": [
+     "limiting_reagent",
+     "moles",
+     "mass",
+     "density"
+    ],
+    "chapters": [
+     "Stoichiometry"
+    ],
+    "txs": [
+     14,
+     341,
+     10
+    ],
+    "trap_ids": [
+     "inverted_ratio",
+     "one_to_one",
+     "subtracts_amounts",
+     "uses_dichromate_n_as_2"
+    ],
+    "weight": 1.0,
+    "description": "amount of the excess reagent left (mol) [left = n_excess − n_LR × ν_excess/ν_LR] → mass of ethanol oxidised (g) [eq(Cr2O7²⁻, n = 6) = eq(C2H5OH → CH3COOH, n = 4)] → density (g mL⁻¹) [d = m/V; specific gravity = d/d(water, 4 °C)]"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "inputs",
+     "at": "2026-10-14T09:17:13.602857+00:00",
+     "values": {
+      "s0.n_A": 0.075,
+      "s0.n_B": 0.3,
+      "s0.coef_A": 1,
+      "s0.coef_B": 6,
+      "s2.volume": 2.19
+     },
+     "scenario": "An acidified solution containing excess potassium dichromate is partially reduced by iron(II) sulfate, and the unreacted dichromate is subsequently used to fully oxidise an ethanol sample to acetic acid to determine the density of the pure ethanol sample.",
+     "answer": 0.7877
+    },
+    {
+     "stage": "gate",
+     "at": "2026-10-14T09:17:32.648628+00:00",
+     "attempt": 1,
+     "stem": "A 2.19 mL sample of pure ethanol is completely oxidised to acetic acid using the unreacted potassium dichromate remaining in an acidic reaction mixture. The reaction mixture was initially prepared by mixing 0.075 mol of potassium dichromate with 0.3 mol of iron(II) sulfate in an acidic medium, where 1 mol of potassium dichromate reacts with 6 mol of iron(II) sulfate. Calculate the density of the ethanol sample.\n\n(Given: C = 12, H = 1, O = 16)\n\nGive the answer in g mL⁻¹, to 3 significant figures.",
+     "ok": true,
+     "mismatches": [],
+     "unreadable": false
+    },
+    {
+     "stage": "council",
+     "at": "2026-10-14T09:17:57.467285+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "First, let's write down the reactions involved in the process. The reaction between potassium dichromate and iron(II) sulfate is:\nK2Cr2O7 + 6FeSO4 + 7H2SO4 -> 3Fe2(SO4)3 + Cr2(SO4)3 + 7H2O + K2SO4\nFrom the given information, 0.075 mol of potassium dichromate reacts with 6 * 0.075 = 0.45 mol of iron(II) sulfate. However, we have 0.3 mol of iron(II) sulfate, which is less than 0.45 mol. This means that all the iron(II) sulfate will react, and some potassium dichromate will remain unreacted.\nLet's calculate the amount of potassium dichromate that remains unreacted:\n0.075 mol (initial) - 0.3 mol / 6 = 0.075 - 0.05 = 0.025 mol of potassium dichromate remains unreacted.\nNow, the reaction between ethanol and potassium dichromate is:\nC2H5OH + 3K2Cr2O7 + 8H2SO4 -> 2CH3COOH + 6K2SO4 + 3Cr2(SO4)3 + 7H2O\nFrom the given information, 1 mol of potassium dichromate reacts with 1/3 mol of ethanol (since 3 mol of potassium dichromate react with 1 mol of ethanol in the balanced equation, but we are considering the reaction of 1 mol of potassium dichromate). Therefore, 0.025 mol of potassium dichromate will react with 0.025 / 3 = 0.00833 mol of ethanol.\nWe are given that a 2.19 mL sample of pure ethanol is completely oxidized. Therefore, the mass of ethanol in this sample is equal to the molar mass of ethanol multiplied by the number of moles:\nMolar mass of ethanol (C2H5OH) = 2*12 + 6*1 + 16 = 46 g/mol\nMass of ethanol = 0.00833 mol * 46 g/mol = 0.383 g\nNow, we can calculate the density of ethanol:\nDensity = mass / volume = 0.383 g / 2.19 mL = 0.175 g/mL\n",
+       "objection": null,
+       "answer_line": "[TYPE: density] [CALC_VALUE: 0.175] [CALC_UNIT: g/mL] [SUBSTANCE: C2H5OH]",
+       "final_answer": "0.175 g mL⁻¹",
+       "unit": "",
+       "answer_type": "density",
+       "calc_value": [
+        0.175
+       ],
+       "calc_unit": [
+        "g/mL"
+       ],
+       "target_unit": "g mL⁻¹",
+       "final_value": [
+        0.175
+       ],
+       "substance": [
+        "C2H5OH"
+       ],
+       "diagnosis": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 2,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "Step 1 is correct: 0.025 mol dichromate remains after the iron(II) sulfate reacts. The student then used an unbalanced ethanol oxidation with 3 mol dichromate per mol ethanol, giving 0.00833 mol ethanol. The correct electron balance is 6 e⁻ per dichromate and 4 e⁻ per ethanol, so 0.025 mol dichromate needs 0.0375 mol ethanol, which gives 1.725 g and 0.7877 g mL⁻¹. The student's answer of 0.175 g mL⁻¹ is therefore a genuine chemistry error in the stoichiometry, not an arithmetic slip."
+       },
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": "wrong",
+       "failure_type": "genuine_difficulty",
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Fe(II) consumed dichromate: 0.3/6 = 0.05 mol, so unreacted dichromate = 0.075 − 0.05 = 0.025 mol. Each dichromate accepts 6 e⁻, so electrons available = 0.15 mol. Oxidation CH3CH2OH → CH3COOH is a 4-electron oxidation, so ethanol moles = 0.15/4 = 0.0375 mol. Mass = 0.0375 × 46 = 1.725 g. Density = 1.725/2.19 = 0.7877 ≈ 0.788 g/mL.",
+       "objection": null,
+       "answer_line": "[TYPE: stoichiometry] [CALC_VALUE: 0.788] [CALC_UNIT: g/mL] [SUBSTANCE: C2H5OH]",
+       "final_answer": "0.788 g mL⁻¹",
+       "unit": "",
+       "answer_type": "stoichiometry",
+       "calc_value": [
+        0.788
+       ],
+       "calc_unit": [
+        "g/mL"
+       ],
+       "target_unit": "g mL⁻¹",
+       "final_value": [
+        0.788
+       ],
+       "substance": [
+        "C2H5OH"
+       ],
+       "diagnosis": {
+        "answer_equivalent": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "failed_step": null,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly found 0.025 mol unreacted dichromate, giving 0.15 mol electrons (6 e⁻ per dichromate). They correctly used the 4-electron oxidation of ethanol to acetic acid, giving 0.0375 mol and 1.725 g. Density 1.725/2.19 = 0.7877, which rounds to 0.788 g mL⁻¹ at the requested 3 significant figures, matching the reference."
+       },
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": "correct",
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "gpt-6-luna"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-10-14T09:18:12.058007+00:00",
+     "tests": [
+      {
+       "member": "llama-3.3-70b",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the mass of ethanol oxidised (g). A common mistake there: takes one ethanol per dichromate.",
+       "solved": false,
+       "answer": "0.175 g mL⁻¹",
+       "recheck": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 2,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "Step 1 is correct: 0.025 mol of dichromate is left unreacted. The student then used the ethanol-to-dichromate ratio for oxidation to CO2 (1:3), but the problem specifies oxidation to acetic acid, which is a 4-electron change against dichromate's 6 electrons, giving 0.0375 mol ethanol and a mass of 1.725 g. The student's final density of 0.175 g mL⁻¹ therefore differs from the intended 0.7877 g mL⁻¹."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

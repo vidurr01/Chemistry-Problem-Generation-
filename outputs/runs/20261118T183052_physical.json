@@ -1,0 +1,375 @@
+{
+ "subject": "physical",
+ "saved_at": "20261118T183052",
+ "spend": {
+  "total_cost_usd": 0.0598,
+  "by_role": {
+   "formula_fit": {
+    "calls": 48,
+    "prompt_tokens": 29614,
+    "completion_tokens": 0,
+    "cost": 0.001243788
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 1525,
+    "completion_tokens": 3946,
+    "cost": 0.050402
+   },
+   "design_check": {
+    "calls": 1,
+    "prompt_tokens": 797,
+    "completion_tokens": 0,
+    "cost": 3.3474e-05
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2945,
+    "completion_tokens": 741,
+    "cost": 0.0049875
+   },
+   "level_check": {
+    "calls": 1,
+    "prompt_tokens": 648,
+    "completion_tokens": 0,
+    "cost": 2.7216e-05
+   },
+   "coder": {
+    "calls": 1,
+    "prompt_tokens": 2927,
+    "completion_tokens": 617,
+    "cost": 0.0006743
+   },
+   "coherence_check": {
+    "calls": 1,
+    "prompt_tokens": 643,
+    "completion_tokens": 0,
+    "cost": 2.7006e-05
+   },
+   "council": {
+    "calls": 3,
+    "prompt_tokens": 2457,
+    "completion_tokens": 933,
+    "cost": 0.0024069
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "mass_percent_to_mass_wwxgsolutepe",
+     "mass_to_density_densitymassv",
+     "mass_to_moles_gammolarmass"
+    ],
+    "nodes": [
+     "mass_percent",
+     "mass",
+     "moles",
+     "density"
+    ],
+    "chapters": [
+     "Stoichiometry"
+    ],
+    "txs": [
+     17,
+     2,
+     10
+    ],
+    "trap_ids": [
+     "inverted_ratio",
+     "multiplies_by_molar_mass",
+     "per_100g_solvent"
+    ],
+    "description": "mass of solute (g) [m_solute = (% w/W)/100 × m_solution] | amount (in mol) of the ionic compound (formula units) [n = m / M] | density (g mL⁻¹) [d = m/V; specific gravity = d/d(water, 4 °C)]",
+    "twist": "condition",
+    "drawn_txs": [
+     17,
+     2,
+     10
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-18T18:29:26.122249+00:00",
+     "p": 0.68
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-18T18:30:16.597348+00:00",
+     "try_": 1,
+     "system": "An evacuated rigid flask of known volume containing excess solid magnesium powder (occupying negligible volume). A specific volume of an aqueous sodium bisulfate (NaHSO4) solution is injected into the flask. The reaction Mg(s) + 2 NaHSO4(aq) → MgSO4(aq) + Na2SO4(aq) + H2(g) goes to completion at a constant temperature.",
+     "hidden_link": "The volume of the injected solution serves two roles simultaneously: it determines the mass of the solution (and thus the amount of H2 produced) and it subtracts from the flask's total volume to dictate the available volume for the H2 gas (V_gas = V_flask - V_sol).",
+     "route": "Formula 3: Takes the specific gravity and density of water to find the solution's density, then takes the unknown solution volume to express the mass of the solution. Formula 1: Takes this mass of the solution and the given % w/W to express the mass of the NaHSO4 solute. Formula 2: Takes the mass of NaHSO4 and its molar mass to find the amount in moles. Standard relations: Stoichiometry converts this to moles of H2, and the ideal gas equation (taking the available volume as V_flask - V_sol, along with the given T and P) is equated to this amount to solve algebraically for the solution volume.",
+     "student_must_notice": "That the injected liquid occupies a significant fraction of the rigid flask, meaning the volume available for the generated hydrogen gas is not the flask's empty volume, but rather the flask's volume minus the volume of the injected solution.",
+     "trap": "Assuming the gas occupies the entire volume of the flask. This uncouples the solution volume from the gas space, turning a required algebraic equation into a simple sequential calculation that yields a believable but incorrectly low required volume.",
+     "given": "Total volume of the flask, specific gravity of the NaHSO4 solution, density of water at 4 °C, mass percentage (% w/W) of NaHSO4, target partial pressure of H2, operating temperature, molar mass of NaHSO4, ideal gas constant.",
+     "hidden": "Density of the solution, mass of the solution, mass of the solute, moles of the solute, moles of H2 gas, and the actual available volume occupied by the gas.",
+     "asked": "The volume of the NaHSO4 solution that must be injected, in mL.",
+     "why_hard": "The unknown quantity is embedded on both sides of the final equation—once driving the moles of gas produced, and once restricting the physical space the gas can occupy.",
+     "_reasoning": "**Crafting a JEE Question**\n\nI'm working on a challenging JEE Advanced physical chemistry numerical, meticulously incorporating the specified formulas for solute mass, moles, and molarity. The aim is to construct a complex problem that requires precise application of these concepts.\n\n**Calculating Equilibrium Conditions**\n\nI'm now focusing on integrating the density and specific gravity definitions with the concept of precipitation. My current train of thought is to establish a scenario where adding a $BaCl_2$ solution, whose concentration is derived from its specific gravity and mass percentage, to a solution containing sulfate ions will just initiate precipitation. This sets a concrete equilibrium state to be solved for.\n\n**Generating a Gas Pressure**\n\nI'm reconsidering how to integrate the ideal gas law. My thought is to have a reaction that generates a gas, and the physical condition set by the experimenter is the specific pressure that gas reaches, defining a meaningful state for the system's equilibrium.\n\n**Deriving Temperature from Pressure**\n\nI'm exploring a scenario where I'll use an aqueous ammonium nitrite solution, providing its specific gravity and mass percentage. This solution will decompose in a rigid, evacuated container to generate nitrogen gas and water vapor. My focus is now on setting a specific pressure for either the nitrogen gas or the total pressure, from which I will derive the required temperature.\n\n**Setting a Partial Pressure**\n\nI'm now refining the problem by asking for the volume of an ammonium nitrite solution to add to a fixed container, so that the nitrogen gas partial pressure reaches a specific value upon decomposition. This introduces a connection between solution volume, solution properties, and the resulting gas pressure.\n\n**Connecting Solution and Gas Volumes**\n\nI'm now integrating the volume of the added solution with the flask's volume to define the gas volume. My focus is on establishing that the student must recognize the solution's volume displaces gas within the flask, a critical, unstated connection.\n\n**Calculating Solution Volume**\n\nI'm now working on a crucial linkage: the solution's volume serves a dual purpose. It's essential for determining the mass of the solution and, critically, it reduces the effective volume available for the gas within the flask. This interplay forms a key hidden relationship.\n\n**Refining the Gas Volume**\n\nI'm now explicitly addressing the common pitfall where students assume the gas volume equals the flask volume. My thought is to make it clear that the injected solution's volume directly reduces the available space for the hydrogen gas. This distinction is vital for accurate calculation.\n\n**Adding an Acidic Salt**\n\nI'm now considering the reaction of magnesium with an acidic salt, $NaHSO_4$, to produce hydrogen gas. My focus is on setting a specific injected volume of this solution as the experimental condition, leading to a defined hydrogen partial pressure.\n\n**Solving for Solution Volume**\n\nI'm now calculating the specific volume of the $NaHSO_4$ solution needed. My current thought is to set up an equation where the ideal gas law, accounting for the reduced gas volume due to the injected solution, balances with the stoichiometry of the reaction. This will yield a precise solution volume.\n\n**Incorporating Volume Displacement**\n\nI'm finalizing the problem by ensuring the student accounts for the solution's volume displacing gas within the flask, a crucial but often overlooked detail. This step is key to correctly calculating the available hydrogen gas volume.\n\n",
+     "situation": "An evacuated rigid flask of known volume containing excess solid magnesium powder (occupying negligible volume). A specific volume of an aqueous sodium bisulfate (NaHSO4) solution is injected into the flask. The reaction Mg(s) + 2 NaHSO4(aq) → MgSO4(aq) + Na2SO4(aq) + H2(g) goes to completion at a constant temperature.",
+     "insight": "That the injected liquid occupies a significant fraction of the rigid flask, meaning the volume available for the generated hydrogen gas is not the flask's empty volume, but rather the flask's volume minus the volume of the injected solution.",
+     "links": "Formula 3: Takes the specific gravity and density of water to find the solution's density, then takes the unknown solution volume to express the mass of the solution. Formula 1: Takes this mass of the solution and the given % w/W to express the mass of the NaHSO4 solute. Formula 2: Takes the mass of NaHSO4 and its molar mass to find the amount in moles. Standard relations: Stoichiometry converts this to moles of H2, and the ideal gas equation (taking the available volume as V_flask - V_sol, along with the given T and P) is equated to this amount to solve algebraically for the solution volume."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-18T18:30:24.799117+00:00",
+     "attempt": 1,
+     "twist": "condition",
+     "examples": [
+      "2021P2_Chem_Q17",
+      "2020P2_Chem_Q18"
+     ],
+     "stem": "An evacuated rigid reaction vessel of volume [[V_flask]] L contains an excess of solid magnesium (Mg) powder occupying negligible volume. A volume of an aqueous sodium bisulfate (NaHSO4) solution having a specific gravity of [[spec_grav]] and containing [[w_percent]] % (w/W) NaHSO4 is injected into the vessel. The reaction Mg(s) + 2 NaHSO4(aq) -> MgSO4(aq) + Na2SO4(aq) + H2(g) proceeds to completion. At a constant temperature of [[T]] K, the partial pressure of H2(g) generated inside the vessel reaches [[P_H2]] atm. Calculate the volume of the NaHSO4 solution injected into the vessel, in mL.\n(Given: Density of water at 4 °C = [[rho_water]] g mL^-1; Molar mass of NaHSO4 = [[M_NaHSO4]] g mol^-1; Gas constant R = [[R]] L atm K^-1 mol^-1)",
+     "asks": "the volume of the sodium bisulfate solution injected into the flask",
+     "unit": "mL",
+     "asked": "V_sol",
+     "ranges": {
+      "V_flask": [
+       0.5,
+       2.0,
+       false
+      ],
+      "P_H2": [
+       1.0,
+       3.0,
+       false
+      ],
+      "T": [
+       290.0,
+       320.0,
+       false
+      ],
+      "spec_grav": [
+       1.1,
+       1.3,
+       false
+      ],
+      "w_percent": [
+       15.0,
+       30.0,
+       false
+      ]
+     },
+     "fixed": {
+      "rho_water": 1.0,
+      "M_NaHSO4": 120.06,
+      "R": 0.08206
+     },
+     "answer_range": [
+      10.0,
+      250.0
+     ],
+     "free": {
+      "rho_water": 1.0,
+      "M_NaHSO4": 120.06,
+      "R": 0.08206
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-18T18:30:36.118319+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n_H2 = P_H2 * V_flask / (R * T)\n    n_NaHSO4 = 2 * n_H2\n    solute_mass = find(step_2, \"mass\", result=n_NaHSO4, molar_mass=M_NaHSO4)\n    solution_mass = find(step_17, \"solution_mass\", result=solute_mass, mass_percent=w_percent)\n    solution_density = spec_grav * rho_water\n    return find(step_10, \"volume\", result=solution_density, mass=solution_mass)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "rho_water": 1.0,
+      "M_NaHSO4": 120.06,
+      "R": 0.08206,
+      "V_flask": 0.644,
+      "P_H2": 1.9,
+      "T": 294.0,
+      "spec_grav": 1.29,
+      "w_percent": 17.3
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-18T18:30:37.729240+00:00",
+     "ok": true,
+     "values": {
+      "rho_water": 1.0,
+      "M_NaHSO4": 120.06,
+      "R": 0.08206,
+      "V_flask": 0.644,
+      "P_H2": 1.9,
+      "T": 294.0,
+      "spec_grav": 1.29,
+      "w_percent": 17.3
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-18T18:30:38.840527+00:00",
+     "stem": "An evacuated rigid reaction vessel of volume 0.644 L contains an excess of solid magnesium (Mg) powder occupying negligible volume. A volume of an aqueous sodium bisulfate (NaHSO4) solution having a specific gravity of 1.29 and containing 17.3 % (w/W) NaHSO4 is injected into the vessel. The reaction Mg(s) + 2 NaHSO4(aq) -> MgSO4(aq) + Na2SO4(aq) + H2(g) proceeds to completion. At a constant temperature of 294 K, the partial pressure of H2(g) generated inside the vessel reaches 1.90 atm. Calculate the volume of the NaHSO4 solution injected into the vessel, in mL.\n(Given: Density of water at 4 °C = 1.00 g mL^-1; Molar mass of NaHSO4 = 120.06 g mol^-1; Gas constant R = 0.08206 L atm K^-1 mol^-1) Give the answer in mL, to 3 significant figures.",
+     "code": "def solve():\n    n_H2 = P_H2 * V_flask / (R * T)\n    n_NaHSO4 = 2 * n_H2\n    solute_mass = find(step_2, \"mass\", result=n_NaHSO4, molar_mass=M_NaHSO4)\n    solution_mass = find(step_17, \"solution_mass\", result=solute_mass, mass_percent=w_percent)\n    solution_density = spec_grav * rho_water\n    return find(step_10, \"volume\", result=solution_density, mass=solution_mass)",
+     "asks": "the volume of the sodium bisulfate solution injected into the flask",
+     "unit": "mL",
+     "twist": "condition",
+     "givens": [
+      {
+       "value": 0.644,
+       "quote": "V_flask"
+      },
+      {
+       "value": 1.29,
+       "quote": "spec_grav"
+      },
+      {
+       "value": 17.3,
+       "quote": "w_percent"
+      },
+      {
+       "value": 294.0,
+       "quote": "T"
+      },
+      {
+       "value": 1.9,
+       "quote": "P_H2"
+      },
+      {
+       "value": 1.0,
+       "quote": "rho_water"
+      },
+      {
+       "value": 120.06,
+       "quote": "M_NaHSO4"
+      },
+      {
+       "value": 0.08206,
+       "quote": "R"
+      }
+     ],
+     "answer": 54.57,
+     "trace": [
+      {
+       "tx": 2,
+       "src": "mass",
+       "dst": "moles",
+       "formula": "n = m / M",
+       "inputs": {
+        "molar_mass": 120.06,
+        "mass": 12.1783642631
+       },
+       "outputs": {
+        "moles": 0.10144
+       }
+      },
+      {
+       "tx": 17,
+       "src": "mass_percent",
+       "dst": "mass",
+       "formula": "m_solute = (% w/W)/100 × m_solution",
+       "inputs": {
+        "mass_percent": 17.3,
+        "solution_mass": 70.3951691508
+       },
+       "outputs": {
+        "mass": 12.178
+       }
+      },
+      {
+       "tx": 10,
+       "src": "mass",
+       "dst": "density",
+       "formula": "d = m/V; specific gravity = d/d(water, 4 °C)",
+       "inputs": {
+        "mass": 70.3951691508,
+        "volume": 54.5698985665
+       },
+       "outputs": {
+        "density": 1.29
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "inverted_ratio",
+       "desc": "divides molar mass by mass",
+       "tx": 2,
+       "step": 0,
+       "wrong_answer": 5304
+      },
+      {
+       "id": "multiplies_by_molar_mass",
+       "desc": "multiplies mass by molar mass",
+       "tx": 2,
+       "step": 0,
+       "wrong_answer": 0.003786
+      },
+      {
+       "id": "per_100g_solvent",
+       "desc": "reads X% as X g per 100 g of solvent",
+       "tx": 17,
+       "step": 1,
+       "wrong_answer": 64.01
+      },
+      {
+       "id": "inverted_ratio",
+       "desc": "divides volume by mass",
+       "tx": 10,
+       "step": 2,
+       "wrong_answer": 90.81
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [],
+     "depth": 1,
+     "extra_txs": [],
+     "preset": {
+      "V_flask": 0.644,
+      "spec_grav": 1.29,
+      "w_percent": 17.3,
+      "T": 294.0,
+      "P_H2": 1.9,
+      "rho_water": 1.0,
+      "M_NaHSO4": 120.06,
+      "R": 0.08206
+     },
+     "template": "An evacuated rigid reaction vessel of volume [[V_flask]] L contains an excess of solid magnesium (Mg) powder occupying negligible volume. A volume of an aqueous sodium bisulfate (NaHSO4) solution having a specific gravity of [[spec_grav]] and containing [[w_percent]] % (w/W) NaHSO4 is injected into the vessel. The reaction Mg(s) + 2 NaHSO4(aq) -> MgSO4(aq) + Na2SO4(aq) + H2(g) proceeds to completion. At a constant temperature of [[T]] K, the partial pressure of H2(g) generated inside the vessel reaches [[P_H2]] atm. Calculate the volume of the NaHSO4 solution injected into the vessel, in mL.\n(Given: Density of water at 4 °C = [[rho_water]] g mL^-1; Molar mass of NaHSO4 = [[M_NaHSO4]] g mol^-1; Gas constant R = [[R]] L atm K^-1 mol^-1)",
+     "ranges": {
+      "V_flask": [
+       0.5,
+       2.0,
+       false
+      ],
+      "P_H2": [
+       1.0,
+       3.0,
+       false
+      ],
+      "T": [
+       290.0,
+       320.0,
+       false
+      ],
+      "spec_grav": [
+       1.1,
+       1.3,
+       false
+      ],
+      "w_percent": [
+       15.0,
+       30.0,
+       false
+      ]
+     },
+     "answer_range": [
+      10.0,
+      250.0
+     ]
+    }
+   ]
+  }
+ ]
+}

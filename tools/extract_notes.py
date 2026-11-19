@@ -2,8 +2,10 @@
 extract_notes.py — turn a chapter's notes (OCR text) into concept-book entries and
 merge them into knowledge/concept_book.json (organic).
 
-    python tools/extract_notes.py --notes data/notes/amines_lec1.txt --topic Amines --dry-run
-    python tools/extract_notes.py --notes data/notes/amines_lec1.txt --topic Amines
+    python tools/extract_notes.py --notes path/to/amines_notes.txt --topic Amines --dry-run
+    python tools/extract_notes.py --notes path/to/amines_notes.txt --topic Amines
+
+(The Amines OCR text that used to sit in data/notes/amines_lec1.txt is in git history.)
 
 HOW IT WORKS:
 1. Read the notes text from --notes (plain text, e.g. OCR of handwritten notes)
@@ -150,7 +152,7 @@ def merge_into_concept_book(extracted: dict, concept_book_path: str = _CB_PATH, 
 
 def main():
     ap = argparse.ArgumentParser(description="Extract concept-book entries from chapter notes.")
-    ap.add_argument("--notes", required=True, help="text file with the notes, e.g. data/notes/amines_lec1.txt")
+    ap.add_argument("--notes", required=True, help="text file with the notes (plain text, e.g. OCR of a lecture)")
     ap.add_argument("--topic", required=True, help="chapter/topic name used in the prompt, e.g. Amines")
     ap.add_argument("--concept-book", default=_CB_PATH, help="concept book to merge into (organic)")
     ap.add_argument("--dry-run", action="store_true", help="show what would be added; write nothing")

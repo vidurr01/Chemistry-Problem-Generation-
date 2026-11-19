@@ -1,0 +1,841 @@
+{
+ "subject": "physical",
+ "saved_at": "20261119T104015",
+ "spend": {
+  "total_cost_usd": 0.13645,
+  "by_role": {
+   "formula_fit": {
+    "calls": 24,
+    "prompt_tokens": 14666,
+    "completion_tokens": 0,
+    "cost": 0.0006159720000000001
+   },
+   "designer": {
+    "calls": 3,
+    "prompt_tokens": 5882,
+    "completion_tokens": 7092,
+    "cost": 0.096868
+   },
+   "design_check": {
+    "calls": 3,
+    "prompt_tokens": 2000,
+    "completion_tokens": 0,
+    "cost": 8.400000000000001e-05
+   },
+   "generator": {
+    "calls": 6,
+    "prompt_tokens": 17545,
+    "completion_tokens": 3334,
+    "cost": 0.02566125
+   },
+   "level_check": {
+    "calls": 6,
+    "prompt_tokens": 3721,
+    "completion_tokens": 0,
+    "cost": 0.000156282
+   },
+   "coder": {
+    "calls": 9,
+    "prompt_tokens": 33359,
+    "completion_tokens": 13833,
+    "cost": 0.0110857
+   },
+   "coherence_check": {
+    "calls": 1,
+    "prompt_tokens": 598,
+    "completion_tokens": 0,
+    "cost": 2.5116e-05
+   },
+   "council": {
+    "calls": 12,
+    "prompt_tokens": 11247,
+    "completion_tokens": 5547,
+    "cost": 0.0019562
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "bohr_orbit_to_orbit_radius_rn0529n2zang",
+     "orbit_radius_to_electron_kinetic_energy_mvrnh2kemvnh",
+     "orbit_radius_to_potential_energy_pekzerperato"
+    ],
+    "nodes": [
+     "orbit_radius",
+     "electron_kinetic_energy",
+     "potential_energy",
+     "bohr_orbit"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     350,
+     376,
+     61
+    ],
+    "trap_ids": [
+     "forgets_n",
+     "linear_in_n",
+     "multiplies_by_Z",
+     "one_atom"
+    ],
+    "description": "kinetic energy of the electron (eV) [mvr = nh/2π → KE = ½mv² = n²h²/(8π²mr²)] | potential energy (kJ mol⁻¹) [PE = −k Ze²/r per atom; × atoms × N_A] | radius of the orbit (Å) [r_n = 0.529 n²/Z Å]",
+    "twist": "inverse"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T10:32:38.998222+00:00",
+     "p": 0.51
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T10:33:12.541810+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "A pure sample of an unknown one-electron species (hydrogen-like ion) in a specific, unknown stationary state.",
+     "hidden_link": "The principal quantum number n and atomic number Z. The question gives mechanical/geometric data (KE and r) to ask for an electrostatic quantity (PE). The student must realise that KE and r together fix n (the quantization of angular momentum), which then fixes Z, bridging the formulas.",
+     "route": "Formula 1: takes the given kinetic energy (eV) and radius (Å) to find the principal quantum number n. Formula 3: takes the found n and the given radius to find the atomic number Z. Formula 2: takes the found Z, the given radius, and Avogadro's number to calculate the potential energy of one mole of the species in kJ mol⁻¹.",
+     "student_must_notice": "That Formula 1 depends only on the orbit's radius and quantum number, not on the nuclear charge, allowing n to be determined purely from the electron's kinetic energy and distance without knowing what element it is.",
+     "trap": "Assuming the species is hydrogen (Z=1) because no element is named, and plugging the given radius directly into Formula 3 to find a (non-integer) n, leading to a completely incorrect potential energy.",
+     "given": "The kinetic energy of the electron in the orbit (in eV) and the radius of the orbit (in Å).",
+     "hidden": "The identity of the element (atomic number Z) and the principal quantum number of the state (n).",
+     "asked": "The potential energy of one mole of this one-electron species in this state, in kJ mol⁻¹.",
+     "why_hard": "It forces the student to decouple the mechanical quantization of the orbit from the electrostatic attraction of the nucleus, working backwards through n and Z to find the potential energy.",
+     "_reasoning": "**Revising Energy Formulas**\n\nI'm currently refining the kinetic and potential energy calculations. I'm integrating the Bohr model's orbital radius into these formulas to establish a cohesive framework for analyzing electron behavior.\n\n**Investigating Energy Relationships**\n\nI'm exploring an \"inverse\" problem formulation. The aim is for a student to determine $n$ or $Z$ given a ratio involving potential energy (in kJ/mol) and kinetic energy (in eV) for a hydrogen-like species. This requires careful consideration of unit conversions and the inherent relationship between PE and KE.\n\n**Solving for Atomic Properties**\n\nI'm focusing on a problem where students must deduce $Z$ from given kinetic energy and atomic radius. This involves simultaneously solving equations derived from the Bohr model's relationships between energy, radius, $n$, and $Z$, moving beyond simple unit conversions.\n\n**Deriving Atomic Number**\n\nI'm focusing on deriving $Z$ from given kinetic energy and atomic radius. This involves solving equations from the Bohr model, specifically addressing how kinetic energy relates to orbital radius and the principal quantum number. My current focus is on how to isolate $Z$ when both kinetic energy and radius are provided.\n\n**Calculating Potential Energy**\n\nI'm now tackling problems where students must determine potential energy given kinetic energy and atomic radius. This requires an iterative process: using KE and radius to find $n$, then using $n$, radius, and $Z$ to find PE. I am exploring how to present this clearly.\n\n**Extracting Atomic Data**\n\nI'm exploring how to derive the potential energy. This involves using the given kinetic energy and radius to first determine the principal quantum number, $n$. Subsequently, I'll use $n$ and the radius to find the atomic number, $Z$, and then calculate the potential energy.\n\n",
+     "situation": "A pure sample of an unknown one-electron species (hydrogen-like ion) in a specific, unknown stationary state.",
+     "insight": "That Formula 1 depends only on the orbit's radius and quantum number, not on the nuclear charge, allowing n to be determined purely from the electron's kinetic energy and distance without knowing what element it is.",
+     "links": "Formula 1: takes the given kinetic energy (eV) and radius (Å) to find the principal quantum number n. Formula 3: takes the found n and the given radius to find the atomic number Z. Formula 2: takes the found Z, the given radius, and Avogadro's number to calculate the potential energy of one mole of the species in kJ mol⁻¹.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T10:33:13.563075+00:00",
+     "twist": "inverse",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T10:33:20.855959+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2019P1_Chem_Q16",
+      "2016P2_Chem_Q21"
+     ],
+     "stem": "An electron in a specific stationary orbit of an unknown hydrogen-like species possesses a kinetic energy of [[KE]] eV, and the radius of this stationary orbit is measured to be [[orbit_radius]] Å. Calculate the electrostatic potential energy of [[N_A]] such independent one-electron ions in this exact state, expressed in kJ mol^-1.\n(Given: Planck's constant h = [[h]] J s, mass of electron = [[m_e]] kg, elementary charge e = [[e_charge]] C, 1/(4πε₀) = [[k_e]] N m^2 C^-2, Avogadro's constant N_A = [[N_A]] mol^-1, radius of the first Bohr orbit of hydrogen a₀ = [[a_0]] Å, 1 eV = 1.602 × 10^-19 J, and π = 3.1416)",
+     "asks": "the potential energy of one mole of this one-electron species in this stationary state",
+     "unit": "kJ mol^-1",
+     "asked": "potential_energy",
+     "ranges": {
+      "KE": [
+       3.4,
+       30.6,
+       false
+      ],
+      "orbit_radius": [
+       0.35,
+       4.23,
+       false
+      ]
+     },
+     "fixed": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "k_e": 9000000000.0,
+      "N_A": 6.022e+23,
+      "a_0": 0.529
+     },
+     "answer_range": [
+      -10000.0,
+      -1000.0
+     ],
+     "free": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "k_e": 9000000000.0,
+      "N_A": 6.022e+23,
+      "a_0": 0.529
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:33:33.104014+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n = find(step_350, \"n\", result=KE, orbit_radius=orbit_radius)\n    Z = find(step_61, \"Z\", result=orbit_radius, n=n)\n    return step_376(orbit_radius=orbit_radius, Z=Z, atoms=1)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_350, 'n'): no whole number n from 1 to 7 gives orbit_kinetic_energy = 18.7 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:33:58.256516+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    ke_at_n1 = step_350(orbit_radius=orbit_radius, n=1)[\"orbit_kinetic_energy\"]\n    n = round(math.sqrt(KE / ke_at_n1))\n    Z = find(step_61, \"Z\", result=orbit_radius, n=n)\n    return step_376(orbit_radius=orbit_radius, Z=Z, atoms=1)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_61, 'Z'): no whole number Z from 1 to 4 gives orbit_radius = 2.04 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T10:33:58.256607+00:00",
+     "attempt": 1,
+     "problems": [
+      "with values in your ranges the situation is physically impossible (find(step_61, 'Z'): no whole number Z from 1 to 4 gives orbit_radius = 2.04 with the other inputs); choose ranges (and values) in which every step of the situation is possible"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T10:34:04.570315+00:00",
+     "attempt": 2,
+     "twist": "inverse",
+     "examples": [
+      "2020P1_Chem_Q15",
+      "2012P2_Chem_Q28"
+     ],
+     "stem": "An electron in a stationary orbit of an unknown one-electron species has a kinetic energy of [[KE]] eV, and the radius of this orbit is [[orbit_radius]] Å. Determine the electrostatic potential energy of one mole of this gaseous species in the same stationary state, in kJ mol^-1.\n(Given: Planck's constant h = [[h]] J s, mass of electron = [[m_e]] kg, elementary charge e = [[e_charge]] C, 1/(4πε₀) = [[k_e]] N m^2 C^-2, Avogadro's constant N_A = [[N_A]] mol^-1, radius of the first Bohr orbit of hydrogen a₀ = [[a_0]] Å, and 1 eV = 1.6 × 10^-19 J)",
+     "asks": "the potential energy of one mole of the one-electron species in the given stationary state, in kJ mol^-1",
+     "unit": "kJ mol^-1",
+     "asked": "potential_energy",
+     "ranges": {},
+     "fixed": {
+      "KE": 13.6,
+      "orbit_radius": 1.058,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "k_e": 9000000000.0,
+      "N_A": 6.022e+23,
+      "a_0": 0.529
+     },
+     "answer_range": [
+      -5500.0,
+      -5000.0
+     ],
+     "free": {
+      "KE": 13.6,
+      "orbit_radius": 1.058,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "k_e": 9000000000.0,
+      "N_A": 6.022e+23,
+      "a_0": 0.529
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:34:14.156184+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n = find(step_350, \"n\", result=KE, orbit_radius=orbit_radius)\n    Z = find(step_61, \"Z\", result=orbit_radius, n=n)\n    return step_376(orbit_radius=orbit_radius, Z=Z, atoms=1)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_350, 'n'): no whole number n from 1 to 7 gives orbit_kinetic_energy = 13.6 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:35:00.066240+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    target_PE = -2 * KE * 1.6e-19 * N_A / 1000\n    initial_Z = find(step_376, \"Z\", result=target_PE, orbit_radius=orbit_radius, atoms=1)\n    n = find(step_61, \"n\", result=orbit_radius, Z=initial_Z)\n    r = step_61(n=n, Z=initial_Z)[\"orbit_radius\"]\n    calculated_KE = step_350(orbit_radius=r, n=n)[\"orbit_kinetic_energy\"]\n    calculated_PE = -2 * calculated_KE * 1.6e-19 * N_A / 1000\n    Z = find(step_376, \"Z\", result=calculated_PE, orbit_radius=r, atoms=1)\n    return step_376(orbit_radius=r, Z=Z, atoms=1)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_376, 'Z'): no whole number Z from 1 to 4 gives potential_energy = -2629.85 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T10:35:00.066342+00:00",
+     "attempt": 2,
+     "problems": [
+      "with values in your ranges the situation is physically impossible (find(step_376, 'Z'): no whole number Z from 1 to 4 gives potential_energy = -2629.85 with the other inputs); choose ranges (and values) in which every step of the situation is possible"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T10:35:18.708790+00:00",
+     "attempt": 3,
+     "twist": "inverse",
+     "examples": [
+      "2019P1_Chem_Q16",
+      "2016P2_Chem_Q21"
+     ],
+     "stem": "An electron in a stationary orbit of an unknown one-electron species has a kinetic energy of [[KE]] eV, and the radius of this orbit is [[orbit_radius]] Å. Determine the electrostatic potential energy of [[atoms]] mole of this gaseous species in the same stationary state, in kJ mol^-1.\n(Given: Planck's constant h = [[h]] J s, mass of electron = [[m_e]] kg, elementary charge e = [[e_charge]] C, 1/(4πε₀) = [[k_e]] N m^2 C^-2, Avogadro's constant N_A = [[N_A]] mol^-1, radius of the first Bohr orbit of hydrogen a₀ = [[a_0]] Å, and 1 eV = 1.6 × 10^-19 J)",
+     "asks": "the potential energy of one mole of the one-electron species in the given stationary state",
+     "unit": "kJ mol^-1",
+     "asked": "potential_energy",
+     "ranges": {},
+     "fixed": {
+      "KE": 13.6,
+      "orbit_radius": 0.529,
+      "atoms": 1,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "k_e": 9000000000.0,
+      "N_A": 6.022e+23,
+      "a_0": 0.529
+     },
+     "answer_range": [
+      -2700.0,
+      -2550.0
+     ],
+     "free": {
+      "KE": 13.6,
+      "orbit_radius": 0.529,
+      "atoms": 1,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "k_e": 9000000000.0,
+      "N_A": 6.022e+23,
+      "a_0": 0.529
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:35:27.407189+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n = find(step_350, \"n\", result=KE, orbit_radius=orbit_radius)\n    Z = find(step_61, \"Z\", result=orbit_radius, n=n)\n    return step_376(orbit_radius=orbit_radius, Z=Z, atoms=atoms)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_350, 'n'): no whole number n from 1 to 7 gives orbit_kinetic_energy = 13.6 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:37:08.227718+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    best_n = 1\n    best_error = abs(step_350(orbit_radius=orbit_radius, n=best_n)[\"orbit_kinetic_energy\"] - KE)\n    for candidate_n in range(2, 10001):\n        candidate_error = abs(step_350(orbit_radius=orbit_radius, n=candidate_n)[\"orbit_kinetic_energy\"] - KE)\n        if candidate_error < best_error:\n            best_n = candidate_n\n            best_error = candidate_error\n\n    best_Z = 1\n    best_radius_error = abs(step_61(n=best_n, Z=best_Z)[\"orbit_radius\"] - orbit_radius)\n    for candidate_Z in range(2, 10001):\n        candidate_radius_error = abs(step_61(n=best_n, Z=candidate_Z)[\"orbit_radius\"] - orbit_radius)\n        if candidate_radius_error < best_radius_error:\n            best_Z = candidate_Z\n            best_radius_error = candidate_radius_error\n\n    return step_376(orbit_radius=orbit_radius, Z=best_Z, atoms=atoms)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "the program did not finish within 60 s (or its process stopped): make every solve_for bracket sensible for the question's values and do not loop; the program must finish in well under a second"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:37:14.902023+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    n = find(step_350, \"n\", result=KE, orbit_radius=orbit_radius)\n    Z = find(step_61, \"Z\", result=orbit_radius, n=n)\n    return step_376(orbit_radius=orbit_radius, Z=Z, atoms=atoms)[\"potential_energy\"]",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_350, 'n'): no whole number n from 1 to 7 gives orbit_kinetic_energy = 13.6 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T10:37:14.902121+00:00",
+     "attempt": 3,
+     "problems": [
+      "the question could not be solved reliably with the formulas: on values from the question's ranges every run fails inside a formula (find(step_350, 'n'): no whole number n from 1 to 7 gives orbit_kinetic_energy = 13.6 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "unit_cell_type_to_atoms_per_cell_corner18face",
+     "unit_cell_type_to_edge_length_scra2",
+     "unit_cell_type_to_packing_fraction_pfzvatomvcel"
+    ],
+    "nodes": [
+     "unit_cell_type",
+     "atoms_per_cell",
+     "packing_fraction",
+     "edge_length"
+    ],
+    "chapters": [
+     "Solid State"
+    ],
+    "txs": [
+     272,
+     275,
+     274
+    ],
+    "trap_ids": [
+     "whole_counts",
+     "wrong_contact",
+     "wrong_z"
+    ],
+    "description": "effective number of atoms per unit cell [corner ⅛, face ½, edge ¼, body 1] | packing fraction [PF = Z(4/3)πr³/a³] | edge length (pm) [SC a = 2r; BCC a = 4r/√3; FCC a = 2√2 r]",
+    "twist": "two_state_ratio"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T10:37:16.965754+00:00",
+     "p": 0.63
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T10:37:43.862669+00:00",
+     "try_": 1,
+     "twist": "two_state_ratio",
+     "system": "Strontium metal undergoing a phase transition from a face-centred cubic (FCC) lattice at room temperature to a body-centred cubic (BCC) lattice at high temperature.",
+     "hidden_link": "The atomic radius (r) is the invariant quantity between the two phases, dictating the change in edge length (a) and allowing the density ratio to be calculated without knowing the actual dimensions or molar mass.",
+     "route": "Formula 1: Calculate the effective number of atoms (Z) from the described lattice positions (corners and face centres for FCC, corners and body centre for BCC). Formula 3: Express the unit cell edge length (a) for both phases strictly in terms of the shared atomic radius (r). Formula 2: Use the packing fraction structure to relate the total volume of atoms to the unit cell volume, ultimately yielding the ratio of the densities.",
+     "student_must_notice": "The unit cell volume (a³) changes drastically between the two phases, but the atomic radius (r) and molar mass (M) remain constant and completely cancel out in the final ratio.",
+     "trap": "Assuming the unit cell edge length 'a' or the unit cell volume remains constant during the solid-state phase transition, which leads to a simple but entirely incorrect ratio of just their Z values.",
+     "given": "The exact atomic positions for both the low-temperature and high-temperature cubic unit cells (in words).",
+     "hidden": "The atomic radius (r), the edge lengths (a), and the molar mass of Strontium.",
+     "asked": "The ratio of the macroscopic density of the low-temperature phase to the high-temperature phase.",
+     "why_hard": "The student must algebraically interlock three geometric formulas across two separate states to realize that all dimensional and mass variables cancel, avoiding the highly intuitive but false assumption of constant unit cell volume.",
+     "_reasoning": "**Designing Unique Questions**\n\nI'm currently focused on constructing a single, complex numerical question for JEE Advanced Physical Chemistry. My aim is to integrate all the provided formulas seamlessly, ensuring no extraneous chemistry concepts are needed beyond fundamental relationships. This challenge requires careful balancing of variables to create a solvable yet rigorous problem.\n\n**Formulating Unit Cell Problems**\n\nI'm exploring ways to integrate unit cell concepts, specifically Z, packing fraction, and edge length relationships, into a single problem. My focus is on creating a solvable numerical question, potentially using an alkali metal's phase transition, while adhering to strict constraints for conciseness and avoiding excluded scenarios.\n\n**Synthesizing Lattice Structure**\n\nI'm refining the approach to generate a problem that inherently utilizes Z, the relationship between edge length and atomic radius, and packing fraction. My current direction is exploring the ratio of densities between two allotropes of a metal, where the atomic radius remains constant across both crystalline forms.\n\n**Calculating Volume Differences**\n\nI'm now focusing on a problem involving the difference in void volumes between FCC and BCC phases of a metal, assuming constant atomic radius. This approach allows me to incorporate Z, packing fraction, and the relationship between edge length and atomic radius as intended.\n\n**Solving for Radius**\n\nI'm working on a problem where I need to calculate the atomic radius by utilizing the void volume within a unit cell. This approach ensures the integration of Z, packing fraction, and the edge length-to-radius relationship, all while maintaining a focus on a single, calculable output.\n\n**Calculating Radius Ratios**\n\nI'm now focused on a problem where I determine the atomic radius by analyzing the void volume within a unit cell. This necessitates integrating Z, packing fraction, and the edge length-to-radius relationship, all leading to a single, calculable atomic radius.\n\n**Evaluating System Parameters**\n\nI'm now consolidating the parameters for a phase transition problem, specifically Strontium moving from FCC to BCC. The key is recognizing the constant atomic radius as the invariant linking their edge lengths and packing fractions, essential for calculating density ratios.\n\n",
+     "situation": "Strontium metal undergoing a phase transition from a face-centred cubic (FCC) lattice at room temperature to a body-centred cubic (BCC) lattice at high temperature.",
+     "insight": "The unit cell volume (a³) changes drastically between the two phases, but the atomic radius (r) and molar mass (M) remain constant and completely cancel out in the final ratio.",
+     "links": "Formula 1: Calculate the effective number of atoms (Z) from the described lattice positions (corners and face centres for FCC, corners and body centre for BCC). Formula 3: Express the unit cell edge length (a) for both phases strictly in terms of the shared atomic radius (r). Formula 2: Use the packing fraction structure to relate the total volume of atoms to the unit cell volume, ultimately yielding the ratio of the densities.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T10:37:44.865534+00:00",
+     "twist": "two_state_ratio",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T10:37:51.635817+00:00",
+     "attempt": 1,
+     "twist": "two_state_ratio",
+     "examples": [
+      "2015P2_Chem_Q28",
+      "2015P2_Chem_Q27"
+     ],
+     "stem": "Strontium metal undergoes a reversible solid-state phase transition from a low-temperature crystalline modification to a high-temperature crystalline modification. In the low-temperature unit cell, strontium atoms occupy all [[corners_fcc]] corners and all [[faces_fcc]] face centres of a cube. In the high-temperature unit cell, strontium atoms occupy all [[corners_bcc]] corners and the [[body_bcc]] body centre of a cube. Assuming that strontium atoms behave as hard spheres with an identical atomic radius in both phases, the ratio of the macroscopic density of the low-temperature phase to that of the high-temperature phase is",
+     "asks": "the ratio of the density of the low-temperature phase of strontium to that of its high-temperature phase",
+     "unit": "",
+     "asked": "density_ratio",
+     "ranges": {},
+     "fixed": {
+      "corners_fcc": 8,
+      "faces_fcc": 6,
+      "corners_bcc": 8,
+      "body_bcc": 1
+     },
+     "answer_range": [
+      1.08,
+      1.1
+     ],
+     "free": {
+      "corners_fcc": 8,
+      "faces_fcc": 6,
+      "corners_bcc": 8,
+      "body_bcc": 1
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:38:15.996183+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    atoms_fcc = step_272(corner_atoms=corners_fcc, face_atoms=faces_fcc, edge_atoms=0, body_atoms=0)['atoms_per_cell']\n    atoms_bcc = step_272(corner_atoms=corners_bcc, face_atoms=0, edge_atoms=0, body_atoms=body_bcc)['atoms_per_cell']\n\n    # Use a normalized common radius; the density ratio is independent of its scale.\n    edge_fcc = step_274(lattice='face-centred cubic', atomic_radius=1.0)['edge_length']\n    edge_bcc = step_274(lattice='body-centred cubic', atomic_radius=1.0)['edge_length']\n    packing_fcc = step_275(lattice='face-centred cubic')['packing_fraction']\n    packing_bcc = step_275(lattice='body-centred cubic')['packing_fraction']\n\n    atom_volume_fcc = packing_fcc * edge_fcc ** 3 / atoms_fcc\n    atom_volume_bcc = packing_bcc * edge_bcc ** 3 / atoms_bcc\n    density_fcc = packing_fcc / atom_volume_fcc\n    density_bcc = packing_bcc / atom_volume_bcc\n    return density_fcc / density_bcc",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "corners_fcc": 8,
+      "faces_fcc": 6,
+      "corners_bcc": 8,
+      "body_bcc": 1
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T10:38:18.276428+00:00",
+     "ok": true,
+     "values": {
+      "corners_fcc": 8,
+      "faces_fcc": 6,
+      "corners_bcc": 8,
+      "body_bcc": 1
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T10:38:18.281091+00:00",
+     "attempt": 1,
+     "problems": [
+      "the result of 'packing fraction' does not change the answer; every formula must matter"
+     ]
+    },
+    {
+     "stage": "impossible",
+     "at": "2026-11-19T10:38:25.503374+00:00",
+     "attempt": 2,
+     "reason": "Calculating the ratio of macroscopic densities of two phases with an invariant atomic radius either directly uses the ratio of their packing fractions (bypassing the explicit calculation of unit cell edge lengths via Formula 3) or uses the ratio of Z/a³ (bypassing the packing fraction formula, Formula 2). It is physically impossible to construct a non-redundant solution path where the result of all three required formulas (Z calculation, edge length calculation, and packing fraction calculation) must genuinely feed into one another without skipping at least one formula."
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "cell_emf_to_delta_g_gnfecell",
+     "cell_emf_to_solubility_product_buildcellwho",
+     "delta_g_to_work_dgtpwnonpvma"
+    ],
+    "nodes": [
+     "cell_emf",
+     "delta_g",
+     "work",
+     "solubility_product"
+    ],
+    "chapters": [
+     "Thermodynamics",
+     "Electrochemistry"
+    ],
+    "txs": [
+     138,
+     137,
+     243
+    ],
+    "trap_ids": [
+     "forgets_n",
+     "per_mole_only"
+    ],
+    "description": "Gibbs energy change (kJ mol⁻¹) [ΔG = −nFE] | maximum useful (non-PV) work obtainable (kJ) [w_non-PV,max = −ΔG] | solubility product [log K_sp = nE°/0.0591]",
+    "twist": "inverse",
+    "drawn_txs": [
+     138,
+     137,
+     243
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T10:38:29.620296+00:00",
+     "p": 0.51
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T10:39:01.746514+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "A galvanic cell operating under standard conditions whose net reaction is the precipitation of a sparingly soluble metal hydroxide, M(OH)₂ (s), from its constituent aqueous ions.",
+     "hidden_link": "The standard EMF of the precipitation cell is the exact negative of the standard EMF of the dissolution cell used in the K_sp formula, and the number of electrons transferred (n=2) must be deduced from the stoichiometry of the half-reactions that sum to this net precipitation.",
+     "route": "1. Use Formula 2 inversely: calculate the standard Gibbs energy change of precipitation (ΔG_precip) from the given maximum non-PV work and the amount of M(OH)₂ formed (mass divided by molar mass). 2. Use Formula 1 inversely: calculate the standard cell EMF of the precipitation cell (E°_precip) using ΔG_precip and n=2. 3. Recognize E°_dissolution = -E°_precip, and use Formula 3 to calculate the solubility product (log K_sp) of M(OH)₂.",
+     "student_must_notice": "The work given is for the spontaneous precipitation reaction, meaning ΔG_precip is negative and E°_precip is positive, but the K_sp formula requires the standard EMF of the dissolution reaction, which is the reverse process and thus has a negative E°.",
+     "trap": "The student might directly plug the positive E° calculated from the work into the K_sp formula, resulting in a K_sp > 1, or assume n=1 because the net precipitation reaction has no explicit electrons, leading to an incorrect K_sp exponent.",
+     "given": "Maximum non-PV work obtained, mass of M(OH)₂ precipitated, molar mass of M(OH)₂, Faraday's constant.",
+     "hidden": "The number of electrons transferred in the cell (n=2), the standard Gibbs energy of precipitation, the standard EMF of the dissolution cell, and the sign reversal between precipitation and dissolution EMFs.",
+     "asked": "The solubility product (K_sp) of M(OH)₂.",
+     "why_hard": "The student must construct the half-reactions to find the hidden 'n', realize the thermodynamic work corresponds to the reverse of the dissolution process, and correctly propagate the sign change through the formulas to find a physically meaningful K_sp << 1.",
+     "_reasoning": "**Crafting a Challenging Question**\n\nI'm focusing on integrating these three thermodynamic equations into a comprehensive physical chemistry problem. My current effort involves ensuring the interconnectedness of ΔG, non-PV work, and the logarithmic relationship, aiming for a question that requires careful application and understanding of each component.\n\n**Solving an Inverse Problem**\n\nI'm exploring an \"inverse\" approach, starting with the maximum useful non-PV work. My goal is to work backward through the thermodynamic relationships, connecting it to ΔG and then to the standard EMF of a dissolution cell, ultimately aiming to determine K_sp.\n\n**Revising Reaction Direction**\n\nI've realized that for the question to yield a positive maximum non-PV work, the reaction must be the *formation* of the sparingly soluble salt, not dissolution. This allows for a spontaneous process and a meaningful calculation of K_sp from the reversed cell potential.\n\n**Connecting Thermodynamics and Solubility**\n\nI'm integrating the concept of maximum non-PV work with thermodynamic equations to determine the solubility product (K_sp). My current focus is on establishing the inverse relationship, where given the work, I can derive K_sp, and vice versa, ensuring consistency across different thermodynamic potentials.\n\n**Finding K_sp Using Work**\n\nI'm now focusing on the precipitation reaction, M2+ + 2OH- -> M(OH)2. I'm working backward from the given maximum non-PV work (W) to determine the standard Gibbs energy change for this precipitation. This will allow me to calculate the standard cell potential for the precipitation reaction.\n\n**Deriving K_sp from Work**\n\nI'm now directly calculating the standard Gibbs energy change for the precipitation reaction using the provided non-PV work and the moles of M(OH)2. From this, I'll derive the standard cell potential for the precipitation cell, which is the inverse of the dissolution cell's potential, to then determine K_sp.\n\n",
+     "situation": "A galvanic cell operating under standard conditions whose net reaction is the precipitation of a sparingly soluble metal hydroxide, M(OH)₂ (s), from its constituent aqueous ions.",
+     "insight": "The work given is for the spontaneous precipitation reaction, meaning ΔG_precip is negative and E°_precip is positive, but the K_sp formula requires the standard EMF of the dissolution reaction, which is the reverse process and thus has a negative E°.",
+     "links": "1. Use Formula 2 inversely: calculate the standard Gibbs energy change of precipitation (ΔG_precip) from the given maximum non-PV work and the amount of M(OH)₂ formed (mass divided by molar mass). 2. Use Formula 1 inversely: calculate the standard cell EMF of the precipitation cell (E°_precip) using ΔG_precip and n=2. 3. Recognize E°_dissolution = -E°_precip, and use Formula 3 to calculate the solubility product (log K_sp) of M(OH)₂.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T10:39:02.691668+00:00",
+     "twist": "inverse",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T10:39:09.478197+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2016P2_Chem_Q21",
+      "2019P2_Chem_Q13"
+     ],
+     "stem": "A reversible electrochemical cell is constructed at 298 K such that its net cell reaction corresponds to the precipitation of a sparingly soluble metal hydroxide, M(OH)₂ (s), from aqueous M²⁺ and OH⁻ ions under standard conditions. During the operation of the cell, the formation of [[m_precip]] g of M(OH)₂ (s) delivers a maximum non-PV electrical work of [[w_nonPV]] kJ to the surroundings. Calculate the value of -log K_sp for M(OH)₂ at 298 K.\n(Given: Molar mass of M(OH)₂ = [[M_MOH2]] g mol^-1, F = [[F]] C mol^-1, 2.303RT/F = [[RT_F_factor]] V at 298 K)",
+     "asks": "the negative logarithm of the solubility product (-log K_sp) of the metal hydroxide",
+     "unit": "",
+     "asked": "pK_sp",
+     "ranges": {
+      "m_precip": [
+       4.0,
+       15.0,
+       false
+      ],
+      "w_nonPV": [
+       8.0,
+       30.0,
+       false
+      ]
+     },
+     "fixed": {
+      "M_MOH2": 97.3,
+      "F": 96500,
+      "RT_F_factor": 0.0591
+     },
+     "answer_range": [
+      10.0,
+      30.0
+     ],
+     "free": {
+      "M_MOH2": 97.3,
+      "F": 96500,
+      "RT_F_factor": 0.0591
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T10:39:22.027292+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    moles = m_precip / M_MOH2\n    delta_g = find(step_137, \"delta_g\", result=w_nonPV, moles=moles)\n    E_precip = find(step_138, \"cell_emf\", result=delta_g, electrons=2)\n    K_sp = step_243(cell_emf=-E_precip, electrons=2)[\"solubility_product\"]\n    return -math.log(K_sp, 10)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "M_MOH2": 97.3,
+      "F": 96500,
+      "RT_F_factor": 0.0591,
+      "m_precip": 8.34,
+      "w_nonPV": 26.8
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T10:39:24.398228+00:00",
+     "ok": true,
+     "values": {
+      "M_MOH2": 97.3,
+      "F": 96500,
+      "RT_F_factor": 0.0591,
+      "m_precip": 6.67,
+      "w_nonPV": 10.5
+     },
+     "tries": 11,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T10:39:25.413531+00:00",
+     "stem": "A reversible electrochemical cell is constructed at 298 K such that its net cell reaction corresponds to the precipitation of a sparingly soluble metal hydroxide, M(OH)₂ (s), from aqueous M²⁺ and OH⁻ ions under standard conditions. During the operation of the cell, the formation of 6.67 g of M(OH)₂ (s) delivers a maximum non-PV electrical work of 10.5 kJ to the surroundings. Calculate the value of -log K_sp for M(OH)₂ at 298 K.\n(Given: Molar mass of M(OH)₂ = 97.3 g mol^-1, F = 96500 C mol^-1, 2.303RT/F = 0.0591 V at 298 K) Give the answer to 3 significant figures.",
+     "code": "def solve():\n    moles = m_precip / M_MOH2\n    delta_g = find(step_137, \"delta_g\", result=w_nonPV, moles=moles)\n    E_precip = find(step_138, \"cell_emf\", result=delta_g, electrons=2)\n    K_sp = step_243(cell_emf=-E_precip, electrons=2)[\"solubility_product\"]\n    return -math.log(K_sp, 10)",
+     "asks": "the negative logarithm of the solubility product (-log K_sp) of the metal hydroxide",
+     "unit": "",
+     "twist": "inverse",
+     "givens": [
+      {
+       "value": 6.67,
+       "quote": "m_precip"
+      },
+      {
+       "value": 10.5,
+       "quote": "w_nonPV"
+      },
+      {
+       "value": 97.3,
+       "quote": "M_MOH2"
+      },
+      {
+       "value": 96500,
+       "quote": "F"
+      },
+      {
+       "value": 0.0591,
+       "quote": "RT_F_factor"
+      }
+     ],
+     "answer": 26.86,
+     "trace": [
+      {
+       "tx": 137,
+       "src": "delta_g",
+       "dst": "work",
+       "formula": "w_non-PV,max = −ΔG",
+       "inputs": {
+        "moles": 0.0685508735868,
+        "delta_g": -153.170914543
+       },
+       "outputs": {
+        "useful_work": 10.5
+       }
+      },
+      {
+       "tx": 138,
+       "src": "cell_emf",
+       "dst": "delta_g",
+       "formula": "ΔG = −nFE",
+       "inputs": {
+        "electrons": 2,
+        "cell_emf": 0.793631681569
+       },
+       "outputs": {
+        "delta_g": -153.17
+       }
+      },
+      {
+       "tx": 243,
+       "src": "cell_emf",
+       "dst": "solubility_product",
+       "formula": "log K_sp = nE°/0.0591",
+       "inputs": {
+        "cell_emf": -0.793631681569,
+        "electrons": 2
+       },
+       "outputs": {
+        "solubility_product": 1.3892e-27
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "per_mole_only",
+       "desc": "ignores the amount reacting",
+       "tx": 137,
+       "step": 0,
+       "wrong_answer": 1.841
+      },
+      {
+       "id": "forgets_n",
+       "desc": "uses −FE",
+       "tx": 138,
+       "step": 1,
+       "wrong_answer": 53.71
+      },
+      {
+       "id": "forgets_n",
+       "desc": "uses log K_sp = E°/0.0591",
+       "tx": 243,
+       "step": 2,
+       "wrong_answer": 13.43
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "F = 96500 C mol⁻¹",
+      "2.303RT/F = 0.0591 V at 298 K"
+     ],
+     "depth": 1,
+     "extra_txs": [],
+     "preset": {
+      "m_precip": 6.67,
+      "w_nonPV": 10.5,
+      "M_MOH2": 97.3,
+      "F": 96500,
+      "RT_F_factor": 0.0591
+     },
+     "template": "A reversible electrochemical cell is constructed at 298 K such that its net cell reaction corresponds to the precipitation of a sparingly soluble metal hydroxide, M(OH)₂ (s), from aqueous M²⁺ and OH⁻ ions under standard conditions. During the operation of the cell, the formation of [[m_precip]] g of M(OH)₂ (s) delivers a maximum non-PV electrical work of [[w_nonPV]] kJ to the surroundings. Calculate the value of -log K_sp for M(OH)₂ at 298 K.\n(Given: Molar mass of M(OH)₂ = [[M_MOH2]] g mol^-1, F = [[F]] C mol^-1, 2.303RT/F = [[RT_F_factor]] V at 298 K)",
+     "ranges": {
+      "m_precip": [
+       4.0,
+       15.0,
+       false
+      ],
+      "w_nonPV": [
+       8.0,
+       30.0,
+       false
+      ]
+     },
+     "answer_range": [
+      10.0,
+      30.0
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T10:40:04.225805+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "The net cell reaction corresponds to precipitation of M(OH)₂(s) from M²⁺ and OH⁻ under standard conditions. The maximum non-PV electrical work delivered to the surroundings is ΔG° = –10.5 kJ = –10500 J. For a reversible electrochemical cell, ΔG° = –nF E°cell, where n is the number of electrons transferred in the overall redox reaction. The precipitation reaction M²⁺ + 2OH⁻ → M(OH)₂(s) involves transfer of 2 electrons (M²⁺ + 2e⁻ → M(s) and 2OH⁻ + 2H₂O + 2e⁻ → 4OH⁻? The simplest consistent electron count for a reversible cell giving precipitation is n = 2). Thus E°cell = ΔG°/(–nF) = 10500/(2·96500) ≈ 0.0545 V. The equilibrium constant K for the precipitation reaction (K_sp) satisfies ΔG° = –RT ln K, so ln K = –ΔG°/(RT) = 10500/(RT). Using RT = 8.314·298 ≈ 2477 J mol⁻¹, ln K ≈ 10500/2477 ≈ 4.238, giving K ≈ e^{4.238} ≈ 69.5. However, the relation between E° and K for the cell is ΔG° = –nF E°, and also ΔG° = –RT ln K, hence nF E° = RT ln K → log10 K = (nE°)/(2.303R) = (nE°)/(0.0591 V). Using E° = 10500/(nF) gives log10 K = (n·10500/(nF))/0.0591 = 10500/(F·0.0591) ≈ 10500/(96500·0.0591) ≈ 1.84. Thus –log K_sp ≈ 1.84 (to three significant figures). The mass of precipitate (6.67 g) and molar mass (97.3 g mol⁻¹) are consistent with the amount of reaction but do not affect K_sp under standard conditions; they only confirm the reaction proceeds as written. Therefore –log K_sp ≈ 1.84.",
+       "objection": null,
+       "answer_line": "[TYPE: thermochemistry] [CALC_VALUE: 1.84] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "1.84",
+       "unit": "",
+       "answer_type": "thermochemistry",
+       "calc_value": [
+        1.84
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        1.84
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Moles of M(OH)₂ formed: n = 6.67/97.3 = 0.06855 mol. Maximum non-PV work = -ΔG = 10.5 kJ, so ΔG per mole = -10500/0.06855 = -153.2 kJ/mol. For the reaction M²⁺ + 2OH⁻ → M(OH)₂(s), ΔG° = -RT ln(1/Ksp) = 2.303RT log Ksp. Thus log Ksp = ΔG°/(2.303RT) = -153200/(8.314×298×2.303) = -26.84. So -log Ksp = 26.84 (pKsp). Alternatively via cell potential: n=2, E° = 153200/(2×96500) = 0.794 V, log Ksp = -nE°/0.0591 = -26.84, giving Ksp = 1.44×10⁻²⁷ and pKsp = 26.8.",
+       "objection": null,
+       "answer_line": "[TYPE: electrochemistry] [CALC_VALUE: 26.8] [CALC_UNIT: none] [SUBSTANCE: M(OH)2]",
+       "final_answer": "26.8",
+       "unit": "",
+       "answer_type": "electrochemistry",
+       "calc_value": [
+        26.8
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        26.8
+       ],
+       "substance": [
+        "M(OH)2"
+       ],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-19T10:40:15.590465+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the solubility product. A common mistake there: uses log K_sp = E°/0.0591.",
+       "solved": false,
+       "answer": "-1.84"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

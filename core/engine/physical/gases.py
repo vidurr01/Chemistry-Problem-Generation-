@@ -8,7 +8,7 @@ from core.engine.base import EngineError, Param, Step, Trap, div, sqrt
 from core.engine.chem import C, const
 
 P = Param
-_L_ATM_J = 101.325        # J per L atm
+# (L atm -> J is thermo.L_ATM_J = 101.3, the value stated in the questions; an unused 101.325 here was removed)
 
 
 def _celsius_k(t):
@@ -190,7 +190,7 @@ STEPS = [
                      lambda v: (C.R_J if v["amount"] == "per mole" else C.K_B) * v["temperature"]),),
          constants=(const("R_J"), const("K_B")), formula="KE = (3/2)RT per mole = (3/2)kT per molecule",
          asks="average translational kinetic energy (J)"),
-    Step(tx=103, src="gas_state", dst="vdw_constants", not_after=(84, 85, 86, 87, 91, 170),
+    Step(tx=103, src="gas_state", dst="vdw_constants", not_after=(84, 85, 86, 87, 91, 170, 386),
          needs=(P("P", "atm", "measured pressure", lo=1, hi=200), P("V", "L", "volume", lo=0.05, hi=50),
                 P("T", "K", "temperature", kind="temperature", lo=150, hi=800),
                 P("n", "mol", "amount of gas", lo=0.1, hi=10), P("b", "L mol⁻¹", "van der Waals b", lo=0.01, hi=0.2)),

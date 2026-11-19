@@ -155,5 +155,124 @@
       "objection_assessment": null,
       "reasoning": "The student correctly used the given temperatures (301.75 − 298.15 = 3.60 K), giving q = 2.82225 kJ, ΔH = −56.445 kJ/mol, and Ea(backward) = 68.945 kJ/mol with the correct relation ΔH = Ea(forward) − Ea(backward). The reference is internally inconsistent: it lists 298.1 and 301.8 K (ΔT = 3.7 K), yet its heat value of 2862 J corresponds to ΔT = 3.6 K, and its 69.74 answer depends on that inconsistent −57.24 kJ/mol. The student's result is therefore the one supported by the problem data, so the reference answer is the one at fault."
     }
+  },
+  {
+    "id": "ENG_20261014T095324_5",
+    "reason": "engine_wrong",
+    "queued_at": "2026-10-14T09:53:24.761498+00:00",
+    "chain": [
+      "equilibrium_constant_to_equilibrium_constant_kpkcrtng",
+      "equilibrium_constant_to_delta_h_vanthofflnk2",
+      "delta_h_to_temperature_thsatg0"
+    ],
+    "txs": [
+      155,
+      136,
+      133
+    ],
+    "values": {
+      "s0.equilibrium_constant": 0.16,
+      "s0.balanced_equation": "N2O4(g) -> 2 NO2(g)",
+      "s0.total_pressure": 2.0,
+      "s1.T1": 300.0,
+      "s1.K2": 2.12,
+      "s1.T2": 350.0,
+      "s2.delta_s": 175.0
+    },
+    "stem": "For the gaseous dissociation reaction of dinitrogen tetroxide (N₂O₄) to nitrogen dioxide (NO₂),\nN2O4(g) -> 2 NO2(g)\nthe system is at an initial temperature of 300.0 K under a total equilibrium pressure of 2.0 atm with K_p = 0.16. Upon heating to a temperature of 350.0 K, the equilibrium constant K becomes 2.12. The standard entropy change for the reaction is 175.0 J K⁻¹ mol⁻¹.\n\nAssuming the standard enthalpy change and standard entropy change are temperature-independent over this range, calculate the temperature at which ΔG = 0.\n\n(Given: R = 8.314 J K⁻¹ mol⁻¹; ln(13.25) = 2.584)\n\nGive the answer in K, to 3 significant figures.",
+    "engine_answer": "327 K",
+    "member": "glm-5.3-flash",
+    "member_answer": "258 K",
+    "diagnosis": {
+      "answer_equivalent": false,
+      "verdict": "reference_wrong",
+      "failure_type": null,
+      "failed_step": null,
+      "member_expression": null,
+      "ambiguous_text": null,
+      "clarification": null,
+      "missing_fact": null,
+      "objection_assessment": null,
+      "reasoning": "The student applied the van't Hoff equation directly to K_p values (2.12/0.16 = 13.25), which matches the given hint ln(13.25) = 2.584, and obtained ΔH ≈ 45.1 kJ/mol and T ≈ 258 K. The reference converts only K₁ to K_x = 0.08 while using K₂ = 2.12 unchanged, which is internally inconsistent if both constants are K_p, so the intended answer of 327 K rests on a questionable step. The student's reasoning is sound and consistent with the problem's own hint, so the reference, not the student, is likely at fault."
+    }
+  },
+  {
+    "id": "ENG_20261014T100007_6",
+    "reason": "engine_wrong",
+    "queued_at": "2026-10-14T10:00:07.123331+00:00",
+    "chain": [
+      "degree_of_dissociation_to_equilibrium_constant_pcl5typekp2p",
+      "equilibrium_constant_to_delta_h_vanthofflnk2",
+      "delta_h_to_temperature_thsatg0"
+    ],
+    "txs": [
+      160,
+      136,
+      133
+    ],
+    "values": {
+      "s0.gas_dissociation_degree": 0.45,
+      "s0.total_pressure": 1.5,
+      "s1.T1": 450,
+      "s1.K2": 12.0,
+      "s1.T2": 600,
+      "s2.delta_s": 145.0
+    },
+    "stem": "Phosphorus pentachloride (PCl₅) dissociates according to the reaction:\n$$\\text{PCl}_5(\\text{g}) \\rightleftharpoons \\text{PCl}_3(\\text{g}) + \\text{Cl}_2(\\text{g})$$\nIn an experiment at 450 K, phosphorus pentachloride (PCl₅) reaches equilibrium with a degree of dissociation of 0.45 under a total equilibrium pressure of 1.5 atm. At 600 K, the equilibrium constant for this dissociation is 12.0. The standard entropy change for the reaction over this temperature range is 145.0 J K⁻¹ mol⁻¹.\n\nCalculate the temperature at which $\\Delta G^\\circ = 0$.\n(Given: $R = 8.314\\text{ J K}^{-1}\\text{ mol}^{-1}$)\n\nGive the answer in K, to 3 significant figures.",
+    "engine_answer": "356.1 K",
+    "member": "glm-5.3-flash",
+    "member_answer": "475 K",
+    "diagnosis": {
+      "answer_equivalent": false,
+      "verdict": "wrong",
+      "failure_type": "genuine_difficulty",
+      "failed_step": 2,
+      "member_expression": null,
+      "ambiguous_text": null,
+      "clarification": null,
+      "missing_fact": null,
+      "objection_assessment": "valid",
+      "reasoning": "The student's K_p = 0.3809 at 450 K is correct, but the student then computed ΔH° from the 450 K data alone and ignored the given K = 12.0 at 600 K, which the intended van't Hoff step uses to get ΔH° ≈ 51.6 kJ/mol and hence T = ΔH°/ΔS° ≈ 356 K. The student's objection is valid: the stated data are internally inconsistent with ΔS° = 145 J/(K mol), but choosing the 450 K data over the 600 K data is a judgment the problem does not support, so 475 K does not match the intended 356.1 K."
+    }
+  },
+  {
+    "id": "ENG_20261119T005401_7",
+    "reason": "engine_wrong",
+    "queued_at": "2026-11-19T00:54:01.460553+00:00",
+    "chain": [
+      "mass_percent_to_mass_wwxgsolutepe",
+      "mass_to_density_densitymassv",
+      "mass_to_moles_gammolarmass"
+    ],
+    "txs": [
+      17,
+      2,
+      10
+    ],
+    "values": {
+      "V_flask": 0.644,
+      "spec_grav": 1.29,
+      "w_percent": 17.3,
+      "T": 294.0,
+      "P_H2": 1.9,
+      "rho_water": 1.0,
+      "M_NaHSO4": 120.06,
+      "R": 0.08206
+    },
+    "stem": "An evacuated rigid reaction vessel of volume 0.644 L contains an excess of solid magnesium (Mg) powder occupying negligible volume. A volume of an aqueous sodium bisulfate (NaHSO4) solution having a specific gravity of 1.29 and containing 17.3 % (w/W) NaHSO4 is injected into the vessel. The reaction Mg(s) + 2 NaHSO4(aq) -> MgSO4(aq) + Na2SO4(aq) + H2(g) proceeds to completion. At a constant temperature of 294 K, the partial pressure of H2(g) generated inside the vessel reaches 1.90 atm. Calculate the volume of the NaHSO4 solution injected into the vessel, in mL.\n(Given: Density of water at 4 °C = 1.00 g mL^-1; Molar mass of NaHSO4 = 120.06 g mol^-1; Gas constant R = 0.08206 L atm K^-1 mol^-1) Give the answer in mL, to 3 significant figures.",
+    "engine_answer": "50.3 mL",
+    "member": "llama-3.3-70b",
+    "member_answer": "56.3 mL",
+    "diagnosis": {
+      "answer_equivalent": false,
+      "verdict": "reference_wrong",
+      "failure_type": null,
+      "failed_step": 1,
+      "ambiguous_text": null,
+      "clarification": null,
+      "missing_fact": null,
+      "objection_assessment": null,
+      "reasoning": "The student's method (PV = nRT, 2:1 NaHSO4:H2 stoichiometry, mass from mole ratio, then solution mass and volume from w/w and specific gravity) is correct. However, the student's n(H2) of 0.0523 mol is an arithmetic slip; PV/RT = 1.2236/24.126 ≈ 0.0507 mol, which gives about 54.6 mL rather than 56.3 mL. The reference answer of 50.3 mL also does not follow from the given data: its intermediate 0.093512 mol NaHSO4 is inconsistent with 1.90 atm, 0.644 L and 294 K, so the reference appears to be the faulty party."
+    }
   }
 ]

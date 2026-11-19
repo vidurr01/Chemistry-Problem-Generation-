@@ -92,6 +92,7 @@ def _split_charge(text: str):
 def parse_formula(text: str):
     """Element counts and charge of a formula: 'Ca(OH)2' -> ({'Ca':1,'O':2,'H':2}, 0);
     'CuSO4.5H2O' (or with '·') counts the water; 'MnO4^-' has charge -1."""
+    text = _STATE.sub("", text.strip()).strip()        # 'H2(g)' is H2 (it was "cannot read")
     body, charge = _split_charge(text)
     total: Counter = Counter()
     for part in re.split(r"[.·*]", body.replace(" ", "")):
@@ -174,7 +175,15 @@ def format_formula(counts: dict, order=None) -> str:
 
 # ── Equations ────────────────────────────────────────────────────────────────
 
-_STATE = re.compile(r"\((s|l|g|aq)\)$")
+_STATE = re.compile(r"\((s|l|ℓ|g|aq)\)$")
+
+
+def species_key(text: str) -> str:
+    """One spelling of a species for comparison: no spaces, no state, ASCII digits. 'CH₄(g)' and
+    'CH4' are the same (a coder wrote 'CH4(g)' for an equation the parser stored as 'CH4' and the
+    engine said it "does not appear", run of 2026-11-16)."""
+    t = str(text).replace(" ", "").translate(_SUB_DIGITS)
+    return _STATE.sub("", t)
 
 
 def _species(term: str):

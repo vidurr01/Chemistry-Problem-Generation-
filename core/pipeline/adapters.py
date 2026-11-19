@@ -25,6 +25,8 @@ SINGLE_STEP_WEIGHT = 0.5      # a step that cannot join any chain is offered alo
 # (two systems compared): docs/advanced_formula_map.md.
 TREE_SHARE = 0.25
 CONDITION_SHARE = 0.10
+FORMULAS_MIN, FORMULAS_MAX = 3, 5   # question first: 3 to 5 formulas drawn at random
+CHAIN_MIN, CHAIN_MAX = 3, 5         # all_chains / random_chain: 3 to 5 linked steps
 SHAPE_TRIES = 40              # random attempts per shaped idea before giving up on it
 BRANCH_MAX = 2                # steps in one branch of a tree or condition
 NUMERIC_KINDS = {"real", "positive", "nonneg", "negative", "fraction", "open_fraction", "percent", "ph",
@@ -284,6 +286,115 @@ class PhysicalAdapter:
                 out.append(cand)
         out.sort(key=lambda x: (-x["weight"], self.rng.random()))
         return self._with_shapes(coverage, out, n, exclude)
+
+    # ── linked chains of CHAIN_MIN-CHAIN_MAX steps (not used by the physical question-first
+    #    flow, which draws formulas at random; kept for subjects whose questions are chains,
+    #    e.g. organic reaction sequences) ───────────────────────────────────────
+
+    def all_chains(self) -> list:
+        """Every chain of CHAIN_MIN..CHAIN_MAX distinct steps the walk can build (consecutive
+        steps share a graph node and link; roles hold; the chain plans), as tuples of txs.
+        Enumerated once per adapter (a few thousand chains, well under a second)."""
+        if getattr(self, "_chains", None) is None:
+            from core.engine.base import links, roles_consistent
+            ph = self.engine
+            steps = [s for s in ph.STEPS.values() if s.tx in self.edge_of_tx]
+            nxt = {a.tx: [b for b in steps if b.tx != a.tx and a.dst == b.src and links(a, b, ph.BRIDGES)]
+                   for a in steps}
+            out = []
+
+            def ok(ch):
+                if not roles_consistent(ch):
+                    return False
+                try:
+                    plan_chain(ch)
+                    return True
+                except EngineError:
+                    return False
+
+            def grow(ch, seen):
+                if len(ch) >= 2 and not ok(ch):
+                    return
+                if len(ch) >= CHAIN_MIN:
+                    out.append(tuple(s.tx for s in ch))
+                if len(ch) == CHAIN_MAX:
+                    return
+                for b in nxt[ch[-1].tx]:
+                    if b.tx not in seen:
+                        grow(ch + [b], seen | {b.tx})
+
+            for a in steps:
+                grow([a], {a.tx})
+            self._chains = out
+        return self._chains
+
+    def random_chain(self, chapter=None, exclude=()):
+        """One chain drawn uniformly from all_chains() (no coverage weighting), as a candidate
+        dict; None if no chain is left. chapter: at least one step in that chapter."""
+        pool = []
+        for txs in self.all_chains():
+            edges = [self.edge_of_tx[t] for t in txs]
+            if tuple(e["id"] for e in edges) in exclude:
+                continue
+            if chapter and not any(chapter.lower() in e.get("chapter", "").lower() for e in edges):
+                continue
+            pool.append((txs, edges))
+        if not pool:
+            return None
+        txs, edges = self.rng.choice(pool)
+        steps = [self.engine.step(t) for t in txs]
+        plan = plan_chain(steps)
+        return {"edges": [e["id"] for e in edges], "nodes": [steps[0].src] + [s.dst for s in steps],
+                "chapters": list(dict.fromkeys(e.get("chapter", "") for e in edges)), "txs": list(txs),
+                "trap_ids": sorted({t.id for s in steps for t in s.traps}),
+                "description": " → ".join(f"{s.asks} [{s.formula}]" for s in steps),
+                "_steps": steps, "_plan": plan}
+
+    # ── question-first: FORMULAS_MIN-FORMULAS_MAX formulas drawn at random ───────
+
+    def random_formulas(self, chapter=None, exclude=()):
+        """FORMULAS_MIN..FORMULAS_MAX distinct engine steps drawn at random, CONNECTED: the first
+        uniformly from all of the subject's steps (from one chapter with `chapter`), each next one
+        uniformly among those sharing a quantity with one already drawn (not a chain: no order). Formulas from unrelated chapters can only be joined by an
+        invented relation (run of 2026-11-16: ΔG° = −(purity × radial peaks × 100)). The writer
+        makes them one problem, or says it cannot. A candidate dict, or None if every draw tried
+        is excluded. Its "_plan" holds only the steps (they do not form a chain: no wiring)."""
+        from types import SimpleNamespace
+        ph = self.engine
+        pool = sorted(t for t, e in self.edge_of_tx.items()
+                      if not chapter or chapter.lower() in e.get("chapter", "").lower())
+        if len(pool) < FORMULAS_MIN:
+            return None
+        def quantities(t):
+            st = ph.step(t)
+            return {st.src, st.dst}
+
+        for _ in range(50):
+            # CONNECTED random draw: the first formula at random, each next one at random among the
+            # formulas that share a quantity (a graph node: moles, pressure, charge ...) with one
+            # already drawn. Sets with nothing in common could only be glued (6 draws, $0.21, no
+            # question, run of 2026-11-16); 91 % of draws reach their size, ~1.8 chapters each.
+            k = self.rng.randint(FORMULAS_MIN, FORMULAS_MAX)
+            txs = [self.rng.choice(pool)]
+            while len(txs) < k:
+                shared = set().union(*(quantities(t) for t in txs))
+                nxt = [t for t in pool if t not in txs and quantities(t) & shared]
+                if not nxt:
+                    break
+                txs.append(self.rng.choice(nxt))
+            if len(txs) < FORMULAS_MIN:
+                continue
+            edges = [self.edge_of_tx[t] for t in txs]
+            if tuple(sorted(e["id"] for e in edges)) not in exclude:
+                break
+        else:
+            return None
+        steps = [self.engine.step(t) for t in txs]
+        return {"edges": sorted(e["id"] for e in edges), "nodes": list(dict.fromkeys(n for s in steps for n in (s.src, s.dst))),
+                "chapters": list(dict.fromkeys(e.get("chapter", "") for e in edges)), "txs": list(txs),
+                "trap_ids": sorted({t.id for s in steps for t in s.traps}),
+                "description": " | ".join(f"{s.asks} [{s.formula}]" for s in steps),
+                "_steps": steps, "_plan": SimpleNamespace(steps=steps, constants=[], branches=())}
 
     def plan(self, txs: list, shape: dict | None = None):
         """The plan of a chain (txs), or of a tree or condition (shape, from a candidate)."""

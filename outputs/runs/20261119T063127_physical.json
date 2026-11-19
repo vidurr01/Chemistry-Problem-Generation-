@@ -1,0 +1,514 @@
+{
+ "subject": "physical",
+ "saved_at": "20261119T063127",
+ "spend": {
+  "total_cost_usd": 0.03697,
+  "by_role": {
+   "formula_fit": {
+    "calls": 12,
+    "prompt_tokens": 7074,
+    "completion_tokens": 0,
+    "cost": 0.000297108
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 1902,
+    "completion_tokens": 1742,
+    "cost": 0.024708
+   },
+   "design_check": {
+    "calls": 1,
+    "prompt_tokens": 739,
+    "completion_tokens": 0,
+    "cost": 3.1038e-05
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2946,
+    "completion_tokens": 734,
+    "cost": 0.004962
+   },
+   "level_check": {
+    "calls": 1,
+    "prompt_tokens": 647,
+    "completion_tokens": 0,
+    "cost": 2.7174e-05
+   },
+   "coder": {
+    "calls": 1,
+    "prompt_tokens": 4372,
+    "completion_tokens": 1081,
+    "cost": 0.001086925
+   },
+   "coherence_check": {
+    "calls": 1,
+    "prompt_tokens": 641,
+    "completion_tokens": 0,
+    "cost": 2.6922e-05
+   },
+   "council": {
+    "calls": 20,
+    "prompt_tokens": 18714,
+    "completion_tokens": 5999,
+    "cost": 0.005828409000000001
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "equilibrium_constant_to_equilibrium_constant_kpkcrtng",
+     "equilibrium_constant_to_equilibrium_constant_kpkcrtng",
+     "equilibrium_constant_to_equilibrium_constant_kpkcrtng"
+    ],
+    "nodes": [
+     "equilibrium_constant"
+    ],
+    "chapters": [
+     "Chemical Equilibrium"
+    ],
+    "txs": [
+     156,
+     154,
+     163
+    ],
+    "trap_ids": [
+     "arithmetic_instead_of_power",
+     "delta_n_sign",
+     "sign",
+     "wrong_R"
+    ],
+    "description": "K of the new reaction [reverse: 1/K; ×2: K²; ×½: √K] | K_p [K_p = K_c (RT)^Δn_g] | K at T₂ [ln(K₂/K₁) = (ΔH/R)(T₂ − T₁)/(T₁T₂)]",
+    "twist": "inverse",
+    "drawn_txs": [
+     156,
+     154,
+     163
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T06:29:13.067292+00:00",
+     "p": 0.59
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T06:29:31.170527+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "Original reaction: PCl3(g) + Cl2(g) ⇌ PCl5(g). Reversed reaction: PCl5(g) ⇌ PCl3(g) + Cl2(g). The system involves a known initial mass of pure PCl5(g) placed in a rigid vessel of known volume at temperature T2, reaching a measured total equilibrium pressure.",
+     "hidden_link": "The equilibrium constant at T2 must be derived from the total pressure and initial mass using the ideal gas equation and stoichiometry, which provides Kp for the reversed reaction. This Kp must then be converted to Kc, and then reversed to find the original reaction's Kc at T2.",
+     "route": "1. Use ideal gas equation and initial mass to find total moles at equilibrium at T2, yielding Kp for the reversed reaction. 2. Use Formula 2 (Kp = Kc(RT)^Δng) to find Kc for the reversed reaction at T2. 3. Use Formula 1 (reverse: 1/K) to find Kc for the original reaction at T2. 4. Use Formula 3 (van't Hoff equation) taking Kc at T1 and Kc at T2 to calculate the standard enthalpy change.",
+     "student_must_notice": "The equilibrium data at T2 applies to the reversed reaction and provides Kp, not Kc. The van't Hoff equation must be used with consistent K values (either both Kc or both Kp) for the original reaction.",
+     "trap": "Students might apply the van't Hoff equation directly to Kp at T2 and Kc at T1 without converting Kp to Kc, or forget to apply the reversal of the equilibrium constant, leading to an incorrect sign and magnitude for the enthalpy change.",
+     "given": "Kc of the original reaction at T1, initial mass of PCl5, volume of the vessel, equilibrium total pressure at T2, temperatures T1 and T2.",
+     "hidden": "Kp at T2, Kc at T2 (for both reactions), degree of dissociation of PCl5.",
+     "asked": "Standard enthalpy change (ΔH) of the original reaction, in kJ mol⁻¹",
+     "why_hard": "It forces the student to work backwards from physical equilibrium measurements to a thermodynamic parameter while carefully navigating unit states (Kp vs Kc) and reaction direction.",
+     "_reasoning": "**Crafting JEE Question**\n\nI'm synthesizing a JEE Advanced Physical Chemistry question. The core will involve deriving a new equilibrium constant from existing ones, incorporating reversal, doubling, and halving, while also ensuring the Kp/Kc relationship and the van't Hoff equation are tested.\n\n**Deriving Equilibrium Constants**\n\nI'm focused on integrating the van't Hoff equation with reaction manipulation. My current thought process involves setting up a scenario where students must deduce a new equilibrium constant at a different temperature by applying a specific condition to a given reaction, ensuring all constraints are met.\n\n**Calculating Reaction Enthalpy**\n\nI'm working on an inverse problem. Instead of deriving K, I'll provide K at T2 and equilibrium pressures for the reversed reaction, then ask for the reaction's standard enthalpy change, ΔH.\n\n**Calculating Reaction Enthalpy**\n\nI'm currently focused on an inverse problem scenario. My plan is to provide the equilibrium constant (Kc) for the original reaction at a specific temperature (T1) and then present data for the reversed reaction at a different temperature (T2). This data will include the mass of reactant, volume, and total equilibrium pressure. From this, I'll guide the student to calculate the degree of dissociation, determine Kp at T2 for the reversed reaction, subsequently find Kc for the reversed reaction at T2, then Kc for the original reaction at T2, and finally deduce the standard enthalpy change (ΔH) of the original reaction.\n\n",
+     "situation": "Original reaction: PCl3(g) + Cl2(g) ⇌ PCl5(g). Reversed reaction: PCl5(g) ⇌ PCl3(g) + Cl2(g). The system involves a known initial mass of pure PCl5(g) placed in a rigid vessel of known volume at temperature T2, reaching a measured total equilibrium pressure.",
+     "insight": "The equilibrium data at T2 applies to the reversed reaction and provides Kp, not Kc. The van't Hoff equation must be used with consistent K values (either both Kc or both Kp) for the original reaction.",
+     "links": "1. Use ideal gas equation and initial mass to find total moles at equilibrium at T2, yielding Kp for the reversed reaction. 2. Use Formula 2 (Kp = Kc(RT)^Δng) to find Kc for the reversed reaction at T2. 3. Use Formula 1 (reverse: 1/K) to find Kc for the original reaction at T2. 4. Use Formula 3 (van't Hoff equation) taking Kc at T1 and Kc at T2 to calculate the standard enthalpy change.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T06:29:32.157470+00:00",
+     "twist": "inverse",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:29:39.123038+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2025P1_Q8",
+      "2019P1_Chem_Q16"
+     ],
+     "stem": "For the gas-phase synthesis of phosphorus pentachloride according to the reaction PCl3(g) + Cl2(g) ⇌ PCl5(g), the equilibrium constant Kc is [[Kc_T1]] L mol^-1 at a temperature of [[T1]] K. In a separate experiment, a rigid vessel of volume [[V_vessel]] L is charged with [[m_PCl5]] g of pure phosphorus pentachloride (PCl5) and maintained at [[T2]] K until equilibrium is established. The total pressure inside the vessel at equilibrium is found to be [[P_total]] atm. Assuming all gaseous species behave ideally, calculate the standard enthalpy change of the forward reaction PCl3(g) + Cl2(g) ⇌ PCl5(g) in kJ mol^-1. (Given: molar mass of PCl5 = [[M_PCl5]] g mol^-1, R = [[R_gas]] L atm K^-1 mol^-1, R = [[R_energy]] J K^-1 mol^-1)",
+     "asks": "standard enthalpy change of the forward synthesis reaction",
+     "unit": "kJ mol^-1",
+     "asked": "delta_h",
+     "ranges": {
+      "m_PCl5": [
+       10.0,
+       30.0,
+       false
+      ],
+      "V_vessel": [
+       2.0,
+       10.0,
+       false
+      ],
+      "T2": [
+       500.0,
+       600.0,
+       false
+      ],
+      "P_total": [
+       1.5,
+       4.0,
+       false
+      ],
+      "Kc_T1": [
+       10.0,
+       150.0,
+       false
+      ],
+      "T1": [
+       400.0,
+       480.0,
+       false
+      ]
+     },
+     "fixed": {
+      "M_PCl5": 208.24,
+      "R_gas": 0.0821,
+      "R_energy": 8.314
+     },
+     "answer_range": [
+      -150.0,
+      -40.0
+     ],
+     "free": {
+      "M_PCl5": 208.24,
+      "R_gas": 0.0821,
+      "R_energy": 8.314
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:29:53.842347+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n_PCl5_initial = m_PCl5 / M_PCl5\n    n_total = P_total * V_vessel / (R_gas * T2)\n    extent = n_total - n_PCl5_initial\n\n    p_PCl3 = P_total * extent / n_total\n    p_Cl2 = P_total * extent / n_total\n    p_PCl5 = P_total * (n_PCl5_initial - extent) / n_total\n    Kp_reverse = p_PCl3 * p_Cl2 / p_PCl5\n\n    Kc_reverse = find(\n        step_154,\n        \"equilibrium_constant\",\n        result=Kp_reverse,\n        balanced_equation=\"PCl5(g) ⇌ PCl3(g) + Cl2(g)\",\n        T=T2\n    )\n    Kc_T2 = step_156(\n        equilibrium_constant=Kc_reverse,\n        manipulation=\"reverse the reaction\"\n    )[\"equilibrium_constant\"]\n\n    delta_h = find(\n        step_163,\n        \"delta_h\",\n        result=Kc_T2,\n        equilibrium_constant=Kc_T1,\n        T1=T1,\n        T2=T2\n    )\n    return delta_h",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "M_PCl5": 208.24,
+      "R_gas": 0.0821,
+      "R_energy": 8.314,
+      "m_PCl5": 10.0,
+      "V_vessel": 2.27,
+      "T2": 580.0,
+      "P_total": 1.59,
+      "Kc_T1": 140.0,
+      "T1": 467.0
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:29:55.897788+00:00",
+     "ok": true,
+     "values": {
+      "M_PCl5": 208.24,
+      "R_gas": 0.0821,
+      "R_energy": 8.314,
+      "m_PCl5": 17.8,
+      "V_vessel": 2.73,
+      "T2": 539.0,
+      "P_total": 2.6,
+      "Kc_T1": 71.1,
+      "T1": 471.0
+     },
+     "tries": 11,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T06:29:56.886483+00:00",
+     "stem": "For the gas-phase synthesis of phosphorus pentachloride according to the reaction PCl3(g) + Cl2(g) ⇌ PCl5(g), the equilibrium constant Kc is 71.1 L mol^-1 at a temperature of 471 K. In a separate experiment, a rigid vessel of volume 2.73 L is charged with 17.8 g of pure phosphorus pentachloride (PCl5) and maintained at 539 K until equilibrium is established. The total pressure inside the vessel at equilibrium is found to be 2.60 atm. Assuming all gaseous species behave ideally, calculate the standard enthalpy change of the forward reaction PCl3(g) + Cl2(g) ⇌ PCl5(g) in kJ mol^-1. (Given: molar mass of PCl5 = 208.24 g mol^-1, R = 0.0821 L atm K^-1 mol^-1, R = 8.314 J K^-1 mol^-1) Give the answer in kJ mol^-1, to 3 significant figures.",
+     "code": "def solve():\n    n_PCl5_initial = m_PCl5 / M_PCl5\n    n_total = P_total * V_vessel / (R_gas * T2)\n    extent = n_total - n_PCl5_initial\n\n    p_PCl3 = P_total * extent / n_total\n    p_Cl2 = P_total * extent / n_total\n    p_PCl5 = P_total * (n_PCl5_initial - extent) / n_total\n    Kp_reverse = p_PCl3 * p_Cl2 / p_PCl5\n\n    Kc_reverse = find(\n        step_154,\n        \"equilibrium_constant\",\n        result=Kp_reverse,\n        balanced_equation=\"PCl5(g) ⇌ PCl3(g) + Cl2(g)\",\n        T=T2\n    )\n    Kc_T2 = step_156(\n        equilibrium_constant=Kc_reverse,\n        manipulation=\"reverse the reaction\"\n    )[\"equilibrium_constant\"]\n\n    delta_h = find(\n        step_163,\n        \"delta_h\",\n        result=Kc_T2,\n        equilibrium_constant=Kc_T1,\n        T1=T1,\n        T2=T2\n    )\n    return delta_h",
+     "asks": "standard enthalpy change of the forward synthesis reaction",
+     "unit": "kJ mol^-1",
+     "twist": "inverse",
+     "givens": [
+      {
+       "value": 71.1,
+       "quote": "Kc_T1"
+      },
+      {
+       "value": 471.0,
+       "quote": "T1"
+      },
+      {
+       "value": 2.73,
+       "quote": "V_vessel"
+      },
+      {
+       "value": 17.8,
+       "quote": "m_PCl5"
+      },
+      {
+       "value": 539.0,
+       "quote": "T2"
+      },
+      {
+       "value": 2.6,
+       "quote": "P_total"
+      },
+      {
+       "value": 208.24,
+       "quote": "M_PCl5"
+      },
+      {
+       "value": 0.0821,
+       "quote": "R_gas"
+      },
+      {
+       "value": 8.314,
+       "quote": "R_energy"
+      }
+     ],
+     "answer": -81.58,
+     "trace": [
+      {
+       "tx": 154,
+       "src": "equilibrium_constant",
+       "dst": "equilibrium_constant",
+       "formula": "K_p = K_c (RT)^Δn_g",
+       "inputs": {
+        "balanced_equation": "PCl5(g) ⇌ PCl3(g) + Cl2(g)",
+        "T": 539,
+        "equilibrium_constant": 0.194770598263
+       },
+       "outputs": {
+        "equilibrium_constant": 8.619,
+        "T1": 539,
+        "T": 539,
+        "balanced_equation": "PCl5(g) ⇌ PCl3(g) + Cl2(g)"
+       }
+      },
+      {
+       "tx": 156,
+       "src": "equilibrium_constant",
+       "dst": "equilibrium_constant",
+       "formula": "reverse: 1/K; ×2: K²; ×½: √K",
+       "inputs": {
+        "equilibrium_constant": 0.194770598263,
+        "manipulation": "reverse the reaction"
+       },
+       "outputs": {
+        "equilibrium_constant": 5.1342
+       }
+      },
+      {
+       "tx": 163,
+       "src": "equilibrium_constant",
+       "dst": "equilibrium_constant",
+       "formula": "ln(K₂/K₁) = (ΔH/R)(T₂ − T₁)/(T₁T₂)",
+       "inputs": {
+        "equilibrium_constant": 71.1,
+        "T1": 471,
+        "T2": 539,
+        "delta_h": -81.5758622325
+       },
+       "outputs": {
+        "equilibrium_constant": 5.1342,
+        "T": 539
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "delta_n_sign",
+       "desc": "uses (RT)^(−Δn)",
+       "tx": 154,
+       "step": 0,
+       "wrong_answer": -316.8
+      },
+      {
+       "id": "wrong_R",
+       "desc": "uses R = 8.314",
+       "tx": 154,
+       "step": 0,
+       "wrong_answer": 61.76
+      },
+      {
+       "id": "sign",
+       "desc": "uses the opposite sign in the exponent",
+       "tx": 163,
+       "step": 2,
+       "wrong_answer": 81.58
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "R = 0.0821 L atm K⁻¹ mol⁻¹",
+      "R = 8.314 J K⁻¹ mol⁻¹"
+     ],
+     "depth": 2,
+     "extra_txs": [],
+     "preset": {
+      "Kc_T1": 71.1,
+      "T1": 471.0,
+      "V_vessel": 2.73,
+      "m_PCl5": 17.8,
+      "T2": 539.0,
+      "P_total": 2.6,
+      "M_PCl5": 208.24,
+      "R_gas": 0.0821,
+      "R_energy": 8.314
+     },
+     "template": "For the gas-phase synthesis of phosphorus pentachloride according to the reaction PCl3(g) + Cl2(g) ⇌ PCl5(g), the equilibrium constant Kc is [[Kc_T1]] L mol^-1 at a temperature of [[T1]] K. In a separate experiment, a rigid vessel of volume [[V_vessel]] L is charged with [[m_PCl5]] g of pure phosphorus pentachloride (PCl5) and maintained at [[T2]] K until equilibrium is established. The total pressure inside the vessel at equilibrium is found to be [[P_total]] atm. Assuming all gaseous species behave ideally, calculate the standard enthalpy change of the forward reaction PCl3(g) + Cl2(g) ⇌ PCl5(g) in kJ mol^-1. (Given: molar mass of PCl5 = [[M_PCl5]] g mol^-1, R = [[R_gas]] L atm K^-1 mol^-1, R = [[R_energy]] J K^-1 mol^-1)",
+     "ranges": {
+      "m_PCl5": [
+       10.0,
+       30.0,
+       false
+      ],
+      "V_vessel": [
+       2.0,
+       10.0,
+       false
+      ],
+      "T2": [
+       500.0,
+       600.0,
+       false
+      ],
+      "P_total": [
+       1.5,
+       4.0,
+       false
+      ],
+      "Kc_T1": [
+       10.0,
+       150.0,
+       false
+      ],
+      "T1": [
+       400.0,
+       480.0,
+       false
+      ]
+     },
+     "answer_range": [
+      -150.0,
+      -40.0
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T06:30:58.824658+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "\nFirst, we need to calculate the number of moles of PCl5 initially present in the vessel. We can do this using the molar mass of PCl5 and the given mass.\n\nmoles_PCl5_initial = mass_PCl5 / molar_mass_PCl5\n= 17.8 g / 208.24 g mol^-1\n",
+       "objection": null,
+       "answer_line": "[TYPE: thermochemistry] [CALC_VALUE: -134] [CALC_UNIT: kJ/mol] [SUBSTANCE: null]",
+       "final_answer": "-134 kJ mol^-1",
+       "unit": "",
+       "answer_type": "thermochemistry",
+       "calc_value": [
+        -134.0
+       ],
+       "calc_unit": [
+        "kJ/mol"
+       ],
+       "target_unit": "kJ mol^-1",
+       "final_value": [
+        -134.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Moles PCl5 initially: 17.8/208.24 = 0.08548 mol. Total moles at equilibrium from ideal gas: n = PV/RT = 2.60×2.73/(0.0821×539) = 0.1604 mol. Let x = mol PCl5 dissociated: n_total = 0.08548 + x = 0.1604 → x = 0.07492 mol. So n(PCl5) = 0.01056, n(PCl3) = n(Cl2) = 0.07492. Concentrations: [PCl5] = 0.01056/2.73 = 0.003868 M, [PCl3] = [Cl2] = 0.07492/2.73 = 0.02744 M. Kc(539 K) = [PCl5]/([PCl3][Cl2]) = 0.003868/(0.02744²) = 5.14 L/mol. Van't Hoff: ln(K2/K1) = -ΔH/R(1/T2 - 1/T1) → ln(5.14/71.1) = -2.628 = -ΔH/8.314 × (1/539 - 1/471). Since (1/539 - 1/471) < 0, ΔH = 2.628×8.314/(1/471 - 1/539) = 81565 J/mol ≈ +81.6 kJ/mol (endothermic forward reaction, consistent with K decreasing at higher T).",
+       "objection": null,
+       "answer_line": "[TYPE: thermodynamics] [CALC_VALUE: 81.6] [CALC_UNIT: kJ/mol] [SUBSTANCE: PCl5]",
+       "final_answer": "81.6 kJ mol^-1",
+       "unit": "",
+       "answer_type": "thermodynamics",
+       "calc_value": [
+        81.6
+       ],
+       "calc_unit": [
+        "kJ/mol"
+       ],
+       "target_unit": "kJ mol^-1",
+       "final_value": [
+        81.6
+       ],
+       "substance": [
+        "PCl5"
+       ],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "gpt-6-luna",
+       "model": "openai/gpt-6-luna",
+       "working": "Let the initial amount of PCl5 be n0 and the amount dissociated at equilibrium be x. Initially, n0 = 17.8/208.24 = 0.0854783 mol. The equilibrium total amount is n_total = PV/(RT) = (2.60 × 2.73)/(0.0821 × 539) = 0.160400 mol. Since dissociation produces two gas molecules from one, n_total = n0 + x, so x = 0.160400 − 0.0854783 = 0.0749216 mol. Thus at equilibrium, n(PCl5) = n0 − x, and n(PCl3) = n(Cl2) = x. The equilibrium constant at 539 K is Kc,2 = [PCl5]/([PCl3][Cl2]) = (n0 − x)V/x² = 5.134 L mol^-1. Using the van't Hoff equation, ln(Kc,2/Kc,1) = −ΔH°/R (1/T2 − 1/T1). Therefore ΔH° = −R ln(5.134/71.1)/(1/539 − 1/471) = −81575.9 J mol^-1 = −81.6 kJ mol^-1 to 3 significant figures. The negative sign indicates that the forward reaction is exothermic.",
+       "objection": null,
+       "answer_line": "[TYPE: thermochemistry] [CALC_VALUE: -81.6] [CALC_UNIT: kJ/mol] [SUBSTANCE: PCl5]",
+       "final_answer": "-81.6 kJ mol^-1",
+       "unit": "",
+       "answer_type": "thermochemistry",
+       "calc_value": [
+        -81.6
+       ],
+       "calc_unit": [
+        "kJ/mol"
+       ],
+       "target_unit": "kJ mol^-1",
+       "final_value": [
+        -81.6
+       ],
+       "substance": [
+        "PCl5"
+       ],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [],
+     "first_solver": "gpt-6-luna"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-19T06:31:27.627697+00:00",
+     "tests": [
+      {
+       "member": "llama-3.3-70b",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the K at T₂. A common mistake there: uses the opposite sign in the exponent.",
+       "solved": false,
+       "answer": "-27.8 kJ mol^-1"
+      },
+      {
+       "member": "glm-5.3-flash",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the K at T₂. A common mistake there: uses the opposite sign in the exponent.",
+       "solved": false,
+       "answer": "40.4 kJ mol^-1"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

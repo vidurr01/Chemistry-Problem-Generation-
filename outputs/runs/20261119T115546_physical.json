@@ -1,0 +1,885 @@
+{
+ "subject": "physical",
+ "saved_at": "20261119T115546",
+ "spend": {
+  "total_cost_usd": 0.12877,
+  "by_role": {
+   "formula_fit": {
+    "calls": 22,
+    "prompt_tokens": 13235,
+    "completion_tokens": 0,
+    "cost": 0.00055587
+   },
+   "designer": {
+    "calls": 4,
+    "prompt_tokens": 6816,
+    "completion_tokens": 6936,
+    "cost": 0.096864
+   },
+   "design_check": {
+    "calls": 4,
+    "prompt_tokens": 2619,
+    "completion_tokens": 0,
+    "cost": 0.000109998
+   },
+   "generator": {
+    "calls": 2,
+    "prompt_tokens": 5712,
+    "completion_tokens": 834,
+    "cost": 0.0074115
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1177,
+    "completion_tokens": 0,
+    "cost": 4.9434e-05
+   },
+   "coder": {
+    "calls": 2,
+    "prompt_tokens": 6341,
+    "completion_tokens": 2043,
+    "cost": 0.001813975
+   },
+   "coherence_check": {
+    "calls": 2,
+    "prompt_tokens": 1165,
+    "completion_tokens": 0,
+    "cost": 4.893e-05
+   },
+   "council": {
+    "calls": 25,
+    "prompt_tokens": 25092,
+    "completion_tokens": 31965,
+    "cost": 0.021856059099999995
+   },
+   "refiner": {
+    "calls": 1,
+    "prompt_tokens": 1440,
+    "completion_tokens": 0,
+    "cost": 6.048e-05
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "electron_energy_to_electron_kinetic_energy_ekepe2",
+     "electron_energy_to_photon_energy_e136z21n121n",
+     "electron_energy_to_wavelength_1rhz21n121n2"
+    ],
+    "nodes": [
+     "electron_energy",
+     "electron_kinetic_energy",
+     "photon_energy",
+     "wavelength"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     70,
+     65,
+     66
+    ],
+    "trap_ids": [
+     "forgets_Z_squared",
+     "no_squares",
+     "sign_error"
+    ],
+    "description": "the asked energy (eV) [KE = −E; PE = 2E] | energy of the emitted photon (eV) [ΔE = 13.6 Z² (1/n₁² − 1/n₂²) eV] | wavelength of the spectral line (nm) [1/λ = R_H Z² (1/n₁² − 1/n₂²)]",
+    "twist": null
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T11:49:59.511074+00:00",
+     "p": 0.55
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T11:50:15.979452+00:00",
+     "try_": 1,
+     "twist": "simultaneous",
+     "system": "A mixture of two different hydrogen-like ions (e.g., He+ and Li2+) undergoing electronic transitions.",
+     "hidden_link": "The principal quantum numbers of the transitions. The energy of the photon emitted by one species matches the energy required to ionize the other species from a specific excited state, and the wavelength of another transition is given, creating a system of equations for Z and n.",
+     "route": "Formula 3 uses the given wavelength to establish a relation between Z and the quantum numbers for the first ion's transition. Formula 2 uses the energy equality to set up a simultaneous equation linking the quantum numbers of both ions. Formula 1 uses the determined quantum number and Z to calculate the potential energy of the electron in that specific orbit.",
+     "student_must_notice": "That the Rydberg formula for wavelength and the Bohr energy formula must be solved simultaneously for two different atomic numbers (Z) and quantum states, recognizing that the total energy is negative and PE is twice the total energy.",
+     "trap": "Assuming the transitions occur in the same hydrogen-like species, or confusing the total energy with the potential energy, omitting the factor of 2 or the negative sign.",
+     "given": "The wavelength of the photon emitted by the first ion, the condition that the emitted photon energy exactly ionizes the second ion from a stated excited state, and the identity of one of the ions.",
+     "hidden": "The atomic number of the unknown ion, the principal quantum numbers of the transition, and the total energy of the state.",
+     "asked": "The potential energy of the electron in the lower state of the first ion's transition (in eV).",
+     "why_hard": "The student must navigate a simultaneous system of equations involving discrete quantum variables and two different atomic numbers, culminating in a specific energy component calculation.",
+     "_reasoning": "**Deriving Kinetic Energy**\n\nI'm focusing on constructing a challenging JEE Advanced physical chemistry numerical. My current efforts are centered around leveraging the relationships between total, kinetic, and potential energy, and how changes in energy manifest, specifically aiming to incorporate the provided formulas for kinetic energy and energy difference.\n\n**Combining Energy and Wavelength**\n\nI'm exploring how to uniquely combine the energy and wavelength formulas for atomic transitions. My current thought is to use them to describe simultaneous events, perhaps involving two different hydrogen-like species or a single ion emitting a photon. This could lead to a more complex problem setup.\n\n",
+     "situation": "A mixture of two different hydrogen-like ions (e.g., He+ and Li2+) undergoing electronic transitions.",
+     "insight": "That the Rydberg formula for wavelength and the Bohr energy formula must be solved simultaneously for two different atomic numbers (Z) and quantum states, recognizing that the total energy is negative and PE is twice the total energy.",
+     "links": "Formula 3 uses the given wavelength to establish a relation between Z and the quantum numbers for the first ion's transition. Formula 2 uses the energy equality to set up a simultaneous equation linking the quantum numbers of both ions. Formula 1 uses the determined quantum number and Z to calculate the potential energy of the electron in that specific orbit.",
+     "drop": null
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-19T11:50:16.908466+00:00",
+     "try_": 1,
+     "problem": "it glues unrelated sub-problems together instead of one chemical situation (Jev: 15%)"
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "orbital_label_to_node_count_radialnodesn",
+     "orbital_label_to_radial_peaks_peakof4r2r2r",
+     "quantum_numbers_to_orbital_label_l0n1"
+    ],
+    "nodes": [
+     "orbital_label",
+     "radial_peaks",
+     "node_count",
+     "quantum_numbers"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     82,
+     77,
+     76
+    ],
+    "trap_ids": [
+     "letter_off_by_one",
+     "peaks_as_nodes",
+     "radial_as_peaks"
+    ],
+    "description": "number of peaks in the radial distribution curve [peaks in 4πr²R² = n − l] | number of nodes [radial = n − l − 1; angular = l; total = n − 1] | the orbital described (or 'not allowed') [l = 0..n−1, m = −l..+l; l = 0 s, 1 p, 2 d, 3 f]",
+    "twist": null
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T11:50:20.846850+00:00",
+     "p": 0.52
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T11:50:41.627120+00:00",
+     "try_": 1,
+     "twist": "simultaneous",
+     "system": "A single electron orbital in a hydrogen-like atom",
+     "hidden_link": "The relationship between the number of peaks and radial nodes (peaks = radial nodes + 1) which must be deduced from combining the formulas rather than given.",
+     "route": "Use Formula 2 to write radial nodes as n - l - 1. Use Formula 1 to write peaks as n - l. Use the given simultaneous conditions equating a multiple of peaks to radial nodes and another quantum number to find n and l. Use Formula 3 to determine the maximum magnetic quantum number m.",
+     "student_must_notice": "That the number of peaks is inherently always one more than the number of radial nodes, which simplifies the simultaneous equations.",
+     "trap": "Students might confuse radial nodes with total nodes or misapply the formula for peaks, leading to fractional or impossible quantum numbers.",
+     "given": "A linear equation relating the number of peaks to the number of radial nodes and the azimuthal quantum number, and a second condition specifying the maximum allowed magnetic quantum number.",
+     "hidden": "The explicit values of n and l, and the fact that peaks minus radial nodes always equals 1.",
+     "asked": "The principal quantum number n of the orbital",
+     "why_hard": "The solver must algebraically manipulate the node and peak formulas simultaneously with quantum number constraints to isolate n without any explicit integer values being handed to them.",
+     "_reasoning": "**Designing Exam Question**\n\nI'm currently focusing on crafting a challenging JEE Advanced Physical Chemistry numerical problem. My goal is to integrate the provided formula for radial distribution curve peaks (n - l) with other relevant quantum number and atomic orbital concepts to create a unique and insightful question for students.\n\n**Formulating Exam Question**\n\nI'm shifting my focus to integrating the number of nodes and orbital descriptor formulas alongside the radial distribution curve peaks. My current direction explores an \"inverse\" twist, where I provide node and peak counts to elicit quantum numbers, aiming for a more intricate challenge.\n\n**Deriving Quantum Numbers**\n\nI'm now working on a numerical question involving simultaneous equations derived from orbital properties. My aim is to present a single-electron system where the sum of the magnetic quantum number and radial nodes equals a given value, and the radial distribution curve peaks equal another, to solve for n+l.\n\n**Combining Orbital Properties**\n\nI'm currently working on a question that cleverly combines the number of radial distribution curve peaks, angular nodes, and total nodes to define a specific orbital. My aim is to derive the quantum numbers n and l from these given properties, leading to a unique orbital identification.\n\n**Calculating Orbital Index**\n\nI'm refining the question to ask for the product of the derived quantum numbers, n and l, using the provided formulas for nodes and peak counts. This approach avoids dependencies on electron configuration rules, focusing solely on the orbital's intrinsic mathematical properties to find the answer.\n\n**Integrating Radial Node Count**\n\nI'm now focusing on questions that specifically use the radial node count in conjunction with other orbital characteristics. My aim is to craft a problem where the radial node count, along with the number of radial distribution curve peaks, uniquely determines the quantum numbers.\n\n",
+     "situation": "A single electron orbital in a hydrogen-like atom",
+     "insight": "That the number of peaks is inherently always one more than the number of radial nodes, which simplifies the simultaneous equations.",
+     "links": "Use Formula 2 to write radial nodes as n - l - 1. Use Formula 1 to write peaks as n - l. Use the given simultaneous conditions equating a multiple of peaks to radial nodes and another quantum number to find n and l. Use Formula 3 to determine the maximum magnetic quantum number m.",
+     "drop": null
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-19T11:50:42.540918+00:00",
+     "try_": 1,
+     "problem": "it links quantities by a relation that is not real chemistry (Jev: 58%); it links its parts by an arbitrary condition (an equality chosen only to connect them, such as a constant numerically equal to a pressure), not by something that physically follows in the situation (Jev: 60%)"
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "dissociation_constant_to_dissociation_constant_kaxkbkwconju",
+     "dissociation_constant_to_ph_hsqrtkac",
+     "dissociation_constant_to_ph_hsqrtkac"
+    ],
+    "nodes": [
+     "dissociation_constant",
+     "ph"
+    ],
+    "chapters": [
+     "Ionic Equilibrium"
+    ],
+    "txs": [
+     192,
+     176,
+     178
+    ],
+    "trap_ids": [
+     "full_dissociation",
+     "multiplies_by_kw",
+     "reports_pOH"
+    ],
+    "description": "pH [K₁ ≫ K₂: only the first step sets [H⁺]] | pH [[OH⁻] = √(K_bC); pH = 14 − pOH] | K_b of the conjugate base [K_a K_b = K_w (conjugate pair)]",
+    "twist": "two_state_difference",
+    "drawn_txs": [
+     192,
+     176,
+     178
+    ],
+    "extra_txs": []
+   },
+   "rounds": 1,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T11:50:43.493858+00:00",
+     "p": 0.55
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T11:50:58.315486+00:00",
+     "try_": 1,
+     "twist": "two_state_difference",
+     "system": "Two separate aqueous solutions at 298 K: one of a weak diprotic acid (H2A, e.g., H2S) and one of its normal sodium salt (Na2A), both at the same initial molar concentration.",
+     "hidden_link": "The relationship between the successive dissociation constants of the acid and the hydrolysis constants of its fully neutralized salt. Specifically, the base dissociation constant (K_b) of the A²⁻ ion depends entirely on the second acid dissociation constant (K_a2) of H2A, not the first.",
+     "route": "For State 1 (H2A solution): Use Formula 1 with K_a1 and C to find [H⁺] and thus pH. For State 2 (Na2A solution): Use Formula 3 to find K_b of A²⁻ using K_w and K_a2. Then use Formula 2 with K_b and C to find [OH⁻], pOH, and subsequently the pH of the salt solution. Finally, find the difference between the two pH values.",
+     "student_must_notice": "The student must realize that for the hydrolysis of the A²⁻ ion, the relevant conjugate acid is HA⁻, meaning the correct K_a to use in K_a * K_b = K_w is K_a2, not K_a1.",
+     "trap": "A student might mistakenly use K_a1 to calculate the K_b for A²⁻, or attempt to account for the second dissociation in State 1 despite K_a1 ≫ K_a2, leading to incorrect pH values for both states.",
+     "given": "The concentration of the solutions, the first and second acid dissociation constants (K_a1 and K_a2) of the diprotic acid, and the ionic product of water (K_w).",
+     "hidden": "The base hydrolysis constant (K_b) of the A²⁻ ion and the explicit instruction to ignore the second dissociation step for the acid's pH calculation.",
+     "asked": "The difference in pH between the Na2A solution and the H2A solution.",
+     "why_hard": "It requires the solver to correctly map the successive dissociation constants of a polyprotic acid to the corresponding hydrolysis steps of its salt in reverse order without being explicitly prompted.",
+     "_reasoning": "**Designing Chemistry Question**\n\nI'm currently crafting a JEE Advanced level physical chemistry problem. My focus is on questions that integrate pH calculations, particularly those involving polyprotic acids where the first dissociation constant is dominant, and also considering basic solutions where hydroxide concentration is key.\n\n**Clarifying Polyprotic Acid pH**\n\nI'm refining the problem by specifying the system: a diprotic acid (H2A) and a salt of its fully deprotonated conjugate base (e.g., Na2A). I'm focusing on calculating the pH of the Na2A solution, using the Kb of the A^2- ion, which is Kw/Ka2, and then determining the hydroxide concentration from that.\n\n",
+     "situation": "Two separate aqueous solutions at 298 K: one of a weak diprotic acid (H2A, e.g., H2S) and one of its normal sodium salt (Na2A), both at the same initial molar concentration.",
+     "insight": "The student must realize that for the hydrolysis of the A²⁻ ion, the relevant conjugate acid is HA⁻, meaning the correct K_a to use in K_a * K_b = K_w is K_a2, not K_a1.",
+     "links": "For State 1 (H2A solution): Use Formula 1 with K_a1 and C to find [H⁺] and thus pH. For State 2 (Na2A solution): Use Formula 3 to find K_b of A²⁻ using K_w and K_a2. Then use Formula 2 with K_b and C to find [OH⁻], pOH, and subsequently the pH of the salt solution. Finally, find the difference between the two pH values.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T11:50:59.256797+00:00",
+     "twist": "two_state_difference",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T11:51:05.346623+00:00",
+     "attempt": 1,
+     "twist": "two_state_difference",
+     "examples": [
+      "2024P2_Chem_Q8",
+      "2015P2_Chem_Q37"
+     ],
+     "stem": "Two separate aqueous solutions are prepared at 25 °C: Solution X contains a weak diprotic acid H₂A at a concentration of [[C]] mol L⁻¹, and Solution Y contains its normal sodium salt Na₂A at the same concentration of [[C]] mol L⁻¹. For H₂A, the first and second acid dissociation constants are K_a1 = [[Ka1]] and K_a2 = [[Ka2]], respectively. Calculate the magnitude of the difference in pH between Solution Y and Solution X.\n(Given: K_w = [[Kw]] at 25 °C)",
+     "asks": "the difference in pH between the sodium salt solution and the diprotic acid solution",
+     "unit": "",
+     "asked": "delta_pH",
+     "ranges": {
+      "C": [
+       0.01,
+       0.1,
+       false
+      ],
+      "Ka1": [
+       1e-05,
+       0.001,
+       false
+      ],
+      "Ka2": [
+       1e-11,
+       1e-09,
+       false
+      ]
+     },
+     "fixed": {
+      "Kw": 1e-14
+     },
+     "answer_range": [
+      4.0,
+      9.0
+     ],
+     "free": {
+      "Kw": 1e-14
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T11:51:18.133337+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    acid_ph = step_192(dissociation_constant=Ka1, concentration=C)['ph']\n    kb = step_178(dissociation_constant=Ka2)['Kb']\n    salt_ph = step_176(Kb=kb, concentration=C)['ph']\n    return abs(salt_ph - acid_ph)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "Kw": 1e-14,
+      "C": 0.052,
+      "Ka1": 0.00073,
+      "Ka2": 7.76e-11
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T11:51:20.397197+00:00",
+     "ok": true,
+     "values": {
+      "Kw": 1e-14,
+      "C": 0.0195,
+      "Ka1": 0.000279,
+      "Ka2": 3.87e-10
+     },
+     "tries": 2,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T11:51:21.394266+00:00",
+     "stem": "Two separate aqueous solutions are prepared at 25 °C: Solution X contains a weak diprotic acid H₂A at a concentration of 0.0195 mol L⁻¹, and Solution Y contains its normal sodium salt Na₂A at the same concentration of 0.0195 mol L⁻¹. For H₂A, the first and second acid dissociation constants are K_a1 = 2.79 × 10^-4 and K_a2 = 3.87 × 10^-10, respectively. Calculate the magnitude of the difference in pH between Solution Y and Solution X.\n(Given: K_w = 1.00 × 10^-14 at 25 °C) Give the answer to 3 significant figures.",
+     "code": "def solve():\n    acid_ph = step_192(dissociation_constant=Ka1, concentration=C)['ph']\n    kb = step_178(dissociation_constant=Ka2)['Kb']\n    salt_ph = step_176(Kb=kb, concentration=C)['ph']\n    return abs(salt_ph - acid_ph)",
+     "asks": "the difference in pH between the sodium salt solution and the diprotic acid solution",
+     "unit": "",
+     "twist": "two_state_difference",
+     "givens": [
+      {
+       "value": 0.0195,
+       "quote": "C"
+      },
+      {
+       "value": 0.000279,
+       "quote": "Ka1"
+      },
+      {
+       "value": 3.87e-10,
+       "quote": "Ka2"
+      },
+      {
+       "value": 1e-14,
+       "quote": "Kw"
+      }
+     ],
+     "answer": 8.185,
+     "trace": [
+      {
+       "tx": 192,
+       "src": "dissociation_constant",
+       "dst": "ph",
+       "formula": "K₁ ≫ K₂: only the first step sets [H⁺]",
+       "inputs": {
+        "dissociation_constant": 0.000279,
+        "concentration": 0.0195
+       },
+       "outputs": {
+        "ph": 2.6581
+       }
+      },
+      {
+       "tx": 178,
+       "src": "dissociation_constant",
+       "dst": "dissociation_constant",
+       "formula": "K_a K_b = K_w (conjugate pair)",
+       "inputs": {
+        "dissociation_constant": 3.87e-10
+       },
+       "outputs": {
+        "Kb": 2.584e-05
+       }
+      },
+      {
+       "tx": 176,
+       "src": "dissociation_constant",
+       "dst": "ph",
+       "formula": "[OH⁻] = √(K_bC); pH = 14 − pOH",
+       "inputs": {
+        "Kb": 2.58397932817e-05,
+        "concentration": 0.0195
+       },
+       "outputs": {
+        "ph": 10.843
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "full_dissociation",
+       "desc": "assumes both protons are released",
+       "tx": 192,
+       "step": 0,
+       "wrong_answer": 9.434
+      },
+      {
+       "id": "multiplies_by_kw",
+       "desc": "multiplies K_w by K_a instead of dividing",
+       "tx": 178,
+       "step": 1,
+       "wrong_answer": 1.219
+      },
+      {
+       "id": "reports_pOH",
+       "desc": "reports pOH as pH",
+       "tx": 176,
+       "step": 2,
+       "wrong_answer": 0.4986
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "K_w = 1.0 × 10⁻¹⁴ at 25 °C"
+     ],
+     "depth": 2,
+     "extra_txs": [],
+     "preset": {
+      "C": 0.0195,
+      "Ka1": 0.000279,
+      "Ka2": 3.87e-10,
+      "Kw": 1e-14
+     },
+     "template": "Two separate aqueous solutions are prepared at 25 °C: Solution X contains a weak diprotic acid H₂A at a concentration of [[C]] mol L⁻¹, and Solution Y contains its normal sodium salt Na₂A at the same concentration of [[C]] mol L⁻¹. For H₂A, the first and second acid dissociation constants are K_a1 = [[Ka1]] and K_a2 = [[Ka2]], respectively. Calculate the magnitude of the difference in pH between Solution Y and Solution X.\n(Given: K_w = [[Kw]] at 25 °C)",
+     "ranges": {
+      "C": [
+       0.01,
+       0.1,
+       false
+      ],
+      "Ka1": [
+       1e-05,
+       0.001,
+       false
+      ],
+      "Ka2": [
+       1e-11,
+       1e-09,
+       false
+      ]
+     },
+     "answer_range": [
+      4.0,
+      9.0
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T11:51:27.742929+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Solution X: H2A weak diprotic acid. First dissociation dominates at this concentration because Ka2 << Ka1. Approximate [H+] ≈ √(Ka1·C) = √(2.79×10⁻⁴ × 0.0195). Compute: 2.79×10⁻⁴ × 0.0195 = 5.4405×10⁻⁶; √ = 2.332×10⁻³ M. Thus pH_X ≈ -log(2.332×10⁻³) = 2.63 (3 sf).\n\nSolution Y: Na₂A is the normal sodium salt of H₂A, i.e., A²⁻. A²⁻ hydrolyzes: A²⁻ + H₂O ⇌ HA⁻ + OH⁻ with Kb2 = Kw/Ka2 = 1.00×10⁻¹⁴ / 3.87×10⁻¹⁰ = 2.58×10⁻⁵. For a weak base of concentration C = 0.0195 M, [OH⁻] ≈ √(Kb2·C) = √(2.58×10⁻⁵ × 0.0195). Compute: 2.58×10⁻⁵ × 0.0195 = 5.035×10⁻⁷; √ = 7.10×10⁻⁴ M. Thus pOH ≈ -log(7.10×10⁻⁴) = 3.15, pH_Y ≈ 10.85.\n\nDifference |pH_Y – pH_X| = 10.85 – 2.63 = 8.22 (3 sf).",
+       "objection": null,
+       "answer_line": "[TYPE: acidity] [CALC_VALUE: 8.22] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "8.22",
+       "unit": "",
+       "answer_type": "acidity",
+       "calc_value": [
+        8.22
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        8.22
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "glm-5.3-flash",
+      "minimax-m3"
+     ],
+     "first_solver": "granite-4.2-8b"
+    },
+    {
+     "stage": "refine",
+     "at": "2026-11-19T11:51:28.704524+00:00",
+     "mode": "too_easy",
+     "probabilities": {
+      "cue_word": {
+       "p": 0.04,
+       "evidence": "",
+       "chosen": false
+      },
+      "ready_data": {
+       "p": 0.09,
+       "evidence": "",
+       "chosen": false
+      },
+      "shortcut_worked": {
+       "p": 0.2,
+       "evidence": "",
+       "chosen": false
+      },
+      "plugin_order": {
+       "p": 0.34,
+       "evidence": "",
+       "chosen": true
+      },
+      "one_system": {
+       "p": 0.0,
+       "evidence": "",
+       "chosen": false
+      },
+      "too_few_steps": {
+       "p": 0.04,
+       "evidence": "",
+       "chosen": false
+      },
+      "textbook_pattern": {
+       "p": 0.29,
+       "evidence": "",
+       "chosen": false
+      },
+      "trivial_units": {
+       "p": 0.0,
+       "evidence": "",
+       "chosen": false
+      }
+     },
+     "chosen": [
+      "plugin_order"
+     ],
+     "twist": "inverse",
+     "added": "",
+     "feedback": "Your earlier question was solved easily by a weak model, so it is not yet a JEE Advanced question. Make it genuinely harder by applying ONLY the changes below. Never make it harder by messier numbers or longer sentences. It must stay fair, complete and unambiguous, with exactly one answer, and still need every formula listed above.\n1. The question was a straight plug-in in solution order. Change what is asked: Run the chain backwards: give a later result (one a student would normally be asked for) and ask for an INPUT of one of the formulas, so the solver has to work back through the formulas to it. State a result that would normally be asked, and ask for a quantity that would normally be given, so the solver has to set up the relation and work back through the formulas."
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T11:51:58.477919+00:00",
+     "try_": 1,
+     "system": "Aqueous solutions of an organic diprotic acid (H2A) and its primary mono-sodium salt (NaHA) at 298 K.",
+     "hidden_link": "The identity of the active Ka in the conjugate pair relation. For the mono-sodium salt acting purely as a weak base (when K2 is exceptionally small or suppressed), the relevant conjugate acid is H2A, meaning Kb of HA- is Kw / K1, linking the base hydrolysis directly to the first dissociation constant of the polyprotic acid.",
+     "route": "Formula 2: Takes the given pH and concentration of the NaHA solution to compute the base dissociation constant (Kb) of the HA- ion. Formula 3: Takes the Kb of HA- and Kw to compute the Ka of its conjugate acid (which is K1 of H2A). Formula 1: Takes the computed K1 and the given pH of the pure H2A solution to compute the required initial concentration of the H2A solution.",
+     "student_must_notice": "The student must realize that the Kb calculated from the hydrolysis of HA- corresponds to the conjugate acid H2A, and therefore yields K1, not K2, which perfectly feeds into the polyprotic acid formula.",
+     "trap": "Assuming that because HA- is an intermediate ion, its hydrolysis constant Kb is related to K2 (the dissociation of HA- to A2-), leading the student to incorrectly assign the calculated Ka as K2 and stall because Formula 1 requires K1.",
+     "given": "The pH of the mono-sodium salt (NaHA) solution, the concentration of the NaHA solution, and the pH of the pure diprotic acid (H2A) solution.",
+     "hidden": "The actual values of K1, K2, or Kb, and the explicit relation that Kb(HA-) connects to K1.",
+     "asked": "The initial concentration of the pure diprotic acid (H2A) solution, in mol L^-1",
+     "why_hard": "It forces the student to trace the exact conjugate pair logic backwards from a salt's pH to isolate K1, avoiding the amphoteric trap and correctly identifying which Ka dictates the hydrolysis.",
+     "_reasoning": "**Designing Complex Questions**\n\nI'm currently devising a challenging numerical question that integrates pH, K₁, and the provided relations. My focus is on crafting a scenario requiring careful application of these concepts to arrive at a singular, definitive answer.\n\n**Integrating Multiple Chemical Concepts**\n\nI'm building a problem that starts from a calculated pH and asks for an initial concentration, working backward through the dissociation steps of a diprotic acid and its conjugate bases. I'm ensuring all necessary formulas are present and the system is chemically realistic.\n\n**Refining Problem Logic**\n\nI'm working to clarify the precise relationships between $K_1$, $K_2$, and $K_b$ for the species involved, ensuring the problem logically flows from pH to initial concentration by correctly applying the weak base formula to the appropriate conjugate base.\n\n**Formulating Hydrolysis Equations**\n\nI'm currently clarifying the hydrolysis reactions and associated $K_b$ values for salts of polyprotic acids. My focus is on ensuring the correct $K_b$ (derived from $K_w/K_a$) is applied when starting from the pH of a neutralized salt, and that this logically connects back to the initial acid's $K_1$ and $K_2$.\n\n**Connecting Dissociation Constants**\n\nI'm re-evaluating how to logically connect $K_1$ and $K_2$ for a polyprotic acid. I'm exploring scenarios where the pH of $H_2A$ and $Na_2A$ are given to implicitly link these constants, or if $K_2$ is vanishingly small, effectively making it a monoprotic acid scenario.\n\n**Calculating $K_b$ from pH**\n\nI'm now focusing on working backward from a given pH of a weak base solution. My goal is to use this information to calculate the base dissociation constant ($K_b$), which is a key input for other calculations.\n\n**Revising Problem Structure**\n\nI'm rethinking how to incorporate polyprotic acid concepts without overcomplicating. My current approach involves using a $pH$ value of a conjugate base solution to deduce $K_2$, then linking that to $K_1$ implicitly.\n\n",
+     "situation": "Aqueous solutions of an organic diprotic acid (H2A) and its primary mono-sodium salt (NaHA) at 298 K.",
+     "insight": "The student must realize that the Kb calculated from the hydrolysis of HA- corresponds to the conjugate acid H2A, and therefore yields K1, not K2, which perfectly feeds into the polyprotic acid formula.",
+     "links": "Formula 2: Takes the given pH and concentration of the NaHA solution to compute the base dissociation constant (Kb) of the HA- ion. Formula 3: Takes the Kb of HA- and Kw to compute the Ka of its conjugate acid (which is K1 of H2A). Formula 1: Takes the computed K1 and the given pH of the pure H2A solution to compute the required initial concentration of the H2A solution.",
+     "drop": null,
+     "twist": "inverse"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T11:52:04.580536+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2023P2_Chem_Q11",
+      "2016P2_Chem_Q21"
+     ],
+     "stem": "An aqueous solution of the mono-sodium salt (NaHA) of an organic diprotic acid (H₂A) has a concentration of [[C_salt]] mol L^-1 and a pH of [[pH_salt]] at 25 °C, where HA⁻ undergoes negligible further acid dissociation (K₂ ≪ K₁). A separate aqueous solution of the pure diprotic acid (H₂A) has a pH of [[pH_acid]] at the same temperature. Assuming only the first dissociation step governs the hydronium ion concentration in the pure acid solution, calculate the initial concentration of the H₂A solution (in mol L^-1).\n(Given: K_w = [[Kw]] at 25 °C)",
+     "asks": "the initial concentration of the pure diprotic acid solution",
+     "unit": "mol L^-1",
+     "asked": "C_acid",
+     "ranges": {
+      "C_salt": [
+       0.05,
+       0.5,
+       false
+      ],
+      "pH_salt": [
+       8.2,
+       9.5,
+       false
+      ],
+      "pH_acid": [
+       2.5,
+       3.8,
+       false
+      ]
+     },
+     "fixed": {
+      "Kw": 1e-14
+     },
+     "answer_range": [
+      0.005,
+      0.8
+     ],
+     "free": {
+      "Kw": 1e-14
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T11:52:23.050105+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    Kb = find(step_176, \"Kb\", result=pH_salt, concentration=C_salt)\n    K1_engine = find(step_178, \"dissociation_constant\", result=Kb)\n    Kw_engine = step_178(dissociation_constant=1)['Kb']\n    K1 = K1_engine * (Kw / Kw_engine)\n    return find(step_192, \"concentration\", result=pH_acid, dissociation_constant=K1)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "Kw": 1e-14,
+      "C_salt": 0.166,
+      "pH_salt": 8.41,
+      "pH_acid": 2.62
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T11:52:25.216901+00:00",
+     "ok": true,
+     "values": {
+      "Kw": 1e-14,
+      "C_salt": 0.166,
+      "pH_salt": 8.41,
+      "pH_acid": 2.62
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T11:52:26.232399+00:00",
+     "stem": "An aqueous solution of the mono-sodium salt (NaHA) of an organic diprotic acid (H₂A) has a concentration of 0.166 mol L^-1 and a pH of 8.41 at 25 °C, where HA⁻ undergoes negligible further acid dissociation (K₂ ≪ K₁). A separate aqueous solution of the pure diprotic acid (H₂A) has a pH of 2.62 at the same temperature. Assuming only the first dissociation step governs the hydronium ion concentration in the pure acid solution, calculate the initial concentration of the H₂A solution (in mol L^-1).\n(Given: K_w = 1.00 × 10^-14 at 25 °C) Give the answer in mol L^-1, to 3 significant figures.",
+     "code": "def solve():\n    Kb = find(step_176, \"Kb\", result=pH_salt, concentration=C_salt)\n    K1_engine = find(step_178, \"dissociation_constant\", result=Kb)\n    Kw_engine = step_178(dissociation_constant=1)['Kb']\n    K1 = K1_engine * (Kw / Kw_engine)\n    return find(step_192, \"concentration\", result=pH_acid, dissociation_constant=K1)",
+     "asks": "the initial concentration of the pure diprotic acid solution",
+     "unit": "mol L^-1",
+     "twist": "inverse",
+     "givens": [
+      {
+       "value": 0.166,
+       "quote": "C_salt"
+      },
+      {
+       "value": 8.41,
+       "quote": "pH_salt"
+      },
+      {
+       "value": 2.62,
+       "quote": "pH_acid"
+      },
+      {
+       "value": 1e-14,
+       "quote": "Kw"
+      }
+     ],
+     "answer": 0.0253,
+     "trace": [
+      {
+       "tx": 176,
+       "src": "dissociation_constant",
+       "dst": "ph",
+       "formula": "[OH⁻] = √(K_bC); pH = 14 − pOH",
+       "inputs": {
+        "concentration": 0.166,
+        "Kb": 3.98014264186e-11
+       },
+       "outputs": {
+        "ph": 8.41
+       }
+      },
+      {
+       "tx": 178,
+       "src": "dissociation_constant",
+       "dst": "dissociation_constant",
+       "formula": "K_a K_b = K_w (conjugate pair)",
+       "inputs": {
+        "dissociation_constant": 0.000251247276789
+       },
+       "outputs": {
+        "Kb": 3.9801e-11
+       }
+      },
+      {
+       "tx": 178,
+       "src": "dissociation_constant",
+       "dst": "dissociation_constant",
+       "formula": "K_a K_b = K_w (conjugate pair)",
+       "inputs": {
+        "dissociation_constant": 1
+       },
+       "outputs": {
+        "Kb": 1e-14
+       }
+      },
+      {
+       "tx": 192,
+       "src": "dissociation_constant",
+       "dst": "ph",
+       "formula": "K₁ ≫ K₂: only the first step sets [H⁺]",
+       "inputs": {
+        "dissociation_constant": 0.000251247276789,
+        "concentration": 0.0253021632433
+       },
+       "outputs": {
+        "ph": 2.62
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "reports_pOH",
+       "desc": "reports pOH as pH",
+       "tx": 176,
+       "step": 0,
+       "wrong_answer": 0.002399
+      },
+      {
+       "id": "full_dissociation",
+       "desc": "assumes both protons are released",
+       "tx": 192,
+       "step": 2,
+       "wrong_answer": 0.001199
+      }
+     ],
+     "tolerance": 0.010866596253018557,
+     "constants": [
+      "K_w = 1.0 × 10⁻¹⁴ at 25 °C"
+     ],
+     "depth": 1,
+     "extra_txs": [],
+     "preset": {
+      "C_salt": 0.166,
+      "pH_salt": 8.41,
+      "pH_acid": 2.62,
+      "Kw": 1e-14
+     },
+     "template": "An aqueous solution of the mono-sodium salt (NaHA) of an organic diprotic acid (H₂A) has a concentration of [[C_salt]] mol L^-1 and a pH of [[pH_salt]] at 25 °C, where HA⁻ undergoes negligible further acid dissociation (K₂ ≪ K₁). A separate aqueous solution of the pure diprotic acid (H₂A) has a pH of [[pH_acid]] at the same temperature. Assuming only the first dissociation step governs the hydronium ion concentration in the pure acid solution, calculate the initial concentration of the H₂A solution (in mol L^-1).\n(Given: K_w = [[Kw]] at 25 °C)",
+     "ranges": {
+      "C_salt": [
+       0.05,
+       0.5,
+       false
+      ],
+      "pH_salt": [
+       8.2,
+       9.5,
+       false
+      ],
+      "pH_acid": [
+       2.5,
+       3.8,
+       false
+      ]
+     },
+     "answer_range": [
+      0.005,
+      0.8
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T11:54:28.237044+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Let K1 be the first dissociation constant of H2A. For the pure acid solution at pH 2.62, only the first dissociation matters and [H+] = 10^{-2.62} = 2.39×10^{-3} M. Assuming [HA^-] ≈ [H2A]_initial = c (since [H+] ≪ c), we have K1 ≈ [H+]/c = 2.39×10^{-3}/c.\n\nFor the NaHA solution (0.166 M), pH = 8.41 gives [H+] = 10^{-8.41} = 3.89×10^{-9} M. Because K2 ≪ K1, HA^- does not further dissociate, so the equilibrium is H2A ⇌ H+ + HA^-. Let x = [H2A] at equilibrium. Then [HA^-] = 0.166 - x ≈ 0.166 (x is small). K1 = [H+][HA^-]/[H2A] = (3.89×10^{-9})(0.166)/x.\n\nEquating the two expressions for K1:\n(2.39×10^{-3})/c = (3.89×10^{-9})(0.166)/x.\nBut x ≈ c (the initial concentration of H2A in the pure acid equals the equilibrium [H2A] in the NaHA solution because NaHA is the conjugate base of the same acid and the amount of H2A formed from dissociation of HA^- is negligible compared to 0.166 M). Thus x ≈ c.\n\nHence (2.39×10^{-3})/c ≈ (3.89×10^{-9})(0.166)/c → cancel c (non‑zero) gives 2.39×10^{-3} ≈ (3.89×10^{-9})(0.166) = 6.47×10^{-10}, which is false. Therefore the approximation x ≈ c is invalid; instead solve directly.\n\nFrom the NaHA data: K1 = (3.89×10^{-9})(0.166)/x.\nFrom the pure acid data: K1 = (2.39×10^{-3})c / (c - 2.39×10^{-3}) ≈ 2.39×10^{-3} (since c ≫ [H+]).\nSet them equal: (3.89×10^{-9})(0.166)/x = 2.39×10^{-3}.\nThus x = (3.89×10^{-9})(0.166) / (2.39×10^{-3}) = (6.47×10^{-10}) / (2.39×10^{-3}) ≈ 2.71×10^{-7} M.\nThis x is the equilibrium [H2A] in the NaHA solution, not the initial c.\n\nNow use the pure acid equilibrium: K1 ≈ [H+]/c = 2.39×10^{-3}/c. But K1 also equals (3.89×10^{-9})(0.166)/x. Substitute x ≈ 2.71×10^{-7}:\nK1 = (3.89×10^{-9})(0.166)/(2.71×10^{-7}) ≈ 2.39×10^{-3} (consistent).\nThus c = [H+]/K1 = (2.39×10^{-3})/(2.39×10^{-3}) = 1.00 M.\nTherefore the initial concentration of the H2A solution is approximately 1.00 mol L^{-1}.\n\n(Three‑significant‑figure value: 1.00 mol L^{-1}.)",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: 1.00] [CALC_UNIT: mol/L] [SUBSTANCE: null]",
+       "final_answer": "1 mol L^-1",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        1.0
+       ],
+       "calc_unit": [
+        "mol/L"
+       ],
+       "target_unit": "mol L^-1",
+       "final_value": [
+        1.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "For NaHA (amphiprotic, K₂ negligible): pH = ½(pK₁ + pK_w) → pK₁ = 2×8.41 − 14 = 2.82, so K₁ = 2.57×10⁻⁶ mol/L. For the pure H₂A solution, pH = 2.62 → [H⁺] = 2.399×10⁻³ M. With only the first dissociation governing: H₂A ⇌ H⁺ + HA⁻, K₁ = [H⁺]²/(C − [H⁺]) (negligible second dissociation since K₂ ≪ K₁). So C = [H⁺] + [H⁺]²/K₁ = 2.399×10⁻³ + (2.399×10⁻³)²/(2.57×10⁻⁶) = 0.0024 + 109.67 ≈ 109.7 mol/L. This concentration is physically absurd for an aqueous solution (well above water's molarity, ~55.5 M), indicating the problem's given pH values are inconsistent/contrived; nevertheless the formal calculation gives C ≈ 110 mol/L.",
+       "objection": {
+        "type": "chemistry",
+        "detail": "The computed concentration (~110 mol/L) exceeds what is physically possible in water (~55.5 M pure water), so the given pH values are chemically inconsistent; the formal answer follows from the stated assumptions."
+       },
+       "answer_line": "[TYPE: equilibria] [CALC_VALUE: 110] [CALC_UNIT: mol/L] [SUBSTANCE: H2A]",
+       "final_answer": "110 mol L^-1",
+       "unit": "",
+       "answer_type": "equilibria",
+       "calc_value": [
+        110.0
+       ],
+       "calc_unit": [
+        "mol/L"
+       ],
+       "target_unit": "mol L^-1",
+       "final_value": [
+        110.0
+       ],
+       "substance": [
+        "H2A"
+       ],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "minimax-m3",
+       "model": "minimax/minimax-m3",
+       "working": "From NaHA solution (0.166 M, pH 8.41): [H⁺] = 3.8905×10⁻⁹ M, [OH⁻] = 2.5704×10⁻⁶ M. Since K₂≪K₁, hydrolysis dominates: HA⁻ + H₂O ⇌ H₂A + OH⁻, giving K₁ = Kw·C/[OH⁻]² = (10⁻¹⁴)(0.166)/(2.5704×10⁻⁶)² = 2.5127×10⁻⁴. From H₂A solution (pH 2.62): [H⁺] = 2.3988×10⁻³ M. With only first dissociation: K₁ = [H⁺]²/(C₀-[H⁺]), so C₀ = [H⁺] + [H⁺]²/K₁ = 2.3988×10⁻³ + 5.7543×10⁻⁶/2.5127×10⁻⁴ = 0.02530 M.",
+       "objection": null,
+       "answer_line": "[TYPE: equilibrium] [CALC_VALUE: 0.0253] [CALC_UNIT: mol/L] [SUBSTANCE: H2A]",
+       "final_answer": "0.0253 mol L^-1",
+       "unit": "",
+       "answer_type": "equilibrium",
+       "calc_value": [
+        0.0253
+       ],
+       "calc_unit": [
+        "mol/L"
+       ],
+       "target_unit": "mol L^-1",
+       "final_value": [
+        0.0253
+       ],
+       "substance": [
+        "H2A"
+       ],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [],
+     "first_solver": "minimax-m3"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-19T11:55:46.701365+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the K_b of the conjugate base. A common mistake there: multiplies K_w by K_a instead of dividing.",
+       "solved": false,
+       "answer": "0.0024 mol L^-1"
+      },
+      {
+       "member": "glm-5.3-flash",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the K_b of the conjugate base. A common mistake there: multiplies K_w by K_a instead of dividing.",
+       "solved": true,
+       "answer": "0.0253 mol L^-1"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

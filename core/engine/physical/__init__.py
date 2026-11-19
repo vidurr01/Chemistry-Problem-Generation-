@@ -14,10 +14,10 @@ import json
 import os
 
 from core.engine.base import EngineError, Step, assign_steps, links, plan_chain, run_chain  # noqa: F401
-from core.engine.physical import (atomic, electro_solutions, equilibrium, gases, kinetics, stoichiometry,
-                                  thermo)
+from core.engine.physical import (advanced, atomic, electro_solutions, equilibrium, gases, kinetics,
+                                  stoichiometry, thermo)
 
-_MODULES = [stoichiometry, atomic, gases, thermo, equilibrium, kinetics, electro_solutions]
+_MODULES = [stoichiometry, atomic, gases, thermo, equilibrium, kinetics, electro_solutions, advanced]
 
 # ── Topics ──────────────────────────────────────────────────────────────────
 # A step's topic is its concept-book chapter, except that nuclear entries are split off
@@ -56,6 +56,7 @@ BRIDGES = {frozenset(p) for p in [
     ("Chemical Equilibrium", "Chemical Kinetics & Nuclear Chemistry"),
     ("Ionic Equilibrium", "Electrochemistry"), ("Ionic Equilibrium", "Dilute Solutions"),
     ("Electrochemistry", "Dilute Solutions"),
+    ("Stoichiometry", "Surface Chemistry"),        # amounts adsorbed found by titration (tx 387)
 ]}
 
 STEPS: dict = {}
@@ -124,6 +125,18 @@ NEW_NODE_NAMES = {
     "relative_lowering":   "relative lowering of vapour pressure",
     "ostwald_walker":      "Ostwald-Walker measurement",
     "equilibrium_reaction": "equilibrium reaction (states, ΔH)",
+    # added with core/engine/physical/advanced.py
+    "fractional_life_ratio": "ratio of fractional lives (t₇₅/t₅₀)",
+    "specific_enthalpy":   "enthalpy change per gram",
+    "meeting_distance":    "distance at which two diffusing gases meet",
+    "mean_free_path":      "mean free path",
+    "diffusion_coefficient": "diffusion coefficient",
+    "residual_concentration": "concentration left after precipitation",
+    "potential_energy":    "electrostatic potential energy",
+    "recoil_velocity":     "recoil velocity of an atom",
+    "reaction_mechanism":  "reaction mechanism (fast and slow steps)",
+    "molecular_area":      "area occupied by one adsorbed molecule",
+    "current":             "electric current",
 }
 
 

@@ -1,0 +1,480 @@
+{
+ "subject": "physical",
+ "saved_at": "20261115T221637",
+ "spend": {
+  "total_cost_usd": 0.04851,
+  "by_role": {
+   "generator": {
+    "calls": 2,
+    "prompt_tokens": 4115,
+    "completion_tokens": 7840,
+    "cost": 0.03248625
+   },
+   "coder": {
+    "calls": 3,
+    "prompt_tokens": 7521,
+    "completion_tokens": 26714,
+    "cost": 0.00822453
+   },
+   "council": {
+    "calls": 6,
+    "prompt_tokens": 3816,
+    "completion_tokens": 10914,
+    "cost": 0.00393156
+   },
+   "verifier": {
+    "calls": 4,
+    "prompt_tokens": 16612,
+    "completion_tokens": 4419,
+    "cost": 0.0038707
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "equilibrium_constant_to_delta_g_grtlnk",
+     "equivalents_to_percent_purity_eqbasetakene",
+     "molarity_to_molarity_mfvfmivimole",
+     "orbital_label_to_radial_peaks_peakof4r2r2r",
+     "redox_reagent_to_n_factor_mno48h5emn24"
+    ],
+    "nodes": [
+     "equivalents",
+     "percent_purity",
+     "equilibrium_constant",
+     "delta_g",
+     "molarity",
+     "orbital_label",
+     "radial_peaks",
+     "redox_reagent",
+     "n_factor"
+    ],
+    "chapters": [
+     "Stoichiometry",
+     "Chemical Equilibrium",
+     "Atomic Structure"
+    ],
+    "txs": [
+     41,
+     369,
+     23,
+     82,
+     51
+    ],
+    "trap_ids": [
+     "forgets_back_titration",
+     "log10_as_ln",
+     "peaks_as_nodes",
+     "water_as_final_volume",
+     "wrong_n_factor"
+    ],
+    "description": "percentage purity of the sample [eq(sample) = eq(added) − eq(back-titrated); % = eq × E / mass × 100] | standard Gibbs energy change (kJ mol⁻¹) [ΔG° = −RT ln K] | molarity after dilution (mol L⁻¹) [M1V1 = M2V2] | number of peaks in the radial distribution curve [peaks in 4πr²R² = n − l] | n-factor of the reagent [n-factor = electrons gained or lost per formula unit]",
+    "twist": "condition",
+    "drawn_txs": [
+     41,
+     369,
+     23,
+     82,
+     51
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "question",
+     "at": "2026-11-15T22:12:06.582121+00:00",
+     "attempt": 1,
+     "twist": "condition",
+     "examples": [
+      "2021P2_Chem_Q17",
+      "2018P2_Chem_Q10"
+     ],
+     "stem": "A 50.0 mL stock solution of 0.10 M potassium iodate (KIO₃) is diluted by adding 200.0 mL of water. A 200.0 mL portion of this diluted KIO₃ solution is treated with excess potassium iodide (KI) in acidic medium to react with a 1.26 g impure sample of sodium sulfite (Na₂SO₃). The unreacted KIO₃ requires 50.0 mL of 0.080 N standard reducing solution for complete back-titration. A separate gas-phase isomerization reaction involving the purified product has an equilibrium constant K with ln K = 9.62. Calculate the temperature T (in K) at which the standard Gibbs energy change (ΔG°) of this isomerization reaction equals −(N × P × 100) J mol⁻¹, where N is the number of peaks in the radial distribution curve (4πr²R²) of a 4p electron and P is the percentage purity of the Na₂SO₃ sample. (Given: R = 8.314 J K⁻¹ mol⁻¹; equivalent mass of Na₂SO₃ = 63.0 g eq⁻¹; in acidic medium, IO₃⁻ is reduced to I₂ in the presence of excess I⁻).",
+     "asks": "the temperature (in K) at which the condition is satisfied, rounded to the nearest integer",
+     "unit": "K",
+     "solution_outline": "Step 1 (n-factor of reagent): In acidic medium with excess KI, iodate is reduced to iodine: IO3- + 5e- + 6H+ -> 1/2 I2 + 3H2O. The n-factor of KIO3 is 5.\nStep 2 (Molarity after dilution): M1*V1 = M2*V2 => M2 = (0.10 M * 50 mL) / (50 mL + 200 mL) = 0.020 M. Normality of the diluted KIO3 solution = 0.020 M * 5 = 0.10 N.\nStep 3 (Percentage purity by back-titration): eq(KIO3 added) = 0.200 L * 0.10 N = 0.0200 eq. eq(back-titrated) = 0.050 L * 0.080 N = 0.0040 eq. eq(Na2SO3) = 0.0200 - 0.0040 = 0.0160 eq. Mass of pure Na2SO3 = eq * E = 0.0160 eq * 63.0 g eq-1 = 1.008 g. Percentage purity P = (1.008 g / 1.26 g) * 100 = 80.0%.\nStep 4 (Radial distribution peaks): For a 4p orbital, n = 4 and l = 1. Number of peaks in 4*pi*r^2*R^2 = n - l = 4 - 1 = 3.\nStep 5 (Standard Gibbs energy and temperature): Delta G° = -(peaks) * P * 100 J mol-1 = -3 * 80 * 100 = -24000 J mol-1. From Delta G° = -RT ln K: T = -Delta G° / (R ln K) = 24000 / (8.314 * 9.62) = 300.07 K ≈ 300 K.",
+     "how_it_differs": "Unlike 2021P2_Chem_Q17 (which equates work done in two thermodynamic paths of an ideal gas) and 2018P2_Chem_Q10 (which determines threshold hydrogen partial pressure to prevent copper oxide formation via coupled Ellingham Delta G° values), this question links the determination of sample purity via iodometric back-titration of a diluted standard with atomic wave mechanics (radial distribution peaks) to establish the threshold temperature of a thermodynamic equilibrium."
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T22:13:38.839785+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Record all given values\n    V_stock = given(50.0, \"50.0 mL\")\n    M_stock = given(0.10, \"0.10 M\")\n    V_water = given(200.0, \"200.0 mL\")\n    V_portion = given(200.0, \"200.0 mL\")\n    mass_sample = given(1.26, \"1.26 g\")\n    V_back = given(50.0, \"50.0 mL\")\n    N_back = given(0.080, \"0.080 N\")\n    eq_mass = given(63.0, \"63.0 g eq⁻¹\")\n    lnK = given(9.62, \"9.62\")\n    R_val = given(8.314, \"8.314 J K⁻¹ mol⁻¹\")\n    redox = given(\"KIO3 with excess KI in acid (IO3- -> I2)\", \"in acidic medium, IO₃⁻ is reduced to I₂ in the presence of excess I⁻\")\n    orbital = given(\"4p\", \"a 4p electron\")\n\n    # Step 1: Dilution\n    dil = step_23(molarity=M_stock, initial_volume=V_stock, water_added=V_water)\n    M_dil = dil['molarity']\n\n    # Step 2: n-factor of KIO3\n    nf = step_51(redox_reagent=redox)\n    n_factor = nf['n_factor']\n\n    # Moles of KIO3 in the 200 mL portion\n    moles_KIO3 = M_dil * (V_portion / 1000.0)\n\n    # Equivalents of KIO3 added\n    eq_KIO3 = moles_KIO3 * n_factor\n\n    # Back-titration equivalents\n    eq_back = N_back * (V_back / 1000.0)\n\n    # Step 3: Percentage purity of Na2SO3\n    purity = step_41(equivalents=eq_KIO3, back_titrated_equivalents=eq_back, equivalent_mass=eq_mass, sample_mass=mass_sample)\n    P = purity['percent_purity']\n\n    # Step 4: Radial distribution peaks for 4p\n    peaks = step_82(orbital_label=orbital)\n    N = peaks['radial_peaks']\n\n    # Target ΔG° in kJ/mol\n    target_delta_g = - (N * P * 100) / 1000.0\n\n    # Equilibrium constant from ln K\n    K = math.exp(lnK)\n\n    # Solve for T such that ΔG° = target\n    def f(T):\n        res = step_369(equilibrium_constant=K, T=T)\n        return res['delta_g'] - target_delta_g\n\n    T_sol = solve_for(f, 200, 1500)\n    return round(T_sol)",
+     "ok": true,
+     "problems": [],
+     "answer": 300
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T22:13:38.840881+00:00",
+     "attempt": 1,
+     "problems": [
+      "the result of 'molarity after dilution (mol L⁻¹)'; 'n-factor of the reagent'; 'percentage purity of the sample'; 'number of peaks in the radial distribution curve'; 'standard Gibbs energy change (kJ mol⁻¹)' does not change the answer; every formula must matter"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T22:14:02.079410+00:00",
+     "attempt": 2,
+     "twist": "condition",
+     "examples": [
+      "2018P2_Chem_Q10",
+      "2020P2_Chem_Q18"
+     ],
+     "stem": "A 50.0 mL stock solution of 0.15 M potassium iodate (KIO₃) is diluted by adding 200.0 mL of water. A 100.0 mL aliquot of this diluted KIO₃ solution is treated with excess potassium iodide (KI) in an acidic medium and mixed with an impure 0.80 g sample of a reducing agent (equivalent mass = 50.0 g eq⁻¹). The unreacted iodate requires 30.0 mL of a 0.100 N standard reducing agent for complete back-titration. In a separate gas-phase equilibrium reaction, the equilibrium constant is K with ln K = 6.7657. The standard Gibbs energy change (ΔG°) of this reaction is related to the percentage purity P of the sample and the number of peaks N in the radial distribution curve (4πr²R²) of a 4p electron by ΔG° = −(P × N × 100) J mol⁻¹. Calculate the temperature T (in K) of the equilibrium reaction. (Given: R = 8.314 J K⁻¹ mol⁻¹; in acidic medium with excess I⁻, IO₃⁻ is reduced to I₂).",
+     "asks": "the temperature T (in K)",
+     "unit": "K",
+     "solution_outline": "Step 1: Dilution of standard KIO3 solution: M1 = 0.15 M, V1 = 50.0 mL, V_final = 50.0 + 200.0 = 250.0 mL. Diluted molarity M2 = (0.15 × 50.0) / 250.0 = 0.030 M. Step 2: n-factor of KIO3 when reduced to I2 in acidic medium with excess KI: IO3- + 5e- -> (1/2)I2, so n-factor = 5. Normality of diluted KIO3 solution = 0.030 M × 5 = 0.150 N. Step 3: Back-titration and percentage purity: Equivalents of KIO3 added = 0.100 L × 0.150 N = 0.0150 eq. Equivalents of unreacted KIO3 back-titrated = 0.0300 L × 0.100 N = 0.0030 eq. Equivalents consumed by sample = 0.0150 - 0.0030 = 0.0120 eq. Mass of pure substance in sample = 0.0120 eq × 50.0 g eq⁻¹ = 0.60 g. Percentage purity P = (0.60 / 0.80) × 100 = 75.0%. Step 4: Number of radial peaks (maxima in 4πr²R²) for a 4p orbital: N = n - l = 4 - 1 = 3. Step 5: Standard Gibbs energy change: ΔG° = -(P × N × 100) J mol⁻¹ = -(75.0 × 3 × 100) = -22500 J mol⁻¹ = -22.5 kJ mol⁻¹. Using ΔG° = -RT ln K: T = -ΔG° / (R ln K) = 22500 / (8.314 × 6.7657) = 400 K.",
+     "how_it_differs": "Differs completely from the cited JEE problems by integrating redox back-titration of iodate with quantum mechanical radial distribution properties and chemical equilibrium thermodynamics, asking for the threshold temperature."
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T22:14:41.126727+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    V_stock = given(50.0, \"50.0 mL stock solution\")\n    M_stock = given(0.15, \"0.15 M potassium iodate\")\n    V_water = given(200.0, \"200.0 mL of water\")\n    V_aliquot = given(100.0, \"100.0 mL aliquot\")\n    sample_mass = given(0.80, \"0.80 g sample\")\n    eq_mass = given(50.0, \"equivalent mass = 50.0 g eq⁻¹\")\n    V_back = given(30.0, \"30.0 mL of a 0.100 N standard reducing agent\")\n    N_back = given(0.100, \"0.100 N standard reducing agent\")\n    lnK = given(6.7657, \"ln K = 6.7657\")\n    R = given(8.314, \"R = 8.314 J K⁻¹ mol⁻¹\")\n    orbital = given(\"4p\", \"4p electron\")\n    redox = given(\"KIO3 with excess KI in acid (IO3- -> I2)\", \"in acidic medium with excess I⁻, IO₃⁻ is reduced to I₂\")\n\n    dil = step_23(molarity=M_stock, initial_volume=V_stock, water_added=V_water)\n    M2 = dil['molarity']\n\n    nf = step_51(redox_reagent=redox)\n    n_factor = nf['n_factor']\n\n    moles = M2 * (V_aliquot / 1000.0)\n    eq_total = moles * n_factor\n\n    back_eq = N_back * (V_back / 1000.0)\n\n    purity = step_41(equivalents=eq_total, back_titrated_equivalents=back_eq, equivalent_mass=eq_mass, sample_mass=sample_mass)\n    P = purity['percent_purity']\n\n    peaks = step_82(orbital_label=orbital)\n    N = peaks['radial_peaks']\n\n    target_delta_g = -(P * N * 100)  # J/mol\n\n    def mismatch(T):\n        K_val = math.exp(lnK)\n        res = step_369(equilibrium_constant=K_val, T=T)\n        delta_g_kJ = res['delta_g']\n        delta_g_J = delta_g_kJ * 1000.0\n        return delta_g_J - target_delta_g\n\n    T = solve_for(mismatch, 200, 1500)\n    return T",
+     "ok": true,
+     "problems": [],
+     "answer": 400
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-15T22:14:41.127588+00:00",
+     "stem": "A 50.0 mL stock solution of 0.15 M potassium iodate (KIO₃) is diluted by adding 200.0 mL of water. A 100.0 mL aliquot of this diluted KIO₃ solution is treated with excess potassium iodide (KI) in an acidic medium and mixed with an impure 0.80 g sample of a reducing agent (equivalent mass = 50.0 g eq⁻¹). The unreacted iodate requires 30.0 mL of a 0.100 N standard reducing agent for complete back-titration. In a separate gas-phase equilibrium reaction, the equilibrium constant is K with ln K = 6.7657. The standard Gibbs energy change (ΔG°) of this reaction is related to the percentage purity P of the sample and the number of peaks N in the radial distribution curve (4πr²R²) of a 4p electron by ΔG° = −(P × N × 100) J mol⁻¹. Calculate the temperature T (in K) of the equilibrium reaction. (Given: R = 8.314 J K⁻¹ mol⁻¹; in acidic medium with excess I⁻, IO₃⁻ is reduced to I₂). Give the answer in K, to 3 significant figures.",
+     "code": "def solve():\n    V_stock = given(50.0, \"50.0 mL stock solution\")\n    M_stock = given(0.15, \"0.15 M potassium iodate\")\n    V_water = given(200.0, \"200.0 mL of water\")\n    V_aliquot = given(100.0, \"100.0 mL aliquot\")\n    sample_mass = given(0.80, \"0.80 g sample\")\n    eq_mass = given(50.0, \"equivalent mass = 50.0 g eq⁻¹\")\n    V_back = given(30.0, \"30.0 mL of a 0.100 N standard reducing agent\")\n    N_back = given(0.100, \"0.100 N standard reducing agent\")\n    lnK = given(6.7657, \"ln K = 6.7657\")\n    R = given(8.314, \"R = 8.314 J K⁻¹ mol⁻¹\")\n    orbital = given(\"4p\", \"4p electron\")\n    redox = given(\"KIO3 with excess KI in acid (IO3- -> I2)\", \"in acidic medium with excess I⁻, IO₃⁻ is reduced to I₂\")\n\n    dil = step_23(molarity=M_stock, initial_volume=V_stock, water_added=V_water)\n    M2 = dil['molarity']\n\n    nf = step_51(redox_reagent=redox)\n    n_factor = nf['n_factor']\n\n    moles = M2 * (V_aliquot / 1000.0)\n    eq_total = moles * n_factor\n\n    back_eq = N_back * (V_back / 1000.0)\n\n    purity = step_41(equivalents=eq_total, back_titrated_equivalents=back_eq, equivalent_mass=eq_mass, sample_mass=sample_mass)\n    P = purity['percent_purity']\n\n    peaks = step_82(orbital_label=orbital)\n    N = peaks['radial_peaks']\n\n    target_delta_g = -(P * N * 100)  # J/mol\n\n    def mismatch(T):\n        K_val = math.exp(lnK)\n        res = step_369(equilibrium_constant=K_val, T=T)\n        delta_g_kJ = res['delta_g']\n        delta_g_J = delta_g_kJ * 1000.0\n        return delta_g_J - target_delta_g\n\n    T = solve_for(mismatch, 200, 1500)\n    return T",
+     "asks": "the temperature T (in K)",
+     "unit": "K",
+     "twist": "condition",
+     "givens": [
+      {
+       "value": 50.0,
+       "quote": "50.0 mL stock solution"
+      },
+      {
+       "value": 0.15,
+       "quote": "0.15 M potassium iodate"
+      },
+      {
+       "value": 200.0,
+       "quote": "200.0 mL of water"
+      },
+      {
+       "value": 100.0,
+       "quote": "100.0 mL aliquot"
+      },
+      {
+       "value": 0.8,
+       "quote": "0.80 g sample"
+      },
+      {
+       "value": 50.0,
+       "quote": "equivalent mass = 50.0 g eq⁻¹"
+      },
+      {
+       "value": 30.0,
+       "quote": "30.0 mL of a 0.100 N standard reducing agent"
+      },
+      {
+       "value": 0.1,
+       "quote": "0.100 N standard reducing agent"
+      },
+      {
+       "value": 6.7657,
+       "quote": "ln K = 6.7657"
+      },
+      {
+       "value": 8.314,
+       "quote": "R = 8.314 J K⁻¹ mol⁻¹"
+      },
+      {
+       "value": "4p",
+       "quote": "4p electron"
+      },
+      {
+       "value": "KIO3 with excess KI in acid (IO3- -> I2)",
+       "quote": "in acidic medium with excess I⁻, IO₃⁻ is reduced to I₂"
+      }
+     ],
+     "answer": 400,
+     "trace": [
+      {
+       "tx": 23,
+       "src": "molarity",
+       "dst": "molarity",
+       "formula": "M1V1 = M2V2",
+       "inputs": {
+        "molarity": 0.15,
+        "initial_volume": 50,
+        "water_added": 200
+       },
+       "outputs": {
+        "molarity": 0.03
+       }
+      },
+      {
+       "tx": 51,
+       "src": "redox_reagent",
+       "dst": "n_factor",
+       "formula": "n-factor = electrons gained or lost per formula unit",
+       "inputs": {
+        "redox_reagent": "KIO3 with excess KI in acid (IO3- -> I2)"
+       },
+       "outputs": {
+        "n_factor": 5,
+        "molar_mass": 214
+       }
+      },
+      {
+       "tx": 41,
+       "src": "equivalents",
+       "dst": "percent_purity",
+       "formula": "eq(sample) = eq(added) − eq(back-titrated); % = eq × E / mass × 100",
+       "inputs": {
+        "equivalents": 0.015,
+        "back_titrated_equivalents": 0.003,
+        "equivalent_mass": 50,
+        "sample_mass": 0.8
+       },
+       "outputs": {
+        "percent_purity": 75
+       }
+      },
+      {
+       "tx": 82,
+       "src": "orbital_label",
+       "dst": "radial_peaks",
+       "formula": "peaks in 4πr²R² = n − l",
+       "inputs": {
+        "orbital_label": "4p"
+       },
+       "outputs": {
+        "radial_peaks": 3
+       }
+      },
+      {
+       "tx": 369,
+       "src": "equilibrium_constant",
+       "dst": "delta_g",
+       "formula": "ΔG° = −RT ln K",
+       "inputs": {
+        "equilibrium_constant": 867.573296592,
+        "T": 399.999788089
+       },
+       "outputs": {
+        "delta_g": -22.5
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "water_as_final_volume",
+       "desc": "takes the water added as the final volume",
+       "tx": 23,
+       "step": 0,
+       "wrong_answer": 525
+      },
+      {
+       "id": "forgets_back_titration",
+       "desc": "uses all the reagent added",
+       "tx": 41,
+       "step": 2,
+       "wrong_answer": 500
+      },
+      {
+       "id": "peaks_as_nodes",
+       "desc": "counts n − l − 1",
+       "tx": 82,
+       "step": 3,
+       "wrong_answer": 266.7
+      },
+      {
+       "id": "log10_as_ln",
+       "desc": "uses log₁₀ K",
+       "tx": 369,
+       "step": 4,
+       "wrong_answer": 921
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "R = 8.314 J K⁻¹ mol⁻¹",
+      "atomic mass of K = 39",
+      "atomic mass of I = 127",
+      "atomic mass of O = 16"
+     ],
+     "depth": 1,
+     "extra_txs": []
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-15T22:16:02.809468+00:00",
+     "members": [
+      {
+       "name": "phi-4",
+       "model": "microsoft/phi-4",
+       "working": "1. Calculate the concentration of KIO₃ after dilution:\n   - Initial moles of KIO₃ = 0.15 M * 0.050 L = 0.0075 mol.\n   - Total volume after dilution = 50.0 mL + 200.0 mL = 250.0 mL = 0.250 L.\n   - Concentration after dilution = 0.0075 mol / 0.250 L = 0.030 M.\n\n2. Calculate moles of KIO₃ in 100.0 mL aliquot:\n   - Moles of KIO₃ = 0.030 M * 0.100 L = 0.0030 mol.\n\n3. Reaction of KIO₃ with KI in acidic medium:\n   - IO₃⁻ + 5I⁻ + 6H⁺ → 3I₂ + 3H₂O.\n   - 1 mole of IO₃⁻ produces 3 moles of I₂.\n   - Moles of I₂ produced = 3 * 0.0030 mol = 0.0090 mol.\n\n4. Back-titration with standard reducing agent:\n   - Moles of reducing agent used = 0.100 N * 0.030 L = 0.0030 eq.\n   - Moles of IO₃⁻ reacted with reducing agent = 0.0030 eq (since 1 eq of IO₃⁻ reacts with 1 eq of reducing agent).\n   - Moles of IO₃⁻ initially = 0.0030 mol.\n   - Moles of IO₃⁻ reacted with KI = 0.0030 mol - 0.0030 mol = 0.0000 mol.\n   - Moles of I₂ reacted with reducing agent = 0.0030 mol / 3 = 0.0010 mol.\n   - Moles of I₂ from KI = 0.0090 mol - 0.0010 mol = 0.0080 mol.\n\n5. Calculate moles of reducing agent equivalent to impure sample:\n   - Equivalent mass = 50.0 g eq⁻¹.\n   - Moles of reducing agent equivalent to sample = 0.80 g / 50.0 g eq⁻¹ = 0.016 mol.\n   - Moles of I₂ reduced by sample = 0.0080 mol.\n   - Moles of reducing agent in sample = 0.016 mol - 0.0030 mol = 0.013 mol.\n\n6. Calculate percentage purity P:\n   - Purity = (moles of reducing agent in sample / total moles of reducing agent equivalent to sample) * 100.\n   - P = (0.013 mol / 0.016 mol) * 100 = 81.25%.\n\n7. Calculate ΔG°:\n   - ln K = 6.7657, so K = e^6.7657.\n   - ΔG° = −RT ln K.\n   - ΔG° = −(81.25 * 4 * 100) J mol⁻¹ = −32500 J mol⁻¹.\n\n8. Calculate temperature T:\n   - ΔG° = −RT ln K.\n   - T = −ΔG° / (R ln K).\n   - T = 32500 / (8.314 * 6.7657) = 575.5 K.",
+       "objection": null,
+       "answer_line": "[TYPE: equilibrium] [CALC_VALUE: 575.5] [CALC_UNIT: K] [SUBSTANCE: null]",
+       "final_answer": "575.5 K",
+       "unit": "",
+       "answer_type": "equilibrium",
+       "calc_value": [
+        575.5
+       ],
+       "calc_unit": [
+        "K"
+       ],
+       "target_unit": "K",
+       "final_value": [
+        575.5
+       ],
+       "substance": [],
+       "diagnosis": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 2,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student used a 1:1 equivalence for iodate (ignoring the n-factor of 5 for IO₃⁻ → I₂), so the sample equivalents and purity came out as 81.25% instead of 75%. They also used N = 4 for the 4p radial peaks, where n − l gives 3, and the ΔG° and temperature calculations inherited these errors. The correct result is T ≈ 400 K, not 575.5 K."
+       },
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": "wrong",
+       "failure_type": "genuine_difficulty",
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "(from the model's reasoning trace)\nThe user wants me to solve a complex, multi-part chemistry problem and output the result in a specific JSON format.\n\nThe problem involves two seemingly unrelated parts:\n1. A redox titration/back-titration problem to determine the amount of unreacted iodate.\n2. A gas-phase equilibrium problem linking $\\Delta G^\\circ$ to $K$, and then relating $\\Delta G^\\circ$ to physical properties ($P$ and $N$) to find the temperature $T$.\n\nI must first analyze the titration part to find the necessary parameters for the equilibrium part.\n\n---\n### Part 1: Redox Titration Analysis\n\n**Goal:** Find the amount of unreacted iodate ($\\text{IO}_3^-$).\n\n**Step 1: Calculate moles of $\\text{KIO}_3$ in the stock solution.**\n$V_{\\text{stock}} = 50.0 \\text{ mL} = 0.0500 \\text{ L}$\n$C_{\\text{stock}} = 0.15 \\text{ M}$\n$n_{\\text{KIO}_3, \\text{stock}} = C_{\\text{stock}} \\times V_{\\text{stock}} = 0.15 \\text{ mol/L} \\times 0.0500 \\text{ L} = 0.0075 \\text{ mol}$.\n\n**Step 2: Calculate moles of $\\text{KIO}_3$ in the diluted solution.**\nThe stock solution is diluted by adding $200.0 \\text{ mL}$ of water.\n$V_{\\text{diluted}} = 50.0 \\text{ mL} + 200.0 \\text{ mL} = 250.0 \\text{ mL} = 0.2500 \\text{ L}$.\n$C_{\\text{diluted}} = \\frac{n_{\\text{KIO}_3, \\text{stock}}}{V_{\\text{diluted}}} = \\frac{0.0075 \\text{ mol}}{0.2500 \\text{ L}} = 0.0300 \\text{ M}$.\n\n**Step 3: Calculate moles of $\\text{KIO}_3$ in the aliquot taken for titration.**\n$V_{\\text{aliquot}} = 100.0 \\text{ mL} = 0.1000 \\text{ L}$.\n$n_{\\text{KIO}_3, \\text{aliquot}} = C_{\\text{diluted}} \\times V_{\\text{aliquot}} = 0.0300 \\text{ mol/L} \\times 0.1000 \\text{ L} = 0.00300 \\text{ mol}$.\n\n**Step 4: Analyze the titration reaction.**\nThe reaction is: $\\text{IO}_3^- + 5\\text{I}^- + 6\\text{H}^+ \\rightarrow 3\\text{I}_2 + 3\\text{H}_2\\text{O}$.\nThe titration uses excess $\\text{KI}$ (providing $\\text{I}^-$) and an impure reducing agent.\n\n**Step 5: Analyze the reaction with the reducing agent.**\nThe reducing agent reacts with $\\text{IO}_3^-$.\nThe reducing agent has an equivalent mass of $50.0 \\text{ g eq}^{-1}$.\nMass of reducing agent used = $0.80 \\text{ g}$.\nMoles of reducing agent used ($n_{\\text{RA}}$) = $\\frac{\\text{Mass}}{\\text{Equivalent Mass}} = \\frac{0.80 \\text{ g}}{50.0 \\text{ g eq}^{-1}} = 0.0160 \\text{ eq}$.\n\nSince the reducing agent is used in a redox reaction, the moles of $\\text{IO}_3^-$ reacted is equal to the moles of equivalents of the reducing agent used.\n$n_{\\text{IO}_3^-, \\text{reacted}} = 0.0160 \\text{ mol}$.\n\n*Self-Correction/Check:* The initial moles of $\\text{IO}_3^-$ in the aliquot was $0.00300 \\text{ mol}$. The moles of reducing agent used ($0.0160 \\text{ mol}$) is significantly larger than the total amount of $\\text{IO}_3^-$ available ($0.00300 \\text{ mol}$). This implies that the reducing agent reacts completely with all the $\\text{IO}_3^-$, and there is a large excess of the reducing agent.\n\n**Step 6: Analyze the back-titration.**\nThe unreacted iodate ($\\text{IO}_3^-$) is back-titrated using a standard reducing agent.\nThe problem states: \"The unreacted iodate requires $30.0 \\text{ mL}$ of a $0.100 \\text{ N}$ standard reducing agent for complete back-titration.\"\n\nWait, this phrasing is confusing.\n1. The initial titration used an impure reducing agent (RA) and excess $\\text{KI}$.\n2. The RA reacted with $\\text{IO}_3^-$.\n3. The *unreacted* $\\text{IO}_3^-$ is then titrated with a *standard* reducing agent.\n\nIf the RA reacted with $0.0160 \\text{ mol}$ of $\\text{IO}_3^-$, and we only started with $0.00300 \\text{ mol}$ of $\\text{IO}_3^-$, then $0.00300 \\text{ mol}$ of $\\text{IO}_3^-$ would have reacted. The back-titration would require $0 \\text{ mL}$ of the standard reducing agent.\n\n**Re-reading the problem carefully:**\n\"A 100.0 mL aliquot of this diluted $\\text{KIO}_3$ solution is treated with excess potassium iodide ($\\text{KI}$) in an acidic medium and mixed with an impure $0.80 \\text{ g}$ sample of a reducing agent (equivalent mass $= 50.0 \\text{ g eq}^{-1}$).\"\n\nThis setup suggests a redox titration where the reducing agent is the primary reactant, and $\\text{IO}_3^-$ is the analyte.\n\nIf the reducing agent is used in excess, it would reduce all the $\\text{IO}_3^-$.\nIf the reducing agent is the limiting reagent, it reduces some $\\text{IO}_3^-$.\n\nSince $n_{\\text{RA}} (0.0160 \\text{ mol}) > n_{\\text{IO}_3^-} (0.00300 \\text{ mol})$, the $\\text{IO}_3^-$ is the limiting reactant. All $0.00300 \\text{ mol}$ of $\\text{IO}_3^-$ should react.\n\n**Hypothesis: The problem implies that the reducing agent is *not* used in excess, or the stoichiometry is complex, or there is a mistake in the problem statement.**\n\nLet's assume the intent of the problem is that the reducing agent is the limiting reagent, and the back-titration measures the *unreacted* $\\text{IO}_3^-$. This is the standard procedure for determining the purity/amount of a reducing agent.\n\nIf $n_{\\text{IO}_3^-, \\text{reacted}} = 0.0160 \\text{ mol}$, then $n_{\\text{IO}_3^-, \\text{remaining}} = 0.00300 - 0.0160 = -0.0130 \\text{ mol}$. This is impossible.\n\n**Conclusion on Titration:** The problem is chemically flawed as stated, because the amount of reducing agent provided ($0.0160 \\text{ mol}$) is much greater than the amount of iodate available ($0.00300 \\text{ mol}$).\n\n**Alternative Interpretation (Assuming the back-titration data is the intended path):**\nPerhaps the $0.80 \\text{ g}$ of reducing agent was *intended* to be the limiting reagent, and the back-titration measures the remaining $\\text{IO}_3^-$.\n\nLet's assume the problem meant that the reducing agent was used in a way that only a fraction reacted, and the back-titration measures the remaining amount.\n\n$n_{\\text{IO}_3^-, \\text{remaining}} = n_{\\text{IO}_3^-, \\text{aliquot}} - n_{\\text{IO}_3^-, \\text{reacted}}$.\n\nThe back-titration uses a standard reducing agent (let's call it $\\text{R}'$).\n$V_{\\text{back}} = 30.0 \\text{ mL} = 0.0300 \\text{ L}$.\n$N_{\\text{standard}} = 0.100 \\text{ N}$.\n\nThe reaction for back-titration is: $\\text{IO}_3^- + \\text{R}' \\rightarrow \\text{Products}$.\nThe moles of $\\text{IO}_3^-$ remaining ($n_{\\text{IO}_3^-, \\text{remaining}}$) is determined by the moles of the standard reducing agent used.\n$n_{\\text{IO}_3^-, \\text{remaining}} = N_{\\text{standard}} \\times V_{\\text{back}} = 0.100 \\text{ eq/L} \\times 0.0300 \\text{ L} = 0.00300 \\text{ mol}$.\n\nIf $n_{\\text{IO}_3^-, \\text{remaining}} = 0.00300 \\text{ mol}$, and $n_{\\text{IO}_3^-, \\text{aliquot}} = 0.00300 \\text{ mol}$, then $n_{\\text{IO}_3^-, \\text{reacted}} = 0.000 \\text{ mol}$.\nThis implies the impure reducing agent did not react at all, which contradicts the premise of the experiment.\n\n**Revisiting the Titration Setup (The only way the numbers make sense):**\nThe problem must be interpreted as:\n1. The initial amount of $\\text{IO}_3^-$ is $0.00300 \\text{ mol}$.\n2. The amount of $\\text{IO}_3^-$ that *reacted* with the impure reducing agent is $n_{\\text{reacted}}$.\n3. The amount of $\\text{IO}_3^-$ that *remains* is $n_{\\text{remaining}} = 0.00300 - n_{\\text{reacted}}$.\n4. This remaining amount ($n_{\\text{remaining}}$) is titrated with the standard reducing agent, yielding $0.00300 \\text{ mol}$.\n\nIf $n_{\\text{remaining}} = 0.00300 \\text{ mol}$, then $n_{\\text{reacted}} = 0$. This is a contradiction.\n\n**Assuming the question meant the standard reducing agent was used to titrate the *reacted* amount, or that the initial amount of $\\text{IO}_3^-$ was much larger.**\n\nLet's assume the question meant that the $0.80 \\text{ g}$ of reducing agent was the *limiting reagent* and the back-titration measures the *excess* of the reducing agent, which is not what is stated.\n\n**Let's assume the question meant the initial amount of $\\text{IO}_3^-$ was $0.00300 \\text{ mol}$, and the amount that reacted with the impure reducing agent was $n_{\\text{reacted}}$. The back-titration measures $n_{\\text{reacted}}$.**\nIf $n_{\\text{reacted}} = 0.00300 \\text{ mol}$ (the entire amount), then $n_{\\text{remaining}} = 0$. The back-titration would require $0 \\text{ mL}$.\n\n**Let's assume the question meant the $0.80 \\text{ g}$ of reducing agent was the limiting reagent, and the back-titration measures the remaining $\\text{IO}_3^-$.**\n$n_{\\text{reacted}} = 0.0160 \\text{ mol}$. (Impossible, as $n_{\\text{total}} = 0.00300 \\text{ mol}$).\n\n**The only way to proceed is to assume the back-titration data ($0.00300 \\text{ mol}$) represents the amount of $\\text{IO}_3^-$ that *reacted* with the impure reducing agent, and the initial amount of $\\text{IO}_3^-$ was much larger.**\n\nIf we must use the data provided, we must assume the back-titration result ($0.00300 \\text{ mol}$) is the amount of $\\text{IO}_3^-$ that *remained* after the initial reaction.\n\n$n_{\\text{IO}_3^-, \\text{remaining}} = 0.00300 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{aliquot}} = 0.00300 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{reacted}} = 0.000 \\text{ mol}$.\n\nThis leads to $P=100\\%$ purity, which is unlikely for an \"impure\" sample.\n\n**Let's assume the problem meant the initial amount of $\\text{IO}_3^-$ was $X$, and the back-titration measures the remaining amount $Y$.**\n$X = 0.00300 \\text{ mol}$.\n$Y = 0.00300 \\text{ mol}$.\n$X - Y = 0$.\n\n**Let's assume the problem meant the $0.80 \\text{ g}$ of reducing agent was the limiting reagent, and the back-titration measures the remaining $\\text{IO}_3^-$.**\n$n_{\\text{reacted}} = 0.0160 \\text{ mol}$. (Impossible).\n\n**Let's assume the problem meant the $0.80 \\text{ g}$ of reducing agent was used in excess, and the back-titration measures the amount of $\\text{IO}_3^-$ that reacted.**\n$n_{\\text{reacted}} = 0.00300 \\text{ mol}$.\n$n_{\\text{remaining}} = 0$.\nBack titration requires $0 \\text{ mL}$. Contradiction.\n\n**Given the structure of these highly complex problems, there is likely a typo in the input values.**\nIf we assume the back-titration result ($0.00300 \\text{ mol}$) is the amount of $\\text{IO}_3^-$ that *reacted* with the impure reducing agent, then:\n$n_{\\text{IO}_3^-, \\text{reacted}} = 0.00300 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{total}} = 0.00300 \\text{ mol}$.\nPurity $P = \\frac{n_{\\text{reacted}}}{n_{\\text{theoretical}}} \\times 100\\% = \\frac{0.00300}{0.0160} \\times 100\\% = 18.75\\%$.\nThis would mean the reducing agent was the limiting reagent, and the back-titration was used to determine the amount of $\\text{IO}_3^-$ that reacted, which is non-standard procedure for back-titration.\n\n**Let's stick to the standard procedure and assume the back-titration result ($0.00300 \\text{ mol}$) is the amount of $\\text{IO}_3^-$ remaining.**\n$n_{\\text{IO}_3^-, \\text{remaining}} = 0.00300 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{total}} = 0.00300 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{reacted}} = 0.000 \\text{ mol}$.\n$P = 0\\%$.\n\n**Let's assume the problem meant the initial amount of $\\text{IO}_3^-$ was $0.0160 \\text{ mol}$ (based on the RA mass) and the back-titration measures the remaining amount.**\n$n_{\\text{IO}_3^-, \\text{total}} = 0.0160 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{remaining}} = 0.00300 \\text{ mol}$.\n$n_{\\text{IO}_3^-, \\text{reacted}} = 0.0160 - 0.00300 = 0.0130 \\text{ mol}$.\nPurity $P = \\frac{0.0130}{0.0160} \\times 100\\% = 81.25\\%$.\nThis interpretation resolves the contradiction and allows calculation of $P$. I will proceed with this assumption, as it is the only way to derive a non-trivial purity value.\n\n**Assumption for Purity Calculation:** The initial amount of $\\text{IO}_3^-$ was $0.0160 \\text{ mol}$ (based on the equivalent mass of the reducing agent), and the amount remaining after reaction was $0.00300 \\text{ mol}$ (based on the back-titration).\n\n$P = \\frac{n_{\\text{reacted}}}{n_{\\text{theoretical}}} \\times 100 = \\frac{0.0160 - 0.00300}{0.0160} \\times 100 = \\frac{0.0130}{0.0160} \\times 100 = 81.25\\%$.\n\n---\n### Part 2: Gas-Phase Equilibrium Analysis\n\n**Goal:** Calculate Temperature $T$ (in K).\n\n**Given:**\n1. $\\ln K = 6.7657$\n2. $\\Delta G^\\circ = -(P \\times N \\times 100) \\text{ J mol}^{-1}$\n3. $R = 8.314 \\text{ J K}^{-1} \\text{ mol}^{-1}$\n4. $P = 81.25$ (from Part 1)\n5. $N = 4\\pi r^2 R^2$ (Number of peaks in radial distribution curve of a 4p electron).\n\n**Step 1: Calculate $\\Delta G^\\circ$.**\nWe need $N$. The problem states $N$ is the number of peaks in the radial distribution curve of a 4p electron. This is a highly specific, likely arbitrary, piece of information designed to be a constant or a value derived from the context of the reaction, which is missing.\n\n*Self-Correction/Object Check:* The problem is fundamentally flawed because $N$ is undefined. It is stated as a property of a 4p electron's radial distribution curve, but no context or value is provided for $N$.\n\n**If I must proceed, I must assume $N$ is a known constant or that the phrase \"number of peaks $N$ in the radial distribution curve (4$\\pi r^2 R^2$) of a 4p electron\" is a convoluted way of defining $N$ itself.**\n\nLet's assume the parenthetical expression $(4\\pi r^2 R^2)$ is the definition of $N$.\n$N = 4\\pi r^2 R^2$.\n$r$ is the radius of the electron orbital (4p). $R$ is the effective radius of the atom. These values are not provided.\n\n**If I assume $N$ is a numerical constant, I cannot solve the problem.**\n\n**Let's assume the problem intended for $N$ to be a simple integer, perhaps related to the quantum number $n=4$ or $l=1$.**\nIf $N=4$ (from $n=4$), $\\Delta G^\\circ = -(81.25 \\times 4 \\times 100) = -32500 \\text{ J mol}^{-1}$.\nIf $N=1$ (minimum peaks), $\\Delta G^\\circ = -8125 \\text{ J mol}^{-1}$.\n\n**Let's assume the problem is flawed and state the objection.**\n\nHowever, the prompt says: \"If you believe the problem itself is flawed... you may object — but still give your best answer.\" This implies I must attempt a calculation even if flawed.\n\nLet's assume the intended value for $N$ is $N=1$ (the simplest case, often used when specific data is missing in such complex problems).\n\n**Calculation using $N=1$ (Assumption):**\n$P = 81.25$\n$N = 1$\n$\\Delta G^\\circ = -(81.25 \\times 1 \\times 100) = -8125 \\text{ J mol}^{-1}$.\n\n**Step 2: Calculate $T$ using the Gibbs Free Energy equation.**\n$\\Delta G^\\circ = -RT \\ln K$\n$T = -\\frac{\\Delta G^\\circ}{R \\ln K}$\n\n$T = -\\frac{-8125 \\text{ J mol}^{-1}}{8.314 \\text{ J K}^{-1} \\text{ mol}^{-1} \\times 6.7657}$\n$T = \\frac{8125}{8.314 \\times 6.7657}$\n$T = \\frac{8125}{56.246}$\n$T \\approx 144.45 \\text{ K}$.\n\n**Calculation using $N=4$ (Assumption):**\n$\\Delta G^\\circ = -32500 \\text{ J mol}^{-1}$.\n$T = -\\frac{-32500}{8.314 \\times 6.7657}$\n$T = \\frac{32500}{56.246}$\n$T \\approx 578.6 \\text{ K}$.\n\nSince the problem is highly artificial, I will proceed with the calculation based on the assumption that $N$ is a constant that was intended to be provided, and I will use $N=1$ as the most conservative assumption for a missing integer value, while noting the flaw.\n\n**Final check of the steps and required output format.**\n\n1. **Purity (P):** $P = 81.25$. (Based on the necessary assumption that $n_{\\text{total}} = 0.0160 \\text{ mol}$ and $n_{\\text{remaining}} = 0.00300 \\text{ mol}$).\n2. **$\\Delta G^\\circ$:** Assuming $N=1$, $\\Delta G^\\circ = -8125 \\text{ J mol}^{-1}$.\n3. **Temperature (T):** $T = 144.45 \\text{ K}$.\n\nRounding to 3 significant figures: $T = 144 \\text{ K}$.\n\n**Objection:** The problem is flawed because the value of $N$ (number of peaks in the radial distribution curve of a 4p electron) is not provided, making the calculation of $\\Delta G^\\circ$ impossible without an assumption. Furthermore, the titration data is contradictory under standard chemical interpretation, requiring a non-standard assumption to derive the purity $P$.\n\nSince I must provide an answer, I will use the calculated value based on the assumption $N=1$.\n\n$T = 144.45 \\text{ K}$.\n$T$ (3 sig figs) = $144 \\text{ K}$.\n\n---\n**Construct JSON.**",
+       "objection": {
+        "type": "chemistry",
+        "detail": "The problem is flawed. 1) The titration data is contradictory under standard chemical interpretation (the amount of reducing agent provided is greater than the total amount of iodate available). 2) The value of N (number of peaks in the radial distribution curve of a 4p electron) is not provided, making the calculation of ΔG° impossible without an assumption. I proceeded by assuming the initial amount of IO3- was 0.0160 mol and the remaining amount was 0.00300 mol to calculate purity P, and assumed N=1 for the equilibrium calculation."
+       },
+       "answer_line": "[TYPE: thermochemistry] [CALC_VALUE: 144] [CALC_UNIT: K] [SUBSTANCE: null]",
+       "final_answer": "144 K",
+       "unit": "",
+       "answer_type": "thermochemistry",
+       "calc_value": [
+        144.0
+       ],
+       "calc_unit": [
+        "K"
+       ],
+       "target_unit": "K",
+       "final_value": [
+        144.0
+       ],
+       "substance": [],
+       "diagnosis": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 2,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": "IO3- reduced to I2 in acidic excess iodide gains 5 electrons, so the n-factor is 5 and the titration must be done in equivalents (0.003 mol × 5 = 0.015 eq). Also, the number of radial peaks for an electron is n − l = 4 − 1 = 3 for a 4p electron.",
+        "objection_assessment": "invalid",
+        "reasoning": "The student wrote the correct half-reaction (IO3- + 5I- + 6H+ → 3I2) but never used its 5-electron change, so they compared moles of iodate with equivalents of reductant and concluded the data were contradictory. Using n-factor 5 gives 0.015 eq total and 0.003 eq back-titrated, so purity is 75%, and the student's objection to the titration data is therefore unfounded. The student also assumed N = 1 instead of computing n − l = 3 for a 4p electron, so the final 144 K differs from the intended 400 K."
+       },
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": "wrong",
+       "failure_type": "genuine_difficulty",
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "gpt-6-luna",
+       "model": "openai/gpt-6-luna",
+       "working": "1. The diluted solution has total volume 50.0 mL + 200.0 mL = 250.0 mL. Its KIO₃ concentration is (0.15 M × 50.0 mL)/250.0 mL = 0.0300 M. The 100.0 mL aliquot therefore contains 0.00300 mol IO₃⁻.\n\n2. In acidic solution with excess iodide, IO₃⁻ + 5I⁻ + 6H⁺ → 3I₂ + 3H₂O. Each mole of IO₃⁻ corresponds to 6 redox equivalents, so the aliquot initially contains 0.00300 × 6 = 0.0180 equivalents of oxidizing capacity.\n\n3. The back-titration uses 0.0300 L × 0.100 N = 0.00300 equivalents of reducing agent, representing the unreacted iodate. Thus, the sample consumed 0.0180 − 0.00300 = 0.0150 equivalents.\n\n4. The pure reducing agent mass is 0.0150 eq × 50.0 g eq⁻¹ = 0.750 g. The sample purity is P = (0.750/0.80) × 100 = 93.75%.\n\n5. A 4p orbital has n − l − 1 = 4 − 1 − 1 = 2 radial nodes. Its radial distribution curve therefore has 3 peaks, so N = 3.\n\n6. The specified relation gives ΔG° = −(93.75 × 3 × 100) J mol⁻¹ = −28125 J mol⁻¹. Using ΔG° = −RT ln K, T = 28125/(8.314 × 6.7657) K = 500 K to 3 significant figures.",
+       "objection": null,
+       "answer_line": "[TYPE: thermodynamics] [CALC_VALUE: 500] [CALC_UNIT: K] [SUBSTANCE: null]",
+       "final_answer": "500 K",
+       "unit": "",
+       "answer_type": "thermodynamics",
+       "calc_value": [
+        500.0
+       ],
+       "calc_unit": [
+        "K"
+       ],
+       "target_unit": "K",
+       "final_value": [
+        500.0
+       ],
+       "substance": [],
+       "diagnosis": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 2,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student took the n-factor of IO₃⁻ as 6, counting the 6 H⁺ in the balanced equation, when IO₃⁻ gains only 5 electrons (I from +5 to 0). This propagates to 0.0150 eq consumed, 93.75% purity, ΔG° = −28125 J mol⁻¹, and T = 500 K, whereas the correct n-factor of 5 gives 75% purity, ΔG° = −22500 J mol⁻¹, and T ≈ 400 K. The 4p peak count (N = 3) is correct, so the error is conceptual rather than arithmetic."
+       },
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": "wrong",
+       "failure_type": "genuine_difficulty",
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      }
+     ],
+     "skipped": [],
+     "first_solver": null
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-15T22:16:37.940969+00:00",
+     "tests": [
+      {
+       "member": "phi-4",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the standard Gibbs energy change (kJ mol⁻¹). A common mistake there: uses log₁₀ K.",
+       "solved": true,
+       "answer": "400 K"
+      },
+      {
+       "member": "glm-5.3-flash",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the standard Gibbs energy change (kJ mol⁻¹). A common mistake there: uses log₁₀ K.",
+       "solved": true,
+       "answer": "400 K"
+      },
+      {
+       "member": "gpt-6-luna",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the standard Gibbs energy change (kJ mol⁻¹). A common mistake there: uses log₁₀ K.",
+       "solved": false,
+       "answer": "500 K",
+       "recheck": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 2,
+        "member_expression": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student used a 6-electron change per iodate, but in acidic solution with excess I⁻, IO₃⁻ → I₂ gains 5 electrons, so the n-factor is 5. This gives 0.0150 eq of sample reductant, 75% purity, ΔG° = −22500 J mol⁻¹, and T = 400 K. The student's final 500 K follows from the incorrect n-factor, while the subsequent ln K and J-units handling were correct."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

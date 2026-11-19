@@ -14,7 +14,7 @@ from unittest import mock
 
 import run_groundup_final as entry
 from core import dedup, models
-from core.pipeline import adapters, forms_layer, gate, queues
+from core.pipeline import adapters, flow, forms_layer, gate, queues
 
 CHAIN = [1, 4]          # mass -> moles -> gas volume at 1 atm, 273 K (answer 2.24 L for 4.4 g CO2)
 
@@ -77,7 +77,8 @@ class _Env:
                         coverage_state_file=os.path.join(self.tmp, "cov.json"))
         self.patches = [
             mock.patch.object(entry, "get_subject_config", lambda s: self.cfg),
-            mock.patch.object(models, "key_is_set", lambda: True),
+            mock.patch.object(models, "key_is_set", lambda *a: True),
+            mock.patch("core.pipeline.qf_checks._level_floor", lambda: None),   # never Jev's level check in tests
             mock.patch.object(dedup, "STORE", __import__("pathlib").Path(self.tmp, "seen.json")),
             mock.patch.object(queues, "_OUT", self.tmp),
             mock.patch.object(forms_layer, "FORM_WEIGHTS", {"forward": 1}),   # these fakes answer the forward chain
@@ -106,10 +107,10 @@ class _Env:
                 "description": "", "_steps": plan.steps, "_plan": plan}
         return [] if tuple(cand["edges"]) in exclude else [cand]
 
-    def _run(self, fake, kind="chains"):
+    def _run(self, fake, kind="chains", extra=()):
         with mock.patch.object(models, "ask_json", fake), \
                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "physical", "--seed", "1",
-                                                "--kind", kind]):
+                                                "--kind", kind, "--flow", "engine", *extra]):
             return entry.main()
 
     def _records(self):
@@ -154,7 +155,7 @@ class FakeFactModels:
 
 
 class PipelineOffline(_Env, unittest.TestCase):
-    """Ladder order: models.LADDER = [phi-4, glm-5.3-flash, gpt-6-luna]."""
+    """Ladder order: models.LADDER = [granite-4.2-8b, glm-5.3-flash, minimax-m3]."""
 
     def test_accepts_and_labels_by_first_solver(self):
         slugs = [s for _, s in models.LADDER]
@@ -167,7 +168,8 @@ class PipelineOffline(_Env, unittest.TestCase):
         self.assertEqual(len(recs), 1)
         r = recs[0]
         self.assertEqual(r["answer"], 2.24)
-        self.assertEqual((r["difficulty_label"], r["ladder_first_solver"]), ("advanced", models.LADDER[1][0]))
+        # GLM first: hard Mains or Advanced; the level check (not calibrated here) would decide which
+        self.assertEqual((r["difficulty_label"], r["ladder_first_solver"]), ("advanced_or_mains_hard", models.LADDER[1][0]))
         self.assertEqual((r["council_n_called"], r["council_skipped"]), (2, [models.LADDER[2][0]]))
         self.assertEqual(r["tags"]["knowledge"], "closed_book")
         self.assertEqual(len(r["hint_tests"]), 1)                       # only the failed step
@@ -175,16 +177,21 @@ class PipelineOffline(_Env, unittest.TestCase):
         self.assertTrue(r["solution"])
         self.assertTrue(os.path.exists(dedup.STORE))
 
-    def test_confirmed_slip_at_the_bottom_counts_as_solved(self):
+    def test_slip_at_the_bottom_no_longer_counts(self):
+        """Solvers have a calculator now: a "slip" verdict is not offered and a wrong number is a
+        failure, so the next step is called (it used to count as solved -> too easy)."""
         slugs = [s for _, s in models.LADDER]
         fake = FakeModels(
             council_answers={slugs[0]: "22.4", slugs[1]: "2.24", slugs[2]: "2.24"},
+            hint_answers={slugs[0]: "22.4"},
             verdicts={"2.24": {"verdict": "correct"},
                       "22.4": {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.1*22.4"}},
             refine_mode="reword")
-        self.assertEqual(self._run(fake), 0)        # the bottom step solves (slip confirmed) -> too easy -> dropped
-        self.assertEqual(self._records(), [])
-        self.assertEqual(fake.calls.count("council"), 1 * 4)
+        self.assertEqual(self._run(fake), 0)
+        recs = self._records()
+        self.assertEqual(len(recs), 1)
+        self.assertEqual(recs[0]["ladder_first_solver"], models.LADDER[1][0])
+        self.assertEqual(fake.calls.count("council"), 2 + 1)            # two steps + one hint re-solve
 
     def test_too_easy_until_rounds_run_out(self):
         slugs = [s for _, s in models.LADDER]
@@ -206,7 +213,7 @@ class PipelineOffline(_Env, unittest.TestCase):
                       "1.12": {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.05*22.4"}})
         self.assertEqual(self._run(fake), 0)
         r = self._records()[0]
-        self.assertEqual((r["difficulty_label"], r["council_n_called"], r["council_skipped"]), ("hard_advanced", 3, []))
+        self.assertEqual((r["difficulty_label"], r["council_n_called"], r["council_skipped"]), ("advanced_medium", 3, []))
         by = {c["name"]: c for c in r["council"]}
         self.assertFalse(by[models.LADDER[1][0]]["slip_confirmed"])     # 0.05*22.4 ≠ 2.24
         self.assertEqual(len(r["hint_tests"]), 2)
@@ -219,7 +226,7 @@ class PipelineOffline(_Env, unittest.TestCase):
             verdicts={"2.24": {"verdict": "correct"}})
         self.assertEqual(self._run(fake), 0)
         r = self._records()[0]
-        self.assertEqual((r["difficulty_label"], r["ladder_first_solver"], r["council_n_solved"]), ("frontier", None, 0))
+        self.assertEqual((r["difficulty_label"], r["ladder_first_solver"], r["council_n_solved"]), ("hard_advanced", None, 0))
 
     def test_council_failure_parks_then_recheck_accepts(self):
         slugs = [s for _, s in models.LADDER]
@@ -229,10 +236,117 @@ class PipelineOffline(_Env, unittest.TestCase):
         self.assertEqual(self._run(FakeModels(answers, answers, verdicts, fail_council=True)), entry.EXIT_COUNCIL_FAILED)
         with open(self.cfg["pending_file"], encoding="utf-8") as f:
             self.assertEqual(len(json.load(f)), 1)
+        # the parked run's audit copy is saved too (it was saved only when a run ended normally)
+        runs = os.path.join(self.tmp, "runs")
+        self.assertEqual(len(os.listdir(runs)), 1)
+        with open(os.path.join(runs, os.listdir(runs)[0]), encoding="utf-8") as f:
+            self.assertTrue(json.load(f)["chains"])
         self.assertEqual(self._run(FakeModels(answers, {slugs[0]: "2.24", slugs[1]: "2.24"}, verdicts)), 0)
         self.assertEqual(len(self._records()), 1)
         with open(self.cfg["pending_file"], encoding="utf-8") as f:
             self.assertEqual(json.load(f), [])
+
+    def test_parked_question_that_keeps_failing_is_put_on_hold(self):
+        """A parked question whose recheck fails every time goes ON HOLD after MAX_RECHECK_FAILURES runs (its own
+        file, kept whole, never judged automatically) and the run goes on to generate: a failed call is not a
+        wrong answer, and before, it stopped every later run for good."""
+        slugs = [s for _, s in models.LADDER]
+        answers = {slugs[0]: "2.45", slugs[1]: "2.45", slugs[2]: "2.24"}
+        verdicts = {"2.24": {"verdict": "correct"}}
+        failing = lambda: FakeModels(answers, answers, verdicts, fail_council=True)
+
+        def pending():
+            with open(self.cfg["pending_file"], encoding="utf-8") as f:
+                return json.load(f)
+        self.assertEqual(self._run(failing()), entry.EXIT_COUNCIL_FAILED)
+        first = pending()[0]["pending_id"]
+        for n in range(1, entry.MAX_RECHECK_FAILURES):
+            fake = failing()
+            self.assertEqual(self._run(fake), entry.EXIT_COUNCIL_FAILED)
+            self.assertEqual([(p["pending_id"], p["recheck_failures"]) for p in pending()], [(first, n)])
+            self.assertEqual(fake.calls.count("generator"), 0)          # stopped before generating anything
+        fake = failing()
+        self.assertEqual(self._run(fake), entry.EXIT_COUNCIL_FAILED)    # the new question parks too (same fakes)
+        self.assertGreater(fake.calls.count("generator"), 0)           # but the run went on to generate
+        left = pending()
+        self.assertEqual(len(left), 1)
+        self.assertNotIn("recheck_failures", left[0])                  # a new item (ids are second-stamped)
+        with open(entry.on_hold_file(self.cfg), encoding="utf-8") as f:
+            held = json.load(f)
+        self.assertEqual([(h["pending_id"], h["recheck_failures"]) for h in held],
+                         [(first, entry.MAX_RECHECK_FAILURES)])
+        self.assertIn("stem", held[0])                                 # kept whole, ready to re-run
+        self.assertIn("last_error", held[0])
+        log_path = os.path.splitext(self.cfg["output_file"])[0] + "_attempts.jsonl"
+        with open(log_path, encoding="utf-8") as f:
+            self.assertEqual([r["pending_id"] for r in map(json.loads, f) if r["event"] == "pending_on_hold"], [first])
+        # later, with the models working again: --rerun-held judges it first, and it is accepted
+        with open(self.cfg["pending_file"], "w", encoding="utf-8") as f:
+            json.dump([], f)                                            # the new parked item is not under test
+        hints = {slugs[0]: "2.24", slugs[1]: "2.24"}
+        working = FakeModels(answers, hints, verdicts)
+        self.assertEqual(self._run(working, extra=["--rerun-held"]), 0)
+        recs = self._records()
+        self.assertEqual(len(recs), 1)
+        self.assertIn(held[0]["stem"].strip()[:80], json.dumps(recs[0], ensure_ascii=False))   # the held question
+        with open(entry.on_hold_file(self.cfg), encoding="utf-8") as f:
+            self.assertEqual(json.load(f), [])
+
+    def _parks_then_accepts(self, broken):
+        """`broken` fails one kind of call; the run must park the question (not crash), and
+        the next run, with every model reachable, judges and accepts it."""
+        slugs = [s for _, s in models.LADDER]
+        answers = {slugs[0]: "2.45", slugs[1]: "2.45", slugs[2]: "2.24"}
+        hints = {slugs[0]: "2.24", slugs[1]: "2.24"}
+        verdicts = {"2.24": {"verdict": "correct"}}
+        self.assertEqual(self._run(broken(answers, hints, verdicts)), entry.EXIT_COUNCIL_FAILED)
+        with open(self.cfg["pending_file"], encoding="utf-8") as f:
+            pending = json.load(f)
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(self._records(), [])
+        self.assertEqual(self._run(FakeModels(answers, hints, verdicts)), 0)
+        self.assertEqual(len(self._records()), 1)
+        with open(self.cfg["pending_file"], encoding="utf-8") as f:
+            self.assertEqual(json.load(f), [])
+        return pending[0]
+
+    def test_hint_resolve_failure_parks(self):
+        """A solver that is unreachable for the hint re-solve (after the ladder went through)."""
+        class HintDown(FakeModels):
+            def __call__(self, role, model, system, user, **kw):
+                if role == "council" and "A teacher adds this hint" in user:
+                    raise RuntimeError("503 provider overloaded")
+                return super().__call__(role, model, system, user, **kw)
+        self.assertIn("hint re-solve", self._parks_then_accepts(HintDown)["error"])
+
+    def test_parked_fact_without_a_fact_engine_is_dropped(self):
+        """A parked fact question whose subject has no fact engine cannot be judged: it is
+        dropped and the run goes on, instead of crashing every later run."""
+        slugs = [s for _, s in models.LADDER]
+        with open(self.cfg["pending_file"], "w", encoding="utf-8") as f:
+            json.dump([{"pending_id": "PENDING_x", "kind": "fact", "txs": [1], "edges": ["fact:x"],
+                        "nodes": ["x"], "chapters": [], "values": {}, "stem": "?"}], f)
+        fake = FakeModels({slugs[0]: "2.45", slugs[1]: "2.24"}, {slugs[0]: "2.24"}, {"2.24": {"verdict": "correct"}})
+        with mock.patch.dict(adapters.FACT_ADAPTERS, clear=True):
+            self.assertEqual(self._run(fake), 0)
+        with open(self.cfg["pending_file"], encoding="utf-8") as f:
+            self.assertEqual(json.load(f), [])
+        self.assertEqual(len(self._records()), 1)
+
+    def test_duplicate_inputs_cost_no_question_calls(self):
+        """Inputs that are already an accepted question are caught before a stem is written,
+        read back or solved, and the next round always asks for new inputs (a reworded stem
+        would have the same inputs and be the same duplicate again)."""
+        slugs = [s for _, s in models.LADDER]
+        make = lambda: FakeModels({slugs[0]: "2.45", slugs[1]: "2.24"}, {slugs[0]: "2.24"},
+                                  {"2.24": {"verdict": "correct"}}, refine_mode="reword")
+        self.assertEqual(self._run(make()), 0)
+        self.assertEqual(len(self._records()), 1)
+        again = make()                                # proposes the same values every time
+        self.assertEqual(self._run(again), 0)
+        self.assertEqual(len(self._records()), 1)
+        self.assertEqual(set(again.calls), {"generator", "refiner"})     # input proposals only
+        self.assertEqual(len(again.calls), 1 + flow.MAX_ROUNDS)
 
     def test_cut_off_writer_replies_do_not_crash(self):
         """Run 6: the refiner's input proposal was cut off mid-JSON three times and the run crashed."""
@@ -253,22 +367,6 @@ class PipelineOffline(_Env, unittest.TestCase):
                      hint_answers={slugs[0]: "2.24"}, verdicts={"2.24": {"verdict": "correct"}})
         self.assertEqual(self._run(fake), 0)
         self.assertEqual(len(self._records()), 1)            # recovered on the next attempt and accepted
-
-    def test_reference_wrong_overruled_by_a_sound_solve(self):
-        """Run 8: GLM slipped, the verifier blamed the engine, while Luna matched by sound reasoning."""
-        slugs = [s for _, s in models.LADDER]
-        fake = FakeModels(
-            council_answers={slugs[0]: "2.45", slugs[1]: "2.10", slugs[2]: "2.24"},
-            hint_answers={slugs[0]: "2.24", slugs[1]: "2.24"},
-            verdicts={"2.24": {"verdict": "correct"},
-                      "2.10": {"verdict": "reference_wrong", "reasoning": "reference inconsistent"}})
-        self.assertEqual(self._run(fake), 0)
-        r = self._records()[0]                                   # accepted, not dropped as engine_wrong
-        by = {c["name"]: c for c in r["council"]}
-        self.assertEqual(by[models.LADDER[1][0]]["verdict"], "wrong")
-        self.assertEqual(r["difficulty_label"], "hard_advanced")
-        self.assertFalse(os.path.exists(os.path.join(self.tmp, "queue_engine_wrong_physical.json")))
-        self.assertTrue(os.listdir(os.path.join(self.tmp, "runs")))      # the run's Blackboard is saved
 
     def test_trace_shows_inputs_as_given(self):
         ad = adapters.PhysicalAdapter(entry.get_subject_config("physical"))
@@ -321,7 +419,7 @@ class FactQuestions(_Env, unittest.TestCase):
         r = recs[0]
         self.assertEqual(r["question_kind"], "fact")
         self.assertEqual(len(r["options"]), 4)
-        self.assertEqual((r["council_n_solved"], r["difficulty_label"]), (1, "advanced"))
+        self.assertEqual((r["council_n_solved"], r["difficulty_label"]), (1, "advanced_or_mains_hard"))
         self.assertNotIn("extractor", self.fake.calls)                  # the fact gate is code only
 
 
@@ -339,13 +437,12 @@ class Grading(unittest.TestCase):
                         {"verdict": "correct", "answer_equivalent": True})     # code decides, not the verifier
         self.assertEqual((g["answer_matches"], g["match_by"]), (False, "code"))
 
-    def test_verifier_field_decides_what_code_cannot(self):
+    def test_an_answer_code_cannot_read_is_not_matched(self):
+        """No verifier since 2026-11-19: what code cannot compare counts as not matched."""
         from core.pipeline import flow
         r = self._res("ion 1 precipitates first", "text")
         g = flow._grade(r, {"final_answer": "Cl⁻ first"}, {"verdict": "correct", "answer_equivalent": True})
-        self.assertEqual((g["answer_matches"], g["counts_as_solved"], g["match_by"]), (True, True, "verifier"))
-        g = flow._grade(r, {"final_answer": "Br⁻ first"}, {"verdict": "wrong", "answer_equivalent": False})
-        self.assertEqual((g["answer_matches"], g["match_by"]), (False, "verifier"))
+        self.assertEqual((g["answer_matches"], g["counts_as_solved"], g["match_by"]), (False, False, "code"))
 
     def test_text_answer_shapes(self):
         from core.answers import text_answers_match as m
@@ -379,14 +476,14 @@ class Grading(unittest.TestCase):
         self.assertEqual(fmt, "Answer with exactly one of: forward, backward, no shift.")
         self.assertIsNone(PhysicalAdapter.answer_format(SimpleNamespace(answer=2.24, trace=[{"tx": 4}])))
 
-    def test_matching_answer_with_a_slip_on_the_way_counts(self):
-        """Run 4: 29.52 L against 29.79 L (inside tolerance) was labelled a slip and not counted."""
+    def test_a_matching_answer_is_solved_whatever_a_diagnosis_says(self):
+        """No verifier since 2026-11-19: solved = the answer matches (code). Run 4: 29.52 L against 29.79 L."""
         from core.pipeline import flow
         r = self._res(29.79, "positive")
-        g = flow._grade(r, {"final_answer": "29.52"}, {"verdict": "wrong", "failure_type": "slip"})
-        self.assertTrue(g["counts_as_solved"])
-        g = flow._grade(r, {"final_answer": "29.79"}, {"verdict": "right_answer_wrong_reasoning"})
-        self.assertFalse(g["counts_as_solved"])
+        for diag in (None, {"verdict": "correct"}, {"verdict": "wrong", "failure_type": "slip"},
+                     {"verdict": "right_answer_wrong_reasoning"}):
+            self.assertTrue(flow._grade(r, {"final_answer": "29.52"}, diag)["counts_as_solved"], diag)
+        self.assertFalse(flow._grade(r, {"final_answer": "31.2"}, {"verdict": "correct"})["counts_as_solved"])
 
     def test_numbers_stay_code_matched(self):
         from core.pipeline import flow
@@ -422,12 +519,6 @@ class SmokeTest3(unittest.TestCase):
             self.assertFalse(answers.matches(r.answer, str(t["wrong_answer"]), r.kind, r.tolerance))
         r2 = self.ad.compute(self.ad.plan(CHAIN), {"s0.mass": 4.4, "s0.molar_mass": 44})
         self.assertEqual(r2.tolerance, 0.01)
-
-    def test_slip_expression_chain(self):
-        from core.pipeline import flow
-        v = flow._eval_expression("exp(-(8.314*1.940/1.0336e-4)/(8.314*550)) = exp(-156070/4572.7) ≈ exp(-34.13)")
-        self.assertAlmostEqual(v / 1.5109e-15, 1.0, places=3)
-        self.assertIsNone(flow._eval_expression("the student used the wrong value"))
 
     def test_blank_council_reply_is_asked_again(self):
         from core.pipeline import stages
@@ -525,7 +616,8 @@ class GradingStress(unittest.TestCase):
         r = self._r(29.79, "L")
         ok = {"verdict": "correct"}
         slip = {"verdict": "wrong", "failure_type": "slip"}
-        self.assertTrue(self._solved(r, "29.52", "L", slip))          # run 4: inside 1% with a slip on the way
+        self.assertTrue(self._solved(r, "29.52", "L", ok))            # run 4: inside 1%
+        self.assertTrue(self._solved(r, "29.52", "L", slip))          # any diagnosis is ignored: code decides
         self.assertTrue(self._solved(r, "29.8", "L", ok))
         self.assertTrue(self._solved(r, 29.79, "L", ok))              # a number, not a string
         self.assertTrue(self._solved(r, "29790", "mL", ok))           # other unit, converted by the stated unit
@@ -533,20 +625,22 @@ class GradingStress(unittest.TestCase):
         self.assertFalse(self._solved(r, "31.2", "L"))                # the uses-22.4 trap
         self.assertFalse(self._solved(r, "29790", "L"))               # wrong unit really is wrong
         self.assertFalse(self._solved(r, None, "L"))
-        self.assertFalse(self._solved(r, "29.79", "L", {"verdict": "right_answer_wrong_reasoning"}))
+        self.assertTrue(self._solved(r, "29.79", "L", {"verdict": "right_answer_wrong_reasoning"}))
 
     def test_decision_table(self):
         """Every row of the solved? table (Flow.md step 8)."""
         r = self._r(-192.2, "kJ mol⁻¹", kind="real")
         rows = [  # (answer, diagnosis, solved?)
             ("-192.2", {"verdict": "correct"}, True),
-            ("-190.28", {"verdict": "wrong", "failure_type": "slip"}, True),                 # inside tol, slip
-            ("-190.28", {"verdict": "wrong", "failure_type": "genuine_difficulty"}, False),  # run 5: wrong method
-            ("-190.28", {"verdict": "wrong", "failure_type": "missing_knowledge"}, False),
-            ("-192.2", {"verdict": "right_answer_wrong_reasoning"}, False),
+            # run 5: -190.28 by a wrong method is inside 1 % of -192.2; code only, so it counts (the author's
+            # choice, 2026-11-19: on a hard question a wrong route rarely lands on the right number)
+            ("-190.28", {"verdict": "wrong", "failure_type": "slip"}, True),
+            ("-190.28", {"verdict": "wrong", "failure_type": "genuine_difficulty"}, True),
+            ("-190.28", {"verdict": "wrong", "failure_type": "missing_knowledge"}, True),
+            ("-192.2", {"verdict": "right_answer_wrong_reasoning"}, True),                   # code only: it matches
             ("-150", {"verdict": "wrong", "failure_type": "slip", "member_expression": "-221.1 + 85*152/1000 - 450*102.6/1000 + 0"}, False),
-            ("-150", {"verdict": "wrong", "failure_type": "slip", "member_expression": "-150 - 42.2"}, True),   # own arithmetic = -192.2
-            ("-150", {"verdict": "correct", "member_expression": "-150 - 42.2"}, True),
+            ("-150", {"verdict": "wrong", "failure_type": "slip", "member_expression": "-150 - 42.2"}, False),  # no slip confirmation
+            ("-150", {"verdict": "correct", "member_expression": "-150 - 42.2"}, False),   # code match decides the number
             ("-150", {"verdict": "wrong", "failure_type": "genuine_difficulty"}, False),
             (None, {"verdict": "wrong"}, False),
         ]
@@ -570,26 +664,19 @@ class GradingStress(unittest.TestCase):
         self.assertTrue(self._solved(self._r(0.0005776, "s⁻¹"), "0.03466", "min⁻¹", ok))
         self.assertTrue(self._solved(self._r(1.0, "atm"), "101.325", "kPa", ok))
 
-    def test_unusable_line_goes_to_the_verifier_field(self):
-        r = self._r(29.79, "L")
-        self.assertTrue(self._solved(r, "about 29.8 (29.79)", "L", {"verdict": "correct", "answer_equivalent": True}))
-        self.assertFalse(self._solved(r, "about 29.8 (29.79)", "L", {"verdict": "wrong", "answer_equivalent": False}))
+    def test_an_unusable_line_is_not_solved(self):
+        r = self._r(29.79, "L")                       # no verifier to read it: not matched
+        self.assertFalse(self._solved(r, "about 29.8 (29.79)", "L", {"verdict": "correct", "answer_equivalent": True}))
 
-    def test_slip_confirmed_by_the_members_own_arithmetic(self):
-        r = self._r(29.79, "L")
+    def test_slip_is_never_confirmed(self):
+        """Slip confirmation is gone (solvers have a calculator): a wrong number never counts,
+        whatever expression the verifier offers. The cases are the ones that used to be confirmed."""
+        r, r7 = self._r(29.79, "L"), self._r(307.4, "kJ")
         d = {"verdict": "wrong", "failure_type": "slip", "member_expression": "(1.4173 * 0.0821 * 320.0) / 1.25"}
-        work = "n total = 1.4173 mol; V = nRT/P = 1.4173 x 0.0821 x 320.0 / 1.25 = 31.0 L"
-        self.assertTrue(self._solved(r, "31.0", "L", d, work))
-        # run 7: the verifier wrote the correct set-up itself; the member's working has none of it
         d7 = {"verdict": "wrong", "failure_type": "slip", "member_expression": "0.45 * 6 * 96500 * 1.18 / 1000"}
-        r7 = self._r(307.4, "kJ")
+        self.assertFalse(self._solved(r, "31.0", "L", d, "V = 1.4173 x 0.0821 x 320.0 / 1.25 = 31.0 L"))
         self.assertFalse(self._solved(r7, "0.2915", "kJ", d7, "W = nFE = 2 x 96500 x 1.51 = 291.5 J, i.e. 0.2915 kJ"))
-        # a genuine miscopy (1.81 written for 1.18) is still confirmed: one substituted value allowed
-        self.assertTrue(self._solved(r7, "471.6", "kJ", d7, "W = 0.45 x 6 x 96500 x 1.81 = 471.6 kJ"))
-        # no working at all: cannot be confirmed
-        self.assertFalse(self._solved(r, "31.0", "L", d, ""))
-        d = {"verdict": "wrong", "failure_type": "slip", "member_expression": "1.0 * 0.0821 * 320 / 1.25"}
-        self.assertFalse(self._solved(r, "21.0", "L", d))
+        self.assertFalse(self._solved(r7, "471.6", "kJ", d7, "W = 0.45 x 6 x 96500 x 1.81 = 471.6 kJ"))
 
     def test_text_and_letters(self):
         from types import SimpleNamespace
@@ -740,6 +827,35 @@ class GateCompare(unittest.TestCase):
 
     def test_unreadable(self):
         self.assertTrue(gate.compare(self.SPEC, self.VALUES, {"asked": 1}, 1, [])["unreadable"])
+
+
+class LadderConsensus(unittest.TestCase):
+    """Every ladder model gives the same answer and it is not the key: held for review (2026-11-19). Replayed on
+    the 21 questions judged so far, it holds only the two with a wrong key."""
+
+    def _r(self, answer, traps=()):
+        from types import SimpleNamespace
+        return SimpleNamespace(answer=answer, unit="eV", kind="positive", tolerance=0.01,
+                               traps=[{"id": f"t{i}", "wrong_answer": w} for i, w in enumerate(traps)])
+
+    def test_the_hydrogen_like_ion_is_held(self):
+        from core.pipeline import flow
+        graded = [{"name": n, "final_answer": "85.4"} for n in ("a", "b", "c")]
+        self.assertEqual(flow._consensus_against_key(self._r(88.61), graded), 85.4)
+
+    def test_different_wrong_answers_or_a_match_are_not_held(self):
+        from core.pipeline import flow
+        r = self._r(50.31)
+        self.assertIsNone(flow._consensus_against_key(r, [{"final_answer": "56.3"}, {"final_answer": "54.6"},
+                                                          {"final_answer": "54.6"}]))       # the flask: 3 % apart
+        self.assertIsNone(flow._consensus_against_key(r, [{"final_answer": "40"}]))         # one model only
+        self.assertIsNone(flow._consensus_against_key(r, [{"final_answer": "40"}, {"final_answer": None}]))
+
+    def test_a_shared_known_trap_answer_is_hard_not_held(self):
+        from core.pipeline import flow
+        r = self._r(88.61, traps=(85.4,))
+        graded = [{"final_answer": "85.4"}, {"final_answer": "85.5"}]
+        self.assertIsNone(flow._consensus_against_key(r, graded))
 
 
 if __name__ == "__main__":

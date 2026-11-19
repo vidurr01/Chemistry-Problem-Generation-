@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 from core.engine.base import EngineError, Param, Step, Trap, log10, solve_bisect, sqrt
-from core.engine.chem import C, check_balanced, const, parse_equation
+from core.engine.chem import C, check_balanced, const, parse_equation, species_key
 
 P = Param
 KW = C.KW_25
@@ -20,11 +20,11 @@ def _gas_delta_n(eq_text, gases=None):
 def _mass_action(eq_text, values, use_powers=True):
     check_balanced(eq_text)
     r, p = parse_equation(eq_text)
-    vals = {k.replace(" ", ""): float(x) for k, x in values.items()}
+    vals = {species_key(k): float(x) for k, x in values.items()}
     k = 1.0
     for sign, side in ((1, p), (-1, r)):
         for c, f in side:
-            key = f.replace(" ", "")
+            key = species_key(f)
             if key not in vals:
                 raise EngineError(f"no value for {f}")
             if vals[key] <= 0:
@@ -58,9 +58,9 @@ def _kc_unit(dn) -> str:
 def _dn_of(eq_text, species):
     """Δν over the species listed (those in the K expression)."""
     r, p = parse_equation(eq_text)
-    keys = {k.replace(" ", "") for k in species}
-    return (sum(c for c, f in p if f.replace(" ", "") in keys)
-            - sum(c for c, f in r if f.replace(" ", "") in keys))
+    keys = {species_key(k) for k in species}
+    return (sum(c for c, f in p if species_key(f) in keys)
+            - sum(c for c, f in r if species_key(f) in keys))
 
 
 def _single_reactant(eq_text):
@@ -80,7 +80,11 @@ def _kp_from_alpha(v, total_moles=True):
     total = sum(n for _, n in amounts) if total_moles else 1.0
     k = 1.0
     for i, (c, n) in enumerate(amounts):
-        k *= (n / total * P) ** (-c if i == 0 else c)
+        xi = n / total * P
+        exp = -c if i == 0 else c
+        if xi == 0.0 and exp < 0:
+            return math.inf   # reactant fully consumed → K_p → ∞
+        k *= xi ** exp
     return k
 
 
@@ -110,10 +114,10 @@ def _ice_alpha(v, use_coef=True):
         raise EngineError("degree-of-dissociation tables need a single reactant")
     nu_r, reac = r[0]
     n0, a = v["moles"], v["gas_dissociation_degree"]
-    amounts = {reac: n0 * (1 - a)}
+    amounts = {species_key(reac): n0 * (1 - a)}
     for c, f in p:
-        amounts[f] = n0 * a * (c / nu_r if use_coef else 1)
-    target = v["species_asked"]
+        amounts[species_key(f)] = n0 * a * (c / nu_r if use_coef else 1)
+    target = species_key(v["species_asked"])
     if target not in amounts:
         raise EngineError(f"{target} is not in the equation")
     return {"equilibrium_moles": amounts[target], "eq_amounts": amounts, "balanced_equation": eq,
@@ -126,7 +130,17 @@ def _strong_acid_h(c, basicity):
 
 
 def _weak_h(K, Cc):
-    return (-K + sqrt(K * K + 4 * K * Cc)) / 2
+    if not math.isfinite(K) or K > 1e153:  # K*K would overflow → full dissociation limit
+        return Cc
+    disc = K * K + 4 * K * Cc
+    return (-K + sqrt(disc)) / 2
+
+
+def _weak_h_with_water(K, Cc):
+    """[H⁺] of a weak acid with water's own H⁺: h³ + Kh² − (KC + K_w)h − KK_w = 0. Same as
+    the quadratic whenever K_aC ≫ K_w; differs for a very weak or very dilute acid (2025 Q9)."""
+    f = lambda h: h ** 3 + K * h * h - (K * Cc + KW) * h - K * KW
+    return solve_bisect(f, 1e-14, Cc + 1e-6)
 
 
 def _quad_common_ion(ksp, c):
@@ -280,16 +294,16 @@ STEPS = [
                 P("T", "K", "temperature", kind="temperature", lo=250, hi=1500)),
          answer="equilibrium_constant", kind="positive", roles={"equilibrium_constant": "Kp"},
          unit=lambda v: _power_unit("atm", _gas_delta_n(v["balanced_equation"])),
-         gives=("T1", "balanced_equation"),   # K_p is at this temperature: a van 't Hoff step's T₁
+         gives=("T1", "T", "balanced_equation"),   # K_p is at this temperature (van 't Hoff's T₁; ΔG° by tx 369)
          fn=lambda v: {"equilibrium_constant": v["equilibrium_constant"] * (C.R_LATM * v["T"]) ** _gas_delta_n(v["balanced_equation"]),
-                       "T1": v["T"], "balanced_equation": v["balanced_equation"]},
+                       "T1": v["T"], "T": v["T"], "balanced_equation": v["balanced_equation"]},
          traps=(Trap("delta_n_sign", "uses (RT)^(−Δn)",
                      lambda v: v["equilibrium_constant"] * (C.R_LATM * v["T"]) ** -_gas_delta_n(v["balanced_equation"])),
                 Trap("wrong_R", "uses R = 8.314",
                      lambda v: v["equilibrium_constant"] * (C.R_J * v["T"]) ** _gas_delta_n(v["balanced_equation"]))),
          constants=(const("R_LATM"),), formula="K_p = K_c (RT)^Δn_g", asks="K_p"),
     Step(tx=155, src="equilibrium_constant", dst="equilibrium_constant",
-         needs=(P("equilibrium_constant", "", "K_p (atm units)", lo=1e-6, hi=1e6, role="Kp"),
+         needs=(P("equilibrium_constant", "", "K_p (atm units)", lo=1e-6, hi=1e6, role=("Kp", "K°")),
                 P("balanced_equation", "", "balanced equation (all species gaseous)", kind="text"),
                 P("total_pressure", "atm", "total equilibrium pressure", lo=0.1, hi=50)),
          answer="equilibrium_constant", unit="", kind="positive", roles={"equilibrium_constant": "Kx"},
@@ -395,10 +409,13 @@ STEPS = [
          needs=(P("dissociation_constant", "", "K_a of the weak acid", lo=1e-10, hi=1e-2),
                 P("concentration", "mol L⁻¹", "concentration of the acid", lo=1e-3, hi=2)),
          answer="ph", unit="", kind="ph", roles={"ph": "solution"},
-         fn=lambda v: {"ph": _pH(_weak_h(v["dissociation_constant"], v["concentration"]))},
+         fn=lambda v: {"ph": _pH(_weak_h_with_water(v["dissociation_constant"], v["concentration"]))},
          traps=(Trap("forgets_sqrt", "uses [H⁺] = K_aC", lambda v: _pH(v["dissociation_constant"] * v["concentration"])),
-                Trap("treats_as_strong", "takes [H⁺] = C", lambda v: _pH(v["concentration"]))),
-         formula="[H⁺] = √(K_aC); pH = ½(pK_a − log C)", asks="pH"),
+                Trap("treats_as_strong", "takes [H⁺] = C", lambda v: _pH(v["concentration"])),
+                Trap("ignores_water", "ignores H⁺ from water (matters when K_aC is near K_w)",
+                     lambda v: _pH(_weak_h(v["dissociation_constant"], v["concentration"])))),
+         constants=(const("KW_25"),),
+         formula="[H⁺] from K_a = [H⁺][A⁻]/[HA] with water's H⁺ (≈ √(K_aC) when K_aC ≫ K_w)", asks="pH"),
     Step(tx=176, src="dissociation_constant", dst="ph",
          needs=(P("Kb", "", "K_b of the weak base", lo=1e-10, hi=1e-2),
                 P("concentration", "mol L⁻¹", "concentration of the base", lo=1e-3, hi=2)),
@@ -498,7 +515,7 @@ STEPS = [
     *[Step(tx=tx, src="ph", dst="dissociation_constant",
            needs=(P("ph", "", "pH at the half-equivalence point", kind="ph", lo=2, hi=12, role="half-equivalence point"),),
            answer="dissociation_constant", unit="", kind="positive",
-           fn=lambda v: {"dissociation_constant": 10 ** -v["ph"]},
+           fn=lambda v: {"dissociation_constant": 10.0 ** max(-307.0, min(307.0, -v["ph"]))},
            traps=(Trap("weak_acid_formula", "applies [H⁺] = √(K_aC) with C = 1", lambda v: 10 ** (-2 * v["ph"])),),
            formula="at half-equivalence [salt] = [acid] so pH = pK_a", asks="K_a of the acid")
       for tx in (191, 316)],
@@ -602,7 +619,12 @@ def _common_ion_s(v):
 
 def _ksp(v):
     x, y, s = v["cation_count"], v["anion_count"], v["solubility"]
-    return (x ** x) * (y ** y) * s ** (x + y)
+    if not (math.isfinite(s) and s > 0 and math.isfinite(x) and x > 0 and math.isfinite(y) and y > 0):
+        return 0.0   # counts and solubility must be positive finite numbers
+    try:
+        return (x ** x) * (y ** y) * s ** (x + y)
+    except OverflowError:
+        return math.inf
 
 
 def _first(v):

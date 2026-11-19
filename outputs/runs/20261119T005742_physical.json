@@ -1,0 +1,605 @@
+{
+ "subject": "physical",
+ "saved_at": "20261119T005742",
+ "spend": {
+  "total_cost_usd": 0.04779,
+  "by_role": {
+   "council": {
+    "calls": 38,
+    "prompt_tokens": 43608,
+    "completion_tokens": 11775,
+    "cost": 0.010886214
+   },
+   "verifier": {
+    "calls": 8,
+    "prompt_tokens": 17049,
+    "completion_tokens": 10357,
+    "cost": 0.0068834000000000005
+   },
+   "formula_fit": {
+    "calls": 4,
+    "prompt_tokens": 2417,
+    "completion_tokens": 0,
+    "cost": 0.000101514
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2077,
+    "completion_tokens": 1644,
+    "cost": 0.023882
+   },
+   "design_check": {
+    "calls": 1,
+    "prompt_tokens": 728,
+    "completion_tokens": 0,
+    "cost": 3.0576e-05
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 3036,
+    "completion_tokens": 589,
+    "cost": 0.00448575
+   },
+   "level_check": {
+    "calls": 1,
+    "prompt_tokens": 570,
+    "completion_tokens": 0,
+    "cost": 2.394e-05
+   },
+   "coder": {
+    "calls": 1,
+    "prompt_tokens": 4828,
+    "completion_tokens": 1733,
+    "cost": 0.001469925
+   },
+   "coherence_check": {
+    "calls": 1,
+    "prompt_tokens": 565,
+    "completion_tokens": 0,
+    "cost": 2.373e-05
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "delta_g_to_equilibrium_constant_grtlnk2303rt",
+     "delta_g_to_work_dgtpwnonpvma",
+     "equilibrium_constant_to_equilibrium_constant_kpkcrtng",
+     "equilibrium_moles_to_equilibrium_constant_kcxxyyaabbla"
+    ],
+    "nodes": [
+     "equilibrium_moles",
+     "equilibrium_constant",
+     "delta_g",
+     "work"
+    ],
+    "chapters": [
+     "Chemical Equilibrium",
+     "Thermodynamics"
+    ],
+    "txs": [
+     152,
+     154,
+     135,
+     137
+    ],
+    "trap_ids": [
+     "delta_n_sign",
+     "ignores_powers",
+     "kJ_not_converted",
+     "log10_as_ln",
+     "per_mole_only",
+     "uses_moles",
+     "wrong_R"
+    ],
+    "description": "K_c [K_c = Π[products]^ν / Π[reactants]^ν] | K_p [K_p = K_c (RT)^Δn_g] | equilibrium constant K [ΔG° = −RT ln K] | maximum useful (non-PV) work obtainable (kJ) [w_non-PV,max = −ΔG]",
+    "twist": "inverse",
+    "drawn_txs": [
+     152,
+     154,
+     135,
+     137
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T00:54:02.563378+00:00",
+     "p": 0.55
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T00:54:25.517670+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "The gas-phase dissociation of dinitrogen tetroxide: N2O4(g) ⇌ 2NO2(g) at a fixed temperature T.",
+     "hidden_link": "The thermodynamic equilibrium constant K in ΔG° = −RT ln K for a gas-phase reaction is strictly K_p (based on standard pressures), not K_c. The maximum non-PV work under standard conditions gives ΔG°, which yields K_p, forcing the use of the K_p-K_c relation before solving the concentration-based equilibrium.",
+     "route": "Formula 4: Use the given maximum non-PV work for the standard reaction of a given amount of N2O4 to find the standard Gibbs energy change (ΔG°). Formula 3: Use ΔG° to calculate the thermodynamic equilibrium constant, which is K_p. Formula 2: Convert K_p to K_c using the temperature and Δn_g = 1. Formula 1: Use K_c, the initial amount of N2O4, and the vessel volume to set up the equilibrium expression and solve for the equilibrium amount of NO2.",
+     "student_must_notice": "That the K obtained from standard Gibbs energy of a gas-phase reaction is K_p, and it must be converted to K_c to be used with moles and volume in the K_c expression.",
+     "trap": "Assuming the K calculated from ΔG° is K_c directly, skipping Formula 2, and using it straight in the concentration equilibrium expression, which yields a plausible but incorrect degree of dissociation.",
+     "given": "The maximum non-PV work obtainable from the standard state conversion of a specified number of moles of N2O4(g) to NO2(g) at temperature T, the initial moles of N2O4 placed in a closed vessel, the volume of the vessel, and the temperature T.",
+     "hidden": "The values of ΔG°, K_p, and K_c.",
+     "asked": "The equilibrium amount of NO2(g) present in the vessel, in moles.",
+     "why_hard": "It runs the thermodynamic-equilibrium chain backwards, requiring the solver to correctly identify which specific equilibrium constant (K_p vs K_c) is linked to standard Gibbs energy before applying the stoichiometry.",
+     "_reasoning": "**Formulating Physical Chemistry Challenges**\n\nI'm now focusing on constructing a challenging physical chemistry problem utilizing the provided equilibrium and free energy equations. I'm exploring how to integrate the twist options, particularly the inverse and simultaneous approaches, to create a truly thought-provoking scenario for an expert.\n\n**Designing Equilibrium Puzzles**\n\nI'm currently focused on designing a challenging physical chemistry problem, specifically integrating the \"inverse\" twist with gas-phase equilibrium. I'm working to ensure the relationship between $\\Delta G^\\circ$, $K$, and non-PV work is clearly defined and non-trivial for an expert audience.\n\n**Reversing Equilibrium Calculations**\n\nI'm now exploring an \"inverse\" problem formulation, starting with maximum non-PV work and cascading back through $\\Delta G^\\circ$, $K_p$, $K_c$, and finally to equilibrium concentrations. This approach seems to effectively reverse the typical problem-solving sequence.\n\n",
+     "situation": "The gas-phase dissociation of dinitrogen tetroxide: N2O4(g) ⇌ 2NO2(g) at a fixed temperature T.",
+     "insight": "That the K obtained from standard Gibbs energy of a gas-phase reaction is K_p, and it must be converted to K_c to be used with moles and volume in the K_c expression.",
+     "links": "Formula 4: Use the given maximum non-PV work for the standard reaction of a given amount of N2O4 to find the standard Gibbs energy change (ΔG°). Formula 3: Use ΔG° to calculate the thermodynamic equilibrium constant, which is K_p. Formula 2: Convert K_p to K_c using the temperature and Δn_g = 1. Formula 1: Use K_c, the initial amount of N2O4, and the vessel volume to set up the equilibrium expression and solve for the equilibrium amount of NO2."
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T00:54:26.964864+00:00",
+     "twist": "inverse",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T00:54:33.180150+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2016P2_Chem_Q21",
+      "2012P1_Chem_Q40"
+     ],
+     "stem": "A rigid closed container of volume [[V_vessel]] L is maintained at a constant temperature of [[T_val]] K and initially charged with [[n_N2O4_0]] mol of pure dinitrogen tetroxide (N2O4) gas. The maximum non-PV work obtainable from the standard state conversion of [[n_reacted]] mol of N2O4(g) into nitrogen dioxide (NO2) gas at this temperature is [[w_work]] kJ. Calculate the total amount of NO2(g) present in the container at chemical equilibrium. (Given: R = [[R_gas]] J K^-1 mol^-1, R = [[R_atm]] L atm K^-1 mol^-1).",
+     "asks": "the equilibrium amount of nitrogen dioxide present in the vessel",
+     "unit": "mol",
+     "asked": "n_NO2_eq",
+     "ranges": {
+      "V_vessel": [
+       2.0,
+       10.0,
+       false
+      ],
+      "T_val": [
+       300.0,
+       400.0,
+       false
+      ],
+      "w_work": [
+       1.0,
+       10.0,
+       false
+      ],
+      "n_reacted": [
+       0.5,
+       2.0,
+       false
+      ],
+      "n_N2O4_0": [
+       0.5,
+       2.0,
+       false
+      ]
+     },
+     "fixed": {
+      "R_gas": 8.314,
+      "R_atm": 0.0821
+     },
+     "answer_range": [
+      0.05,
+      3.5
+     ],
+     "free": {
+      "R_gas": 8.314,
+      "R_atm": 0.0821
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T00:54:57.413509+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    balanced_equation = \"N2O4(g) ⇌ 2 NO2(g)\"\n    delta_g = find(step_137, \"delta_g\", result=w_work, moles=n_reacted)\n    Kp = step_135(delta_g=delta_g, T=T_val)[\"equilibrium_constant\"]\n    Kc = find(step_154, \"equilibrium_constant\", result=Kp, balanced_equation=balanced_equation, T=T_val)\n\n    def mismatch(alpha):\n        amounts = {\n            \"N2O4(g)\": n_N2O4_0 * (1 - alpha),\n            \"NO2(g)\": 2 * n_N2O4_0 * alpha\n        }\n        return step_152(balanced_equation=balanced_equation, eq_amounts=amounts, volume=V_vessel)[\"equilibrium_constant\"] - Kc\n\n    alpha = solve_for(mismatch, 1e-12, 1 - 1e-12)\n    return 2 * n_N2O4_0 * alpha",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "R_gas": 8.314,
+      "R_atm": 0.0821,
+      "V_vessel": 6.35,
+      "T_val": 370.0,
+      "w_work": 3.1,
+      "n_reacted": 1.43,
+      "n_N2O4_0": 0.655
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T00:54:59.947584+00:00",
+     "ok": true,
+     "values": {
+      "R_gas": 8.314,
+      "R_atm": 0.0821,
+      "V_vessel": 6.35,
+      "T_val": 370.0,
+      "w_work": 3.1,
+      "n_reacted": 1.43,
+      "n_N2O4_0": 0.655
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-19T00:55:00.913859+00:00",
+     "stem": "A rigid closed container of volume 6.35 L is maintained at a constant temperature of 370 K and initially charged with 0.655 mol of pure dinitrogen tetroxide (N2O4) gas. The maximum non-PV work obtainable from the standard state conversion of 1.43 mol of N2O4(g) into nitrogen dioxide (NO2) gas at this temperature is 3.10 kJ. Calculate the total amount of NO2(g) present in the container at chemical equilibrium. (Given: R = 8.314 J K^-1 mol^-1, R = 0.0821 L atm K^-1 mol^-1). Give the answer in mol, to 3 significant figures.",
+     "code": "def solve():\n    balanced_equation = \"N2O4(g) ⇌ 2 NO2(g)\"\n    delta_g = find(step_137, \"delta_g\", result=w_work, moles=n_reacted)\n    Kp = step_135(delta_g=delta_g, T=T_val)[\"equilibrium_constant\"]\n    Kc = find(step_154, \"equilibrium_constant\", result=Kp, balanced_equation=balanced_equation, T=T_val)\n\n    def mismatch(alpha):\n        amounts = {\n            \"N2O4(g)\": n_N2O4_0 * (1 - alpha),\n            \"NO2(g)\": 2 * n_N2O4_0 * alpha\n        }\n        return step_152(balanced_equation=balanced_equation, eq_amounts=amounts, volume=V_vessel)[\"equilibrium_constant\"] - Kc\n\n    alpha = solve_for(mismatch, 1e-12, 1 - 1e-12)\n    return 2 * n_N2O4_0 * alpha",
+     "asks": "the equilibrium amount of nitrogen dioxide present in the vessel",
+     "unit": "mol",
+     "twist": "inverse",
+     "givens": [
+      {
+       "value": 6.35,
+       "quote": "V_vessel"
+      },
+      {
+       "value": 370.0,
+       "quote": "T_val"
+      },
+      {
+       "value": 0.655,
+       "quote": "n_N2O4_0"
+      },
+      {
+       "value": 1.43,
+       "quote": "n_reacted"
+      },
+      {
+       "value": 3.1,
+       "quote": "w_work"
+      },
+      {
+       "value": 8.314,
+       "quote": "R_gas"
+      },
+      {
+       "value": 0.0821,
+       "quote": "R_atm"
+      }
+     ],
+     "answer": 0.4311,
+     "trace": [
+      {
+       "tx": 137,
+       "src": "delta_g",
+       "dst": "work",
+       "formula": "w_non-PV,max = −ΔG",
+       "inputs": {
+        "moles": 1.43,
+        "delta_g": -2.16783216783
+       },
+       "outputs": {
+        "useful_work": 3.1
+       }
+      },
+      {
+       "tx": 135,
+       "src": "delta_g",
+       "dst": "equilibrium_constant",
+       "formula": "ΔG° = −RT ln K",
+       "inputs": {
+        "delta_g": -2.16783216783,
+        "T": 370
+       },
+       "outputs": {
+        "equilibrium_constant": 2.0233,
+        "T1": 370,
+        "T": 370
+       }
+      },
+      {
+       "tx": 154,
+       "src": "equilibrium_constant",
+       "dst": "equilibrium_constant",
+       "formula": "K_p = K_c (RT)^Δn_g",
+       "inputs": {
+        "balanced_equation": "N2O4(g) ⇌ 2 NO2(g)",
+        "T": 370,
+        "equilibrium_constant": 0.0666053682892
+       },
+       "outputs": {
+        "equilibrium_constant": 2.0233,
+        "T1": 370,
+        "T": 370,
+        "balanced_equation": "N2O4(g) ⇌ 2 NO2(g)"
+       }
+      },
+      {
+       "tx": 152,
+       "src": "equilibrium_moles",
+       "dst": "equilibrium_constant",
+       "formula": "K_c = Π[products]^ν / Π[reactants]^ν",
+       "inputs": {
+        "balanced_equation": "N2O4(g) ⇌ 2 NO2(g)",
+        "eq_amounts": {
+         "N2O4(g)": 0.439442749396,
+         "NO2(g)": 0.431114501207
+        },
+        "volume": 6.35
+       },
+       "outputs": {
+        "equilibrium_constant": 0.066605,
+        "balanced_equation": "N2O4(g) ⇌ 2 NO2(g)"
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "per_mole_only",
+       "desc": "ignores the amount reacting",
+       "tx": 137,
+       "step": 0,
+       "wrong_answer": 0.4858
+      },
+      {
+       "id": "log10_as_ln",
+       "desc": "uses 10^(−ΔG/RT)",
+       "tx": 135,
+       "step": 1,
+       "wrong_answer": 0.6092
+      },
+      {
+       "id": "kJ_not_converted",
+       "desc": "keeps ΔG in kJ",
+       "tx": 135,
+       "step": 1,
+       "wrong_answer": 0.3215
+      },
+      {
+       "id": "delta_n_sign",
+       "desc": "uses (RT)^(−Δn)",
+       "tx": 154,
+       "step": 2,
+       "wrong_answer": 1.301
+      },
+      {
+       "id": "wrong_R",
+       "desc": "uses R = 8.314",
+       "tx": 154,
+       "step": 2,
+       "wrong_answer": 0.05127
+      },
+      {
+       "id": "uses_moles",
+       "desc": "puts amounts instead of concentrations into K_c",
+       "tx": 152,
+       "step": 3,
+       "wrong_answer": 0.1929
+      },
+      {
+       "id": "ignores_powers",
+       "desc": "ignores the stoichiometric powers",
+       "tx": 152,
+       "step": 3,
+       "wrong_answer": 0.04222
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "R = 8.314 J K⁻¹ mol⁻¹",
+      "R = 0.0821 L atm K⁻¹ mol⁻¹"
+     ],
+     "depth": 2,
+     "extra_txs": [],
+     "preset": {
+      "V_vessel": 6.35,
+      "T_val": 370.0,
+      "n_N2O4_0": 0.655,
+      "n_reacted": 1.43,
+      "w_work": 3.1,
+      "R_gas": 8.314,
+      "R_atm": 0.0821
+     },
+     "template": "A rigid closed container of volume [[V_vessel]] L is maintained at a constant temperature of [[T_val]] K and initially charged with [[n_N2O4_0]] mol of pure dinitrogen tetroxide (N2O4) gas. The maximum non-PV work obtainable from the standard state conversion of [[n_reacted]] mol of N2O4(g) into nitrogen dioxide (NO2) gas at this temperature is [[w_work]] kJ. Calculate the total amount of NO2(g) present in the container at chemical equilibrium. (Given: R = [[R_gas]] J K^-1 mol^-1, R = [[R_atm]] L atm K^-1 mol^-1).",
+     "ranges": {
+      "V_vessel": [
+       2.0,
+       10.0,
+       false
+      ],
+      "T_val": [
+       300.0,
+       400.0,
+       false
+      ],
+      "w_work": [
+       1.0,
+       10.0,
+       false
+      ],
+      "n_reacted": [
+       0.5,
+       2.0,
+       false
+      ],
+      "n_N2O4_0": [
+       0.5,
+       2.0,
+       false
+      ]
+     },
+     "answer_range": [
+      0.05,
+      3.5
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-19T00:56:49.035409+00:00",
+     "members": [
+      {
+       "name": "llama-3.3-70b",
+       "model": "meta-llama/llama-3.3-70b-instruct",
+       "working": "First, we need to calculate the number of moles of N2O4 that dissociate. The given non-PV work is 3.10 kJ for 1.43 mol of N2O4. We can use the formula ΔG = -w_max to find the Gibbs free energy change for the dissociation reaction. Since ΔG = ΔG° + RT ln(Q), where Q is the reaction quotient, we need to find the equilibrium constant K. The reaction is N2O4(g) ⇌ 2NO2(g). Let x be the number of moles of N2O4 that dissociate. The initial number of moles of N2O4 is 0.655 mol. The total number of moles after dissociation is 0.655 - x + 2x = 0.655 + x. The pressure of the gas mixture can be calculated using the ideal gas law: PV = nRT. We can calculate the initial pressure of N2O4: P_initial = nRT/V = (0.655 mol)(8.314 J K^-1 mol^-1)(370 K)/(6.35 L) = 3.33 atm. After dissociation, the total pressure is P_total = (0.655 + x)(8.314)(370)/(6.35). We can use the given non-PV work to find the Gibbs free energy change: ΔG = -w_max = -3100 J = -3.10 kJ. We can use the formula ΔG = ΔG° + RT ln(Q) to find the equilibrium constant K. For the reaction N2O4(g) ⇌ 2NO2(g), ΔG° = -RT ln(K). We can rearrange the equation to find K: K = exp(-ΔG°/RT). We can use the given data to find the equilibrium constant K and then find the number of moles of NO2 at equilibrium.",
+       "objection": null,
+       "answer_line": "[TYPE: equilibrium] [CALC_VALUE: 0.513] [CALC_UNIT: mol] [SUBSTANCE: NO2]",
+       "final_answer": "0.513 mol",
+       "unit": "",
+       "answer_type": "equilibrium",
+       "calc_value": [
+        0.513
+       ],
+       "calc_unit": [
+        "mol"
+       ],
+       "target_unit": "mol",
+       "final_value": [
+        0.513
+       ],
+       "substance": [
+        "NO2"
+       ],
+       "diagnosis": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 4,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly relates ΔG to w_max and sets up the dissociation stoichiometry, but never computes K or applies the equilibrium expression, so the final value of 0.513 mol has no supported derivation. Checking the reference independently gives K ≈ 2.02 and Kc ≈ 0.0666, and solving 4x² + 0.4229x − 0.277 = 0 gives 0.431 mol NO₂, so the reference is correct and the student's answer is wrong."
+       },
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": "wrong",
+       "failure_type": "genuine_difficulty",
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Step 1: ΔG° for N2O4(g) → 2NO2(g). Maximum non-PV work = -ΔG°, so ΔG° = -3100 J / 1.43 mol = -2167.83 J/mol.\nStep 2: Kp = exp(-ΔG°/RT) = exp(2167.83/(8.314×370)) = exp(0.7049) = 2.0233.\nStep 3: Initial concentration c = n/V = 0.655/6.35 = 0.10315 mol/L. Since Kp = Kc(RT)^Δn with Δn = 1, Kc = Kp/(RT) = 2.0233/(0.0821×370) = 2.0233/4.7838 = 0.4230.\nStep 4: Equilibrium: Kc = [NO2]^2/[N2O4] = (2x)^2/(0.10315 - x) = 0.4230.\nStep 5: Solve 4x^2 = 0.4230(0.10315 - x) → 4x^2 + 0.4230x - 0.043633 = 0 → x = (-0.4230 + sqrt(0.4230^2 + 16×0.4230×0.10315))/8 = 1.3231 mol/L.\nStep 6: n(NO2) = 2x × V = 2 × 1.3231 × 6.35 = 2.646 mol.",
+       "objection": null,
+       "answer_line": "[TYPE: equilibrium] [CALC_VALUE: 2.65] [CALC_UNIT: mol] [SUBSTANCE: NO2]",
+       "final_answer": "2.65 mol",
+       "unit": "",
+       "answer_type": "equilibrium",
+       "calc_value": [
+        2.65
+       ],
+       "calc_unit": [
+        "mol"
+       ],
+       "target_unit": "mol",
+       "final_value": [
+        2.65
+       ],
+       "substance": [
+        "NO2"
+       ],
+       "diagnosis": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 3,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly found ΔG° and Kp ≈ 2.02, and correctly used Kc = Kp/(RT) for Δn = 1. However, in Step 3 they computed RT as 0.0821 × 370 = 4.7838, when it is 30.38, giving Kc = 0.423 instead of 0.0666. This error propagates to an equilibrium extent of 1.32 mol/L, which exceeds the initial concentration of 0.103 mol/L and is physically impossible, a check the student should have caught. The correct result is about 0.431 mol NO2, not 2.65 mol."
+       },
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": "wrong",
+       "failure_type": "genuine_difficulty",
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "gpt-6-luna",
+       "model": "openai/gpt-6-luna",
+       "working": "For the dissociation reaction N2O4(g) ⇌ 2 NO2(g), the maximum non-PV work obtainable from the standard-state conversion is −ΔG° for the forward reaction. Thus, for 1.43 mol of N2O4, ΔG° = −3.10 kJ. The standard Gibbs energy per mole of reaction is ΔG° = −3100/1.43 J mol⁻¹. Using ΔG° = −RT ln Kp gives ln Kp = 3100/(1.43 × 8.314 × 370) = 0.7047, so Kp = 2.023.\n\nLet x mol of N2O4 dissociate. At equilibrium, n(N2O4) = 0.655 − x and n(NO2) = 2x. Assuming ideal gases, RT/V = (0.0821 × 370)/6.35 = 4.7838 atm mol⁻¹. With the standard pressure taken as 1 atm, Kp = P(NO2)²/P(N2O4) = (RT/V) × 4x²/(0.655 − x). Therefore, 4(4.7838)x² = 2.023(0.655 − x). The positive root is x = 0.21556 mol, so the equilibrium amount of NO2 is 2x = 0.431 mol (3 significant figures).",
+       "objection": null,
+       "answer_line": "[TYPE: equilibrium] [CALC_VALUE: 0.431] [CALC_UNIT: mol] [SUBSTANCE: NO2]",
+       "final_answer": "0.431 mol",
+       "unit": "",
+       "answer_type": "equilibrium",
+       "calc_value": [
+        0.431
+       ],
+       "calc_unit": [
+        "mol"
+       ],
+       "target_unit": "mol",
+       "final_value": [
+        0.431
+       ],
+       "substance": [
+        "NO2"
+       ],
+       "diagnosis": {
+        "answer_equivalent": true,
+        "verdict": "correct",
+        "failure_type": null,
+        "failed_step": null,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly derives ΔG° = −3100/1.43 J/mol and K ≈ 2.023 (standard pressure 1 atm), then sets up Kp = (RT/V)·4x²/(0.655 − x) with the correct ideal-gas relations. Solving gives x ≈ 0.2156 mol, so n(NO2) = 2x ≈ 0.431 mol, matching the reference. The reference's Kc route (K_c = K_p/RT, concentrations in mol/L) is algebraically equivalent to the student's Kp route."
+       },
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": "correct",
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [],
+     "first_solver": "gpt-6-luna"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-19T00:57:42.710005+00:00",
+     "tests": [
+      {
+       "member": "llama-3.3-70b",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the maximum useful (non-PV) work obtainable (kJ). A common mistake there: ignores the amount reacting.",
+       "solved": false,
+       "answer": "1.11 mol",
+       "recheck": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "missing_knowledge",
+        "failed_step": 3,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": "The standard-state equilibrium constant from ΔG° = −RT ln K is K_p, and it must be converted to a concentration-based K_c using K_p = K_c(RT)^Δn_g (here Δn_g = 1) before writing [NO2]²/[N2O4] with concentrations in mol/L.",
+        "objection_assessment": null,
+        "reasoning": "The student correctly obtained K ≈ 2.02 from the Gibbs energy, but then used it directly as a concentration-based K_c. The reference converts it with K_c = K_p/(RT) ≈ 0.0666, which the student never did, so the equilibrium quadratic is wrong. The student's final 1.11 mol does not match the reference 0.431 mol."
+       }
+      },
+      {
+       "member": "glm-5.3-flash",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the equilibrium constant K. A common mistake there: uses 10^(−ΔG/RT).",
+       "solved": false,
+       "answer": "1.116 mol",
+       "recheck": {
+        "answer_equivalent": false,
+        "verdict": "wrong",
+        "failure_type": "genuine_difficulty",
+        "failed_step": 3,
+        "ambiguous_text": null,
+        "clarification": null,
+        "missing_fact": null,
+        "objection_assessment": null,
+        "reasoning": "The student correctly obtained K ≈ 2.0233 from ΔG° per mole of reaction, but used it directly as K_c. The reference converts this thermodynamic K (K_p) to K_c = K_p/(RT)^Δn ≈ 0.0666 M, since Δn_gas = +1 for N2O4 ⇌ 2NO2. Using the unconverted value overstates the NO2 yield, giving 1.116 mol instead of the correct 0.431 mol; the student's 'consistency check' used the wrong initial amount (1.310 mol limit) and so did not catch the error."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

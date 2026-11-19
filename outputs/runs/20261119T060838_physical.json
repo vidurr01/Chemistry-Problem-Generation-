@@ -1,0 +1,805 @@
+{
+ "subject": "physical",
+ "saved_at": "20261119T060838",
+ "spend": {
+  "total_cost_usd": 0.14053,
+  "by_role": {
+   "formula_fit": {
+    "calls": 35,
+    "prompt_tokens": 21698,
+    "completion_tokens": 0,
+    "cost": 0.000911316
+   },
+   "designer": {
+    "calls": 4,
+    "prompt_tokens": 7896,
+    "completion_tokens": 6955,
+    "cost": 0.099252
+   },
+   "design_check": {
+    "calls": 4,
+    "prompt_tokens": 2739,
+    "completion_tokens": 0,
+    "cost": 0.00011503799999999999
+   },
+   "generator": {
+    "calls": 6,
+    "prompt_tokens": 18338,
+    "completion_tokens": 3412,
+    "cost": 0.026548500000000003
+   },
+   "level_check": {
+    "calls": 6,
+    "prompt_tokens": 3729,
+    "completion_tokens": 0,
+    "cost": 0.00015661800000000002
+   },
+   "coder": {
+    "calls": 6,
+    "prompt_tokens": 21881,
+    "completion_tokens": 21619,
+    "cost": 0.013544175000000002
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "bohr_orbit_to_electron_energy_en136z2n2eva",
+     "bohr_orbit_to_electron_velocity_vn218e6znms",
+     "bohr_orbit_to_orbit_radius_rn0529n2zang",
+     "orbit_radius_to_electron_kinetic_energy_mvrnh2kemvnh"
+    ],
+    "nodes": [
+     "orbit_radius",
+     "electron_kinetic_energy",
+     "bohr_orbit",
+     "electron_energy",
+     "electron_velocity"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     350,
+     61,
+     60,
+     62
+    ],
+    "trap_ids": [
+     "forgets_n",
+     "linear_in_Z",
+     "linear_in_n",
+     "multiplies_by_Z",
+     "uses_n_squared"
+    ],
+    "description": "kinetic energy of the electron (eV) [mvr = nh/2π → KE = ½mv² = n²h²/(8π²mr²)] | radius of the orbit (Å) [r_n = 0.529 n²/Z Å] | energy of the electron (eV) [E_n = −13.6 Z²/n² eV] | velocity of the electron (m s⁻¹) [v_n = 2.18 × 10⁶ Z/n m s⁻¹]",
+    "twist": "simultaneous"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T06:00:40.016490+00:00",
+     "p": 0.51
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T06:00:51.407942+00:00",
+     "try_": 1,
+     "twist": "simultaneous",
+     "system": "A hydrogen-like ion (one-electron species) undergoes an electronic transition from a higher excited state to a lower excited state.",
+     "hidden_link": "The atomic number Z and the principal quantum numbers of the two states (n1 and n2) are linked by the given velocity difference and the total energy of one state, which must be solved simultaneously.",
+     "route": "1. Use Formula 3 with the given total energy to establish a relation between Z and n1. 2. Use Formula 4 with the given velocity difference to establish a relation between Z, n1, and n2. 3. Use Formula 2 to express the radius of the second orbit in terms of Z and n2. 4. Use Formula 1 with the radius and n2 to calculate the kinetic energy of the electron in the second state.",
+     "student_must_notice": "The identity of the species (Z) is not given and must be found simultaneously with the quantum numbers n1 and n2 using the integer constraints of quantum numbers.",
+     "trap": "Assuming the species is hydrogen (Z=1) by default, which leads to fractional or non-physical quantum numbers but might yield a numerically computable kinetic energy if the student blindly plugs in values.",
+     "given": "The total energy of the first state (in eV), and the difference in the electron's velocity between the second state and the first state (in m/s).",
+     "hidden": "The atomic number Z of the species, and the principal quantum numbers n1 and n2.",
+     "asked": "The kinetic energy of the electron in the second state, in eV.",
+     "why_hard": "The student must algebraically solve for an integer atomic number and two integer quantum numbers simultaneously before applying the remaining formulas to find the final kinetic energy.",
+     "_reasoning": "**Formulating JEE Question**\n\nI'm now integrating all four specified formulas into a coherent problem statement. The current focus is on ensuring the question's complexity aligns with JEE Advanced standards while logically connecting the kinetic energy, orbital radius, energy levels, and velocity of a hydrogenic atom.\n\n",
+     "situation": "A hydrogen-like ion (one-electron species) undergoes an electronic transition from a higher excited state to a lower excited state.",
+     "insight": "The identity of the species (Z) is not given and must be found simultaneously with the quantum numbers n1 and n2 using the integer constraints of quantum numbers.",
+     "links": "1. Use Formula 3 with the given total energy to establish a relation between Z and n1. 2. Use Formula 4 with the given velocity difference to establish a relation between Z, n1, and n2. 3. Use Formula 2 to express the radius of the second orbit in terms of Z and n2. 4. Use Formula 1 with the radius and n2 to calculate the kinetic energy of the electron in the second state."
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T06:00:52.367044+00:00",
+     "twist": "simultaneous",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:00:59.651838+00:00",
+     "attempt": 1,
+     "twist": "simultaneous",
+     "examples": [
+      "2016P1_Chem_Q32",
+      "2022P2_Chem_Q3"
+     ],
+     "stem": "An electron in a hydrogen-like species undergoes a transition from an initial excited state to a lower energy state. The difference between the orbital velocity of the electron in the lower state and that in the initial state is [[delta_v]] m s^-1. If the total energy of the electron in the initial state is [[E_initial]] eV, the kinetic energy of the electron in the lower energy state is:\n(Given: Planck's constant, h = [[h]] J s; mass of electron, m_e = [[m_e]] kg; electronic charge, e = [[e_charge]] C; radius of first Bohr orbit of H atom = [[r_H]] Å; ground state energy of H atom = [[E_H]] eV; velocity of electron in the first Bohr orbit of H atom = [[v_H]] m s^-1)",
+     "asks": "the kinetic energy of the electron in the lower energy state",
+     "unit": "eV",
+     "asked": "kinetic_energy_2",
+     "ranges": {
+      "delta_v": [
+       1000000.0,
+       2200000.0,
+       false
+      ],
+      "E_initial": [
+       -3.4,
+       -0.85,
+       false
+      ]
+     },
+     "fixed": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     },
+     "answer_range": [
+      3.4,
+      54.4
+     ],
+     "free": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:01:55.348227+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n1_over_Z = math.sqrt(abs(E_H / E_initial))\n    Z_over_n2 = 1.0 / n1_over_Z + delta_v / v_H\n\n    for Z in range(1, 100001):\n        n1 = round(n1_over_Z * Z)\n        n2 = round(Z / Z_over_n2)\n        if n1 < 1 or n2 < 1 or n2 >= n1:\n            continue\n\n        initial_energy = step_60(n=n1, Z=Z)['electron_energy']\n        initial_velocity = step_62(n=n1, Z=Z)['electron_velocity']\n        lower_velocity = step_62(n=n2, Z=Z)['electron_velocity']\n        if abs(initial_energy - E_initial) > 0.01 * abs(E_initial):\n            continue\n        if abs((lower_velocity - initial_velocity) - delta_v) > 0.01 * abs(delta_v):\n            continue\n\n        radius = step_61(n=n2, Z=Z)['orbit_radius']\n        return step_350(orbit_radius=radius, n=n2)['orbit_kinetic_energy']",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0,
+      "delta_v": 1260000.0,
+      "E_initial": -2.24
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:02:21.571380+00:00",
+     "ok": true,
+     "values": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0,
+      "delta_v": 1260000.0,
+      "E_initial": -2.24
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T06:02:21.589007+00:00",
+     "attempt": 1,
+     "problems": [
+      "the question states -2.245, which is a result the solution has to compute; remove it",
+      "the question states -2.235, which is a result the solution has to compute; remove it",
+      "the question states -2.25, which is a result the solution has to compute; remove it",
+      "the question states -2.24, which is a result the solution has to compute; remove it",
+      "the question states -2.231, which is a result the solution has to compute; remove it",
+      "the question states -2.248, which is a result the solution has to compute; remove it",
+      "the question states -2.245, which is a result the solution has to compute; remove it",
+      "the question states -2.241, which is a result the solution has to compute; remove it",
+      "the question states -2.238, which is a result the solution has to compute; remove it"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:02:29.296664+00:00",
+     "attempt": 2,
+     "twist": "simultaneous",
+     "examples": [
+      "2015P1_Chem_Q28",
+      "2021P2_Chem_Q7"
+     ],
+     "stem": "An electron in an unidentified hydrogen-like ion undergoes a transition from an initial excited state to a lower orbit. The orbital velocity of the electron in this lower orbit exceeds that in the initial excited state by [[delta_v]] m s^-1. If the total energy of the electron in the initial excited state is [[E_initial]] eV, the kinetic energy of the electron in the lower orbit is:\n(Given: Planck's constant, h = [[h]] J s; mass of electron, m_e = [[m_e]] kg; electronic charge, e = [[e_charge]] C; radius of the first Bohr orbit of H = [[r_H]] Å; energy of the electron in the first Bohr orbit of H = [[E_H]] eV; velocity of the electron in the first Bohr orbit of H = [[v_H]] m s^-1)",
+     "asks": "the kinetic energy of the electron in the lower energy state",
+     "unit": "eV",
+     "asked": "orbit_kinetic_energy",
+     "ranges": {
+      "delta_v": [
+       700000.0,
+       1500000.0,
+       false
+      ],
+      "E_initial": [
+       -6.0,
+       -0.5,
+       false
+      ]
+     },
+     "fixed": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     },
+     "answer_range": [
+      3.4,
+      122.4
+     ],
+     "free": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:03:01.480322+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    reference_energy = step_60(n=1, Z=1)[\"electron_energy\"]\n    reference_velocity = step_62(n=1, Z=1)[\"electron_velocity\"]\n    reference_radius = step_61(n=1, Z=1)[\"orbit_radius\"]\n    reference_kinetic_energy = step_350(orbit_radius=reference_radius, n=1)[\"orbit_kinetic_energy\"]\n\n    initial_ratio = math.sqrt(E_initial / reference_energy)\n    lower_ratio = initial_ratio + delta_v / reference_velocity\n    return reference_kinetic_energy * lower_ratio ** 2",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0,
+      "delta_v": 765000.0,
+      "E_initial": -2.1
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:03:10.392469+00:00",
+     "ok": false,
+     "values": null,
+     "tries": 200,
+     "kind": "traps",
+     "counts": {
+      "traps": 200
+     },
+     "problem": "with values in your ranges fewer than 2 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 2 of these give a clearly different answer: uses mvr = h/2π for every orbit; multiplies by Z instead of dividing; uses n instead of n²; uses Z instead of Z²; divides by n² instead of n"
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T06:03:10.392586+00:00",
+     "attempt": 2,
+     "problems": [
+      "with values in your ranges fewer than 2 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 2 of these give a clearly different answer: uses mvr = h/2π for every orbit; multiplies by Z instead of dividing; uses n instead of n²; uses Z instead of Z²; divides by n² instead of n"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:03:17.588255+00:00",
+     "attempt": 3,
+     "twist": "simultaneous",
+     "examples": [
+      "2020P2_Chem_Q14",
+      "2015P1_Chem_Q28"
+     ],
+     "stem": "An electron in a certain hydrogen-like ion undergoes a de-excitation from an initial stationary state of principal quantum number n₁ to a lower stationary state of principal quantum number n₂. In this transition, the orbital velocity of the electron increases by [[delta_v]] m s^-1. If the total mechanical energy of the electron in the initial state is [[E_initial]] eV, the kinetic energy of the electron in the lower stationary state is:\n(Given: Planck's constant, h = [[h]] J s; mass of electron, m_e = [[m_e]] kg; electronic charge, e = [[e_charge]] C; radius of the first Bohr orbit of H = [[r_H]] Å; energy of the electron in the first Bohr orbit of H = [[E_H]] eV; velocity of the electron in the first Bohr orbit of H = [[v_H]] m s^-1)",
+     "asks": "the kinetic energy of the electron in the lower orbit",
+     "unit": "eV",
+     "asked": "KE_final",
+     "ranges": {},
+     "fixed": {
+      "delta_v": 1090000.0,
+      "E_initial": -3.4,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     },
+     "answer_range": [
+      13.0,
+      14.0
+     ],
+     "free": {
+      "delta_v": 1090000.0,
+      "E_initial": -3.4,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:03:58.475339+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    for Z in range(1, 1001):\n        n1_value = find(step_60, \"n\", result=E_initial, Z=Z)\n        n1 = round(n1_value)\n        if n1 < 2 or abs(n1_value - n1) > 1e-5 * max(1, abs(n1_value)):\n            continue\n\n        initial_energy = step_60(n=n1, Z=Z)[\"electron_energy\"]\n        if abs(initial_energy - E_initial) > 1e-6 * max(1, abs(E_initial)):\n            continue\n\n        initial_velocity = step_62(n=n1, Z=Z)[\"electron_velocity\"]\n        target_velocity = initial_velocity + delta_v\n        n2_value = find(step_62, \"n\", result=target_velocity, Z=Z)\n        n2 = round(n2_value)\n        if n2 < 1 or n2 >= n1 or abs(n2_value - n2) > 1e-5 * max(1, abs(n2_value)):\n            continue\n\n        lower_velocity = step_62(n=n2, Z=Z)[\"electron_velocity\"]\n        if abs((lower_velocity - initial_velocity) - delta_v) > 1e-6 * max(1, abs(delta_v)):\n            continue\n\n        radius = step_61(n=n2, Z=Z)[\"orbit_radius\"]\n        return step_350(orbit_radius=radius, n=n2)[\"orbit_kinetic_energy\"]\n\n    return {\"cannot\": \"The supplied energy and velocity change do not identify an integer hydrogen-like transition in the searched atomic-number range.\"}",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "delta_v": 1090000.0,
+      "E_initial": -3.4,
+      "h": 6.626e-34,
+      "m_e": 9.1e-31,
+      "e_charge": 1.6e-19,
+      "r_H": 0.529,
+      "E_H": -13.6,
+      "v_H": 2180000.0
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:04:00.700906+00:00",
+     "ok": false,
+     "values": null,
+     "tries": 1,
+     "kind": "traps",
+     "counts": {
+      "traps": 1
+     },
+     "problem": "with values in your ranges fewer than 2 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 2 of these give a clearly different answer: uses mvr = h/2π for every orbit; multiplies by Z instead of dividing; uses n instead of n²; uses Z instead of Z²; divides by n² instead of n"
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T06:04:00.701009+00:00",
+     "attempt": 3,
+     "problems": [
+      "with values in your ranges fewer than 2 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 2 of these give a clearly different answer: uses mvr = h/2π for every orbit; multiplies by Z instead of dividing; uses n instead of n²; uses Z instead of Z²; divides by n² instead of n"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "isotopic_abundances_to_molar_mass_aavga1x1a2x2",
+     "moles_to_gas_volume_224lmolat1at",
+     "moles_to_molar_mass_mavgm1n1m2n2"
+    ],
+    "nodes": [
+     "isotopic_abundances",
+     "molar_mass",
+     "moles",
+     "gas_volume"
+    ],
+    "chapters": [
+     "Stoichiometry"
+    ],
+    "txs": [
+     5,
+     6,
+     4
+    ],
+    "trap_ids": [
+     "swapped_abundances",
+     "unweighted_mean",
+     "uses_1_bar_molar_volume",
+     "uses_room_temperature_volume"
+    ],
+    "description": "average atomic mass (u) [A_avg = (A1 x1 + A2 x2)/(x1 + x2)] | average molar mass of the mixture [M_avg = (M1 n1 + M2 n2)/(n1 + n2)] | volume of the gas at 1 atm and 273 K (L) [V = n × 22.4 L (1 atm, 273 K)]",
+    "twist": null
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T06:04:01.692791+00:00",
+     "p": 0.51
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T06:04:44.243596+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "Complete thermal decomposition of a known mass of pure liquid chlorine trifluoride (ClF₃) into chlorine gas (Cl₂) and fluorine gas (F₂).",
+     "hidden_link": "The total mass of the final gas mixture is exactly equal to the given initial mass of the ClF₃ liquid (conservation of mass), and the mole ratio of the gases in the mixture is fixed strictly by the decomposition stoichiometry (n_Cl2 : n_F2 = 1 : 3). These facts must be combined to find the average molar mass of the mixture without ever determining the initial moles of ClF₃.",
+     "route": "Formula 3: Takes the given final total volume of the gas mixture at 1 atm and 273 K to yield the total moles of gas (n_total). Formula 2: Takes the total mass (equal to the initial mass) and n_total to find the average molar mass of the mixture (M_avg), and uses the stoichiometric 1:3 mole ratio to extract the exact molar mass of Cl₂ gas (M_Cl2), since M_F2 is known. Formula 1: Takes the average atomic mass of Cl (which is M_Cl2 / 2) and the given exact masses of the two isotopes (³⁵Cl and ³⁷Cl) to yield the percentage abundance of the ³⁵Cl isotope.",
+     "student_must_notice": "That the initial mass of the sample can be directly divided by the final total moles of the product gases to find the average molar mass of the product mixture, bypassing the need to know the molar mass of the reactant ClF₃.",
+     "trap": "A student will likely try to find the initial moles of ClF₃ by calculating its molar mass using the standard periodic table atomic mass for Cl (35.5 u). This is a fatal error because the specific sample's isotopic composition is the unknown being asked for, so its actual molar mass is not standard.",
+     "given": "The initial mass of the liquid ClF₃ sample, the final total volume of the product gas mixture at 1 atm and 273 K, the atomic mass of fluorine, and the exact isotopic masses of ³⁵Cl and ³⁷Cl.",
+     "hidden": "The total mass of the product gas mixture, the mole fraction of Cl₂ and F₂ in the mixture, the average atomic mass of Cl in the sample, and the standard atomic mass of Cl.",
+     "asked": "The percentage natural abundance of the ³⁵Cl isotope in the sample, in %.",
+     "why_hard": "It forces the student to apply conservation of mass across a reaction to a mixture's average properties, working backwards to find an isotopic abundance while actively avoiding the reflex to use the standard atomic weight of chlorine.",
+     "_reasoning": "**Developing Analytical Problems**\n\nI'm currently constructing a challenging physical chemistry problem. It will integrate calculations involving both average atomic mass and average molar mass of mixtures, requiring a solid grasp of the provided formulas. The aim is for a robust question that tests conceptual understanding and application.\n\n**Crafting Isotopic Mixture Problems**\n\nI'm focusing on incorporating isotopic composition into the problem. Specifically, I'm exploring how to use the volume and total mass of a gas mixture at STP to determine the average molar mass. This will then allow me to work backward and establish the average atomic mass of an element based on its diatomic molecular form within the mixture, likely using Chlorine isotopes as an example.\n\n**Refining Isotopic Calculations**\n\nI'm currently exploring how to reverse the typical isotopic abundance calculation. Instead of providing abundances to find the average atomic mass, I'm working on a scenario where the average atomic mass of a diatomic element (like Chlorine) is deduced from a gas mixture's properties (volume, mass, and mole fraction of a co-gas like Krypton at STP). This should force a deeper application of related formulas.\n\n**Exploring Isotopic Determination Methods**\n\nI'm considering a scenario where I deduce isotopic abundance from a gas mixture. The challenge is to avoid overdetermination; I need to ensure the provided information (like volume and mass at STP) uniquely identifies the isotopic composition of a key element within the mixture, perhaps involving Boron isotopes and compounds like BF3 and BCl3, without introducing too many unknowns.\n\n**Determining Isotopic Ratios**\n\nI'm now exploring how to use simultaneous equations to solve for isotopic ratios. My focus is on a mixture of diatomic chlorine and oxygen gases. Given the total mass and volume at STP, I can derive the average molar mass. However, to find the abundance of 35Cl, I need another relationship, which I'm currently trying to establish through a reaction with hydrogen to form HCl and H2O, though this is proving quite complex.\n\n**Solving Isotopic Abundance**\n\nI'm now able to solve for isotopic abundance by working backward. Given the initial mass of ClF3 and the final volume of the decomposed mixture at STP, I can determine the average molar mass and then the average atomic mass of Chlorine, ultimately leading to its isotopic percentage.\n\n**Decomposing Isotopic Mixtures**\n\nI'm now working on a problem involving the complete decomposition of ClF3 into Cl2 and F2 at STP. Given the initial mass of ClF3 and the final volume of the resulting gas mixture, I can determine the average molar mass and subsequently the average atomic mass of Chlorine, which will allow me to solve for its isotopic abundance.\n\n",
+     "situation": "Complete thermal decomposition of a known mass of pure liquid chlorine trifluoride (ClF₃) into chlorine gas (Cl₂) and fluorine gas (F₂).",
+     "insight": "That the initial mass of the sample can be directly divided by the final total moles of the product gases to find the average molar mass of the product mixture, bypassing the need to know the molar mass of the reactant ClF₃.",
+     "links": "Formula 3: Takes the given final total volume of the gas mixture at 1 atm and 273 K to yield the total moles of gas (n_total). Formula 2: Takes the total mass (equal to the initial mass) and n_total to find the average molar mass of the mixture (M_avg), and uses the stoichiometric 1:3 mole ratio to extract the exact molar mass of Cl₂ gas (M_Cl2), since M_F2 is known. Formula 1: Takes the average atomic mass of Cl (which is M_Cl2 / 2) and the given exact masses of the two isotopes (³⁵Cl and ³⁷Cl) to yield the percentage abundance of the ³⁵Cl isotope."
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-19T06:04:45.219646+00:00",
+     "try_": 1,
+     "problem": "it glues unrelated sub-problems together instead of one chemical situation (Jev: 20%)"
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "bohr_orbit_to_de_broglie_wavelength_2rnn",
+     "bohr_orbit_to_electron_velocity_vn218e6znms",
+     "momentum_to_de_broglie_wavelength_hmvhp"
+    ],
+    "nodes": [
+     "momentum",
+     "de_broglie_wavelength",
+     "bohr_orbit",
+     "electron_velocity"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     73,
+     74,
+     62
+    ],
+    "trap_ids": [
+     "forgets_n_waves",
+     "uses_hbar",
+     "uses_n_squared"
+    ],
+    "description": "de Broglie wavelength (m) [λ = h/p] | de Broglie wavelength of the electron (m) [2πr_n = nλ] | velocity of the electron (m s⁻¹) [v_n = 2.18 × 10⁶ Z/n m s⁻¹]",
+    "twist": "two_state_ratio"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T06:04:46.183967+00:00",
+     "p": 0.6
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T06:05:00.458156+00:00",
+     "try_": 1,
+     "twist": "two_state_ratio",
+     "system": "Electrons in two different excited states of two different one-electron species (He⁺ and Li²⁺).",
+     "hidden_link": "The number of de Broglie waves formed by an electron in a Bohr orbit is exactly equal to its principal quantum number n, which ties the ratio of circumferences to the ratio of de Broglie wavelengths.",
+     "route": "First, use Formula 3 to express the velocity of the electron in both states in terms of their respective Z and n. Second, use Formula 1 to express the de Broglie wavelength of the electron in each state inversely proportional to its velocity. Third, use Formula 2 to relate the circumference of the orbit (2πr) to the de Broglie wavelength and n, allowing the calculation of the ratio of the orbital radii.",
+     "student_must_notice": "That the number of waves in the orbit directly gives the principal quantum number (n), and that the ratio of the radii depends on both the ratio of the wavelengths and the ratio of these quantum numbers.",
+     "trap": "Assuming the radius is simply proportional to the de Broglie wavelength without accounting for the different principal quantum numbers (i.e., forgetting the 'n' multiplier in 2πr = nλ).",
+     "given": "The atomic numbers of the two species (He⁺ and Li²⁺), and the ratio of the de Broglie wavelengths of the electrons in their respective orbits.",
+     "hidden": "The principal quantum numbers of the two orbits, and the explicit relation that the number of waves equals n.",
+     "asked": "The ratio of the radii of the two orbits.",
+     "why_hard": "The student must independently reconstruct the quantization condition from the wave nature of the electron to relate the given wavelength ratio to the orbital radii across different species.",
+     "_reasoning": "**Developing De Broglie Formulas**\n\nI'm currently working on synthesizing these three core de Broglie relations into a single, cohesive numerical problem. The focus is on integrating the wavelength, orbital circumference, and electron velocity for a clear, expert-level challenge.\n\n**Synthesizing De Broglie Relations**\n\nI'm now focusing on a `two_state_ratio` twist, exploring the relationship between the orbital circumference of one species' nth orbit and the de Broglie wavelength in another species' mth orbit. This aims to create a more complex, expert-level problem.\n\n",
+     "situation": "Electrons in two different excited states of two different one-electron species (He⁺ and Li²⁺).",
+     "insight": "That the number of waves in the orbit directly gives the principal quantum number (n), and that the ratio of the radii depends on both the ratio of the wavelengths and the ratio of these quantum numbers.",
+     "links": "First, use Formula 3 to express the velocity of the electron in both states in terms of their respective Z and n. Second, use Formula 1 to express the de Broglie wavelength of the electron in each state inversely proportional to its velocity. Third, use Formula 2 to relate the circumference of the orbit (2πr) to the de Broglie wavelength and n, allowing the calculation of the ratio of the orbital radii."
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T06:05:01.499479+00:00",
+     "twist": "two_state_ratio",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:05:07.488393+00:00",
+     "attempt": 1,
+     "twist": "two_state_ratio",
+     "examples": [
+      "2013P1_Chem_Q31",
+      "2015P2_Chem_Q28"
+     ],
+     "stem": "An electron moves in a stationary Bohr orbit of a helium ion (He⁺, Z = [[Z_He]]) and another electron moves in a stationary Bohr orbit of a lithium ion (Li²⁺, Z = [[Z_Li]]). The de Broglie wavelength of the electron in the He⁺ orbit is [[ratio_lambda]] times that of the electron in the Li²⁺ orbit. Calculate the ratio of the radius of the orbit in the He⁺ ion to that in the Li²⁺ ion. (Given: h = [[h]] J s, radius of the first Bohr orbit of H = [[a0]] Å, velocity of the electron in the first Bohr orbit of H = [[v0]] m s^-1)",
+     "asks": "the ratio of the radius of the orbit in the He⁺ ion to the radius of the orbit in the Li²⁺ ion",
+     "unit": "",
+     "asked": "r_ratio",
+     "ranges": {
+      "ratio_lambda": [
+       1.2,
+       2.5,
+       false
+      ]
+     },
+     "fixed": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0
+     },
+     "answer_range": [
+      0.5,
+      5.0
+     ],
+     "free": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:06:00.719906+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    orbit_He = step_62(n=1, Z=Z_He)\n    orbit_Li = step_62(n=1, Z=Z_Li)\n\n    lambda_He_ref = step_74(n=1, Z=Z_He)['de_broglie_wavelength']\n    lambda_Li_ref = step_74(n=1, Z=Z_Li)['de_broglie_wavelength']\n\n    electron_mass = h / (2 * math.pi * a0 * 1e-10 * v0)\n    lambda_He_from_velocity = step_73(momentum=electron_mass * orbit_He['electron_velocity'])['de_broglie_wavelength']\n    lambda_Li_from_velocity = step_73(momentum=electron_mass * orbit_Li['electron_velocity'])['de_broglie_wavelength']\n\n    n_ratio = ratio_lambda * lambda_Li_from_velocity / lambda_He_from_velocity\n    return (lambda_He_ref / lambda_Li_ref) * n_ratio ** 2",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0,
+      "ratio_lambda": 2.08
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:06:14.831682+00:00",
+     "ok": false,
+     "values": null,
+     "tries": 200,
+     "kind": "traps",
+     "counts": {
+      "traps": 200
+     },
+     "problem": "with values in your ranges fewer than 2 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 2 of these give a clearly different answer: uses h/2π; takes the whole circumference as one wavelength; divides by n² instead of n"
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T06:06:14.831757+00:00",
+     "attempt": 1,
+     "problems": [
+      "with values in your ranges fewer than 2 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 2 of these give a clearly different answer: uses h/2π; takes the whole circumference as one wavelength; divides by n² instead of n"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:06:21.681765+00:00",
+     "attempt": 2,
+     "twist": "two_state_ratio",
+     "examples": [
+      "2018P1_Chem_Q12",
+      "2017P1_Chem_Q32"
+     ],
+     "stem": "An electron revolves in a stationary Bohr orbit of a helium ion (He⁺, atomic number Z = [[Z_He]]) and another electron revolves in a stationary Bohr orbit of a lithium ion (Li²⁺, atomic number Z = [[Z_Li]]). The de Broglie wavelength associated with the electron in the He⁺ orbit is [[ratio_lambda]] times that of the electron in the Li²⁺ orbit. Determine the ratio of the radius of this Bohr orbit in the He⁺ ion to that in the Li²⁺ ion. (Given: h = [[h]] J s, radius of the first Bohr orbit of H = [[a0]] Å, velocity of the electron in the first Bohr orbit of H = [[v0]] m s^-1)",
+     "asks": "the ratio of the radius of the orbit in the He⁺ ion to that in the Li²⁺ ion",
+     "unit": "",
+     "asked": "ratio_radius",
+     "ranges": {
+      "ratio_lambda": [
+       1.2,
+       2.5,
+       false
+      ]
+     },
+     "fixed": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0
+     },
+     "answer_range": [
+      0.8,
+      15.0
+     ],
+     "free": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:06:55.873423+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n_Li = Z_Li\n    v_Li = step_62(n=n_Li, Z=Z_Li)[\"electron_velocity\"]\n    n_He = find(step_62, \"n\", result=v_Li / ratio_lambda, Z=Z_He)\n\n    lambda_He_orbit = step_74(n=n_He, Z=Z_He)[\"de_broglie_wavelength\"]\n    lambda_Li_orbit = step_74(n=n_Li, Z=Z_Li)[\"de_broglie_wavelength\"]\n\n    p_He = find(step_73, \"momentum\", result=lambda_He_orbit)\n    p_Li = find(step_73, \"momentum\", result=lambda_Li_orbit)\n    lambda_He = step_73(momentum=p_He)[\"de_broglie_wavelength\"]\n    lambda_Li = step_73(momentum=p_Li)[\"de_broglie_wavelength\"]\n\n    return (n_He / n_Li) * (lambda_He / lambda_Li)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0,
+      "ratio_lambda": 2.5
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:06:58.976786+00:00",
+     "ok": false,
+     "values": null,
+     "tries": 200,
+     "kind": "value_unused",
+     "counts": {
+      "engine": 196,
+      "value_unused": 4
+     },
+     "problem": "the question states [[ratio_lambda]], which the solution does not use: remove it, or make the question need it"
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T06:06:58.976896+00:00",
+     "attempt": 2,
+     "problems": [
+      "the question states [[ratio_lambda]], which the solution does not use: remove it, or make the question need it"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-19T06:07:05.528925+00:00",
+     "attempt": 3,
+     "twist": "two_state_ratio",
+     "examples": [
+      "2018P1_Chem_Q12",
+      "2024P2_Chem_Q9"
+     ],
+     "stem": "An electron revolves in a stationary Bohr orbit of a helium ion (He⁺, atomic number Z = [[Z_He]]) and another electron revolves in the stationary Bohr orbit with principal quantum number n = [[n_Li]] of a lithium ion (Li²⁺, atomic number Z = [[Z_Li]]). The de Broglie wavelength associated with the electron in the He⁺ orbit is [[ratio_lambda]] times that of the electron in the Li²⁺ orbit. Determine the ratio of the radius of this Bohr orbit in the He⁺ ion to that in the Li²⁺ ion. (Given: h = [[h]] J s, radius of the first Bohr orbit of H = [[a0]] Å, velocity of the electron in the first Bohr orbit of H = [[v0]] m s^-1)",
+     "asks": "the ratio of the radius of the Bohr orbit in the He⁺ ion to that in the Li²⁺ ion",
+     "unit": "",
+     "asked": "ratio_radius",
+     "ranges": {
+      "ratio_lambda": [
+       1.2,
+       2.5,
+       false
+      ],
+      "n_Li": [
+       2,
+       4,
+       true
+      ]
+     },
+     "fixed": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0
+     },
+     "answer_range": [
+      0.5,
+      10.0
+     ],
+     "free": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-19T06:08:01.563911+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    v_li = step_62(n=n_Li, Z=Z_Li)[\"electron_velocity\"]\n    lambda_li_orbit = step_74(n=n_Li, Z=Z_Li)[\"de_broglie_wavelength\"]\n    n_he = find(step_74, \"n\", result=ratio_lambda * lambda_li_orbit, Z=Z_He)\n    v_he = step_62(n=n_he, Z=Z_He)[\"electron_velocity\"]\n\n    lambda_first_h_orbit = step_74(n=1, Z=1)[\"de_broglie_wavelength\"]\n    momentum_first_h_orbit = find(step_73, \"momentum\", result=lambda_first_h_orbit)\n    electron_mass = momentum_first_h_orbit / v0\n\n    lambda_he = step_73(momentum=electron_mass * v_he)[\"de_broglie_wavelength\"]\n    lambda_li = step_73(momentum=electron_mass * v_li)[\"de_broglie_wavelength\"]\n    return n_he * lambda_he / (n_Li * lambda_li)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "Z_He": 2,
+      "Z_Li": 3,
+      "h": 6.626e-34,
+      "a0": 0.529,
+      "v0": 2180000.0,
+      "ratio_lambda": 1.5,
+      "n_Li": 4
+     }
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-19T06:08:04.631409+00:00",
+     "ok": false,
+     "values": null,
+     "tries": 200,
+     "kind": "value_unused",
+     "counts": {
+      "engine": 198,
+      "value_unused": 2
+     },
+     "problem": "the question states [[ratio_lambda]], which the solution does not use: remove it, or make the question need it"
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-19T06:08:04.631478+00:00",
+     "attempt": 3,
+     "problems": [
+      "the question states [[ratio_lambda]], which the solution does not use: remove it, or make the question need it"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "chemical_species_to_oxidation_number_onruleso2h1u",
+     "oxidation_number_to_n_factor_nfactoroncha",
+     "redox_reagent_to_n_factor_mno48h5emn24"
+    ],
+    "nodes": [
+     "redox_reagent",
+     "n_factor",
+     "oxidation_number",
+     "chemical_species"
+    ],
+    "chapters": [
+     "Stoichiometry"
+    ],
+    "txs": [
+     52,
+     31,
+     30
+    ],
+    "trap_ids": [
+     "forgets_atom_count",
+     "ignores_charge",
+     "peroxide_as_oxide",
+     "wrong_n_factor"
+    ],
+    "description": "n-factor of the reagent [n-factor = electrons gained or lost per formula unit] | n-factor [n-factor = |Δ(O.N.)| × atoms per formula unit] | oxidation number (average if fractional) [sum of oxidation numbers = charge; O −2, H +1, F −1 unless an exception applies]",
+    "twist": "inverse"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-19T06:08:07.909447+00:00",
+     "p": 0.56
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-19T06:08:37.822062+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "Disproportionation of Cl2 gas in hot concentrated alkali (NaOH) to form chlorate (ClO3-) and chloride (Cl-).",
+     "hidden_link": "The overall n-factor of Cl2 in the disproportionation reaction connects the moles of Cl2 reacted to the total equivalents of electron transfer, which must be derived by combining the oxidation and reduction n-factors.",
+     "route": "Formula 3: Calculate the oxidation number of Cl in ClO3- (+5) and Cl- (-1). Formula 2: Calculate the n-factor of Cl2 for the oxidation half (0 to +5, 2 atoms = 10) and reduction half (0 to -1, 2 atoms = 2). Formula 1: Use the equivalent electron transfer per formula unit for disproportionation (n = n1*n2/(n1+n2) = 10*2/12 = 5/3) to convert the given equivalents of reaction back to the moles of Cl2.",
+     "student_must_notice": "In a disproportionation reaction, the n-factor of the reactant is not simply the sum or difference, but the harmonic mean-like combination (n1*n2)/(n1+n2) of the oxidation and reduction n-factors.",
+     "trap": "A student might simply add the n-factors (10 + 2 = 12) or use the n-factor for only the oxidation or reduction part, leading to an incorrect number of moles of Cl2.",
+     "given": "The total equivalents of Cl2 consumed in the reaction and the molar mass of Cl2.",
+     "hidden": "The oxidation states of chlorine in the products, the individual n-factors for oxidation and reduction, and the overall n-factor of Cl2.",
+     "asked": "The mass of Cl2 consumed in the reaction, in grams.",
+     "why_hard": "The student must recognize how to compute the effective n-factor for a disproportionation reaction by calculating and correctly combining the individual n-factors from the oxidation states.",
+     "_reasoning": "**Considering Oxidation Calculations**\n\nI'm currently focused on deriving a numerical problem. My thought process is centered on applying the provided formulas for oxidation numbers and n-factors, specifically targeting a scenario involving chlorine in hot, concentrated alkali.\n\n**Calculating Chlorine's Oxidation States**\n\nI'm working through a numerical problem, specifically focusing on chlorine's behavior in a hot, concentrated alkali. My thought process is currently centered on determining the oxidation numbers of chlorine as it disproportionates into chlorate and chloride ions, applying the given n-factor formula.\n\n**Deriving Oxidation Factors**\n\nI'm solidifying my understanding of n-factors by working through concrete examples. My current focus is on applying the formula \"|Δ(O.N.)| × atoms per formula unit\" to the disproportionation of chlorine in hot, concentrated alkali, and I'm also re-evaluating the overall n-factor calculation based on electron transfer.\n\n**Refining Calculation Approaches**\n\nI'm re-examining the n-factor calculation for disproportionation reactions. My current thought process is focused on correctly interpreting \"electrons gained or lost per formula unit\" and will shift to a simpler example like MnO2 with concentrated HCl to solidify the application of formulas.\n\n**Applying Inverse Twist**\n\nI'm exploring the \"inverse\" twist option and considering a problem involving MnO2 and concentrated HCl. My focus is on generating a scenario where the mass of a product, like Cl2, is given, and the volume of HCl is then calculated based on the derived n-factors.\n\n",
+     "situation": "Disproportionation of Cl2 gas in hot concentrated alkali (NaOH) to form chlorate (ClO3-) and chloride (Cl-).",
+     "insight": "In a disproportionation reaction, the n-factor of the reactant is not simply the sum or difference, but the harmonic mean-like combination (n1*n2)/(n1+n2) of the oxidation and reduction n-factors.",
+     "links": "Formula 3: Calculate the oxidation number of Cl in ClO3- (+5) and Cl- (-1). Formula 2: Calculate the n-factor of Cl2 for the oxidation half (0 to +5, 2 atoms = 10) and reduction half (0 to -1, 2 atoms = 2). Formula 1: Use the equivalent electron transfer per formula unit for disproportionation (n = n1*n2/(n1+n2) = 10*2/12 = 5/3) to convert the given equivalents of reaction back to the moles of Cl2."
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-19T06:08:38.792295+00:00",
+     "twist": "inverse",
+     "by": "designer"
+    }
+   ]
+  }
+ ]
+}

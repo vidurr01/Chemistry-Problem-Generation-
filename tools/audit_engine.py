@@ -41,6 +41,8 @@ GIVES_UNITS = {
     "coefficient": "", "sum_of_coefficients": "", "lower_level": "", "electrons": "", "n": "",
     "atoms_per_cell": "", "density": "g mL⁻¹", "solute_molar_mass": "g mol⁻¹", "delta_h": "kJ mol⁻¹",
     "Kf": "K kg mol⁻¹", "Kb": "K kg mol⁻¹", "gas_volume": "L", "P": "atm", "V": "L",
+    "concentration": "mol L⁻¹", "solute_mass": "g", "solvent_mass": "g", "vant_hoff_factor": "",
+    "ph": "", "dissociation_constant": "", "solvent_molar_mass": "g mol⁻¹", "n_factor": "",
 }
 # Inputs read as a plain number whatever unit the constant carries (K₂/K₁, k₂/k₁ ratios).
 UNITLESS_OK = {"equilibrium_constant", "rate_constant"}
@@ -60,22 +62,23 @@ def _expected():
     add((103,), (104, 105, 108), "T", "another state of the same gas")
     add((103,), (104, 108), "P", "another state of the same gas")
     add((113, 135, 154), (132,), "T", "ΔG asked at another temperature")
-    add((125, 87), (129,), "T", "the surroundings' temperature, not the gas's")
+    add((125, 87, 386), (129,), "T", "the surroundings' temperature, not the gas's")
     add((330,), (240, 265, 329), "T", "another solution at its own temperature")
     add((265, 329, 330), (262, 263, 265, 329, 330), "vant_hoff_factor", "another solute (isotonic solution)")
     titr = (35, 36, 40, 42, 43)
     add(titr, titr, "volume", "another solution (titrant and titrated)")
     add((34,), (41,), "equivalent_mass", "the reagent's and the sample's")
-    add((32,), (151,), "species_asked", "a different question about another species")
+    add((32,), (151, 361), "species_asked", "a different question about another species")
     add((2,), (1,), "molar_mass", "another substance (step 341 is ethanol)")
     add((234,), (0,), "molar_mass", "the metal of cell 2 (step 235)")
     add((335,), (234,), "molar_mass", "the substance of the second cell")
     add((335,), (234,), "electrons", "the substance of the second cell")
     add((84, 85, 86, 87), (125, 84, 85, 86, 87), "new_volume", "final state of a later process")
-    add((84, 85, 86, 87), (125, 84, 85, 86, 87), "new_temperature", "final state of a later process")
+    add((84, 85, 86, 87), (125, 84, 85, 86, 87, 389), "new_temperature", "final state of a later process")
     add((84, 85, 86, 87), (84, 85, 86, 87), "t2_celsius", "final state of a later process")
-    add((19,), (20,), "density", "the diluted or mixed solution (step 23/24)")
+    add((19, 358, 374), (20,), "density", "the diluted or mixed solution (step 23/24)")
     add((160,), (155,), "total_pressure", "the pressure at the new temperature (step 163)")
+    add((354,), (176,), "concentration", "the conjugate base's own solution (step 178)")
     return e
 
 

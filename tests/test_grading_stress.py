@@ -499,13 +499,15 @@ class MultiValueSlips(unittest.TestCase):
         return flow._grade(self.r, m, {"verdict": verdict, "failure_type": ft, "member_expression": exprs})
 
     def test_one_wrong_value_explained(self):
+        # Slip confirmation removed — calculator access means wrong numbers are genuine failures.
         g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.25"])
-        self.assertTrue(g["slip_confirmed"] and g["counts_as_solved"])
+        self.assertIsNone(g["slip_confirmed"])
+        self.assertFalse(g["counts_as_solved"])
 
     def test_two_wrong_values_both_explained_in_swapped_order(self):
-        # member wrote H2 first; expressions follow the REFERENCE order (N2, H2, NH3)
+        # Slip confirmation removed — wrong values are always unsolved.
         g = self._grade("[CALC_VALUE: 0.85, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: H2, N2, NH3]", [None, "3 * 0.25", "2 * 0.25"])
-        self.assertTrue(g["counts_as_solved"])
+        self.assertFalse(g["counts_as_solved"])
 
     def test_one_of_two_wrong_values_unexplained(self):
         g = self._grade("[CALC_VALUE: 0.75, 0.85, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, "3 * 0.25", None])
@@ -533,21 +535,23 @@ class MultiValueSlips(unittest.TestCase):
                         verdict="correct", ft=None)
         self.assertTrue(g["counts_as_solved"])                       # all right: solved without the slip path
 
-    def test_correct_verdict_with_mismatch_uses_the_same_rule(self):
+    def test_correct_verdict_with_mismatch_is_not_solved(self):
+        # With slip confirmation removed, verdict="correct" cannot override a numerical mismatch.
         g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.25"],
                         verdict="correct", ft=None)
-        self.assertTrue(g["counts_as_solved"])
+        self.assertFalse(g["counts_as_solved"])
 
     def test_genuine_difficulty_never_slip_confirmed(self):
         g = self._grade("[CALC_VALUE: 0.75, 0.75, 0.6] [CALC_UNIT: atm] [SUBSTANCE: N2, H2, NH3]", [None, None, "2 * 0.25"],
                         ft="genuine_difficulty")
         self.assertFalse(g["counts_as_solved"])
 
-    def test_single_value_still_takes_a_string(self):
+    def test_single_value_wrong_answer_is_not_solved(self):
+        # Slip confirmation removed — a wrong answer with ft="slip" is now a genuine failure.
         r = SimpleNamespace(answer=29.79, unit="L", kind="real", tolerance=0.01)
         m = {"working": "V = 1.4173*0.0821*320/1.25 = 31.0", "final_value": [31.0], "final_answer": "31.0 L", "unit": ""}
         g = flow._grade(r, m, {"verdict": "wrong", "failure_type": "slip", "member_expression": "1.4173*0.0821*320/1.25"})
-        self.assertTrue(g["counts_as_solved"])
+        self.assertFalse(g["counts_as_solved"])
 
 
 class OptionsAndText(unittest.TestCase):
@@ -599,11 +603,11 @@ class DecisionTable(unittest.TestCase):
         wrong, _ = _member(r, "[CALC_VALUE: 31.0] [CALC_UNIT: L]", working="V = 1.4173*0.0821*320/1.25 = 31.0")
         good_expr = "1.4173*0.0821*320/1.25"
         rows = []
+        # No verifier since 2026-11-19: solved = the answer matches (code); any diagnosis is ignored.
         for verdict in ("correct", "right_answer_wrong_reasoning", "wrong", "reference_wrong"):
             for ft in (None, "slip", "genuine_difficulty", "missing_knowledge", "unclear_wording"):
-                rows.append((right, verdict, ft, None, verdict == "correct" or (verdict == "wrong" and ft == "slip")))
-                slip_path = ft == "slip" or verdict == "correct"
-                rows.append((wrong, verdict, ft, good_expr, slip_path))
+                rows.append((right, verdict, ft, None, True))
+                rows.append((wrong, verdict, ft, good_expr, False))
                 rows.append((wrong, verdict, ft, None, False))
         for member, verdict, ft, expr, want in rows:
             diag = {"verdict": verdict, "failure_type": ft, "member_expression": expr}
@@ -674,6 +678,24 @@ class Fuzz(unittest.TestCase):
                 out = stages._solve("x/y", "stem", spec=spec)
             self.assertIn("final_answer", out, shape)
             self.assertEqual(out.get("final_value"), [29.8] if "29790" not in str(shape) else [29.79], shape)
+
+
+class CalibrationGrader(unittest.TestCase):
+    """calibration/anchor_calibration.py grades real-question runs (the ladder separation, model comparisons).
+    It read only the last number token, so "11/51" (0.2157, right for a key of 0.22) was read as 51 and graded
+    wrong (2026-11-19). It now reads answers the way the pipeline does."""
+
+    def test_fractions_and_the_usual_forms(self):
+        import os
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "calibration"))
+        import anchor_calibration as ac
+        self.assertAlmostEqual(ac.to_float("11/51"), 11 / 51)
+        self.assertTrue(ac.graded_correct(ac.to_float("11/51"), 0.22))
+        self.assertTrue(ac.graded_correct(ac.to_float("44/51"), 0.88))
+        for text, want in (("2500", 2500.0), ("1.33×10^-6", 1.33e-6), ("≈ 0.25", 0.25), ("1,200", 1200.0),
+                           ("0.9785 A", 0.9785), ("-81.6 kJ/mol", -81.6)):
+            self.assertAlmostEqual(ac.to_float(text), want, msg=text)
 
 
 if __name__ == "__main__":

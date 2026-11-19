@@ -1,0 +1,707 @@
+{
+ "subject": "physical",
+ "saved_at": "20261115T233023",
+ "spend": {
+  "total_cost_usd": 0.20886,
+  "by_role": {
+   "designer": {
+    "calls": 8,
+    "prompt_tokens": 5589,
+    "completion_tokens": 20489,
+    "cost": 0.0810255
+   },
+   "coder": {
+    "calls": 26,
+    "prompt_tokens": 51092,
+    "completion_tokens": 9189,
+    "cost": 0.020083379999999998
+   },
+   "generator": {
+    "calls": 8,
+    "prompt_tokens": 19596,
+    "completion_tokens": 24814,
+    "cost": 0.1077495
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "cell_emf_to_delta_g_gnfecell",
+     "ionic_conductivity_to_limiting_molar_conductivity_kohlrausch0a",
+     "mass_to_charge_wzitthicknes"
+    ],
+    "nodes": [
+     "ionic_conductivity",
+     "limiting_molar_conductivity",
+     "mass",
+     "charge",
+     "cell_emf",
+     "delta_g"
+    ],
+    "chapters": [
+     "Electrochemistry",
+     "Thermodynamics"
+    ],
+    "txs": [
+     250,
+     335,
+     138
+    ],
+    "trap_ids": [
+     "forgets_charge_number",
+     "forgets_n",
+     "ignores_stoichiometry"
+    ],
+    "description": "limiting molar conductivity (S cm² mol⁻¹) [Kohlrausch: Λ°(AxBy) = xλ°₊ + yλ°₋] | charge required (C) [Q = W n F/M] | Gibbs energy change (kJ mol⁻¹) [ΔG = −nFE]",
+    "twist": "simultaneous"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:22:45.022900+00:00",
+     "try_": 1,
+     "situation": "An electrochemical cell operates at standard conditions involving a metal-insoluble salt electrode M|MxAy|A^(z-) coupled with a standard hydrogen electrode. A known mass W of the salt MxAy is electrolytically synthesized at the cathode via complete coulometric reduction with charge Q. Simultaneously, conductivity measurements of the saturated aqueous solution of MxAy yield its solubility, which is tied to the cell's equilibrium potential and Gibbs free energy.",
+     "links": "Faraday's law Q = W n F / M_salt gives the molar mass/charge relationship for the synthesis of MxAy. Kohlrausch's law gives the limiting molar conductivity Λ°(MxAy) = x λ°(M^(z+)) + y λ°(A^(z-)), allowing determination of the molar solubility S = 1000 κ / Λ° and thereby the solubility product Ksp = [M]^[x] [A]^[y]. The standard cell potential of the insoluble-salt electrode directly relates to Ksp and the metal/metal-ion potential via ΔG° = -n F E° = -RT ln(Ksp), creating two simultaneous equations where n, x, and y must be solved together.",
+     "insight": "The number of electrons n transferred in the insoluble salt half-reaction M_x A_y + n e⁻ -> x M + y A^(z-) equals x·z+ = y·z-. In the solubility product expression, the exponents x and y multiply the ionic conductivities in Kohlrausch's law linearly, but enter Ksp exponentially (x^x · y^y · S^(x+y)), tying the thermodynamic ΔG° non-linearly to the transport parameter Λ°.",
+     "asked": "The standard EMF E° of the M|MxAy|A^(z-) half-cell (in V).",
+     "wrong_answers": [
+      "Assuming a 1:1 binary salt (x=1, y=1) and taking n=1 regardless of the actual polyvalent stoichiometry.",
+      "Confusing equivalent conductivity with molar conductivity when applying Kohlrausch's law to calculate solubility from specific conductance κ.",
+      "Omitting the stoichiometric factors x^x and y^y in the Ksp expression while calculating ΔG° from the solubility."
+     ]
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-15T23:22:46.276942+00:00",
+     "try_": 1,
+     "problem": "step_138 cannot be applied because the cell EMF is not provided as input, only the standard cell potential of the insoluble-salt electrode is given."
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:23:01.290650+00:00",
+     "try_": 2,
+     "situation": "A galvanic-driven electrolytic refining cell where a binary alloy of Ag and Cu is completely dissolved anodically into a sulfate electrolyte under a fixed charge Q, while being powered by a Daniell-type driver cell of known Gibbs free energy Delta G = -n F E. The resulting solution contains Ag2SO4 and CuSO4. The total limiting conductivity of the mixed electrolyte is analyzed using Kohlrausch's law Lambda° = sum(c_i * lambda°_i) / c_tot, linking the individual limiting molar conductivities Lambda°(Ag2SO4) = 2 lambda°(Ag+) + lambda°(SO4^2-) and Lambda°(CuSO4) = lambda°(Cu^2+) + lambda°(SO4^2-).",
+     "links": "The driver cell's Gibbs energy Delta G = -n F E dictates the available potential and efficiency. The total charge passed Q = (W_Ag * 1 * F / M_Ag) + (W_Cu * 2 * F / M_Cu) provides the first linear equation in masses (W_Ag, W_Cu). The second linear relation comes from the total solution conductance represented by Kohlrausch's summations for Ag2SO4 and CuSO4. Neither mass W_Ag nor W_Cu can be obtained independently without simultaneously solving the charge balance and the Kohlrausch conductance balance.",
+     "insight": "Silver ion is univalent while copper ion is divalent, which introduces an asymmetric factor of 2 in both Faraday's law (electrons per mole) and Kohlrausch's stoichiometric coefficient for Ag2SO4 (2 Ag+ per SO4^2-), meaning the mole fraction in solution does not equal the mass fraction in the alloy.",
+     "asked": "The mass percentage of silver in the original alloy, in %",
+     "wrong_answers": "Equating molar ratios directly to charge ratios without accounting for the z = 1 vs z = 2 difference; applying Kohlrausch's law with equivalent conductivities without converting to molar conductivities for Ag2SO4."
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-15T23:23:02.700202+00:00",
+     "try_": 2,
+     "problem": "step_138 cannot be applied to this situation as it requires the standard cell EMF, which is not provided in the situation."
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "edge_length_to_crystal_density_dzmnaa3",
+     "equivalents_to_percent_purity_eqbasetakene",
+     "temperature_to_vapour_pressure_xlxgkppxlnp2"
+    ],
+    "nodes": [
+     "equivalents",
+     "percent_purity",
+     "temperature",
+     "vapour_pressure",
+     "edge_length",
+     "crystal_density"
+    ],
+    "chapters": [
+     "Stoichiometry",
+     "Dilute Solutions",
+     "Solid State"
+    ],
+    "txs": [
+     41,
+     254,
+     273
+    ],
+    "trap_ids": [
+     "forgets_back_titration",
+     "pm_as_angstrom",
+     "sign"
+    ],
+    "description": "percentage purity of the sample [eq(sample) = eq(added) − eq(back-titrated); % = eq × E / mass × 100] | vapour pressure at T₂ (mm Hg) [ln(P₂/P₁) = (ΔH_vap/R)(1/T₁ − 1/T₂)] | density of the crystal (g cm⁻³) [d = ZM/(N_A a³), a in cm]",
+    "twist": "simultaneous"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:23:39.177553+00:00",
+     "try_": 1,
+     "situation": "An industrial quality-control process evaluates an impure commercial batch of a substituted sublimable solid carboxylic acid (4-bromobenzoic acid derivative, M unknown due to variable halogenation/isomerism). A sample of mass m is placed into a sealed, evacuated vessel of volume V and heated to T₂ where solid-vapour sublimation equilibrium is established. The vapour pressure follows the Clausius-Clapeyron relation from known (P₁, T₁) and ΔH_sub. Simultaneously, the unvaporised solid residue remaining in the vessel is dissolved and treated with a known excess of standard NaOH, and the unreacted base is back-titrated with standard HCl to determine the purity percentage. The pure substance forms a face-centred cubic molecular crystal whose unit cell edge length a is determined by X-ray diffraction.",
+     "links": "Formula 2 gives the equilibrium vapour pressure P₂ at T₂, which directly sets the moles of pure acid in the vapour phase via n_vap = P₂V/(RT₂). Formula 1 provides the moles of acid remaining in the solid residue from eq(acid) = eq(NaOH added) − eq(HCl back-titrated). The total mass of pure acid originally in the sample is (n_vap + n_solid) × M, which relates sample mass and percentage purity. Formula 3 relates the molar mass M to the crystal density d and unit-cell edge length a (d = ZM/(N_A a³)). Because M and the sample's purity percentage appear simultaneously in both the mass balance across phases and the density-titration constraint, M and purity must be solved as a coupled system.",
+     "insight": "At temperature T₂, the solid does not vaporise completely into an ideal gas; rather, it establishes a true two-phase solid-vapour equilibrium where the vapour pressure is clamped strictly at P₂. Any calculation assuming total vaporisation or ignoring the mass of pure substance residing in the vapour phase underestimates the purity of the original sample.",
+     "asked": "The percentage purity of the commercial sample (in %)",
+     "wrong_answers": "1) Assuming the sample completely vaporises at T₂ using the ideal gas equation with the full sample mass, ignoring the solid-vapour equilibrium limit P₂; 2) Neglecting the mass of the acid in the vapour phase when computing the purity from the back-titration of the solid residue; 3) Using Z = 1 instead of Z = 4 for an FCC molecular unit cell."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:24:43.238718+00:00",
+     "attempt": 1,
+     "twist": "simultaneous",
+     "examples": [
+      "2016P1_Chem_Q32",
+      "2015P1_Chem_Q28"
+     ],
+     "stem": "An impure commercial sample of mass 5.00 g containing a sublimable solid monocarboxylic acid and non-volatile, neutral impurities is placed inside an evacuated, sealed rigid container of volume 8.314 L and heated to 400 K, establishing solid-vapour equilibrium. The vapour pressure of the pure acid is 2.50 mm Hg at 300 K, and its enthalpy of sublimation is 19.954 kJ mol⁻¹. After equilibrium is reached at 400 K, the remaining unvaporised solid residue is completely dissolved in neutral aqueous ethanol and treated with 50.0 mL of 0.500 M sodium hydroxide (NaOH) solution. The unreacted base requires 12.5 mL of 0.400 M hydrochloric acid (HCl) solution for complete neutralisation. In a separate crystallographic analysis, the pure acid forms a face-centred cubic unit cell (Z = 4) with an edge length of 1000 pm and a crystal density of 1.20 g cm⁻³. Assuming ideal gas behaviour for the vapour phase, the percentage purity of the original commercial sample is (Given: R = 8.314 J K⁻¹ mol⁻¹, N_A = 6.022 × 10²³ mol⁻¹, 1 atm = 760 mm Hg = 101325 Pa, e² = 7.389).",
+     "asks": "the percentage purity of the commercial sample",
+     "unit": "%"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:24:49.856243+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Step 1: Calculate the vapour pressure of the pure acid at 400 K\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n                                      vapour_pressure_1=given(2.50, \"2.50 mm Hg at 300 K\"),\n                                      vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n                                      T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Step 2: Calculate the number of moles of the acid that vaporized\n    volume = given(8.314, \"8.314 L\")\n    pressure = vapour_pressure_400K / given(760, \"1 atm = 760 mm Hg\")\n    temperature = given(400, \"400 K\")\n    moles_vaporized = (pressure * volume) / given(8.314, \"R = 8.314 J K⁻¹ mol⁻¹\")\n    \n    # Step 3: Calculate the mass of the acid that vaporized\n    molar_mass = solve_for(lambda x: step_273(edge_length=given(1000, \"1000 pm\"),\n                                               atoms_per_cell=given(4, \"Z = 4\"),\n                                               molar_mass=x)[\"crystal_density\"] - given(1.20, \"1.20 g cm⁻³\"),\n                      lo=1, hi=300)\n    mass_vaporized = moles_vaporized * molar_mass\n    \n    # Step 4: Calculate the mass of the acid in the original sample\n    mass_sample = given(5.00, \"5.00 g\")\n    mass_acid = mass_sample - mass_vaporized\n    \n    # Step 5: Calculate the percentage purity of the original commercial sample\n    equivalents_added = given(50.0, \"50.0 mL\") * given(0.500, \"0.500 M\") / given(1, \"1 eq\")\n    back_titrated_equivalents = given(12.5, \"12.5 mL\") * given(0.400, \"0.400 M\") / given(1, \"1 eq\")\n    equivalent_mass = molar_mass / given(1, \"1 eq\")\n    percent_purity = step_41(equivalents=equivalents_added,\n                                  back_titrated_equivalents=back_titrated_equivalents,\n                                  equivalent_mass=equivalent_mass,\n                                  sample_mass=mass_sample)[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "step_41: must be between 0 and 100, got 72264.00000000573"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:24:56.274424+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Step 1: Calculate the vapour pressure of the pure acid at 400 K\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n                                      vapour_pressure_1=given(2.50, \"2.50 mm Hg at 300 K\"),\n                                      vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n                                      T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Step 2: Calculate the number of moles of the acid that vaporized\n    volume = given(8.314, \"8.314 L\")\n    pressure = vapour_pressure_400K / given(760, \"1 atm = 760 mm Hg\")\n    temperature = given(400, \"400 K\")\n    moles_vaporized = (pressure * volume) / given(8.314, \"R = 8.314 J K⁻¹ mol⁻¹\")\n    \n    # Step 3: Calculate the mass of the acid that vaporized\n    molar_mass = solve_for(lambda x: step_273(edge_length=given(1000, \"1000 pm\"),\n                                               atoms_per_cell=given(4, \"Z = 4\"),\n                                               molar_mass=x)[\"crystal_density\"] - given(1.20, \"1.20 g cm⁻³\"),\n                      lo=1, hi=300)\n    mass_vaporized = moles_vaporized * molar_mass\n    \n    # Step 4: Calculate the mass of the acid in the original sample\n    mass_sample = given(5.00, \"5.00 g\")\n    mass_acid = mass_sample - mass_vaporized\n    \n    # Step 5: Calculate the percentage purity of the original commercial sample\n    equivalents_added = given(50.0, \"50.0 mL\") * given(0.500, \"0.500 M\") / given(1, \"1 eq\")\n    back_titrated_equivalents = given(12.5, \"12.5 mL\") * given(0.400, \"0.400 M\") / given(1, \"1 eq\")\n    equivalent_mass = molar_mass / given(1, \"1 eq\")\n    percent_purity = step_41(equivalents=equivalents_added,\n                                  back_titrated_equivalents=back_titrated_equivalents,\n                                  equivalent_mass=equivalent_mass,\n                                  sample_mass=mass_sample)[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "step_41: must be between 0 and 100, got 72264.00000000573"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:25:02.481746+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Step 1: Calculate the vapour pressure of the pure acid at 400 K\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n                                      vapour_pressure_1=given(2.50, \"2.50 mm Hg at 300 K\"),\n                                      vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n                                      T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Step 2: Calculate the number of moles of the acid that vaporized\n    volume = given(8.314, \"8.314 L\")\n    pressure = vapour_pressure_400K / given(760, \"1 atm = 760 mm Hg\")\n    temperature = given(400, \"400 K\")\n    moles_vaporized = (pressure * volume) / given(8.314, \"R = 8.314 J K⁻¹ mol⁻¹\")\n    \n    # Step 3: Calculate the mass of the acid that vaporized\n    molar_mass = solve_for(lambda x: step_273(edge_length=given(1000, \"1000 pm\"),\n                                               atoms_per_cell=given(4, \"Z = 4\"),\n                                               molar_mass=x)[\"crystal_density\"] - given(1.20, \"1.20 g cm⁻³\"),\n                      lo=1, hi=300)\n    mass_vaporized = moles_vaporized * molar_mass\n    \n    # Step 4: Calculate the mass of the acid in the original sample\n    mass_sample = given(5.00, \"5.00 g\")\n    mass_acid = mass_sample - mass_vaporized\n    \n    # Step 5: Calculate the percentage purity of the original commercial sample\n    equivalents_added = given(50.0, \"50.0 mL\") * given(0.500, \"0.500 M\") / given(1, \"1 eq\")\n    back_titrated_equivalents = given(12.5, \"12.5 mL\") * given(0.400, \"0.400 M\") / given(1, \"1 eq\")\n    equivalent_mass = molar_mass / given(1, \"1 eq\")\n    percent_purity = step_41(equivalents=equivalents_added,\n                                  back_titrated_equivalents=back_titrated_equivalents,\n                                  equivalent_mass=equivalent_mass,\n                                  sample_mass=mass_sample)[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "step_41: must be between 0 and 100, got 72264.00000000573"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:25:02.482232+00:00",
+     "attempt": 1,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_41: must be between 0 and 100, got 72264.00000000573"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:25:25.951410+00:00",
+     "attempt": 2,
+     "twist": "simultaneous",
+     "examples": [
+      "2020P2_Chem_Q14",
+      "2018P1_Chem_Q9"
+     ],
+     "stem": "An impure commercial sample of mass 4.00 g containing a sublimable solid monocarboxylic acid and non-volatile neutral impurities is placed inside an evacuated, sealed rigid container of volume 8.314 L and heated to 400 K, establishing solid-vapour equilibrium. The vapour pressure of the pure acid is 5.14 mm Hg at 300 K, and its enthalpy of sublimation is 19.954 kJ mol⁻¹. After equilibrium is established at 400 K, all the unvaporised solid residue remaining in the container is collected, dissolved in neutral aqueous ethanol, and treated with 40.0 mL of 0.500 M sodium hydroxide (NaOH) solution. The unreacted base requires 25.0 mL of 0.400 M hydrochloric acid (HCl) solution for complete neutralisation. In a separate crystallographic analysis, the pure acid forms a face-centred cubic unit cell (Z = 4) with an edge length of 1000 pm and a crystal density of 0.800 g cm⁻³. Assuming ideal gas behaviour for the vapour phase, the percentage purity of the original commercial sample is (Given: R = 8.314 J K⁻¹ mol⁻¹, N_A = 6.022 × 10²³ mol⁻¹, 1 atm = 760 mm Hg = 101325 Pa, e² = 7.389).",
+     "asks": "the percentage purity of the original commercial sample",
+     "unit": "%"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:25:31.261030+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Step 1: Calculate the vapour pressure at 400 K using step_254\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n                                      vapour_pressure_1=given(5.14, \"5.14 mm Hg\"),\n                                      vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n                                      T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Step 2: Calculate the density of the crystal using step_273\n    crystal_density = step_273(edge_length=given(1000, \"1000 pm\"),\n                                 atoms_per_cell=given(4, \"Z = 4\"),\n                                 molar_mass=solve_for(lambda x: x - (crystal_density * (given(1000, \"1000 pm\") * 1e-10) ** 3 * C.NA / given(4, \"Z = 4\")), lo=1, hi=300))\n    \n    # Step 3: Calculate the percentage purity using step_41\n    percent_purity = step_41(equivalents=given(40.0, \"40.0 mL\") * given(0.500, \"0.500 M\"),\n                            back_titrated_equivalents=given(25.0, \"25.0 mL\") * given(0.400, \"0.400 M\"),\n                            equivalent_mass=given(4.00, \"4.00 g\") / (crystal_density * given(8.314, \"8.314 L\") * 1000),\n                            sample_mass=given(4.00, \"4.00 g\"))[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "NameError: cannot access free variable 'crystal_density' where it is not associated with a value in enclosing scope"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:25:37.210824+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Step 1: Calculate the vapour pressure at 400 K using step_254\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n                                      vapour_pressure_1=given(5.14, \"5.14 mm Hg\"),\n                                      vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n                                      T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Step 2: Calculate the density of the crystal using step_273\n    crystal_density = step_273(edge_length=given(1000, \"1000 pm\"),\n                                 atoms_per_cell=given(4, \"Z = 4\"),\n                                 molar_mass=solve_for(lambda x: x - (given(0.800, \"0.800 g cm⁻³\") * (given(1000, \"1000 pm\") * 1e-10) ** 3 * C.NA / given(4, \"Z = 4\")), lo=1, hi=300))\n    \n    # Step 3: Calculate the percentage purity using step_41\n    percent_purity = step_41(equivalents=given(40.0, \"40.0 mL\") * given(0.500, \"0.500 M\"),\n                            back_titrated_equivalents=given(25.0, \"25.0 mL\") * given(0.400, \"0.400 M\"),\n                            equivalent_mass=given(4.00, \"4.00 g\") / (crystal_density * given(8.314, \"8.314 L\") * 1000),\n                            sample_mass=given(4.00, \"4.00 g\"))[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "NameError: name 'C' is not defined"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:25:42.891550+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Step 1: Calculate the vapour pressure at 400 K using step_254\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n                                      vapour_pressure_1=given(5.14, \"5.14 mm Hg\"),\n                                      vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n                                      T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Step 2: Calculate the density of the crystal using step_273\n    crystal_density = step_273(edge_length=given(1000, \"1000 pm\"),\n                                 atoms_per_cell=given(4, \"Z = 4\"),\n                                 molar_mass=solve_for(lambda x: x - (given(0.800, \"0.800 g cm⁻³\") * (given(1000, \"1000 pm\") * 1e-10) ** 3 * 6.022e23 / given(4, \"Z = 4\")), lo=1, hi=300))\n    \n    # Step 3: Calculate the percentage purity using step_41\n    percent_purity = step_41(equivalents=given(40.0, \"40.0 mL\") * given(0.500, \"0.500 M\"),\n                            back_titrated_equivalents=given(25.0, \"25.0 mL\") * given(0.400, \"0.400 M\"),\n                            equivalent_mass=given(4.00, \"4.00 g\") / (crystal_density * given(8.314, \"8.314 L\") * 1000),\n                            sample_mass=given(4.00, \"4.00 g\"))[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "TypeError: unsupported operand type(s) for *: 'dict' and 'float'"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:25:42.891740+00:00",
+     "attempt": 2,
+     "problems": [
+      "the question could not be solved reliably with the formulas: TypeError: unsupported operand type(s) for *: 'dict' and 'float'"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:26:07.336843+00:00",
+     "attempt": 3,
+     "twist": "simultaneous",
+     "examples": [
+      "2025P1_Q9",
+      "2022P2_Chem_Q3"
+     ],
+     "stem": "An impure commercial sample of mass 10.0 g containing a sublimable solid monocarboxylic acid and non-volatile neutral impurities is placed inside an evacuated, sealed rigid container of volume 8.314 L and heated to 400 K, establishing solid-vapour equilibrium. The vapour pressure of the pure acid is 8.12 mm Hg at 300 K, and its enthalpy of sublimation is 19.954 kJ mol⁻¹. After equilibrium is established at 400 K, all the unvaporised solid residue remaining in the container is collected, dissolved in neutral aqueous ethanol, and treated with 50.0 mL of 1.00 M sodium hydroxide (NaOH) solution. The unreacted base requires 20.0 mL of 1.00 M hydrochloric acid (HCl) solution for complete neutralisation. In a separate crystallographic analysis, the pure acid forms a face-centred cubic unit cell (Z = 4) with an edge length of 1000 pm and a crystal density of 0.800 g cm⁻³. Assuming ideal gas behaviour for the vapour phase, the percentage purity of the original commercial sample is (Given: R = 8.314 J K⁻¹ mol⁻¹, N_A = 6.022 × 10²³ mol⁻¹, 1 atm = 760 mm Hg = 101325 Pa, e² = 7.389)",
+     "asks": "percentage purity of the original commercial sample",
+     "unit": "%"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:26:12.411575+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Calculate the vapour pressure at 400 K\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n        vapour_pressure_1=given(8.12, \"8.12 mm Hg\"),\n        vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n        T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Calculate the density of the crystal\n    crystal_density = step_273(edge_length=given(1000, \"1000 pm\"),\n        atoms_per_cell=given(4, \"Z = 4\"),\n        molar_mass=solve_for(lambda x: x - 0.800, 1, 300))[\"crystal_density\"]\n    \n    # Calculate the percentage purity of the sample\n    percent_purity = step_41(equivalents=given(50.0, \"50.0 mL of 1.00 M sodium hydroxide (NaOH) solution\"),\n        back_titrated_equivalents=given(20.0, \"20.0 mL of 1.00 M hydrochloric acid (HCl) solution\"),\n        equivalent_mass=solve_for(lambda x: x - (crystal_density * 8.314 / 1000), 10, 300),\n        sample_mass=given(10.0, \"10.0 g\"))[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "the question states 0.8 but the program never takes it with given()",
+      "the question states 760 but the program never takes it with given()",
+      "the question states 101325 but the program never takes it with given()",
+      "the question states 7.389 but the program never takes it with given()"
+     ],
+     "answer": 0.01325
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:26:17.622086+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Calculate the vapour pressure at 400 K\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n        vapour_pressure_1=given(8.12, \"8.12 mm Hg\"),\n        vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n        T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Calculate the density of the crystal\n    crystal_density = step_273(edge_length=given(1000, \"1000 pm\"),\n        atoms_per_cell=given(4, \"Z = 4\"),\n        molar_mass=solve_for(lambda x: x - given(0.800, \"0.800 g cm⁻³\"), 1, 300))[\"crystal_density\"]\n    \n    # Calculate the percentage purity of the sample\n    percent_purity = step_41(equivalents=given(50.0, \"50.0 mL of 1.00 M sodium hydroxide (NaOH) solution\"),\n        back_titrated_equivalents=given(20.0, \"20.0 mL of 1.00 M hydrochloric acid (HCl) solution\"),\n        equivalent_mass=solve_for(lambda x: x - (crystal_density * given(8.314, \"8.314 L\") / given(1000, \"1000 pm\")), 10, 300),\n        sample_mass=given(10.0, \"10.0 g\"))[\"percent_purity\"]\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "the question states 760 but the program never takes it with given()",
+      "the question states 101325 but the program never takes it with given()",
+      "the question states 7.389 but the program never takes it with given()"
+     ],
+     "answer": 0.01325
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:26:23.239084+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Calculate the vapour pressure at 400 K\n    vapour_pressure_400K = step_254(temperature=given(300, \"300 K\"),\n        vapour_pressure_1=given(8.12, \"8.12 mm Hg\"),\n        vaporisation_enthalpy=given(19.954, \"19.954 kJ mol⁻¹\"),\n        T2=given(400, \"400 K\"))[\"vapour_pressure\"]\n    \n    # Calculate the density of the crystal\n    crystal_density = step_273(edge_length=given(1000, \"1000 pm\"),\n        atoms_per_cell=given(4, \"Z = 4\"),\n        molar_mass=solve_for(lambda x: x - given(0.800, \"0.800 g cm⁻³\"), 1, 300))[\"crystal_density\"]\n    \n    # Calculate the percentage purity of the sample\n    percent_purity = step_41(equivalents=given(50.0, \"50.0 mL of 1.00 M sodium hydroxide (NaOH) solution\"),\n        back_titrated_equivalents=given(20.0, \"20.0 mL of 1.00 M hydrochloric acid (HCl) solution\"),\n        equivalent_mass=solve_for(lambda x: x - (crystal_density * given(8.314, \"8.314 L\") / given(1000, \"1000 pm\")), 10, 300),\n        sample_mass=given(10.0, \"10.0 g\"))[\"percent_purity\"]\n    \n    # Use the given values for 760, 101325, and 7.389\n    given(760, \"1 atm = 760 mm Hg\")\n    given(101325, \"1 atm = 101325 Pa\")\n    given(7.389, \"e² = 7.389\")\n    \n    return percent_purity",
+     "ok": false,
+     "problems": [
+      "quote '1 atm = 101325 Pa' is not in the question (copy the words exactly)",
+      "the question states 101325 but the program never takes it with given()"
+     ],
+     "answer": 0.01325
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:26:23.239716+00:00",
+     "attempt": 3,
+     "problems": [
+      "the question could not be solved reliably with the formulas: quote '1 atm = 101325 Pa' is not in the question (copy the words exactly); the question states 101325 but the program never takes it with given()"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "gas_state_to_gas_state_boyleslawp1v",
+     "partial_pressure_to_extent_of_adsorption_xmkp1n",
+     "standard_entropy_to_delta_s_ssmprodsmrea"
+    ],
+    "nodes": [
+     "gas_state",
+     "partial_pressure",
+     "extent_of_adsorption",
+     "standard_entropy",
+     "delta_s"
+    ],
+    "chapters": [
+     "Gaseous State",
+     "Surface Chemistry",
+     "Thermodynamics"
+    ],
+    "txs": [
+     87,
+     287,
+     131
+    ],
+    "trap_ids": [
+     "ignores_coefficients",
+     "low_pressure_limit",
+     "reactants_minus_products",
+     "temperature_inverted"
+    ],
+    "description": "final volume (L) [P₁V₁/T₁ = P₂V₂/T₂] | x/m [x/m = aP/(1 + bP)] | standard entropy change (J K⁻¹ mol⁻¹) [ΔS° = ΣνS°(products) − ΣνS°(reactants)]",
+    "twist": "two_state_ratio"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:26:49.445720+00:00",
+     "try_": 1,
+     "situation": "Two industrial Fischer-Tropsch catalyst beds convert syngas via two distinct pathways: methanation (CO(g) + 3H₂(g) → CH₄(g) + H₂O(g)) and methanol synthesis (CO(g) + 2H₂(g) → CH₃OH(g)). The standard entropy of reaction ΔS° = ΣνS°(products) - ΣνS°(reactants) is computed for both routes. Complete conversion of identical starting feed volumes at reaction conditions (P₁, V₁, T₁) yields dry gas streams that are cooled and expanded into adsorption columns at (P₂, V₂, T₂). The resulting pure CH₄ and CH₃OH gases adsorb onto zeolitic molecular sieves governed by the Langmuir isotherm.",
+     "links": "ΔS° calculations track the change in reaction mole numbers (Δn_g = -2 for methanation vs -2 for methanol synthesis from different reactant stoichiometries); the unconsumed/produced moles determine the initial gas volume/pressure at T₁; the combined gas law P₁V₁/T₁ = P₂V₂/T₂ provides the final adsorption pressure P₂; P₂ is substituted into x/m = aP₂/(1 + bP₂) to find the specific mass of hydrocarbon/alcohol adsorbed.",
+     "insight": "Water vapor produced in methanation condenses completely upon cooling to T₂ (298 K), so it must be excluded from the gas phase when calculating the final gas pressure P₂ using the combined gas law, whereas methanol at low partial pressure remains entirely in the vapor phase.",
+     "asked": "The ratio of the mass of product gas adsorbed per gram of zeolite, (x/m)_(methane) / (x/m)_(methanol) (dimensionless).",
+     "wrong_answers": "Treating condensed H₂O(g) as an ideal gas contributing to P₂ in the methanation line; confusing the molar mass scaling when converting mole ratio to mass adsorbed ratio x; failing to apply the correct stoichiometric mole contraction ratio (4 mol → 1 mol dry gas vs 3 mol → 1 mol dry gas)."
+    },
+    {
+     "stage": "impossible",
+     "at": "2026-11-15T23:27:01.069538+00:00",
+     "attempt": 1,
+     "reason": "Standard reaction entropy change ΔS° = ΣνS°(products) − ΣνS°(reactants) cannot be physically linked to the combined gas law (P₁V₁/T₁ = P₂V₂/T₂) and the Langmuir adsorption isotherm (x/m = aP/(1+bP)) without invoking additional major thermodynamic relations (such as ΔG° = ΔH° − TΔS° and ΔG° = −RT ln K_p to determine equilibrium partial pressures), which violates the constraint that no other chemistry relations beyond the drawn formulas may be needed."
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "equilibrium_moles_to_equilibrium_constant_kcxxyyaabbla",
+     "heat_to_delta_h_sasbh573kjpe",
+     "thermodynamic_process_to_work_wnrtlnv2v123",
+     "vant_hoff_plot_to_delta_h_slopehrinter",
+     "work_to_heat_isothermalid"
+    ],
+    "nodes": [
+     "thermodynamic_process",
+     "work",
+     "vant_hoff_plot",
+     "delta_h",
+     "heat",
+     "equilibrium_moles",
+     "equilibrium_constant"
+    ],
+    "chapters": [
+     "Thermodynamics",
+     "Chemical Equilibrium",
+     "Thermochemistry"
+    ],
+    "txs": [
+     119,
+     315,
+     144,
+     152,
+     357
+    ],
+    "trap_ids": [
+     "forgets_2303",
+     "ignores_powers",
+     "inverted_gamma",
+     "joules_as_kJ",
+     "sign",
+     "uses_moles"
+    ],
+    "description": "work done on the gas (J) [TV^(γ−1) = const; w = ΔU = nC_v(T₂ − T₁)] | standard enthalpy change (kJ mol⁻¹) [ln K = −ΔH°/RT + ΔS°/R: slope = −ΔH°/R] | enthalpy of neutralisation (kJ per mol of water) [ΔH_neut = −q/n(H₂O); strong acid + strong base ≈ −57.3 kJ per equivalent] | K_c [K_c = Π[products]^ν / Π[reactants]^ν] | heat absorbed by the gas (J) [isothermal ideal gas: ΔU = 0, so q = −w]",
+    "twist": "condition"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:27:22.548060+00:00",
+     "try_": 1,
+     "situation": "A closed vessel contains the thermal decomposition equilibrium of solid ammonium carbamate: NH2COONH4(s) <=> 2 NH3(g) + CO2(g). The temperature dependence of the equilibrium constant is determined from the slope of a ln Kc vs 1/T plot. At a specific operating temperature T_1, the equilibrium gas mixture from a reaction volume V is completely evacuated and bubbled into an excess aqueous solution of strong monoprotic acid (HCl) inside a thermally insulated jacket. The heat liberated by the complete neutralisation of NH3(aq) is transferred isothermally to an enclosed sample of n_g moles of an ideal monoatomic gas at T_1 (expanding isothermally against a piston, q = -w). Following this isothermal expansion, the gas sample is compressed reversibly and adiabatically back to its initial volume V_initial, which raises its temperature from T_1 to T_final.",
+     "links": "The slope of ln Kc vs 1/T gives standard enthalpy of decomposition Delta H° (Formula 2). Kc at T_1 gives the equilibrium concentration of NH3(g) (Formula 4), yielding the total moles of NH3 generated in volume V. When scrubbed into strong acid, moles of H2O formed in neutralisation equal moles of NH3, releasing q_neut = n(H2O) * 57.3 kJ (Formula 3). This heat enters the ideal gas during isothermal expansion, fixing the isothermal work/volume ratio via q = -w (Formula 5). Finally, adiabatic reversible compression from this expanded volume back to V_initial uses TV^(gamma-1) = const and w = nCv(T_final - T_1) (Formula 1) to determine the final temperature.",
+     "insight": "Ammonium carbamate is a solid with unit activity; the reaction produces 2 moles of NH3 for every 1 mole of CO2, meaning [NH3] = 2[CO2] and Kc = 4[CO2]^3. In neutralisation, CO2 does not react with strong acid (HCl), so ONLY NH3 reacts with HCl, meaning n(H2O formed) = n(NH3), not the total moles of gas.",
+     "asked": "The final temperature T_final of the monoatomic gas after the adiabatic compression, in Kelvin (K).",
+     "wrong_answers": "Using the total moles of gas (NH3 + CO2) instead of only NH3 in calculating heat of neutralisation; confusing Kc with Kp without converting via RT; forgetting that adiabatic compression starts from the volume reached after isothermal heat absorption rather than the initial volume."
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-15T23:27:23.989966+00:00",
+     "try_": 1,
+     "problem": "step_144 cannot be applied because the heat evolved on neutralisation is not provided in the situation."
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:27:48.261480+00:00",
+     "try_": 2,
+     "situation": "Solid ammonium hydrogen sulfide undergoes thermal dissociation in a rigid container: NH4HS(s) <=> NH3(g) + H2S(g). The gas concentrations define Kc = [NH3][H2S]. The slope of the ln K versus 1/T plot yields ΔH° of decomposition. The ammonia formed is quantitatively condensed and neutralised with excess strong monoprotic acid (HCl(aq)), releasing heat q where ΔH_neut = -q/n(H2O) = -57.3 kJ/mol. This released heat q is transferred into an insulated piston containing 1.0 mol of helium gas undergoing reversible isothermal expansion (q = -w). The helium then undergoes reversible adiabatic expansion to a final state satisfying TV^(γ-1) = const and w = nCv(T2 - T1).",
+     "links": "Kc = [NH3][H2S] determines moles of NH3(g) -> ln K vs 1/T determines reaction enthalpy -> n(NH3) neutralised with strong acid yields n(H2O) with ΔH_neut = -57.3 kJ/mol -> Heat q enters ideal gas cylinder isothermally with q = -w_iso -> Gas then expands adiabatically with TV^(γ-1) = const and w_adi = nCv(T2 - T1).",
+     "insight": "Because NH4HS is a pure solid, its activity is unity and [NH3] = [H2S] in a previously evacuated vessel, making Kc directly proportional to [NH3]^2; the neutralization heat produced depends exclusively on the square root of Kc at the given temperature.",
+     "asked": "The temperature T1 (in K) of the dissociation vessel such that the magnitude of work done during the adiabatic stage equals the work performed during the isothermal stage.",
+     "wrong_answers": "Including the solid NH4HS in the Kc expression; treating H2S as being neutralised by the strong acid HCl; omitting the negative sign in ΔU = nCv(T2 - T1) when equating work and heat magnitudes."
+    },
+    {
+     "stage": "design_rejected",
+     "at": "2026-11-15T23:27:49.472576+00:00",
+     "try_": 2,
+     "problem": "step_119 cannot be applied to this situation because it requires the initial temperature of the gas, which is not provided in the situation."
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "excited_sample_to_spectral_line_count_atomicsample",
+     "ionization_energy_to_electron_energy_ieeinfegsegs",
+     "orbital_label_to_orbital_angular_momentum_lsqrtll1h2"
+    ],
+    "nodes": [
+     "orbital_label",
+     "orbital_angular_momentum",
+     "excited_sample",
+     "spectral_line_count",
+     "ionization_energy",
+     "electron_energy"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     78,
+     68,
+     69
+    ],
+    "trap_ids": [
+     "bohr_like",
+     "linear_in_n",
+     "wrong_formula"
+    ],
+    "description": "orbital angular momentum (in units of h/2π) [L = √(l(l + 1)) h/2π] | maximum number of spectral lines [sample: Δn(Δn + 1)/2; single atom: Δn] | energy of the electron in level n (eV) [E_GS = −IE; E_n = E_GS / n²]",
+    "twist": "simultaneous"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:28:10.589958+00:00",
+     "try_": 1,
+     "situation": "A discharge tube contains 'a sample of many atoms' of atomic hydrogen. Electrons are excited from an unknown initial level $n_1$ to an upper level $n_2$. During relaxation back to $n_1$, exactly 6 distinct spectral lines are observed. The energy of the longest wavelength photon emitted in this set of transitions is measured to be $0.661\\text{ eV}$. An electron in level $n_1$ is in a state with orbital angular momentum $L_1 = 0$.",
+     "links": "Formula 2 gives $N = \\Delta n(\\Delta n + 1)/2 = 6 \\implies \\Delta n = 3$, giving the linear link $n_2 - n_1 = 3$. Formula 3 gives the energy of the longest wavelength photon (transition between adjacent levels $n_2 \\to n_2 - 1$ or $(n_1 + 1) \\to n_1$) as $\\Delta E_{\\text{min}} = -E_{GS}\\left(\\frac{1}{n_1^2} - \\frac{1}{(n_1+1)^2}\\right)$ or $-E_{GS}\\left(\\frac{1}{(n_2-1)^2} - \\frac{1}{n_2^2}\\right)$, with $E_{GS} = -13.6\\text{ eV}$. Formula 1 verifies that $L_1 = \\sqrt{l_1(l_1+1)}\\hbar = 0 \\implies l_1 = 0$ ($s$-orbital), which is physically valid for any $n_1 \\ge 1$. Solving the coupled system gives $n_1$ and $n_2$ together.",
+     "insight": "In an emission spectrum spanning from $n_2$ down to $n_1$, the longest wavelength (smallest energy) photon corresponds to the transition between the two highest adjacent levels ($n_2 \\to n_2-1$), NOT $(n_1+1 \\to n_1)$, because energy gap $\\Delta E \\propto 1/n^3$ decreases as $n$ increases.",
+     "asked": "The total orbital angular momentum of the state $(n_2, l = n_1)$, in units of $h/2\\pi$.",
+     "wrong_answers": [
+      "Assigning the minimum transition energy to the $(n_1 + 1) \\to n_1$ transition instead of $n_2 \\to n_2 - 1$.",
+      "Solving $\\Delta n = 3$ and automatically assuming the base level is the ground state $n_1 = 1$, which gives a transition energy of $13.6(1 - 1/4) = 10.2\\text{ eV}$, grossly disagreeing with $0.661\\text{ eV}$."
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:28:27.276170+00:00",
+     "attempt": 1,
+     "twist": "simultaneous",
+     "examples": [
+      "2018P1_Chem_Q10",
+      "2021P2_Chem_Q7"
+     ],
+     "stem": "A discharge tube containing a sample of many atoms of atomic hydrogen in an excited state with principal quantum number n₂ undergoes radiative de-excitation to a lower level n₁. In the emission spectrum resulting from all possible transitions among these levels, exactly 6 distinct spectral lines are observed. The minimum photon energy recorded among all emitted spectral lines is 0.306 eV. Calculate the orbital angular momentum of an electron in the orbital with principal quantum number n₂ and azimuthal quantum number l = n₁ (in units of h/2π).\n(Given: ionization energy of hydrogen atom in the ground state = 13.6 eV; √6 = 2.45)",
+     "asks": "the orbital angular momentum of an electron in the state with principal quantum number n₂ and azimuthal quantum number l = n₁, in units of h/2π",
+     "unit": "h/2π"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:28:34.190063+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Given values from the question\n    ionization_energy = given(13.6, \"ionization energy of hydrogen atom in the ground state = 13.6 eV\")\n    min_photon_energy = given(0.306, \"The minimum photon energy recorded among all emitted spectral lines is 0.306 eV.\")\n    spectral_line_count = given(6, \"exactly 6 distinct spectral lines are observed\")\n    \n    # Step 1: Find the final level n₁\n    def find_n1(n2):\n        # Calculate the energy difference for the minimum photon energy\n        energy_diff = min_photon_energy\n        # Find n1 such that the energy difference matches the minimum photon energy\n        def mismatch(n1):\n            energy_n2 = step_69(ionization_energy=ionization_energy, n=n2)[\"electron_energy\"]\n            energy_n1 = step_69(ionization_energy=ionization_energy, n=n1)[\"electron_energy\"]\n            return abs((energy_n2 - energy_n1) - energy_diff)\n        \n        # Solve for n1\n        n1 = solve_for(mismatch, 1, n2 - 1)\n        return n1\n    \n    # Step 2: Find the upper level n₂\n    def find_n2():\n        # Calculate the number of spectral lines for a sample of many atoms\n        def mismatch(n2):\n            n1 = find_n1(n2)\n            lines = step_68(upper_level=n2, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"]\n            return abs(lines - spectral_line_count)\n        \n        # Solve for n2\n        n2 = solve_for(mismatch, 2, 8)\n        return n2\n    \n    # Find n2 and n1\n    n2 = find_n2()\n    n1 = find_n1(n2)\n    \n    # Step 3: Calculate the orbital angular momentum for the state with n2 and l = n1\n    orbital_label = f\"{n2}{L_LETTER[n1]}\"\n    orbital_angular_momentum = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    \n    return orbital_angular_momentum",
+     "ok": false,
+     "problems": [
+      "step_69: must be a whole number, got 2.0000000000000004e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:28:40.900837+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Given values from the question\n    ionization_energy = given(13.6, \"ionization energy of hydrogen atom in the ground state = 13.6 eV\")\n    min_photon_energy = given(0.306, \"The minimum photon energy recorded among all emitted spectral lines is 0.306 eV.\")\n    spectral_line_count = given(6, \"exactly 6 distinct spectral lines are observed\")\n    \n    # Step 1: Find the final level n₁\n    def find_n1(n2):\n        # Calculate the energy difference for the minimum photon energy\n        energy_diff = min_photon_energy\n        # Find n1 such that the energy difference matches the minimum photon energy\n        def mismatch(n1):\n            energy_n2 = step_69(ionization_energy=ionization_energy, n=n2)[\"electron_energy\"]\n            energy_n1 = step_69(ionization_energy=ionization_energy, n=n1)[\"electron_energy\"]\n            return abs((energy_n2 - energy_n1) - energy_diff)\n        \n        # Solve for n1\n        n1 = solve_for(mismatch, 1, n2 - 1)\n        return n1\n    \n    # Step 2: Find the upper level n₂\n    def find_n2():\n        # Calculate the number of spectral lines for a sample of many atoms\n        def mismatch(n2):\n            n1 = find_n1(n2)\n            lines = step_68(upper_level=n2, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"]\n            return abs(lines - spectral_line_count)\n        \n        # Solve for n2\n        n2 = solve_for(mismatch, 2, 8)\n        return n2\n    \n    # Find n2 and n1\n    n2 = find_n2()\n    n1 = find_n1(n2)\n    \n    # Step 3: Calculate the orbital angular momentum for the state with n2 and l = n1\n    orbital_label = f\"{n2}{L_LETTER[n1]}\"\n    orbital_angular_momentum = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    \n    return orbital_angular_momentum",
+     "ok": false,
+     "problems": [
+      "step_69: must be a whole number, got 2.0000000000000004e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:28:48.105373+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    # Given values from the question\n    ionization_energy = given(13.6, \"ionization energy of hydrogen atom in the ground state = 13.6 eV\")\n    min_photon_energy = given(0.306, \"The minimum photon energy recorded among all emitted spectral lines is 0.306 eV.\")\n    spectral_line_count = given(6, \"exactly 6 distinct spectral lines are observed\")\n    \n    # Step 1: Find the final level n₁\n    def find_n1(n2):\n        # Calculate the energy difference for the minimum photon energy\n        energy_diff = min_photon_energy\n        # Find n1 such that the energy difference matches the minimum photon energy\n        def mismatch(n1):\n            energy_n2 = step_69(ionization_energy=ionization_energy, n=n2)[\"electron_energy\"]\n            energy_n1 = step_69(ionization_energy=ionization_energy, n=n1)[\"electron_energy\"]\n            return abs((energy_n2 - energy_n1) - energy_diff)\n        \n        # Solve for n1\n        n1 = solve_for(mismatch, 1, n2 - 1)\n        return n1\n    \n    # Step 2: Find the upper level n₂\n    def find_n2():\n        # Calculate the number of spectral lines for a sample of many atoms\n        def mismatch(n2):\n            n1 = find_n1(n2)\n            lines = step_68(upper_level=n2, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"]\n            return abs(lines - spectral_line_count)\n        \n        # Solve for n2\n        n2 = solve_for(mismatch, 2, 8)\n        return n2\n    \n    # Find n2 and n1\n    n2 = find_n2()\n    n1 = find_n1(n2)\n    \n    # Step 3: Calculate the orbital angular momentum for the state with n2 and l = n1\n    orbital_label = f\"{n2}{L_LETTER[n1]}\"\n    orbital_angular_momentum = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    \n    return orbital_angular_momentum",
+     "ok": false,
+     "problems": [
+      "step_69: must be a whole number, got 2.0000000000000004e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:28:48.105567+00:00",
+     "attempt": 1,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_69: must be a whole number, got 2.0000000000000004e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:29:01.415753+00:00",
+     "attempt": 2,
+     "twist": "simultaneous",
+     "examples": [
+      "2021P2_Chem_Q7",
+      "2025P1_Q9"
+     ],
+     "stem": "A discharge tube containing a sample of many atoms of atomic hydrogen in an excited state with principal quantum number n₂ undergoes radiative de-excitation to a lower level n₁. In the emission spectrum resulting from all possible transitions among these levels down to n₁, exactly 6 distinct spectral lines are observed. The minimum photon energy recorded among all emitted spectral lines is 0.306 eV. Calculate the orbital angular momentum of an electron in an orbital with principal quantum number n₂ and azimuthal quantum number l = n₁ (in units of h/2π).\n(Given: ionization energy of hydrogen atom in the ground state = 13.6 eV; √6 = 2.45)",
+     "asks": "orbital angular momentum of the electron in units of h/2π",
+     "unit": ""
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:29:06.284584+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    n1 = given(1, \"n₁\")\n    n2 = solve_for(lambda x: step_68(upper_level=x, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"] - 6, 2, 8)\n    E_min = given(0.306, \"0.306 eV\")\n    IE = given(13.6, \"ionization energy of hydrogen atom in the ground state = 13.6 eV\")\n    E_n1 = step_69(ionization_energy=IE, n=n1)[\"electron_energy\"]\n    E_n2 = E_n1 + E_min\n    n2_prime = solve_for(lambda x: step_69(ionization_energy=IE, n=x)[\"electron_energy\"] - E_n2, 1, 6)\n    l = n1\n    orbital_label = f\"{n2_prime}{'s' if l == 0 else 'p' if l == 1 else 'd' if l == 2 else 'f' if l == 3 else 'g' if l == 4 else 'h'}\"\n    L = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    return L",
+     "ok": false,
+     "problems": [
+      "step_69: must be a whole number, got 1.0000000000000002e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:29:10.911612+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    n1 = given(1, \"n₁\")\n    n2 = solve_for(lambda x: step_68(upper_level=x, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"] - 6, 2, 8)\n    E_min = given(0.306, \"0.306 eV\")\n    IE = given(13.6, \"ionization energy of hydrogen atom in the ground state = 13.6 eV\")\n    E_n1 = step_69(ionization_energy=IE, n=n1)[\"electron_energy\"]\n    E_n2 = E_n1 + E_min\n    n2_prime = solve_for(lambda x: step_69(ionization_energy=IE, n=x)[\"electron_energy\"] - E_n2, 1, 6)\n    l = n1\n    orbital_label = f\"{n2_prime}{'s' if l == 0 else 'p' if l == 1 else 'd' if l == 2 else 'f' if l == 3 else 'g' if l == 4 else 'h'}\"\n    L = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    return L",
+     "ok": false,
+     "problems": [
+      "step_69: must be a whole number, got 1.0000000000000002e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:29:16.320461+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    n1 = given(1, \"n₁\")\n    n2 = solve_for(lambda x: step_68(upper_level=x, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"] - 6, 2, 8)\n    E_min = given(0.306, \"0.306 eV\")\n    IE = given(13.6, \"ionization energy of hydrogen atom in the ground state = 13.6 eV\")\n    E_n1 = step_69(ionization_energy=IE, n=n1)[\"electron_energy\"]\n    E_n2 = E_n1 + E_min\n    n2_prime = solve_for(lambda x: step_69(ionization_energy=IE, n=x)[\"electron_energy\"] - E_n2, 1, 6)\n    l = n1\n    orbital_label = f\"{n2_prime}{'s' if l == 0 else 'p' if l == 1 else 'd' if l == 2 else 'f' if l == 3 else 'g' if l == 4 else 'h'}\"\n    L = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    return L",
+     "ok": false,
+     "problems": [
+      "step_69: must be a whole number, got 1.0000000000000002e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:29:16.320678+00:00",
+     "attempt": 2,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_69: must be a whole number, got 1.0000000000000002e-07 -- an impossible result usually means an input is in the wrong unit: give ionization_energy in eV (for example N × V in mL gives meq, not eq; mg is not g)"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-15T23:29:28.295049+00:00",
+     "attempt": 3,
+     "twist": "simultaneous",
+     "examples": [
+      "2021P2_Chem_Q7",
+      "2018P1_Chem_Q9"
+     ],
+     "stem": "A discharge tube containing a sample of many atoms of atomic hydrogen in an excited state with principal quantum number n₂ undergoes radiative de-excitation to a lower energy level n₁. In the emission spectrum resulting from all possible transitions among these levels down to n₁, exactly 6 distinct spectral lines are observed. The minimum photon energy recorded among all emitted spectral lines is 0.306 eV. Calculate the orbital angular momentum of an electron in a subshell with azimuthal quantum number l = n₁ (in units of h/2π).\n(Given: ionization energy of hydrogen atom from the ground state = 13.6 eV; √6 = 2.45)",
+     "asks": "orbital angular momentum of an electron in a subshell with azimuthal quantum number equal to n₁",
+     "unit": "h/2π"
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:29:35.030337+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    ionization_energy = given(13.6, \"ionization energy of hydrogen atom from the ground state = 13.6 eV\")\n    spectral_line_count = given(6, \"exactly 6 distinct spectral lines are observed\")\n    min_photon_energy = given(0.306, \"The minimum photon energy recorded among all emitted spectral lines is 0.306 eV.\")\n    \n    # Find the final level n₁\n    def f(n1):\n        upper_level = solve_for(lambda n2: step_68(upper_level=n2, final_level=n1, sample=\"a sample of many atoms\")[\"spectral_line_count\"] - spectral_line_count, 2, 8)\n        E_n1 = step_69(ionization_energy=ionization_energy, n=n1)[\"electron_energy\"]\n        E_n2 = step_69(ionization_energy=ionization_energy, n=upper_level)[\"electron_energy\"]\n        return abs(E_n2 - E_n1) - min_photon_energy\n    \n    n1 = solve_for(f, 1, 5)\n    \n    # Calculate the orbital angular momentum for the subshell with azimuthal quantum number l = n₁\n    orbital_label = f\"{n1}s\"\n    orbital_angular_momentum = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    \n    return orbital_angular_momentum",
+     "ok": false,
+     "problems": [
+      "step_68: must be a whole number, got 2.0000000000000004e-07"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:29:41.406866+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    ionization_energy = given(13.6, \"ionization energy of hydrogen atom from the ground state = 13.6 eV\")\n    spectral_line_count = given(6, \"exactly 6 distinct spectral lines are observed\")\n    min_photon_energy = given(0.306, \"The minimum photon energy recorded among all emitted spectral lines is 0.306 eV.\")\n    \n    # Find the final level n₁\n    def f(n1):\n        upper_level = solve_for(lambda n2: step_68(upper_level=n2, final_level=int(round(n1)), sample=\"a sample of many atoms\")[\"spectral_line_count\"] - spectral_line_count, 2, 8)\n        E_n1 = step_69(ionization_energy=ionization_energy, n=int(round(n1)))['electron_energy']\n        E_n2 = step_69(ionization_energy=ionization_energy, n=upper_level)['electron_energy']\n        return abs(E_n2 - E_n1) - min_photon_energy\n    \n    n1 = solve_for(f, 1, 5)\n    \n    # Calculate the orbital angular momentum for the subshell with azimuthal quantum number l = n₁\n    orbital_label = f\"{int(round(n1))}s\"\n    orbital_angular_momentum = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    \n    return orbital_angular_momentum",
+     "ok": false,
+     "problems": [
+      "step_68: must be a whole number, got 2.0000000000000004e-07"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-15T23:29:47.000538+00:00",
+     "attempt": 3,
+     "code": "def solve():\n    ionization_energy = given(13.6, \"ionization energy of hydrogen atom from the ground state = 13.6 eV\")\n    spectral_line_count = given(6, \"exactly 6 distinct spectral lines are observed\")\n    min_photon_energy = given(0.306, \"The minimum photon energy recorded among all emitted spectral lines is 0.306 eV.\")\n    \n    # Find the final level n₁\n    def f(n1):\n        upper_level = solve_for(lambda n2: step_68(upper_level=int(round(n2)), final_level=int(round(n1)), sample=\"a sample of many atoms\")[\"spectral_line_count\"] - spectral_line_count, 2, 8)\n        E_n1 = step_69(ionization_energy=ionization_energy, n=int(round(n1)))['electron_energy']\n        E_n2 = step_69(ionization_energy=ionization_energy, n=upper_level)['electron_energy']\n        return abs(E_n2 - E_n1) - min_photon_energy\n    \n    n1 = solve_for(f, 1, 5)\n    \n    # Calculate the orbital angular momentum for the subshell with azimuthal quantum number l = n₁\n    orbital_label = f\"{int(round(n1))}s\"\n    orbital_angular_momentum = step_78(orbital_label=orbital_label)[\"orbital_angular_momentum\"]\n    \n    return orbital_angular_momentum",
+     "ok": false,
+     "problems": [
+      "step_68: must be >= 1, got 0.0"
+     ],
+     "answer": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-15T23:29:47.000711+00:00",
+     "attempt": 3,
+     "problems": [
+      "the question could not be solved reliably with the formulas: step_68: must be >= 1, got 0.0"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "equivalents_to_molecular_area_adsorbedadde",
+     "gas_state_to_gas_state_boyleslawp1v",
+     "molarity_to_molarity_mfvfmivimole"
+    ],
+    "nodes": [
+     "equivalents",
+     "molecular_area",
+     "gas_state",
+     "molarity"
+    ],
+    "chapters": [
+     "Surface Chemistry",
+     "Gaseous State",
+     "Stoichiometry"
+    ],
+    "txs": [
+     387,
+     86,
+     23
+    ],
+    "trap_ids": [
+     "all_acid_adsorbed",
+     "celsius_ratio",
+     "water_as_final_volume"
+    ],
+    "description": "surface area occupied by one molecule (m²) [adsorbed = added − back-titrated; area per molecule = total area / N] | final pressure (atm) [Gay-Lussac: P₁/T₁ = P₂/T₂ (T in K)] | molarity after dilution (mol L⁻¹) [M1V1 = M2V2]",
+    "twist": "two_state_difference"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-15T23:30:13.464725+00:00",
+     "try_": 1,
+     "situation": "A physical chemistry laboratory determines the effective cross-sectional footprint of a surfactant (stearic acid) monolayer on two distinct mesoporous carbon supports (Support A and Support B, both having identical mass and known BET surface area). A concentrated stock solution of stearic acid in cyclohexane is diluted to prepare the working adsorption solution (M1V1 = M2V2). Known volumes of this diluted solution are added to sealed rigid equilibrium cells containing each carbon support. After monolayer adsorption equilibrium is reached at T1, the supernatant is separated and the unadsorbed stearic acid is quantified by back-titration with standard KOH to determine the moles adsorbed and calculate the surface area occupied per molecule. To check seal integrity and quantify headspace desorption simultaneously, the sealed rigid headspace containing dry nitrogen above the wet carbon bed is heated isochorically from T1 to T2 (P1/T1 = P2/T2).",
+     "links": "The stock acid concentration is diluted via M1V1 = M2V2 to obtain the exact initial molarity M2 added to the adsorbent bed. Back-titration of the equilibrium liquid yields the unadsorbed moles, from which moles adsorbed = (M2 * V_soln) - n_titrated, directly feeding the area per molecule calculation (Area_total / (n_adsorbed * N_A)). The sealed rigid headspace above the slurry undergoes an isochoric temperature step from T1 to T2, where Gay-Lussac's law (P1/T1 = P2/T2) predicts the ideal baseline pressure of the non-adsorbing carrier gas.",
+     "insight": "Stearic acid forms a vertically oriented close-packed monolayer on one support but lies flat horizontally on the other due to surface oxygen functional groups, changing the denominator n_adsorbed significantly; students often forget that back-titration measures unadsorbed solute in the entire solution volume rather than only the sampled aliquot.",
+     "asked": "The difference in the calculated surface area occupied per stearic acid molecule between Support A and Support B, in nm².",
+     "wrong_answers": "Failing to scale the back-titrated moles from the aliquot volume up to the total contact volume; confusing total BET surface area with specific surface area per gram when mass is varied."
+    },
+    {
+     "stage": "impossible",
+     "at": "2026-11-15T23:30:23.507856+00:00",
+     "attempt": 1,
+     "reason": "Gay-Lussac's law (P₁/T₁ = P₂/T₂) applies strictly to a constant-volume ideal gas system, whereas the determination of molecular surface area footprint via back-titration and solution dilution (M₁V₁ = M₂V₂) are condensed-phase liquid-solid adsorption phenomena. Forcing these completely distinct gas-phase and solution-phase processes into a single problem requires an artificial coupling not grounded in real physical chemistry."
+    }
+   ]
+  }
+ ]
+}

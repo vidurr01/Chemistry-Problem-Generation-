@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from core.engine.base import EngineError, Param, Step, Trap, div
 from core.engine.chem import (ATOMIC_MASS, C, balance, check_balanced, const, format_equation,
-                              format_formula, parse_equation, parse_formula)
+                              format_formula, parse_equation, parse_formula, species_key)
 
 P = Param
 
@@ -32,7 +32,7 @@ def _mass_to_moles_step(tx, what, mass_role=None, strict=False, out_role=None):
 
 def _species_coef(side_list, species):
     for c, f in side_list:
-        if f.replace(" ", "") == species.replace(" ", ""):
+        if species_key(f) == species_key(species):
             return c
     return None
 
@@ -514,14 +514,15 @@ STEPS = [
          needs=(P("molarity", "mol L⁻¹", "molarity of the solution", lo=0.1, hi=10),
                 P("density", "g mL⁻¹", "density of the solution", lo=0.8, hi=2.0),
                 P("solute_molar_mass", "g mol⁻¹", "molar mass of the solute", lo=10, hi=400)),
-         answer="molality", unit="mol kg⁻¹", kind="positive", gives=("solute_molar_mass",),
+         answer="molality", unit="mol kg⁻¹", kind="positive", gives=("solute_molar_mass", "density"),
+         carries=("solvent_molar_mass",),          # the same solution
          fn=lambda v: {"molality": 1000 * v["molarity"]
                        / _positive(1000 * v["density"] - v["molarity"] * v["solute_molar_mass"]),
-                       "solute_molar_mass": v["solute_molar_mass"]},
+                       "solute_molar_mass": v["solute_molar_mass"], "density": v["density"]},
          traps=(Trap("divides_by_density", "divides molarity by density (keeps the solute mass in)",
                      lambda v: v["molarity"] / v["density"]),),
          formula="m = 1000 M / (1000 d − M × M_solute)", asks="molality (mol kg⁻¹)"),
-    Step(tx=21, keeps_role=True, src="mole_fraction", dst="molality",
+    Step(tx=21, keeps_role=True, src="mole_fraction", dst="molality", not_after=(348,),
          needs=(P("mole_fraction", "", "mole fraction of the solute", kind="open_fraction", lo=0.01, hi=0.3, role="solute"),
                 P("solvent_molar_mass", "g mol⁻¹", "molar mass of the solvent", lo=18, hi=150)),
          answer="molality", unit="mol kg⁻¹", kind="positive",
@@ -622,11 +623,11 @@ STEPS = [
     Step(tx=33, src="n_factor", dst="equivalent_mass",
          needs=(P("n_factor", "", "n-factor of the species", lo=1, hi=8),
                 P("molar_mass", "g mol⁻¹", "molar mass of the species", lo=10, hi=500)),
-         answer="equivalent_mass", unit="g eq⁻¹", kind="positive",
-         fn=lambda v: {"equivalent_mass": v["molar_mass"] / v["n_factor"]},
+         answer="equivalent_mass", unit="g eq⁻¹", kind="positive", gives=("n_factor",),
+         fn=lambda v: {"equivalent_mass": v["molar_mass"] / v["n_factor"], "n_factor": v["n_factor"]},
          traps=(Trap("multiplies", "multiplies molar mass by n-factor", lambda v: v["molar_mass"] * v["n_factor"]),),
          formula="E = M / n-factor", asks="equivalent mass (g eq⁻¹)"),
-    Step(tx=34, src="equivalent_mass", dst="equivalents",
+    Step(tx=34, src="equivalent_mass", dst="equivalents", carries=("n_factor",),   # the same substance
          needs=(P("equivalent_mass", "g eq⁻¹", "equivalent mass", lo=5, hi=300),
                 P("mass", "g", "mass of the substance", lo=0.1, hi=100)),
          answer="equivalents", unit="eq", kind="positive",

@@ -294,6 +294,22 @@ def _real_units(words) -> bool:
     return all(_units.parse(w) is not None for w in words)
 
 
+_CHEM_UNITS = {
+    "g", "kg", "mg", "µg", "ug", "mol", "mmol", "kmol", "l", "ml", "dl", "dm", "cm", "mm", "m", "nm", "pm", "å", "k",
+    "°c", "c", "atm", "bar", "pa", "kpa", "mpa", "torr", "mmhg", "hg", "j", "kj", "cal", "kcal", "ev", "v", "mv",
+    "a", "ma", "s", "ms", "min", "h", "hr", "hrs", "hour", "hours", "day", "days", "year", "years", "n", "ppm", "%",
+    "u", "amu", "ω", "ohm", "ohms", "hz", "w", "kw", "f", "eq", "meq", "molecules", "atoms", "ions", "electrons",
+    "mol⁻¹", "s⁻¹", "m⁻¹", "cm⁻¹", "l⁻¹", "g⁻¹", "k⁻¹", "atm⁻¹", "bar⁻¹",
+}
+
+
+def _chem_unit(word: str) -> bool:
+    """A unit a chemistry solution writes after a number. Narrower than core.units, which reads
+    'a' as a year and 'Rb' as a ronnabarn: '8a/(27Rb)' must count as symbols, not units."""
+    w = re.sub(r"[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+$|\^-?\d+$|-?\d+$", "", str(word).strip().lower())
+    return w in _CHEM_UNITS or str(word).lower() in _CHEM_UNITS
+
+
 def arithmetic_errors(text: str) -> list:
     """[{"line": n, "text": line, "computed": x, "stated": y}] for every written calculation
     that is false. Lines with a reaction arrow are skipped."""
@@ -317,6 +333,8 @@ def arithmetic_errors(text: str) -> list:
                 calc, plain = left, right
             else:
                 calc, plain = right, left
+            if calc[3] and not all(_chem_unit(w) for w in calc[3]):
+                continue                      # '8a/(27Rb)': symbols, not units (read as 8/27, run of 2026-11-16)
             if plain is left and plain[0] == "1":
                 continue                      # '1 L = 10^-3 × 1000 mL': a unit statement
             if not plain[2] and plain is left and not _real_units(plain[3]):

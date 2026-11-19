@@ -61,6 +61,7 @@ ENTRYPOINT = os.path.join(HERE, "run_groundup_final.py")
 
 from subject_config import OUTPUT_DIR, SUBJECT_CONFIGS
 from core.llm import load_env
+from core.pipeline.adapters import ADAPTERS
 
 SUBJECTS = ("organic", "inorganic", "physical")
 
@@ -98,7 +99,8 @@ OUTPUT_FILES = {s: SUBJECT_CONFIGS[s]["output_file"] for s in SUBJECTS}
 # child subprocess's stdout is tee'd here line by line as well (see generate_one).
 _LOG = None
 
-# Spend reported by the child runs ("Spend this run: $0.1234"), summed for --max-spend.
+# Spend of the child runs, summed for --max-spend: each run's running total from its SPEND_FILE (kept even
+# when the run is killed), else its "Spend this run: $0.1234" line (_run_spend).
 SPENT = 0.0
 MAX_SPEND = None
 _SPEND_LINE = re.compile(r"Spend this run: \$([0-9.]+)")
@@ -142,6 +144,25 @@ def count_questions(path):
         return 0
 
 
+def _remove(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
+def _run_spend(spend_file, printed) -> float:
+    """One run's spend: the running total the child kept in spend_file (there even when the run was killed),
+    else the "Spend this run" line it printed, else 0. The file is removed."""
+    try:
+        with open(spend_file, encoding="utf-8") as f:
+            value = float(f.read().strip())
+    except (OSError, ValueError):
+        value = printed[-1] if printed else 0.0
+    _remove(spend_file)
+    return value
+
+
 def generate_one(subject, chapter, python_exe, child_timeout):
     """Run the entrypoint once. Returns True if it appended a new question."""
     out_file = OUTPUT_FILES[subject]
@@ -153,7 +174,12 @@ def generate_one(subject, chapter, python_exe, child_timeout):
 
     # PYTHONUNBUFFERED so the child's stage-by-stage prints reach the log/console
     # live instead of sitting in a block buffer until the process exits.
-    env = dict(os.environ, PYTHONUNBUFFERED="1")
+    # The child keeps its running spend in this file (core/models.py Spend), so a run killed at the timeout,
+    # which never prints its "Spend this run" line, is still counted towards --max-spend.
+    spend_file = os.path.join(OUTPUT_DIR, f".spend_{os.getpid()}_{subject}.txt")
+    _remove(spend_file)
+    env = dict(os.environ, PYTHONUNBUFFERED="1", SPEND_FILE=spend_file)
+    printed = []
 
     # Stream the child's output straight through so progress is visible. A single
     # question that hangs (stalled HTTP call, rate-limit backoff storm) is killed
@@ -170,12 +196,11 @@ def generate_one(subject, chapter, python_exe, child_timeout):
         # Read the output on a separate thread: iterating proc.stdout here would block
         # until the child exits, so the timeout below could never fire on a hung run.
         def pump():
-            global SPENT
             for line in proc.stdout:
                 emit(line.rstrip("\n"))
                 m = _SPEND_LINE.search(line)
                 if m:
-                    SPENT += float(m.group(1))
+                    printed.append(float(m.group(1)))
         reader = threading.Thread(target=pump, daemon=True)
         reader.start()
         try:
@@ -188,6 +213,8 @@ def generate_one(subject, chapter, python_exe, child_timeout):
     except Exception as e:
         stamp(f"[warn] {subject}: run failed to launch: {e}")
     dt = time.time() - t0
+    global SPENT
+    SPENT += _run_spend(spend_file, printed)
 
     after = count_questions(out_file)
     produced = after > before
@@ -307,6 +334,16 @@ def main():
         print(f"ERROR: entrypoint not found: {ENTRYPOINT}")
         return 1
 
+    # A subject with no engine in the pipeline cannot produce a question: say so now, before
+    # any run is launched, and carry on with the subjects that can.
+    unavailable = [s for s in SUBJECTS if targets[s] > 0 and s not in ADAPTERS]
+    for s in unavailable:
+        print(f"ERROR: {s} questions cannot be generated: the {s} engine is not wired into the "
+              f"pipeline (core/pipeline/adapters.py has engines for: {', '.join(sorted(ADAPTERS))}). "
+              f"Skipping the {targets[s]} requested.")
+    if unavailable and all(targets[s] <= 0 or s in unavailable for s in SUBJECTS):
+        return 1
+
     key = load_env_key()
     if not key or "your-openrouter-key-here" in key:
         print("ERROR: OPENROUTER_KEY is not set.")
@@ -336,6 +373,9 @@ def main():
     results = {}
     stopped = None
     for subject in order:
+        if subject in unavailable:
+            results[subject] = 0
+            continue
         try:
             results[subject] = generate_subject(
                 subject, targets[subject], chapters[subject],
@@ -356,7 +396,8 @@ def main():
         if want <= 0:
             continue
         got = results.get(subject, 0)
-        flag = "" if got >= want else "  <-- short"
+        flag = "" if got >= want else ("  <-- no engine for this subject" if subject in unavailable
+                                       else "  <-- short")
         if got < want:
             any_short = True
         emit(f"  {subject:<10} {got}/{want}   -> {OUTPUT_FILES[subject]}{flag}")

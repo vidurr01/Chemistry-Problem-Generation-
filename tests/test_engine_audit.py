@@ -292,6 +292,81 @@ class KineticsSolutions(Close):
         self.assertFalse(link(82, 326))
 
 
+class ChainMeaning(Close):
+    """Chains whose steps link by field name but state a value twice, or pass a value on in
+    another meaning (audit of 2026-11-15)."""
+
+    def test_kirchhoff_moves_a_known_delta_s_too(self):
+        """ΔS = nF(∂E/∂T) is fixed by the cell data; after Kirchhoff the question stated a second,
+        free ΔS at T₂ (accepted question GEN_20261014T021446 was consistent only by luck)."""
+        plan = plan_chain([step(t) for t in (240, 114, 132)])
+        self.assertNotIn("delta_s", [g.param.key for g in plan.givens.values()])
+        r = run([240, 114, 132], s0__cell_emf=1.25, s0__electrons=2, s0__T=298, s0__temperature_coefficient=0.00035,
+                s1__delta_cp=85.0, s1__T2=450)
+        ds = 2 * 96500 * 0.00035 + 85.0 * math.log(450 / 298)           # 102.6 J K⁻¹ mol⁻¹
+        self.close(r, -221.1 + 85.0 * 152 / 1000 - 450 * ds / 1000, tol=0.002)
+        # with no ΔS known before it, Kirchhoff is unchanged and ΔS is still a given
+        self.assertIn("delta_s", [g.param.key for g in plan_chain([step(139), step(114), step(132)]).givens.values()])
+        self.close(run([139, 114], s0__balanced_equation="N2 + 3H2 -> 2NH3",
+                       s0__formation_enthalpies={"N2": 0, "H2": 0, "NH3": -46.0}, s1__delta_cp=-45.0,
+                       s1__T1=298, s1__T2=500), -92.0 - 45.0 * 202 / 1000)
+
+    def test_nernst_emf_is_at_298_K(self):
+        """E from 0.0591/n is at 298 K: the next step must not ask for a temperature."""
+        for nernst in (239, 241):
+            self.assertTrue(wired([nernst, 240], 1, "T"), nernst)
+        r = run([241, 240], s0__molarity=0.01, s0__concentration_2=0.1, s0__electrons=2,
+                s1__temperature_coefficient=1e-4)
+        self.close(r, 2 * 96500 * (-0.02955 + 298 * 1e-4) / 1000)
+
+    def test_gas_state_fixes_the_amount(self):
+        """P, V and T of a state give n = PV/RT; the entropy step stated a second, free n after
+        a gas-law step had fixed all three. Now n is never stated: it follows from the state."""
+        for before in ([84], [85], [86], [87], [86, 85], [84, 87]):
+            plan = plan_chain([step(t) for t in before + [125]])
+            self.assertNotIn("n", [g.param.key for g in plan.givens.values()], before)
+        r = run([87, 125], s0__P=2.0, s0__V=10.0, s0__T=300.0, s0__new_pressure=1.0, s0__new_temperature=400.0,
+                s1__gas_type="diatomic", s1__new_temperature=500.0, s1__new_volume=40.0)
+        v1 = 2.0 * 10.0 * 400 / 300                                      # state after the gas-law step
+        n = 1.0 * v1 / (0.0821 * 400)                                    # 0.812 mol
+        self.close(r, n * 8.314 * (2.5 * math.log(500 / 400) + math.log(40 / v1)), tol=0.002)
+        # alone: the state is given, 1 mol at 24.63 L, 300 K, 1 atm
+        self.close(run([125], s0__P=1.0, s0__gas_type="monatomic", s0__T=300, s0__new_temperature=600, s0__V=24.63,
+                       s0__new_volume=49.26), 8.314 * (1.5 + 1) * math.log(2), tol=0.002)
+
+    def test_rate_of_reaction_is_not_a_species_rate(self):
+        """−(1/a)Δ[A]/Δt fed in as −d[A]/dt gave d[C]/dt too small by the factor a."""
+        self.assertFalse(link(200, 201))
+        self.assertTrue(link(201, 201))
+        self.assertTrue(link(200, 202) and link(201, 202))
+        self.assertTrue(wired([200, 202], 1, "concentration"))          # [A] of run 1 is not stated twice
+
+    def test_k_from_delta_g_is_not_kc(self):
+        """ΔG° = −RT ln K gives K° (K_p for gases): it is not multiplied by (RT)^Δn."""
+        self.assertFalse(link(135, 154))
+        self.assertFalse(chain_ok(135, 156, 154))
+        for nxt in (136, 155, 156, 163):
+            self.assertTrue(link(135, nxt), nxt)
+        self.assertTrue(link(152, 154) and link(210, 154) and link(163, 154))
+
+    def test_tree_branch_does_not_recompute_what_another_fixes(self):
+        """van 't Hoff fixes ΔH and ΔS; a tree must not take ΔS from a second branch."""
+        from core.engine.base import EngineError, plan_tree
+        with self.assertRaises(EngineError):
+            plan_tree([[step(136)], [step(131)]], step(132), {"delta_h": 0, "delta_s": 1})
+        with self.assertRaises(EngineError):
+            plan_tree([[step(44)], [step(9)]], step(33), {"n_factor": 0, "molar_mass": 1})
+        plan_tree([[step(113)], [step(131)]], step(132), {"delta_h": 0, "delta_s": 1})
+        plan_tree([[step(31)], [step(9)]], step(33), {"n_factor": 0, "molar_mass": 1})
+
+    def test_contested_heat_capacity_is_stated(self):
+        """C_v of a linear triatomic gas is 5R/2 or 7R/2 depending on the book: the question says which."""
+        r = run([115], s0__n=1.0, s0__gas_type="linear triatomic", s0__delta_T=10.0)
+        self.assertTrue(any("7R/2" in c for c in r.constants), r.constants)
+        self.assertFalse(any("R/2" in c and "C_v" in c
+                             for c in run([115], s0__n=1.0, s0__gas_type="diatomic", s0__delta_T=10.0).constants))
+
+
 class PromptSide(unittest.TestCase):
     def test_chain_text_says_what_each_step_takes(self):
         """The generator picks the substances: it is told what each result is used as."""

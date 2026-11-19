@@ -87,11 +87,20 @@ def openrouter_client():
 _NUM_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 
 def to_float(x):
-    """Extract the last numeric token from a string/number, or None."""
+    """The answer's value, read the way the pipeline reads a solver's answer (core.answers.numeric_value:
+    fractions, powers of ten, approximate signs); else the last numeric token, or None. Before 2026-11-19
+    only the last token was taken, so "11/51" (0.2157, right for a key of 0.22) was read as 51 and graded wrong."""
     if x is None:
         return None
     if isinstance(x, (int, float)):
         return float(x)
+    try:
+        from core import answers
+        v = answers.numeric_value(str(x))
+        if v is not None:
+            return float(v)
+    except Exception:                                   # noqa: BLE001 - fall back to the plain reading
+        pass
     s = str(x).replace(",", "").replace("×10^", "e").replace("x10^", "e").replace("^", "e")
     m = _NUM_RE.findall(s)
     if not m:

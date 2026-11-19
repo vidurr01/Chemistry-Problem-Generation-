@@ -96,8 +96,9 @@ STEPS = [
                 P("molarity", "mol L⁻¹", "concentration of the ion formed at the anode", lo=1e-4, hi=2, role="cell electrolyte"),
                 P("cathode_ion_concentration", "mol L⁻¹", "concentration of the ion reduced at the cathode", lo=1e-4, hi=2),
                 P("electrons", "", "electrons transferred", kind="posint", lo=1, hi=3)),
-         answer="cell_emf", unit="V", kind="real", roles={"cell_emf": "non-standard"}, gives=("electrons",),
-         fn=lambda v: {"cell_emf": _nernst(v), "electrons": v["electrons"]},
+         # 0.0591/n is 2.303RT/nF at 298 K: that T goes on, so no later step asks for another
+         answer="cell_emf", unit="V", kind="real", roles={"cell_emf": "non-standard"}, gives=("electrons", "T"),
+         fn=lambda v: {"cell_emf": _nernst(v), "electrons": v["electrons"], "T": 298.0},
          traps=(Trap("inverted_Q", "inverts the reaction quotient", lambda v: _nernst(v, invert=True)),),
          constants=(const("NERNST_25"),), formula="E = E° − (0.0591/n) log Q (ions of equal charge)",
          asks="EMF of the cell at 298 K (V)"),
@@ -116,8 +117,8 @@ STEPS = [
          needs=(P("molarity", "mol L⁻¹", "concentration at the anode (dilute side)", lo=1e-4, hi=1, role="cell electrolyte"),
                 P("concentration_2", "mol L⁻¹", "concentration at the cathode (concentrated side)", lo=1e-3, hi=2),
                 P("electrons", "", "charge on the ion", kind="posint", lo=1, hi=3)),
-         answer="cell_emf", unit="V", kind="real", roles={"cell_emf": "non-standard"}, gives=("electrons",),
-         fn=lambda v: {"cell_emf": _conc_cell(v), "electrons": v["electrons"]},
+         answer="cell_emf", unit="V", kind="real", roles={"cell_emf": "non-standard"}, gives=("electrons", "T"),
+         fn=lambda v: {"cell_emf": _conc_cell(v), "electrons": v["electrons"], "T": 298.0},
          traps=(Trap("inverted_ratio", "uses log(C_anode/C_cathode)", lambda v: _conc_cell(v, invert=True)),),
          constants=(const("NERNST_25"),), formula="E = (0.0591/n) log(C₂/C₁)", asks="EMF of the concentration cell (V)"),
     Step(tx=243, src="cell_emf", dst="solubility_product",
@@ -199,7 +200,7 @@ STEPS = [
          traps=(Trap("sign", "uses (1/T₂ − 1/T₁)", lambda v: v["vapour_pressure_1"] * math.exp(
              1000 * v["vaporisation_enthalpy"] / C.R_J * (1 / v["T2"] - 1 / v["temperature"]))),),
          constants=(const("R_J"),), formula="ln(P₂/P₁) = (ΔH_vap/R)(1/T₁ − 1/T₂)", asks="vapour pressure at T₂ (mm Hg)"),
-    Step(tx=255, src="mole_fraction", dst="vapour_pressure_lowering",
+    Step(tx=255, src="mole_fraction", dst="vapour_pressure_lowering", carries=("solvent_molar_mass",),
          needs=(P("mole_fraction", "", "mole fraction of the non-volatile solute", kind="open_fraction", lo=0.005, hi=0.3, role="solute"),
                 P("pure_vapour_pressure", "mm Hg", "vapour pressure of the pure solvent", lo=5, hi=800)),
          answer="vapour_pressure_lowering", unit="mm Hg", kind="positive", gives=("pure_vapour_pressure",),
@@ -214,10 +215,14 @@ STEPS = [
                 P("solute_mass", "g", "mass of solute", lo=0.1, hi=100),
                 P("solvent_mass", "g", "mass of solvent", lo=10, hi=1000),
                 P("solvent_molar_mass", "g mol⁻¹", "molar mass of the solvent", lo=18, hi=200)),
+         # the same solution's masses go on, so a molality step (tx 370) does not state them again
          answer="molar_mass", unit="g mol⁻¹", kind="positive", roles={"molar_mass": "solute"},
+         gives=("solute_mass", "solvent_mass", "solvent_molar_mass"),
          fn=lambda v: {"molar_mass": v["solute_mass"] * v["solvent_molar_mass"]
                        * (v["pure_vapour_pressure"] - v["vapour_pressure_lowering"])
-                       / (v["solvent_mass"] * v["vapour_pressure_lowering"])},
+                       / (v["solvent_mass"] * v["vapour_pressure_lowering"]),
+                       "solute_mass": v["solute_mass"], "solvent_mass": v["solvent_mass"],
+                       "solvent_molar_mass": v["solvent_molar_mass"]},
          traps=(Trap("dilute_approximation", "uses P° instead of P in the denominator",
                      lambda v: v["solute_mass"] * v["solvent_molar_mass"] * v["pure_vapour_pressure"]
                      / (v["solvent_mass"] * v["vapour_pressure_lowering"])),),

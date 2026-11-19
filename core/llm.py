@@ -242,20 +242,50 @@ def _log_unparseable(label, resp, content, err):
         pass
 
 
+class CutOffError(ValueError):
+    """A reply cut off at the output limit (finish_reason "length"). Carries what was written (`partial`)
+    and the model's thinking when the provider returned it (`reasoning`), so a caller can have the model
+    finish it instead of paying for the same cut-off again."""
+
+    def __init__(self, msg, partial: str = "", reasoning: str | None = None):
+        super().__init__(msg)
+        self.partial = partial
+        self.reasoning = reasoning
+
+
 def call_json(create, parse, retries: int = 5, parse_retries: int = 2, base_wait: float = 10,
-              label: str = "API"):
+              label: str = "API", retry_cut_off: bool = True):
     """create() makes one chat completion; returns parse(reply text). Transient API
     errors are retried by call_with_retry; an empty or unparseable reply (usually a
     truncated or fenced answer) is asked for again up to parse_retries times."""
     for i in range(parse_retries + 1):
         resp = call_with_retry(create, retries=retries, base_wait=base_wait, label=label)
-        content = resp.choices[0].message.content if getattr(resp, "choices", None) else None
+        choice = resp.choices[0] if getattr(resp, "choices", None) else None
+        content = choice.message.content if choice else None
         try:
             if not content or not str(content).strip():
-                raise ValueError("empty completion")
+                # A thinking model can spend its whole budget thinking (finish_reason "length") or
+                # put its answer in the reasoning field: say which, and use an answer found there.
+                msg = choice.message if choice else None
+                thought = (getattr(msg, "reasoning", None)
+                           or (getattr(msg, "model_extra", None) or {}).get("reasoning")) if msg else None
+                if thought:
+                    try:
+                        return parse(str(thought))
+                    except (ValueError, json.JSONDecodeError):
+                        pass
+                why = getattr(choice, "finish_reason", None) if choice else None
+                raise ValueError(f"empty completion (finish_reason={why})")
             return parse(content)
         except (ValueError, json.JSONDecodeError) as e:
             _log_unparseable(label, resp, content, e)
+            if not retry_cut_off and choice is not None and getattr(choice, "finish_reason", None) == "length":
+                # cut off at the output limit: asking again with the same limit pays for the same cut-off
+                # (the designer's reply at 3000 tokens, run of 2026-11-16)
+                msg = choice.message
+                thought = getattr(msg, "reasoning", None) or (getattr(msg, "model_extra", None) or {}).get("reasoning")
+                raise CutOffError(f"reply cut off at the output limit (finish_reason=length): {e}",
+                                  partial=str(content or ""), reasoning=str(thought) if thought else None) from None
             if i == parse_retries:
                 raise
             print(f"    [{label}] unusable reply ({str(e)[:80]}) — asking again ({i + 1}/{parse_retries})")

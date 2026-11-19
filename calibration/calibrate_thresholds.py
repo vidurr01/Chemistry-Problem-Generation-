@@ -30,7 +30,9 @@ SAMBANOVA_KEY = os.environ.get("SAMBANOVA_KEY_1", "")
 STRONG_MODEL  = "DeepSeek-V3.2"
 WEAK_MODEL    = "llama3.2"
 
-strong_client = OpenAI(api_key=SAMBANOVA_KEY, base_url="https://api.sambanova.ai/v1")
+# a placeholder when the key is missing: OpenAI() refuses an empty key, so importing this file failed;
+# main() says what is missing instead
+strong_client = OpenAI(api_key=SAMBANOVA_KEY or "missing-SAMBANOVA_KEY_1", base_url="https://api.sambanova.ai/v1")
 weak_client   = OpenAI(api_key="ollama",       base_url="http://localhost:11434/v1")
 
 _HERE    = os.path.dirname(os.path.abspath(__file__))
@@ -244,6 +246,8 @@ def recommend(strong_stats, weak_stats):
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
+    if not SAMBANOVA_KEY:
+        raise SystemExit("ERROR: SAMBANOVA_KEY_1 is not set in .env (the strong model runs on SambaNova).")
     print("=" * 65)
     print("  JEEGen Threshold Calibration")
     print("  Using: JEE Advanced organic chemistry questions")

@@ -19,7 +19,6 @@ judged again on the next run without regenerating it.
 
 from __future__ import annotations
 
-import concurrent.futures as cf
 import dataclasses
 import json
 import math
@@ -73,13 +72,26 @@ def stated_answer(result) -> str:
     return f"{fmt(vals[0])}{(' ' + result.unit) if result.unit else ''}"
 
 
+def _shown(v):
+    """A value as the solution should write it: 5 significant figures (3.60056627586 -> 3.6006)."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+    return float(f"{v:.5g}") if v != int(v) or abs(v) >= 1e6 else int(v)
+
+
 def trace_text(result) -> str:
-    lines = []
-    for i, t in enumerate(result.trace):
-        ins = ", ".join(f"{k} = {json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v}"
-                        for k, v in t["inputs"].items())
-        outs = ", ".join(f"{k} = {v}" for k, v in t["outputs"].items())
-        lines.append(f"Step {i + 1}: {t['formula']}\n   with {ins}\n   gives {outs}")
+    """The engine's steps for the solution writer: each distinct calculation once (a program that
+    calls a formula again with the same inputs, or inside find(), repeated it: the solution then
+    said 'reapplying ... the same substitution' four times, run of 2026-11-16), values to 5 figures."""
+    lines, seen = [], set()
+    for t in result.trace:
+        key = json.dumps([t.get("tx"), {k: _shown(v) for k, v in t["inputs"].items()}], sort_keys=True, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        ins = ", ".join(f"{k} = {_shown(v)}" for k, v in t["inputs"].items())
+        outs = ", ".join(f"{k} = {_shown(v)}" for k, v in t["outputs"].items())
+        lines.append(f"Step {len(lines) + 1}: {t['formula']}\n   with {ins}\n   gives {outs}")
     if result.constants:
         lines.append("Constants used: " + "; ".join(result.constants))
     if getattr(result, "form_note", ""):
@@ -156,16 +168,6 @@ def checked_solution(stem: str, result) -> tuple:
 def _fact_source(cand):
     from core.engine.physical.facts_data import BY_ID
     return BY_ID[cand["nodes"][0]]
-
-
-def knowledge_hint(cand) -> str:
-    """The knowledge a question rests on, written by code: the chain's relations, or for a
-    fact question, true facts from the same table (solving after this tags it 'recall')."""
-    if "_fact" in cand:
-        true, _ = _fact_source(cand).statements()
-        return "Facts that may help: " + " ".join(s for s, _, _ in true[:8])
-    rels = [st.formula for st in cand["_plan"].steps if st.formula]
-    return "Relations that may help: " + "; ".join(rels) + "."
 
 
 def insight_hint(cand, failed_step) -> str:
@@ -320,23 +322,6 @@ def _is_scalar(result) -> bool:
     return v is not None and len(v) == 1
 
 
-def _eval_expression(expr):
-    """Value of the member's set-up arithmetic. Verifiers often write a chain such as
-    'exp(-(156070)/(8.314*550)) = exp(-34.13) ≈ 1.5e-15'; the first segment that is plain
-    arithmetic is the set-up. None if no segment evaluates."""
-    if expr is None:
-        return None
-    for seg in re.split(r"=|≈|≅|~|→", str(expr)):
-        seg = seg.strip()
-        if not seg:
-            continue
-        try:
-            return answers.safe_eval(seg)
-        except (ValueError, ZeroDivisionError, OverflowError, SyntaxError, TypeError):
-            continue
-    return None
-
-
 def _answer_instruction(adapter, result):
     """The sentence the stem must end with, checked verbatim by the gate: the option list or
     form for a non-numeric answer (physical.ANSWER_FORMATS), the unit for a numeric one."""
@@ -395,137 +380,101 @@ def _code_match(result, member):
     return answers.text_answers_match(result.answer, v)
 
 
-_NUM_TOKEN = re.compile(r"(?<![A-Za-z_])\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
+def _grade(result, member, diag=None) -> dict:
+    """Solved = the member's answer matches the engine's, decided by CODE only (no verifier since
+    2026-11-19: the author's decision; a hard question is rarely solved by wrong reasoning that lands on
+    the right number, and the coder's program, not a judge, makes the key right). Numbers and option
+    letters by value; a non-numeric answer where its shape allows (formulas, nuclides, configurations,
+    balanced equations, categories with synonyms); an answer code cannot read counts as not matched.
+    diag is ignored (kept so old callers and stored records still work)."""
+    match = bool(_code_match(result, member))
+    return {"answer_matches": match, "match_by": "code", "verdict": None, "failure_type": None,
+            "slip_confirmed": None, "counts_as_solved": match}
 
 
-def _numbers(text):
-    out = []
-    for t in _NUM_TOKEN.findall(str(text or "")):
-        try:
-            out.append(float(t))
-        except ValueError:
-            pass
-    return out
+NONSENSE_FACTOR = 1e3      # a numeric answer this many times too large or too small is no attempt
 
 
-def _grounded(expr, working, allowed_missing: int = 1) -> bool:
-    """Is the verifier's slip expression really the member's own set-up? Every number in it
-    must appear in the member's working (within 0.5 %), except powers of ten (unit
-    conversions) and at most `allowed_missing` substituted value (the number the member
-    miscopied, replaced by the given value). Stops a verifier that writes the correct formula
-    itself from "confirming" a slip the member never had (run 7: 0.2915 kJ for 307.4 kJ)."""
-    have = _numbers(working)
-    if not have:
+def _garbage(result, member) -> bool:
+    """True if a member's attempt at a one-number question is not a real attempt: no number at
+    all, or a number more than NONSENSE_FACTOR away from the engine's (a slip or a wrong method
+    lands within that; 3.8 × 10²⁸ for 25.1 does not). Never True for a correct answer."""
+    if member.get("answer_matches") or not _is_scalar(result):
         return False
-    missing = 0
-    for x in _numbers(expr):
-        if x == 0 or (x > 0 and abs(math.log10(x) - round(math.log10(x))) < 1e-9):
-            continue                                   # 1, 10, 1000, 1e-3 ... unit factors
-        if not any(abs(x - h) <= 0.005 * max(abs(x), abs(h)) for h in have):
-            missing += 1
-    return missing <= allowed_missing
-
-
-def _slip_confirmed(result, member, diag) -> bool:
-    """Every value the member got wrong must be explained by its own set-up arithmetic: the
-    verifier gives one expression per value (a list in the reference's order, null where the
-    value is already right; a single string for a one-value answer), each must evaluate to the
-    engine's value and be grounded in the member's working. One unexplained value -> False."""
-    ev = answers.numeric_values(result.answer)
-    if ev is None:
-        return False
-    tol = getattr(result, "tolerance", 0.01)
-    exprs = diag.get("member_expression")
-    if not isinstance(exprs, (list, tuple)):
-        exprs = [exprs] if len(ev) == 1 else None
-    if exprs is None or len(exprs) != len(ev):
-        return False
+    e = answers.numeric_values(result.answer)[0]
     fv = member.get("final_value")
-    if fv is None:                                   # no usable answer line: read the raw answer
-        raw = member.get("final_answer")
-        fv = [answers.numeric_value(raw)] if len(ev) == 1 else answers.parse_numeric_answers(raw)
-    pairs = answers.align_values(ev, fv, getattr(result, "answer_substances", None), member.get("substance")) \
-        if fv is not None and None not in fv else [(e, None) for e in ev]
-    if pairs is None:
+    v = fv[0] if fv else answers.numeric_value(member.get("final_answer"))
+    if v is None:
+        return True
+    if e == 0 or v == 0:
         return False
-    working = member.get("working", "")
-    for (e, m), expr in zip(pairs, exprs):
-        if m is not None and answers.value_ok(e, m, tol):
-            continue                                 # this value is already right
-        value = _eval_expression(expr)
-        if value is None or not answers.value_ok(e, value, tol) or not _grounded(expr, working):
-            return False
-    return True
+    r = abs(float(v) / float(e))
+    return r > NONSENSE_FACTOR or r < 1 / NONSENSE_FACTOR
 
 
-def _text_match(result, member, diag):
-    """(matches, decided_by): code whenever it can decide (_code_match); otherwise the
-    verifier's narrow answer_equivalent field. diag is the verifier's diagnosis or None."""
-    decided = _code_match(result, member)
-    if decided is not None or diag is None:
-        return bool(decided), "code"
-    eq = diag.get("answer_equivalent")
-    if eq is None:                                   # older reply without the field
-        eq = diag.get("verdict") in ("correct", "right_answer_wrong_reasoning")
-    return bool(eq), "verifier"
+CONSENSUS_TOL = 0.02    # ladder answers within 2 % of each other count as the same answer
 
 
-def _grade(result, member, diag) -> dict:
-    """Facts and judgement for one member, both kept (answer_matches is never overwritten).
-
-    Numbers and option letters are matched by code only. A non-numeric answer is compared by
-    code where its shape allows (formulas by element counts, nuclides, configurations, balanced
-    equations, categories such as forward/backward or yes/no with synonyms); when code cannot
-    tell, the verifier's narrow answer_equivalent field decides. match_by records which."""
-    match, match_by = _text_match(result, member, diag)
-    solved, slip_confirmed = False, None
-    # Decision table (Flow.md, step 8). Within tolerance: solved if the verifier calls the
-    # work correct, or wrong only by a slip that did not change the result (run 4: 29.52 vs
-    # 29.79 L). Within tolerance by a WRONG METHOD (run 5: −190.28 vs −192.2 kJ mol⁻¹ from a
-    # linear extrapolation) or by wrong reasoning is a lucky number, not a solution.
-    if match and (diag.get("verdict") == "correct" or
-                  (diag.get("verdict") == "wrong" and diag.get("failure_type") == "slip")):
-        solved = True
-    elif not match and diag.get("failure_type") == "slip" or (not match and diag.get("verdict") == "correct"):
-        slip_confirmed = _slip_confirmed(result, member, diag)
-        solved = bool(slip_confirmed)
-    return {"answer_matches": match, "match_by": match_by, "verdict": diag.get("verdict"),
-            "failure_type": diag.get("failure_type"), "slip_confirmed": slip_confirmed, "counts_as_solved": solved}
+def _member_value(g):
+    fv = g.get("final_value")
+    if isinstance(fv, list) and fv and isinstance(fv[0], (int, float)):
+        return float(fv[0])
+    return answers.numeric_value(g.get("final_answer"))
 
 
-def _hint_solved(result, re_, stem, rtext, atext, hint):
-    """Did the member solve it after the hint? Same rule as grading: code where it can decide,
-    otherwise the verifier's answer_equivalent (returns that diagnosis too)."""
-    decided = _code_match(result, re_)
-    if decided is not None:
-        return decided, None
-    d = stages.verify_member(stem, rtext, atext, re_, after_hint=hint)
-    return _text_match(result, re_, d)[0], d
+def _consensus_against_key(result, graded):
+    """The answer every ladder model called gave, when they agree with each other (within CONSENSUS_TOL), none
+    matches the key, and it is not one of the engine's own trap answers (then they fell for a known trap and the
+    question is genuinely hard). None otherwise. Replayed on the 21 questions judged by 2026-11-19: it holds the
+    two with a wrong key (an engine step inverted on 14 Oct; a rounded n on 19 Nov) and nothing else."""
+    if not _is_scalar(result):
+        return None
+    vals = [_member_value(g) for g in graded if not g.get("discarded_as_nonsense")]
+    if len(vals) < 2 or any(v is None for v in vals):
+        return None
+    ref = vals[0]
+    if not all(abs(v - ref) <= CONSENSUS_TOL * max(abs(v), abs(ref), 1e-300) for v in vals):
+        return None
+    for t in getattr(result, "traps", None) or []:
+        w = t.get("wrong_answer") if isinstance(t, dict) else None
+        if isinstance(w, (int, float)) and abs(w - ref) <= CONSENSUS_TOL * max(abs(w), abs(ref), 1e-300):
+            return None                          # a known trap: hard, not a wrong key
+    return ref
 
 
 def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
-    """Ladder → verifier → grading → hint tests. Returns one of:
-       {"decision": "accept", ...} | {"decision": "too_easy", ...} | {"decision": "reword", "feedback"}
-       | {"decision": "drop", "reason"}.  Raises Parked if a council call fails."""
-    rtext, atext = trace_text(result), stated_answer(result)
+    """Ladder → grading by code → insight-hint tests (no verifier since 2026-11-19). Returns
+       {"decision": "accept", ...} or {"decision": "too_easy", ...}. Raises Parked if a solver call fails
+       at any point (the ladder, a hint re-solve): the question is not judged on a partial measurement,
+       it is judged again on the next run."""
+    try:
+        return _judge(adapter, cand, plan, values, result, stem, bb, log)
+    except CouncilMemberFailed as e:
+        raise Parked({"error": str(e)}) from e
+
+
+def _judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
     fmt = _answer_instruction(adapter, result)
     spec = answers.answer_spec(result.answer, result.kind, result.unit, fmt, getattr(result, "answer_substances", None))
 
     def solve_and_grade(names):
-        try:
-            members = stages.council_solve(stem, names, spec)
-        except CouncilMemberFailed as e:
-            raise Parked({"error": str(e)})
-        with cf.ThreadPoolExecutor(max_workers=len(members)) as ex:
-            diags = list(ex.map(lambda m: stages.verify_member(stem, rtext, atext, m), members))
-        return [{**m, "diagnosis": d, **_grade(result, m, d)} for m, d in zip(members, diags)]
+        return [{**m, **_grade(result, m)} for m in stages.council_solve(stem, names, spec)]
 
     # Ladder: the weakest model first; each next step is called only if every step below
     # failed. If the first step solves it, the question is too easy; otherwise the first step
     # that solves it (or none) is the difficulty label.
     graded = []
-    for name, _ in models.LADDER:
+    bottom_unmeasured = False
+    for i, (name, _) in enumerate(models.LADDER):
         graded += solve_and_grade([name])
+        if i == 0 and _garbage(result, graded[-1]):
+            # a nonsense answer (3.8 × 10²⁸ L for 25 L, run of 2026-11-16) says the bottom step broke,
+            # not that the question is hard: ask once more, and if it is nonsense again, the bottom
+            # step's failure does not count and the next step has to fail too
+            print(f"    [{name}] answer {graded[-1]['final_answer']} is nonsense for this question; asking again")
+            graded[-1]["discarded_as_nonsense"] = True
+            graded += solve_and_grade([name])
+            bottom_unmeasured = _garbage(result, graded[-1])
         if graded[-1]["counts_as_solved"]:
             break
     called = {g["name"] for g in graded}
@@ -533,119 +482,67 @@ def judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
     first_solver = next((g["name"] for g in graded if g["counts_as_solved"]), None)
     bb.note("council", members=graded, skipped=skipped, first_solver=first_solver)
     for g in graded:
-        tag = "solved" if g["counts_as_solved"] else ("correct-but-not-counted" if g["answer_matches"] else "failed")
+        tag = "solved" if g["counts_as_solved"] else "failed"
         print(f"    [{g['name']}] {g['final_answer']} {g['unit']} → {tag}"
-              f" ({g['verdict']}{', ' + g['failure_type'] if g['failure_type'] else ''})")
+              + (f" (objected, {g['objection']['type']}: kept in the record)" if g.get("objection") else ""))
 
-    # engine or question judged wrong, or an objection nobody can settle
-    # A "reference wrong" judgement on one attempt is overruled when another attempt reached
-    # the engine's answer and the verifier judged that attempt's reasoning correct (run 8:
-    # GLM slipped to 68.945, the verifier blamed the engine; Luna got 69.74 by sound reasoning).
-    sound = [g for g in graded if g["counts_as_solved"] and g["verdict"] == "correct"]
-    for g in graded:
-        d = g["diagnosis"]
-        if sound and d["verdict"] == "reference_wrong":
-            g["reference_wrong_overruled_by"] = sound[0]["name"]
-            g["verdict"] = d["verdict"] = "wrong"
-            g["failure_type"] = d["failure_type"] = d.get("failure_type") or "genuine_difficulty"
-            print(f"    [{g['name']}] 'reference wrong' overruled: {sound[0]['name']} reached the engine's "
-                  f"answer by sound reasoning")
-    for g in graded:
-        d = g["diagnosis"]
-        if d["verdict"] == "reference_wrong" or d.get("objection_assessment") == "valid":
-            qid = queues.add("engine_wrong", adapter.subject, {
-                "chain": cand["edges"], "txs": cand["txs"], "values": values, "stem": stem,
-                "engine_answer": atext, "member": g["name"], "member_answer": g["final_answer"],
-                "diagnosis": d})
-            log({"event": "engine_wrong", "chain": cand["edges"], "queue_id": qid, "member": g["name"]})
-            return {"decision": "drop", "reason": "engine_wrong", "graded": graded}
-        if g.get("objection") and d.get("objection_assessment") == "unsure":
-            qid = queues.add("objection_unresolved", adapter.subject, {
-                "chain": cand["edges"], "txs": cand["txs"], "values": values, "stem": stem,
-                "engine_answer": atext, "member": g["name"], "objection": g["objection"], "diagnosis": d})
-            log({"event": "objection_unresolved", "chain": cand["edges"], "queue_id": qid})
-            return {"decision": "drop", "reason": "objection_unresolved", "graded": graded}
+    held = _consensus_against_key(result, graded) if first_solver is None else None
+    if held:
+        qid = queues.add("ladder_consensus", adapter.subject, {
+            "chain": cand["edges"], "txs": cand["txs"], "values": values, "stem": stem,
+            "engine_answer": stated_answer(result), "consensus": held, "solver_code": getattr(result, "solver_code", None),
+            "members": [{"name": g["name"], "answer": g["final_answer"]} for g in graded]})
+        log({"event": "ladder_consensus", "chain": cand["edges"], "queue_id": qid, "consensus": held})
+        print(f"    ✗ every ladder model gave {held} and the key is {stated_answer(result)}: held for review "
+              f"({qid}); the key may be wrong")
+        return {"decision": "drop", "reason": "ladder_consensus", "graded": graded}
 
     n_correct = sum(g["answer_matches"] for g in graded)
     n_solved = sum(g["counts_as_solved"] for g in graded)
     bottom = models.LADDER[0][0]
+    if bottom_unmeasured and first_solver == models.LADDER[1][0]:
+        print(f"    ladder: {bottom} gave nonsense twice, so its failure does not count; "
+              f"{first_solver} solved it → too easy")
+        return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
+                "skipped": skipped, "first_solver": first_solver, "bottom_unmeasured": True}
     if first_solver == bottom:
         print(f"    ladder: {bottom} solved it → too easy")
         return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
                 "skipped": skipped, "first_solver": first_solver}
-    label = models.DIFFICULTY_LABELS.get(first_solver, "frontier")
-    print(f"    ladder: {bottom} failed; first solved by {first_solver or 'no step'} → {label}")
+    label = models.DIFFICULTY_LABELS.get(first_solver, "hard_advanced")
+    jev_lvl = None
+    if label == "advanced":
+        # By the ladder's own calibration (models.LADDER; measured with phi-4 as the bottom step, Llama 3.3 70B
+        # since 2026-11-17), "phi-4 fails, GLM solves" happens to 47 % of hard
+        # Mains questions and 38 % of real Advanced ones: the ladder alone cannot tell them apart here. Jev's
+        # level check, calibrated on real papers (tools/calibrate_level.py), decides; until it is calibrated
+        # the label says the level is undecided. Acceptance does not change.
+        from core.pipeline import qf_checks
+        floor = qf_checks._level_floor()
+        if floor is None:
+            label = "advanced_or_mains_hard"
+        else:
+            jev_lvl = qf_checks.jev_level(stem)
+            label = "advanced_or_mains_hard" if jev_lvl is None else ("advanced" if jev_lvl >= floor else "mains_hard")
+    print(f"    ladder: {bottom} failed; first solved by {first_solver or 'no step'} → {label}"
+          + (f" (Jev level {jev_lvl:.2f})" if jev_lvl is not None else ""))
 
-    # hint tests on every member that did not solve
+    # hint tests on every member that did not solve: the code-written insight hint names the kind of step
+    # (never the result); solved after it = the difficulty was that step. Graded by code, like the ladder.
     recall, hint_log = False, []
     for g in graded:
-        if g["counts_as_solved"]:
+        if g["counts_as_solved"] or g.get("discarded_as_nonsense"):
             continue
-        d = g["diagnosis"]
-        kind = d.get("failure_type") or "genuine_difficulty"
-        if d["verdict"] == "right_answer_wrong_reasoning" or kind == "slip":
-            kind = "genuine_difficulty"            # an unconfirmed slip or a lucky answer is tested like any failure
-
-        if kind == "unclear_wording":
-            try:
-                hint = stages.clarification_hint(stem, d.get("ambiguous_text") or "", d.get("clarification") or "")
-            except ValueError:                   # the verifier's own clarification is a usable hint
-                hint = d.get("clarification") or "Read every given value and what is asked carefully."
-            re_ = stages.solve_with_hint(g, stem, hint, spec)
-            ok, _ = _hint_solved(result, re_, stem, rtext, atext, hint)
-            hint_log.append({"member": g["name"], "hint": "clarification", "text": hint, "solved": ok,
-                             "answer": re_["final_answer"]})
-            print(f"    [hint] {g['name']}: clarification → {'solved (wording was the obstacle)' if ok else 'still wrong'}")
-            if ok:
-                bb.note("hints", tests=hint_log)
-                return {"decision": "reword", "graded": graded,
-                        "feedback": f"Solvers misread: {d.get('ambiguous_text')}. State it plainly: {d.get('clarification')}"}
-            kind = "genuine_difficulty"
-
-        if kind == "missing_knowledge":
-            hint = knowledge_hint(cand)
-            re_ = stages.solve_with_hint(g, stem, hint, spec)
-            ok, _ = _hint_solved(result, re_, stem, rtext, atext, hint)
-            hint_log.append({"member": g["name"], "hint": "knowledge", "text": hint, "solved": ok,
-                             "answer": re_["final_answer"]})
-            print(f"    [hint] {g['name']}: knowledge → {'solved (recall)' if ok else 'still wrong'}")
-            if ok:
-                recall = True
-                continue
-            kind = "genuine_difficulty"
-
-        # genuine difficulty: always confirmed with the code-written insight hint
-        hint = insight_hint(cand, d.get("failed_step"))
+        hint = insight_hint(cand, None)
         re_ = stages.solve_with_hint(g, stem, hint, spec)
-        ok, d_hint = _hint_solved(result, re_, stem, rtext, atext, hint)
-        entry = {"member": g["name"], "hint": "insight", "text": hint, "solved": ok, "answer": re_["final_answer"]}
-        if d_hint is not None:
-            entry["judged_by_verifier"] = d_hint
-        print(f"    [hint] {g['name']}: insight → {'solved (difficulty confirmed)' if ok else 'still wrong; verifier re-checks'}")
-        if not ok:
-            d2 = d_hint or stages.verify_member(stem, rtext, atext, re_, after_hint=hint)
-            entry["recheck"] = d2
-            if d2["verdict"] == "reference_wrong":
-                qid = queues.add("engine_wrong", adapter.subject, {
-                    "chain": cand["edges"], "txs": cand["txs"], "values": values, "stem": stem,
-                    "engine_answer": atext, "member": g["name"], "member_answer": re_["final_answer"],
-                    "diagnosis": d2, "after_hint": hint})
-                hint_log.append(entry)
-                bb.note("hints", tests=hint_log)
-                log({"event": "engine_wrong", "chain": cand["edges"], "queue_id": qid, "after_hint": True})
-                return {"decision": "drop", "reason": "engine_wrong", "graded": graded}
-            if d2.get("failure_type") == "unclear_wording":
-                hint_log.append(entry)
-                bb.note("hints", tests=hint_log)
-                return {"decision": "reword", "graded": graded,
-                        "feedback": f"After a hint a solver still misread: {d2.get('ambiguous_text')}. "
-                                    f"State it plainly: {d2.get('clarification')}"}
-        hint_log.append(entry)
-
+        ok = bool(_code_match(result, re_))
+        hint_log.append({"member": g["name"], "hint": "insight", "text": hint, "solved": ok,
+                         "answer": re_["final_answer"]})
+        print(f"    [hint] {g['name']}: insight → {'solved (difficulty confirmed)' if ok else 'still wrong'}")
     bb.note("hints", tests=hint_log)
     return {"decision": "accept", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
             "recall": recall, "hints": hint_log, "skipped": skipped, "first_solver": first_solver,
-            "difficulty_label": label}
+            "difficulty_label": label, "jev_level": jev_lvl}
 
 
 def _solved_summary(graded) -> str:
@@ -708,9 +605,15 @@ def _apply_form(adapter, cand, spec, values, result, rng, bb, log, avoid=()):
 
 
 def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
-    """Try up to MAX_CHAINS question ideas (chains, or fact sources for a fact adapter).
+    """Computed questions go question first (core/pipeline/qfirst.py) when the config sets
+    question_first (run_groundup_final.py does, unless --flow engine); otherwise the engine-first flow below.
+
+    Try up to MAX_CHAINS question ideas (chains, or fact sources for a fact adapter).
     Returns {"status": "accepted", "payload"} or {"status": "none"}. Raises Parked."""
     rng = rng or random.Random()
+    if adapter.kind == "chains" and adapter.config.get("question_first", False):
+        from core.pipeline import qfirst            # run_groundup_final.py sets it (default --flow question)
+        return qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
     facts = adapter.kind == "facts"
     cands = adapter.candidates(coverage, chapter, n=MAX_CHAINS * 4, exclude=bb.tried_edges())
     if not cands:
@@ -743,23 +646,25 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
         print(f"  [engine] answer {answer_text(result)}; traps: {[t['id'] for t in result.traps]}")
         previous = feedback = solved = None
         while True:
-            print(f"  [stem] round {bb.current['rounds']}: writing the question...")
-            if facts:
-                stem, why = _fact_stem_and_gate(adapter, cand, bb, previous=previous, feedback=feedback,
-                                                solved=solved)
-            else:
-                stem, why = _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng,
-                                           previous=previous, feedback=feedback, solved=solved)
-            if stem is None:
-                log({"event": why, "chain": cand["edges"]})
-                break
+            # The duplicate check needs only the steps and the values, so it runs before any
+            # model is paid to write, read or solve a question that is already accepted.
             sig = _signature(adapter, cand, values)
             dup = dedup.duplicate_of(sig)
             if dup:
                 print(f"  [dedup] same inputs as accepted question {dup}; choosing new inputs")
                 bb.note("duplicate", of=dup)
-                decision = {"decision": "too_easy", "graded": []}
+                stem, decision = None, {"decision": "too_easy", "graded": [], "reason": f"duplicate of {dup}"}
             else:
+                print(f"  [stem] round {bb.current['rounds']}: writing the question...")
+                if facts:
+                    stem, why = _fact_stem_and_gate(adapter, cand, bb, previous=previous, feedback=feedback,
+                                                    solved=solved)
+                else:
+                    stem, why = _stem_and_gate(adapter, cand, spec, values, scenario, result, bb, rng,
+                                               previous=previous, feedback=feedback, solved=solved)
+                if stem is None:
+                    log({"event": why, "chain": cand["edges"]})
+                    break
                 print("  [council] closed-book solves (cheaper members first)...")
                 decision = judge(adapter, cand, plan, values, result, stem, bb, log)
             log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"],
@@ -781,12 +686,18 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 print("  [refine] rewording for clarity")
                 previous, feedback, solved = stem, decision["feedback"], None
                 continue
-            solved = _solved_summary(decision["graded"])
-            try:
-                choice = stages.choose_refinement(stem, solved, adapter.refine_modes)
-            except ValueError:
-                choice = {"mode": adapter.refine_modes[0],
-                          "feedback": "Too easy: find the shortcut the solvers used and remove it."}
+            if dup:                              # only new inputs make it a different question
+                solved = None
+                choice = {"mode": "new_inputs",
+                          "feedback": "These exact values are already an accepted question: choose a "
+                                      "different system and different values."}
+            else:
+                solved = _solved_summary(decision["graded"])
+                try:
+                    choice = stages.choose_refinement(stem, solved, adapter.refine_modes)
+                except ValueError:
+                    choice = {"mode": adapter.refine_modes[0],
+                              "feedback": "Too easy: find the shortcut the solvers used and remove it."}
             bb.note("refine", **choice)
             print(f"  [refine] too easy → {choice['mode']}: {choice['feedback'][:140]}")
             if choice["mode"] == "reword":

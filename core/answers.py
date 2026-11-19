@@ -234,6 +234,11 @@ def numeric_value(text):
     if isinstance(text, (int, float)):
         return float(text)
     s = str(text).strip().replace("−", "-")
+    # "≈ 0.25", "~0.25", "approximately 0.25": the number itself (read as no number before)
+    s = re.sub(r"^(?:[≈~∼]|approx(?:imately|\.)?|about|nearly|roughly)\s*", "", s, flags=re.IGNORECASE)
+    # "1,200 J" / "12,500": thousands separators (groups of exactly three digits), read as no number before;
+    # "1,2" or "2, 3" stay as they are (several values are parse_numeric_answers' business)
+    s = re.sub(r"^([-+]?\d{1,3}(?:,\d{3})+)(?=$|[\s.]|[^\d,])", lambda m: m.group(1).replace(",", ""), s)
     # a superscript exponent is a power: 10⁻¹⁵ -> 10^(-15), never 10 - 15
     s = re.sub(r"([0-9)])\s*([⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+)",
                lambda m: f"{m.group(1)}^({m.group(2).translate(_SUPERSCRIPTS)})", s)

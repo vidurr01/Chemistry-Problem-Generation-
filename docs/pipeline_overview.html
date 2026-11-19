@@ -40,54 +40,37 @@ h1{font-size:20px;font-weight:600;margin:0 0 4px}
 <body>
 <main>
 <h1>Pipeline overview</h1>
-<p class="sub">How one question is made. The answer key always comes from the engine; every decision is made in code. Status: physical is wired end to end; the inorganic and organic engines are being built.</p>
+<p class="sub">How one question is made, question first (the default for computed questions). The answer key always comes from the engine, run on exactly the numbers the question prints; every decision is made in code. Status: physical is wired end to end; the inorganic and organic engines are being built. Where each stage lives: docs/PIPELINE.md.</p>
 <div class="lg"><span class="tg code">code</span><span class="tg wr">model writes / picks</span><span class="tg sv">model solves</span><span class="tg ck">model checks / judges</span><span class="tg lpk">refinement loop</span></div>
 
-<div class="st"><div class="hd"><span class="n">1</span><span class="tg code">code</span><span class="nm">Graph walk</span></div><div class="ds">Picks a chain, weighted by coverage of edges, chapters and trap types</div></div>
+<div class="st"><div class="hd"><span class="n">1</span><span class="tg code">code</span><span class="nm">Draw formulas</span><span class="md">qf_draw.py · jev-1.14</span></div><div class="ds">3-5 engine formulas at random, each sharing a quantity with one already drawn; Jev scores 6 sets and the best is used; a twist is drawn (inverse, ratio, difference, simultaneous, condition)</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">2</span><span class="tg code">code</span><span class="nm">Blackboard</span><span class="md">core/blackboard.py</span></div><div class="ds">Shared notebook for this question, created right after the walk. Every later stage writes back; input picking and the generator read it on each round</div><div class="br">Holds: chain, candidate molecules + traps, chosen inputs, engine answer + trace, each stem, gate results, council work, verifier diagnoses, hint results, counters</div></div>
+<div class="st"><div class="hd"><span class="n">2</span><span class="tg wr">writes</span><span class="nm">Design</span><span class="md">gemini-3.1-pro-preview</span></div><div class="ds">One design around a hidden link: how the formulas meet through a quantity the question never names, what the student must notice, the trap there</div><div class="br">Jev checks the design (cut-offs calibrated on real JEE designs) · rejected or impossible → new draw</div></div>
 <div class="ar">↓</div>
+<div class="loop"><div class="lt">Refinement loop: max 3 rounds (too easy → new twist or one more formula; unclear → reworded; both back to 3)</div>
 
-<div class="loop"><div class="lt">Refinement loop: max 3 rounds (too easy → back to 3 for new inputs, or to 6 for rewording; inorganic: rewording only)</div>
-
-<div class="st"><div class="hd"><span class="n">3</span><span class="tg code">code</span><span class="nm">Engine screens inputs</span><span class="md">RDKit · SymPy · graph</span></div><div class="ds">Organic: runs the chain on every pool molecule, keeps those where every step works, lists each one's traps. Inorganic: species fixed by the chain</div></div>
+<div class="st"><div class="hd"><span class="n">3</span><span class="tg wr">writes</span><span class="nm">Write with blanks</span><span class="md">gemini-3.7-flash</span></div><div class="ds">The question with every number as a blank [[name]] and a realistic range for it (a fixed value only for a value of the substance itself), plus a range for the answer</div><div class="br">broken blanks → back to 3 (max 3 writes) · Jev level check (calibrated on real papers): below JEE Advanced → back to 3</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">4</span><span class="tg wr">picks</span><span class="nm">Generator picks inputs</span><span class="md">gemini-3.7-flash</span></div><div class="ds">Organic: picks a molecule by ID from the screened list, reading the Blackboard. Physical: proposes numbers, then code sanity checks (e.g. &gt; 0, fractions in [0, 1])</div></div>
+<div class="st"><div class="hd"><span class="n">4</span><span class="tg wr">writes</span><span class="nm">Coder 2: the solving program</span><span class="md">gpt-6-luna · sandbox.py</span></div><div class="ds">solve() written from the question with its blanks, before any number exists; it calls only the drawn formulas. A probe runs it on values from the ranges</div><div class="br">breaks, assigns to a blank, ignores a picked value, skips a needed formula → back to 4 (max 3) · cannot → back to 3</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">5</span><span class="tg code">code</span><span class="nm">Engine computes</span></div><div class="ds">Answer + trace + traps for the chosen inputs</div><div class="br">UNKNOWN → engine-unknown queue</div></div>
+<div class="st"><div class="hd"><span class="n">5</span><span class="tg code">code</span><span class="nm">Coder 1: the number step</span><span class="md">qf_numbers.py · sandbox.search_numbers</span></div><div class="ds">Values drawn in the ranges run through the program until a set gives an answer in the answer range, moves by at most 2 % with rounding, is changed by at least 2 typical mistakes, and uses every picked value; then they are printed in the question</div><div class="br">no set works → back to 3 with the reason · the program breaks on some values → back to 4 once</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">6</span><span class="tg wr">writes</span><span class="nm">Generator writes stem</span><span class="md">gemini-3.7-flash</span></div><div class="ds">Question text only, aimed at the engine's trap. Organic start name inserted from the pool</div></div>
+<div class="st"><div class="hd"><span class="n">6</span><span class="tg ck">checks</span><span class="nm">Checks</span><span class="md">qf_checks.py · jev-1.14</span></div><div class="ds">Every formula's result matters; no intermediate stated; constants stated; not a copy of an example or an accepted question; Jev's coherence check (calibrated)</div><div class="br">fail → back to 3</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">7</span><span class="tg ck">checks</span><span class="nm">Chemistry gate</span><span class="md">deepseek-v4-flash-0731</span></div><div class="ds">Model lists start / reagents / numbers / what's asked; code compares with the chosen inputs</div><div class="br">mismatch → back to 6 (original + 2 retries, then drop chain) · unreadable → gate-unreadable queue</div></div>
+<div class="st"><div class="hd"><span class="n">7</span><span class="tg code">code</span><span class="nm">Duplicate check</span><span class="md">dedup.py</span></div><div class="ds">Same formulas and the same printed values as an accepted question → a new question</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">8</span><span class="tg code">code</span><span class="nm">Tier 1 duplicate check</span></div><div class="ds">Same numeric inputs as an accepted question but a different answer → fail</div></div>
+<div class="st"><div class="hd"><span class="n">8</span><span class="tg sv">solves</span><span class="nm">Ladder</span><span class="md">granite-4.2-8b → glm-5.3-flash → minimax-m3</span></div><div class="ds">Closed book, weakest first; each step only if every step below failed</div></div>
 <div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">9</span><span class="tg sv">solves ×1–3</span><span class="nm">Ladder</span><span class="md">llama-3.3-70b → glm-5.3-flash → gpt-6-luna</span></div><div class="ds">Closed book (no sheet). Weakest first; each step only if every step below failed. The first step decides too easy / accepted; the first step that solves it gives the difficulty label. Returns an answer, plus a self-labelled objection if any (none / chemistry / wording)</div><div class="br">chemistry objection → code path: gate re-checks the step → engine checks the member's alternative → objection-unresolved queue if neither settles it</div></div>
+<div class="st"><div class="hd"><span class="n">9</span><span class="tg code">code</span><span class="nm">Grading</span></div><div class="ds">Code only: solved = the answer is within tolerance of the key (letters and text by their shape)</div></div>
 <div class="ar">↓</div>
+<div class="st"><div class="hd"><span class="n">10</span><span class="tg code">code</span><span class="nm">Decision</span></div><div class="ds">Bottom step solves → too easy: Jev picks the likeliest of 8 cases and code applies it (new twist, one more formula) → back to 3. Bottom step fails → label (GLM: advanced or hard Mains by Jev's level check; MiniMax: advanced medium; none: hard advanced) and the code-written insight hint on each failed step</div><div class="br">failed solver call → parked, judged first next run; after 3 failed rechecks → on hold, never dropped</div></div>
 
-<div class="st"><div class="hd"><span class="n">10</span><span class="tg ck">judges</span><span class="nm">Mismatch verifier</span><span class="md">claude-haiku-5.5</span></div><div class="ds">Reads ALL members' work against the engine's answer and trace</div><div class="br">engine / question wrong → drop chain, flag rule, engine-wrong queue · right answer, wrong reasoning → not solved · wrong answer → why: genuine / unclear wording (→ reword, back to 6) / missing knowledge / slip (counts as solved only if code confirms it, e.g. by re-evaluating the member's own expression) · wording objections judged here</div></div>
-<div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">11</span><span class="tg code">code</span><span class="nm">Grade + solve count</span></div><div class="ds">Final answers compared with the engine's (numbers within 1%, canonical SMILES, normalised formulas). Stores both council_n_correct (raw match) and council_n_solved (after 10's labels)</div><div class="br">llama-3.3 solves → too easy → refiner (gemini-3.8-flash) reads its working, then new inputs or rewording (loop) · llama-3.3 fails → label (glm: advanced, luna: hard advanced, none: frontier) → continue</div></div>
-<div class="ar">↓</div>
-
-<div class="st"><div class="hd"><span class="n">12</span><span class="tg sv">solves again</span><span class="nm">Hint re-solve</span><span class="md">failed council members</span></div><div class="ds">Hint picked by 10's label. Missing knowledge → knowledge hint (the fact/formula); solves → tag recall. Genuine → insight hint written by CODE from the engine's trap rule (names the kind of step, never the result), always run; solves → confirmed. Unclear wording → clarification hint; solves → reword, back through 6 (counts as a round)</div><div class="br">Still fails after the insight hint → verifier re-reads that attempt: genuine / second hard step → accept · unclear wording → reword · engine wrong → drop and flag</div></div>
 </div>
 <div class="ar">↓</div>
 
-<div class="st"><div class="hd"><span class="n">13</span><span class="tg code">code</span><span class="nm">Accept</span></div><div class="ds">Save with tags (recall / closed book, trap type), update coverage (incl. trap type), copy to results/</div></div>
-<div class="ar">↓</div>
+<div class="st"><div class="hd"><span class="n">11</span><span class="tg wr">writes</span><span class="nm">Accept</span><span class="md">gemini-3.8-flash</span></div><div class="ds">Record + readable solution (every calculation checked in code, then by the solution checker, claude-haiku-5.5) + coverage + results/</div></div>
 
-<div class="st"><div class="hd"><span class="n">14</span><span class="tg wr">writes</span><span class="nm">Solution writer</span><span class="md">mistral-small-3.2-24b</span></div><div class="ds">Accepted questions only: turns the engine trace into a readable worked solution for review in results/</div></div>
-
-<p class="rm"><b>Caps:</b> 3 refinement rounds per chain (then drop it, small walk penalty on its edges) · 3 chains per run · gate: original + 2 retries. <b>Queues:</b> separate files per reason under outputs/. <b>Trap diversity:</b> trap type is one more coverage counter in the walk (gentle, always on).</p>
+<p class="rm"><b>Caps:</b> 6 draws per run · 3 writes and 3 programs per question · 200 value sets per number step · 3 refinement rounds · $0.12 per run (--max-run-spend). <b>Router:</b> OpenRouter first, airouter.in once it runs out of credit. <b>The older engine-first flow</b> (--flow engine: graph walk, the generator picks inputs, the engine computes, a chemistry gate) is described in docs/Flow.md.</p>
 </main>
 </body>
 </html>

@@ -10,9 +10,7 @@ tools/build_graph.py:
 The same traversal runs on all three: load_graph(path) returns a KnowledgeGraph, and
 sample_chains() picks coverage-weighted multi-step chains from it for the generator.
 
-The module-level functions (get_edges_from, get_paths, get_node, get_coverage,
-get_ordering) and GRAPH_TOOLS / dispatch_tool keep working for LLM tool calls; they
-query the organic graph.
+get_ordering() reads the organic reactivity orders (knowledge/reaction_orders.json).
 """
 
 from __future__ import annotations
@@ -355,27 +353,10 @@ def chain_txs(graph: KnowledgeGraph, edge_ids: list, concept_book_txs: list) -> 
     return out
 
 
-# ── Organic-graph helpers for LLM tool calls ─────────────────────────────────
+# ── Organic-graph data ───────────────────────────────────────────────────────
 
 _ORDERS = _load_json(_ORDERS_PATH, {})
 _LABELS = {k: v for k, v in _load_json(_LABELS_PATH, {}).items() if not k.startswith("_")}
-
-
-def get_edges_from(node_id: str, molecular_state: dict | None = None) -> dict:
-    return load_graph().get_edges_from(node_id, molecular_state)
-
-
-def get_paths(start_node: str, depth: int = 3, archetype: str | None = None,
-              chapter: str | None = None, avoid_nodes: list[str] | None = None) -> dict:
-    return load_graph().get_paths(start_node, depth, archetype, chapter, avoid_nodes)
-
-
-def get_node(node_id: str) -> dict:
-    return load_graph().get_node(node_id)
-
-
-def get_coverage(coverage_state: dict | None = None) -> dict:
-    return load_graph().get_coverage(coverage_state)
 
 
 def get_ordering(dimension_id: str) -> dict:
@@ -391,155 +372,3 @@ def get_ordering(dimension_id: str) -> dict:
     if dimension_id not in _ORDERS:
         return {"error": f"Unknown dimension: {dimension_id}", "available": list(_ORDERS.keys())}
     return {"dimension_id": dimension_id, **_ORDERS[dimension_id]}
-
-
-# ── Tool dispatcher ───────────────────────────────────────────────────────────
-
-_TOOL_FNS = {
-    "get_edges_from": get_edges_from,
-    "get_paths":      get_paths,
-    "get_node":       get_node,
-    "get_coverage":   get_coverage,
-    "get_ordering":   get_ordering,
-}
-
-def dispatch_tool(name: str, args: dict) -> str:
-    """Call the named graph tool with args dict, return JSON string result."""
-    fn = _TOOL_FNS.get(name)
-    if fn is None:
-        return json.dumps({"error": f"Unknown tool: {name}"})
-    try:
-        result = fn(**args)
-    except Exception as exc:
-        result = {"error": str(exc)}
-    return json.dumps(result, ensure_ascii=False)
-
-
-# ── OpenAI tool schemas ────────────────────────────────────────────────────────
-
-GRAPH_TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_edges_from",
-            "description": (
-                "Return all reaction edges (transformations) leaving a given functional-group node. "
-                "Pass molecular_state to apply chemoselectivity filtering and node_redirect."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "node_id": {
-                        "type": "string",
-                        "description": "Canonical node ID (e.g. 'alkene', 'alcohol', 'ketone')",
-                    },
-                    "molecular_state": {
-                        "type": "object",
-                        "description": "Optional. Keys: also_present (list of other FG node_ids in the molecule), must_absent (list of FG node_ids that must not be present).",
-                        "properties": {
-                            "also_present": {"type": "array", "items": {"type": "string"}},
-                            "must_absent":  {"type": "array", "items": {"type": "string"}},
-                        },
-                    },
-                },
-                "required": ["node_id"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_paths",
-            "description": (
-                "BFS from start_node up to `depth` steps. Returns all reachable reaction chains. "
-                "Use for planning multi-step synthesis questions (Archetype I). "
-                "Filter by archetype or chapter to stay on topic."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_node": {
-                        "type": "string",
-                        "description": "Starting node ID (must be type=stable, can_be_start=true)",
-                    },
-                    "depth": {
-                        "type": "integer",
-                        "description": "Maximum number of reaction steps (1–6). Default 3.",
-                        "default": 3,
-                    },
-                    "archetype": {
-                        "type": "string",
-                        "description": "Optional. Filter edges to those tagged with this archetype.",
-                    },
-                    "chapter": {
-                        "type": "string",
-                        "description": "Optional. Filter edges to those in this chapter (substring match).",
-                    },
-                    "avoid_nodes": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Optional. Node IDs to exclude from paths (avoids recently used nodes).",
-                    },
-                },
-                "required": ["start_node"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_node",
-            "description": "Return full metadata for a single functional-group node.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "node_id": {"type": "string", "description": "Node ID to look up"},
-                },
-                "required": ["node_id"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_coverage",
-            "description": (
-                "Return graph coverage statistics: node count, edge count, out-degrees. "
-                "Pass coverage_state from coverage.py to see which nodes/edges are overused."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "coverage_state": {
-                        "type": "object",
-                        "description": "Optional. Coverage counters from coverage.py.to_dict()",
-                    },
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_ordering",
-            "description": (
-                "Return ordering tiers for a GOC/Archetype IV dimension from reaction_orders.json. "
-                "Use for comparative ranking questions (acidity, basicity, stability, etc.)."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "dimension_id": {
-                        "type": "string",
-                        "description": (
-                            "Dimension key, e.g.: 'carbocation_stability', 'acidity', 'basicity', "
-                            "'nucleophilicity_protic', 'nucleophilicity_aprotic', 'radical_stability', "
-                            "'leaving_group_ability', 'sn1_vs_sn2', 'eas_reactivity', 'alkene_stability'"
-                        ),
-                    },
-                },
-                "required": ["dimension_id"],
-            },
-        },
-    },
-]

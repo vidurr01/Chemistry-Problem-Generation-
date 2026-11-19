@@ -136,6 +136,10 @@ def computed_values(stem: str) -> list:
     for m in re.finditer(r"\b(ln|log(?:10)?|log₁₀)\s*\(?\s*([0-9]+(?:\.[0-9]+)?)\s*\)?\s*[=≈]\s*-?[0-9.]+", stem):
         if m.group(2) not in _LOG_TABLE:
             out.append(m.group(0))
+    # exponentials too: 'e^2.3214 = 10.19' hands over the value of a step (run of 2026-11-16)
+    for m in re.finditer(r"(?:\be\s*\^\s*[({]?\s*-?[0-9.]+\s*[)}]?|\bexp\s*\(\s*-?[0-9.]+\s*\)|\be\s*[⁻⁰¹²³⁴⁵⁶⁷⁸⁹·.]+)"
+                         r"\s*[=≈]\s*-?[0-9.]+", stem):
+        out.append(m.group(0))
     return out
 
 

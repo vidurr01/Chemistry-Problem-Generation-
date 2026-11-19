@@ -2,6 +2,603 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-11-19
+
+### Inorganic engine, step 1: property functions
+- `core/engine/inorganic/properties.py` (new), exact and offline, refusing (EngineError) what they cannot decide:
+  - `vsepr(species)`: steric number, lone pairs, shape, hybridisation, polarity of a main-group molecule or discrete ion (central atom found by code; odd-electron species such as NO₂; ionic and transition-metal solids refused).
+  - `mo_diatomic(species)`: MO configuration, bond order, unpaired electrons, magnetism for H–Ne diatomics, ions and CO, NO, CN⁻ (s-p mixing up to 14 electrons).
+  - `parse_complex` / `complex_info("[Fe(CN)6]4-")`: oxidation state, d electrons, geometry (square planar for d⁸ with a strong field, Pd²⁺, Pt²⁺, Au³⁺), high or low spin by JEE rules (strong-field ligands; NH₃ and H₂O on M³⁺/Co³⁺; 4d and 5d always low spin; [CoF₆]³⁻ high spin), unpaired electrons, spin-only moment, CFSE, hybridisation.
+  - `count_isomers(geometry, ligands)`: geometric and stereo isomers by enumerating every arrangement on the octahedron or square under its rotation (and reflection) group; chelates on cis positions.
+  - `oxidation_state(formula, element)`: average oxidation state by the usual rules (Fe₃O₄ 8/3, S₄O₆²⁻ 5/2).
+- `tests/test_engine_inorganic.py` (11 tests, ~90 cases): 31 VSEPR shapes, the book's MO diatomics and 12 ions, 20 complexes, 9 octahedral and 4 square-planar/tetrahedral isomer sets ([Ma₂b₂cd] 6 geometric / 8 stereo, [Mabcdef] 15 / 30), oxidation states. Against every concept-book shape fact naming one species: 49 of 49 molecules agree; 3 solids (fluorite, rutile, cristobalite) are now refused.
+
+### Live run 9 (last physical run of the day)
+- $0.1547 ≈ ₹13.6, cap $0.45: draw 1 and draw 2 (Atomic Structure) designs rejected by Jev (glued; invented relation / arbitrary condition); draw 3 (Ionic Equilibrium, two-state difference) was too easy (Granite 8.22 for 8.185); Jev picked `plugin_order`, the twist became `inverse`, the redesign was accepted as GEN_20261119T115635: H₂A concentration from the pH of NaHA (0.166 M, pH 8.41) and of the acid (pH 2.62); key 0.0253 M, hand check 0.02530 (exact, c = [H⁺]²/K_a1 + [H⁺]; the usual approximation gives 0.0229, 10 % off: α ≈ 9.5 %). Granite 1 M, GLM 110 M (objected), MiniMax 0.0253 → advanced_medium; GLM solved after the insight hint.
+
+### Two guards against a wrong key (code only)
+- `core/engine/sandbox.py` `check_code`: a program may not round or truncate a computed value (`round`, `int`, `math.floor/ceil/trunc` on anything but a written number); the formulas' own checks (a whole n, a fraction in 0–1) then catch impossible stated data, and the number step picks other values or the draw ends. The coder prompts say so. Why: n = round(2.59) = 3 turned impossible data into the wrong key of GEN_20261119T110902.
+- `core/pipeline/flow.py` `_consensus_against_key`: when no ladder model solves a question, every model called (at least 2) gave the same answer within 2 %, and that answer is not one of the engine's own trap answers, the question is not accepted: it goes to the new review queue `ladder_consensus` (`core/pipeline/queues.py`; `tools/results.py queue`) and the run draws again. Replayed on the 21 questions judged since October: it holds the two with a wrong key (14 Oct, an inverted engine step; 19 Nov, the rounded n) and nothing else; the flask question (models 3 % apart) is not held.
+- Tests: `NoRoundingInPrograms`, `LadderConsensus`. 457 tests pass.
+- `tools/results.py reject GEN_20261119T110902` (the author): removed from `results/`, recorded in `results/rejected.json` with its reason; runs no longer count it as accepted.
+
+### One typical mistake is enough
+- `core/pipeline/qf_checks.py`: `MIN_TRAPS = 1` (was 2, the author's decision). At 2 it was the commonest way a draw died (3 of 5 draws in live run 8), it ignores the designer's conceptual trap, and some real JEE Advanced questions cannot meet it. Difficulty stays guarded by Jev's level check and the ladder. 453 tests pass.
+- Live run 8 ($0.2136 ≈ ₹18.8, run before this change): accepted GEN_20261119T110902 as hard_advanced, but its key is WRONG. A hydrogen-like ion with KE 12.7 eV in the excited state emits a 72.7 eV photon to the ground state; the ionisation energy from the stated data is 85.4 eV, which all three ladder models gave (GLM also objected). The coder's program rounded n = round(√(85.4/12.7)) = 3 and recomputed the photon (75.91 eV), returning 88.61. The numbers code picked from the writer's ranges admit no whole n and Z (n² = 6.72, Z² = 6.28): the whole-number problem again, now hidden by a round() in the program. Nothing changed for it yet.
+
+### One draft per draw
+- `core/pipeline/qf_writer.py`: `WRITE_TRIES = 1`. Over 21 draws that reached the writer, 9 passed on the first draft, 12 failed all three, none was rescued by a rewrite (the run of 2026-11-19 added one more: an Atomic Structure draw failed three drafts on the same whole-number problem). A rejected draft now means a new draw. The too-easy refinement keeps its rounds.
+- `core/pipeline/qfirst.py`: `UNREADABLE_RETRIES = 2`: a writer reply that cannot be read, or a blank-format slip found by code (numbers not written as `[[blanks]]`, with an exact fix), is asked again without using up the draft, so a design already paid for (~₹3.8) is not thrown away for a technical failure.
+- Live run 7 ($0.1705 ≈ ₹15.0, cap $0.45): draw 1 (Atomic Structure) died on the whole-number problem in all three drafts; draw 2 the writer called impossible; draw 3 accepted GEN_20261119T104117 (galvanic cell precipitating M(OH)₂; −log K_sp = 26.86, hand check 26.86); Granite 1.84 failed, GLM solved → `advanced` (Jev level 2.65). First end-to-end question on the Granite → GLM → MiniMax ladder.
+- `tests/test_qfirst.py`: `OneDraftPerDraw`. 453 tests pass.
+
+### Run cap $0.45
+- `run_groundup_final.py`: `--max-run-spend` default $0.45 (about ₹40 at ₹88/$, room for 3–4 draws), was $0.12, which one long design (~₹11) used up. The cap is checked between stages, so a run can still overshoot by one designer call. Flow.md updated.
+
+### Live run 6 (new ladder, not reached)
+- $0.1307 ≈ ₹11.5, no question: 6 fit batches under the floor, then one draw [391, 336, 234] (electrolysis). The design was cut off at the output limit and finished by `finish_design` (first live use: it worked); Jev then rejected it as an invented relation (37 %): it asked for "the electrical energy consumed for silver alone" as Q_Ag × V in a Cu/Ag co-deposition, a quantity with no physical meaning. The designer cost ~₹11.4 (cut-off call + finish), so the $0.12 cap allowed only this draw. The ladder was not reached.
+
+### Ladder bottom step: Granite 4.2 8B (was Llama 3.3 70B)
+- `core/models.py`: `LADDER` = Granite 4.2 8B (IBM, used nowhere else) → GLM-5.3-Flash → MiniMax M3 (the author: Llama "never a good option, it doesn't work": it never called the calculator unforced, wrote programs, replied empty, failed 54 % of easy Mains). README (family list IBM/Z.ai/MiniMax), Flow.md, PIPELINE.md, the overview page follow. 452 tests pass. Not yet run live; Granite and MiniMax are not in the airouter name tables, so a run that falls back to airouter (out of OpenRouter credit) has not been checked for them.
+
+### Bottom-rung calibration with the forced calculator; one tool call per turn
+- Reran the separation calibration (`calibration/anchor_calibration.py --council`, forced calculator) for Granite 4.2 8B and Llama 3.3 70B; the old results are in `calibration/backup_20261119_no_calculator/` (₹27.2 at ₹88/$; Granite's Advanced run stopped at 48 of 49 when a session ended). `ladder_separation.py`: Granite fails easy Mains 32.1 %, Advanced-level 52.2 % (gap 20.1, $0.00025 a question, 1 no-answer); Llama fails 53.6 % / 85.3 % (gap 31.7, $0.00298, 11 no-answers). Without the calculator (14 Oct): Granite 25.0 / 64.7 (39.7), Llama 28.6 / 66.2 (37.6).
+- Llama's 11 no-answers were a bug: some hosts of Llama 3.3 on OpenRouter (AkashML, CoreWeave) refuse a turn with several tool calls ("This model only supports single tool-calls at once!"); in a live run the question would park. `core/models.py`: tool calls are made one per turn (`parallel_tool_calls=False`), and a turn that still has several keeps only its first. `tests/test_models.py`: `test_one_tool_call_per_turn`. 452 tests pass. Llama's numbers above include those failures, so they overstate how often it fails.
+
+### Ladder top step: MiniMax M3 (was GPT-6 Luna)
+- `core/models.py`: `LADDER` = Llama 3.3 70B → GLM-5.3-Flash → MiniMax M3; `DIFFICULTY_LABELS["minimax-m3"] = "advanced_medium"`. Why: Luna also writes the key (the coder), so a Luna "solve" was the key agreeing with itself (the PCl₅ question: both took van 't Hoff on K_c). Luna stays the coder. MiniMax is a family used nowhere else. README (the family list no longer has a known overlap), Flow.md, PIPELINE.md, the overview page follow. 451 tests pass. Not yet run live; MiniMax was measured on OpenRouter only.
+
+### Top-rung comparison: MiniMax M3 against Qwen3.5-35B-A3B
+- 10 real JEE Advanced physical numericals (same 10, seed 19), the pipeline's solver call with the forced calculator, graded with the fixed grader (₹42.7 at ₹88/$): MiniMax M3 9/10, ₹1.05 a question; Qwen3.5-35B-A3B 9/10, ₹3.22 a question. Both used the calculator on 10/10. MiniMax missed 2022P2_Q1 (PbSO₄ with HSO₄⁻; 3.2 % of candidates got full marks); Qwen missed 2024P2_Q11 (radioactive dating; 50.9 %). Nothing changed in the roster yet.
+
+### Calibration grader reads fractions
+- `calibration/anchor_calibration.py` `to_float`: reads an answer the way the pipeline does (`core.answers.numeric_value`: fractions, powers of ten, approximate signs), else the last number token as before. It took only the last token, so "11/51" (0.2157, right for a key of 0.22) was read as 51 and graded wrong (found in the MiniMax / Qwen comparison, 2021P2_Q7). The saved result files already held those gradings as right (`--regrade`: 0 changed). `tests/test_grading_stress.py`: `CalibrationGrader`.
+
+### Ladder solvers must call the calculator
+- `core/models.py`: `FORCE_FIRST_TOOL_CALL = ("council",)`: every ladder solve (and hint re-solve) sends `tool_choice="required"` on its first turn and `"auto"` after, so the calculator is used whatever the model. A provider that refuses `"required"` (400/404/422) is asked unforced and says so. Why: unforced, Llama called it 0/5, Granite and Qwen3.5 1/2, GLM 1/3; forced, Llama 5/5.
+- `tests/test_models.py`: `ForcedCalculator` (required then auto; refused → unforced). 450 tests pass.
+
+### Difficulty labels one step lower (the author's rule)
+- `core/models.py` `DIFFICULTY_LABELS`: Luna (top step) first to solve → `advanced_medium` (was `hard_advanced`); no step solves → `hard_advanced` (was `frontier`); GLM unchanged (`advanced`, or `mains_hard` by Jev's level check). "Hard advanced" now means even the top step failed. `flow.judge` default, README, Flow.md, the overview page and two tests follow. Records saved before keep their old labels.
+- Calculator probes (N₂O₄ question, `tool_choice=auto`, no nudge, 12000-token cap, so not the pipeline's own call): Luna called it 3/3 and was right 3/3 (₹0.76); GLM 1/3, two empty replies, right 0/3 (₹1.06); Qwen3.5-35B-A3B 3/5, three empty replies, right 1/5 (₹13.61); MiniMax M3 3/5, two empty, right 2/5 (₹4.41); Granite 4.2 8B two tries, both empty (the probe stopped there). Empty replies may come from the probe's cap and missing nudge.
+- The same through the pipeline's own solver call (`stages._solve`: 32000-token cap, nudges, retries), 2 tries each (₹14.60): every model gave an answer. Qwen3.5-35B-A3B right 2/2, calculator calls 28 and 0 (₹7.29); MiniMax M3 right 2/2, calls 7 and 17, after several empty replies were nudged (₹7.08); Granite 4.2 8B wrong 2/2 (0.752, 0.751), calls 1 and 0 (₹0.03); GLM-5.3-Flash wrong 2/2 (0.255, 1.31), calls 5 and 6 (₹0.19). Luna, earlier: right 3/3, calls every time, ~₹0.25 a try.
+
+### Live run 5; Llama and the calculator; the coder and the top ladder step are one model
+- Live run ($0.0491 ≈ ₹4.3): draw [156, 154, 163], the designer chose `inverse`; accepted GEN_20261119T063151 (PCl₅: ΔH° of PCl₃ + Cl₂ ⇌ PCl₅ from K_c at 471 K and the total pressure at 539 K), key −81.58 kJ mol⁻¹; Llama −134, GLM +81.6, Luna −81.6 → hard_advanced. Hand check: −81.58 is van 't Hoff on K_c, which gives ΔU°; on K_p (ΔH°) it is −85.76 (ΔH° = ΔU° + Δn_g RT, Δn_g = −1), 5 % away. Luna wrote the key and Luna solved it the same way. Not changed: for the author's review.
+- `core/models.py`: the calculator log line names the model.
+- Probe (₹1.28, the N₂O₄ question, 5 tries each): Llama called the calculator 0/5 with today's prompt and 0/5 when told it MUST; forced to call it on its first turn (`tool_choice=required`) it called it 5–9 times every time. Right answers 0/5 in all three: its failures there are chemistry, not arithmetic.
+
+### The designer may leave out one formula
+- Funnel of the 28 draws in the current flow (both fit A/B runs and the live runs of 2026-11-19, no new spend): 7 finished questions (25 %); 7 "impossible", 7 designs rejected by Jev (glued / invented), 5 lost after 3 writer drafts, 2 stopped by the cap. Half died at design, after the designer (₹2–8 a call) was paid; 4-formula sets died there 60 % of the time, 3-formula sets 46 %.
+- `core/pipeline/qf_design.py`: with 4 or 5 formulas drawn (`n_formulas`), the designer may leave ONE out that cannot belong to the same system (`drop_block`, reply field `"drop"`, validated: never with 3, never a number outside the set). `core/pipeline/qfirst.py`: the left-out formula is removed before the design checks and the writer (`formula_left_out` on the Blackboard); the draw stays random and never goes below 3.
+- `tests/test_qfirst.py`: `test_the_designer_may_leave_out_one_of_four_formulas`, `test_a_left_out_formula_is_gone_before_writing`. 448 tests pass.
+
+### A cut-off design is finished, not lost
+- Third live run ($0.1837 ≈ ₹16.2, nothing accepted): draw 1's design was rejected by Jev (glued sub-problems); draw 2's design reply hit the 8000-token output limit after ~7000 tokens of thinking, with 1202 characters of the design written ($0.09 lost), and the run stopped at its cap before the ladder. The cap is checked only between stages, so one designer call can overshoot it.
+- `core/llm.py`: `CutOffError(ValueError)` for a reply cut off at the output limit (`retry_cut_off=False`), carrying the text written (`partial`) and the thinking when the provider returned it (`reasoning`).
+- `core/pipeline/qf_design.py`: `finish_design`: on a cut-off design, one call (thinking "low", `FINISH_CAP` = 4000 tokens) gets the original prompt, the partial JSON and the end of the thinking (`THOUGHT_CHARS`), and returns the complete design. If that fails too, the run writes without a design, as before.
+- `tests/test_qfirst.py`: `test_a_cut_off_design_is_finished_not_lost`, `test_a_cut_off_reply_carries_what_was_written`. 446 tests pass.
+
+### No mismatch verifier: ladder answers graded by code only (the author's decision)
+- `core/pipeline/flow.py`: `_grade` is code only: solved = `answer_matches` (`_code_match`; an answer code cannot read is not matched). `judge` no longer calls a verifier: no "reference wrong" overrule or `engine_wrong` / `objection_unresolved` drops (objections stay in the record), no clarification or knowledge hints, no re-check after a hint; every failed step gets the code-written insight hint, graded by code, and the question is accepted. Removed `_verify`, `_text_match`, `_hint_solved`, `knowledge_hint`.
+- `core/pipeline/stages.py`: `verify_member` and `clarification_hint` removed. `core/models.py`: `VERIFIER` removed; the same model stays as `SOLUTION_CHECKER` (checks the written solution after acceptance). `tools/check_models.py`, `tools/regress.py` (no verifier stage) follow.
+- Why: the verifier called the flask question's right key wrong (50.31 mL) and the question was dropped instead of reworded; the author judged it too weak, the coder strong enough for the key, and a right number by wrong reasoning rare on a hard question.
+- Tests: verifier tests removed (`VerifierReply`, reference-wrong overrule, verifier parks); grading tables updated (a matching answer is solved whatever a diagnosis says; run 5's −190.28 for −192.2 now counts). 444 tests pass. `README.md`, `docs/Flow.md`, `docs/PIPELINE.md`, `docs/pipeline_overview.html`, `docs/Decisions.md` updated.
+
+### Live run: the parked flask question; an empty ladder reply; on hold instead of dropped
+- Live run (`--kind chains`, $0.0112 ≈ ₹1): PENDING_20261118T183052 (key re-solved to 50.31 mL) was judged: Llama 22.9 mL (failed), GLM 54.6 mL (failed: the old key, the design's trap), Luna 50.3 mL (solved) → hard_advanced. Then Llama's hint re-solve wrote a program, was told, and answered with nothing; the call failed and the question was parked again (1 recheck failure), so no new draw ran.
+- `core/models.py`: an empty final reply after calculator calls is now told too (`EMPTY_NUDGE`, same `FORMAT_NUDGES` budget, no empty assistant turn); before, it ended the call at once. `tests/test_models.py`: `test_a_program_then_an_empty_reply_is_still_answered`.
+- Why Llama wrote programs: Llama 3.x's chat template adds "Environment: ipython" to the system prompt when tools are passed. Probe on the flask question, 5 tries each (₹1.61): with the calculator 0/5 usable (4 programs, 1 loop of 12 calls); without it 4/5 JSON; with the calculator and a "no Python interpreter, use calculate" line 5/5 JSON (no calculator calls; Llama did the arithmetic itself). `core/pipeline/stages.py`: `NO_CODE` is added to the solver system prompt on every solve that offers the calculator. `tests/test_models.py`: `SolverPrompt`. 448 tests pass.
+- Second live run ($0.0562 ≈ ₹4.9): no Llama crash (one empty reply and one cut-off JSON were each answered after a nudge). The flask question was re-judged: Llama 56.3, GLM 54.6, Luna 54.6 mL, all taking the whole vessel as the gas volume; the verifier called the 50.31 mL key wrong, so it went to `outputs/queue_engine_wrong_physical.json` (kept, not lost). The key is right physically, but the question never says the gas occupies only the space left by the liquid. New draw [152, 154, 135, 137]: the designer chose `inverse`; accepted GEN_20261119T005804 (N₂O₄ ⇌ 2NO₂ from the maximum non-PV work, 0.431 mol, hand check 0.4311), hard_advanced (Luna only).
+- `run_groundup_final.py`: a parked question is never dropped. After `MAX_RECHECK_FAILURES` failed rechecks, or when it cannot be recomputed, or when it is in the pre-engine format, it moves whole to `outputs/on_hold_questions_<subject>.json` with `hold_reason` (`_hold`, `on_hold_file`); runs carry on without it. `--rerun-held` moves every held question back to be judged first (failure count reset), to re-run them or to check that a code change fixed their error. A run says how many are on hold. `tests/test_pipeline_offline.py`: `test_parked_question_that_keeps_failing_is_put_on_hold` (held whole, then accepted with `--rerun-held`). 447 tests pass.
+
+### The designer chooses the twist
+- `core/pipeline/qf_design.py`: `design_question(..., twist=None)` shows the designer every twist with one level example each (`twist_block`) and asks it to choose the one that lets these formulas make the hardest real question; the design carries `"twist"`. A reply without a valid twist keeps the design (₹1–5 already paid) and the caller picks one at random. A fixed twist works as before.
+- `core/pipeline/qfirst.py`: `run()` no longer draws the twist; `write_and_solve` lets the designer choose when none is fixed, notes it (`twist` on the Blackboard) and returns it on the candidate. A refinement that changes the twist still fixes it for the redesign. `tools/step_by_step.py` keeps its own twist.
+- Why: a random twist chosen before the formulas were seen killed draws (a "condition" twist on pure Bohr-orbit formulas, fit A/B run of 2026-11-19). To watch: whether the designer always picks the same, easiest twist (Blackboard `twist` notes).
+- `tests/test_qfirst.py`: `test_the_designer_chooses_the_twist_and_the_writer_uses_it`, `test_a_design_without_a_twist_is_kept_and_a_random_twist_used`. 446 tests pass.
+
+### Jev formula-fit A/B test; steps 65/66 accept the value they ask for
+- `tools/fit_ab.py` (new): draws with Jev's fit check off (first random set) and on (as the pipeline), interleaved, each taken to a finished question (no ladder, nothing saved). Results in `outputs/fit_ab/`.
+- Live, 5 per arm (₹34.3 at ₹88/$): off built 2/5, on built 1/5; ₹17.1 each arm. Jev's score did not predict success (built at 34 %, 43 %, 57 %; failed at 65 %, 62 %, 59 %, 53 %). Too few draws to be sure; no sign that the check helps.
+- Second run, 5 per arm (₹34.3): off built 0/5 (₹20.7), on 2/5 (₹13.6). Both runs together: off 2/10 (₹37.8, ₹18.9 per built question), on 3/10 (₹30.7, ₹10.2 per built question). Every off set Jev scored under 30 % died (4 of 4); above that its score did not separate built from failed. Most draws in both arms (15 of 20) died as "impossible" at the designer or writer.
+- Tried and removed: drawing the next formula weighted by the rarity of the quantity it shares (α, E° over moles, ΔH). Jev on 100 draws each: old median 0.34 (10 over the floor), weighted 0.31 (14 over), real JEE 0.66; no real gain (₹0.46). Neither the weighting nor its comparison script is kept.
+- Tried and removed (the author keeps the current draw): situation-first test, a chapter or a BRIDGES pair → Gemini 3.7 Flash invents one system and lists the engine quantities it involves → code picks 3–5 connected formulas among them → Jev scores. 20 situations, ₹10.1: 11 gave a formula set, Jev median 0.38 (2 of 11 over the floor) against 0.34 for random draws and 0.66 for real JEE. The systems were real but exotic (cryogenic ion trap, Burnett apparatus), and code still picked the formulas at random among the matching ones.
+- Bug found by it, `core/engine/sandbox.py`: steps 65/66 (photon energy, wavelength) compute `electron_energy` from Z. Left out, the error asked for `electron_energy`; given, it was refused as an unknown input ("it takes ['n', 'lower_level']", Z not named). The coder went back and forth until 2 of the 10 draws died. A derived value is now accepted as an input (also by `find()`), the refusal names it and its params, and `library_doc` marks it REQUIRED (give it or Z).
+- `tests/test_qfirst.py`: `FindWholeNumber.test_a_derived_input_may_be_given_itself`. 444 tests pass; engine audit 0 flags.
+
+### solve_for finds whole-number unknowns
+- `core/engine/sandbox.py`: when bisection fails because a step needs a whole number (n, Z, l, a line count), `solve_for` tries the whole numbers in [lo, hi] (`_whole_root`, at most `WHOLE_SCAN` = 200): f(n) zero, or under 1 % of the next best (rounded data). Other failures are unchanged. `find()` already did this (2026-11-17); `solve_for` did not.
+- Why: run of 2026-11-15, an H-spectrum question (6 lines, smallest photon 0.306 eV): every program bisected n to 2.0000000000000004, steps 68/69 refused it, 9 programs failed and the question was dropped.
+- `tests/test_qfirst.py`: `FindWholeNumber.test_solve_for_gives_a_whole_number_unknown` (n₁ = 2; no whole number for 0.5 eV). 443 tests pass.
+
+### The coder sees the design
+- `core/pipeline/qf_coder.py`: `design_block()`; `write_blank_program` and `solver_program` take `design` and show the coder its situation, route, the point a careful solver must notice and the typical mistake its program must not make. `qf_numbers.numbers_for`, `qfirst.write_and_solve` and `tools/step_by_step.py solve` pass it on.
+- Why: the parked question PENDING_20261118T183052 (Mg + NaHSO₄ in a rigid flask) has a wrong key, 54.57 mL against 50.3 mL. The coder saw only the question, took the gas volume as the whole flask, and so made the very mistake the design named (the liquid takes up part of the flask).
+- `tests/test_qfirst.py`: `test_the_coder_sees_the_design_route_and_trap`. 442 tests pass.
+- `outputs/pending_questions_physical.json`: PENDING_20261118T183052 re-solved live by the coder with the design shown (one call, $0.0007): gas volume = V_flask − V_sol, answer 50.31 mL (hand check 50.31). The old program is kept as `qfirst.old_code_wrong_key`; `key_resolved` says why.
+
+### Formula-fit floor: the calibrated 0.504
+- `core/pipeline/qf_draw.py`: `FIT_FLOOR = None`, so the floor is read from `knowledge/fit_calibration_physical.json` (0.504, the 20th percentile of real JEE Advanced sets). The hard-coded 0.60 turned away 18 of 53 real sets (5 of 10 real 3-formula sets) and passed 2 of 60 random draws; a run drew 7 batches in a row under it. At 0.504: 42 of 53 real sets and 9 of 60 random draws pass (about 7 sets a draw).
+- `tests/test_qfirst.py`: `FitFloor.test_the_floor_is_the_calibrated_one`.
+
+### Ladder solver that answers with a program is told so
+- `core/models.py`: a final reply after calculator calls that is not JSON is answered in the same conversation (`FORMAT_NUDGE`: no code, use the calculate tool, reply with only the JSON), up to `FORMAT_NUDGES` = 2 times, before the fresh retries. Llama 3.3 70B wrote a Python program three times on one question (run of 2026-11-18, parked as PENDING_20261118T183052); started afresh it repeated it; told so, it answered (55.8 mL against the engine's 54.57).
+- `tests/test_models.py` patched `core.llm._log_unparseable`, but `core.models` holds its own reference: the tests wrote 11 fake replies into `outputs/unparseable_replies.jsonl`. Patched where it is used; the 11 records were removed.
+
+### Rate constant per the reaction (JEE's convention)
+- `core/engine/physical/kinetics.py`, step 208 (k from pressures): optional input `reactant_coefficient` a (default 1: every chain as before); k = (1/(a t)) ln(P₀/P_A), since JEE defines k for the reaction, rate = −(1/a) d[A]/dt. New trap `coefficient_ignored`. Real question 2019P2_Q13 (2N₂O₅): 2.30, as the official answer (4.605 before).
+- `core/engine/sandbox.py`: an optional input with a plain default reads "(optional: if omitted it is 1)".
+- `tests/test_engine_physical.py`: `Kinetics.test_rate_constant_from_pressures_and_the_jee_convention`.
+
+### Coder prompt: two rules that caused wrong results
+- `core/pipeline/qf_coder.py` (program_for path): "every value the question states must be used" made the coder force "log 2 = 0.30" into a right pH (10.02 → 10.62, 2022P1_Q3). Now: use the values the solution needs; leave out values given for hand arithmetic and constants the steps hold; never add a value only to have used it.
+- `core/engine/sandbox.py`: an input's range reads "usual values lo–hi, not a limit: any value the question gives is accepted" (was "typically lo–hi"), and `lo=` / `hi=` are left out of the engine source shown to the coder. Both read as limits: the coder refused a solution density of 0.656 g/mL (2014P1_Q40). Nothing enforces them.
+
+### Real-JEE coder test set curated
+- `tools/calibrate_coder.py`: `EXCLUDED` (5 questions, with reasons: 3 whose figure, table or mechanism is missing from the text; 2017P1_Q26 and 2017P1_Q27, whose stored answer does not follow from the stored text) and `ADAPTED` (2018P2_Q10 and 2023P1_Q9 restated with the engine's R; answers −14.23 and 102.6). `data/jee_advanced/` is unchanged (eight other tools read it). `PAPER_SET` pins the coder table's 8 questions as the default set.
+- Luna on all 44 usable questions: 44/44 after the fixes above (39/49 before; results in `knowledge/coder_calibration_physical_all49.json`). `tests/test_coder_test_set.py`.
+
+## 2026-11-18
+
+### Code review fixes
+- `core/engine/sandbox.py`: frame, traceback, code-object and closure attributes (`gi_`, `cr_`, `ag_`, `f_`, `tb_`, `co_` prefixes, `cell_contents`) and `format` / `format_map` are refused by `check_code`: a generator's frame reached the module's builtins (`open`, `exec`).
+- `run_groundup_final.py`: a parked question whose recheck fails `MAX_RECHECK_FAILURES` = 3 times is dropped (whole, into the attempt log); it stopped every later run and batch. Parked and crashed runs now save their Blackboard to `outputs/runs/` too.
+- `core/models.py`: the calculator computes powers in floating point and caps `factorial` at 170 (`9**9**9` hung the tool loop); every call that gets a 402 moves to airouter (only the first did); calculator-tool calls get retries, re-asks and the router switch; `key_is_set` checks the key of the router the model goes to.
+- `core/pipeline/qfirst.py`: a refinement that changes the twist or adds a formula drops the old design.
+- `core/pipeline/stages.py`: the verifier's labels are read in any case and spacing ("Correct" was read as wrong); a `failed_step` that is not a finite number is left out.
+- `core/pipeline/refine.py`: Jev's own pick is the case applied; a 400/401 from Jev is not retried; docstring updated.
+- `core/pipeline/qf_writer.py`: reserved blank names are every name the sandbox defines; a rewrite keeps `"whole": true`.
+- `core/answers.py`: "1,200 J", "≈ 0.25", "approximately 0.25" read as numbers.
+- `core/pipeline/qf_draw.py`: "Jev could not score the formula sets" instead of an empty score list.
+- `generate_questions.py`: each run keeps its spend in `SPEND_FILE`, so a run killed at the timeout is counted towards `--max-spend`.
+- `core/engine/physical/gases.py`: an unused `_L_ATM_J = 101.325` removed (thermo's 101.3 is the one used).
+- `calibration/calibrate_thresholds*.py`: import without `SAMBANOVA_KEY_1`; `main()` says it is missing.
+- `tools/extract_notes.py`: examples no longer name the deleted `data/notes/amines_lec1.txt`.
+- `README.md`: the ladder measures difficulty only; a question a failed insight hint did not confirm is still accepted unless the verifier re-check finds the engine or the wording at fault (as the code does).
+- New tests: `tests/test_models.py`; additions to `test_qfirst.py`, `test_pipeline_offline.py`.
+
+### Documents brought up to date with the pipeline
+- **`README.md`:**
+  - the question-first loop is rewritten: blanks, coder 2, the number step, the Jev checks, the designer;
+  - the ladder is Llama 3.3 70B, not Phi-4;
+  - the solution writer is Gemini 3.8 Flash;
+  - the models table now has the designer, Luna as coder, the number step as code, Jev's roles and the airouter.in router;
+  - the quick start has `step_by_step` and `real`, and 414 tests;
+  - the layout lists the `qf_*` files and `docs/PIPELINE.md`.
+- **`docs/Flow.md`:** the question-first section is rewritten (no number program, `construct_numbers` or Codestral), with the Llama ladder, its calibration and Jev's level label.
+- **`docs/Decisions.md`:** six new entries: the designer, Llama replacing Phi-4, Luna as coder, numbers picked by code, only picked values must matter, and the coherence cut-off trial. The Phi-4 entry is marked superseded.
+- **`docs/pipeline_overview.html`:** now shows the question-first flow (it showed only the engine-first one).
+- **`core/models.py`:** the module docstring (router, families, the known Luna overlap) is corrected and the stale Codestral comment is removed.
+- **`docs/inorganic_pipeline_plan.md`:** a note on the blank flow.
+
+`docs/analysis_advanced_formula_use.md` keeps its Phi-4 measurements: they are a record of that analysis.
+
+### Cleanup: `qfirst.py` split by stage (no behaviour change)
+The 2,035-line `core/pipeline/qfirst.py` is split into one file per stage. Each block was moved verbatim:
+- `qf_draw.py`, `qf_design.py`, `qf_writer.py`, `qf_coder.py`, `qf_numbers.py`, `qf_checks.py`: the stages.
+- `qf_text.py`: the number-printing and novelty helpers.
+
+`qfirst.py` keeps the orchestration (`write_and_solve`, `run`, `refine_round`, `rebuild_result`) and re-exports every moved name, so `qfirst.<name>` works as before.
+
+Other changes:
+- **Prompts:** every prompt is unchanged. The writer, designer and both coders' prompts were rendered before and after the split and compared: identical.
+- **Dated notes:** those in comments and docstrings were shortened to the reason alone; the dates are in this log. Notes inside prompts are untouched.
+- **Patch targets:** `flow.py` now reads the level floor from `qf_checks`. The tests patch `_level_floor`, `jev_level` and `_coherence_cuts` in `qf_checks`, and `formulas_fit`, `_fit_floor` and `FIT_*` in `qf_draw`, where the code uses them. A patch of `qfirst._level_floor` no longer reached the level check, and a test tried the network.
+- **New page:** `docs/PIPELINE.md` maps every stage to its function and file.
+- **Checks:** 414 tests pass, and a scripted dry run of every `step_by_step` stage ran end to end. No file was deleted.
+
+### Third real-question check (2017P1_Q26): a broken database entry, a misleading message, an engine limit
+- **The database entry is broken.** The stored text (cell constant 1000 m⁻¹, α = 0.01, Λ° in S m² mol⁻¹) gives 0.0333 by hand, which is what Luna's program gave. The official 6 belongs to the paper's own wording (120 cm electrodes, pH 4, Z × 10²), and the entry's solution note says so itself. It is excluded from `real` (`step_by_step.BROKEN_REAL`). The coder calibration pool is unchanged.
+- **Bug fixed (`sandbox._search`).** The number step reported the most frequent failure (125 sets outside the answer range) instead of the furthest one (75 sets inside it, all failing the typical-mistake check). So the writer was told its answers were "never inside" the range. It now reports the furthest failure and mentions the out-of-range sets alongside.
+- **Engine limit, not changed.** Formulas 247, 248 and 251 know two typical mistakes between them (none for α = Λm/Λ°). One of them pushes the backwards step out of range. So at most one mistake changes the answer, and `MIN_TRAPS = 2` can never be met for this formula set: rewriting cannot help.
+
+### `real`: blanks with problems go back to the writer, as in the pipeline
+Second real-question check (2023P2_Q11, He⁺ orbit radii → wavelength). The writer turned the answer blank "____" into a placeholder `[[blank]]`. `blank_problems` caught it, but `real` then said "next: solve".
+- `real` now sends the writer back with the problem, up to `WRITE_TRIES` times, as `write_and_solve` does.
+- After that it stops.
+- `solve` refuses a question whose blanks still have problems.
+
+Also seen in this run: the writer gave orbit radii continuous ranges (50–300 pm), though a radius exists only at 26.45 n² pm for He⁺. The engine catches this: `find(step_61, 'n')` accepts only whole n, so every value set fails and the number step would tell the writer the situation is impossible (checked offline). Nothing changed for it.
+
+### Coherence cut-offs under trial: current (95th percentile) against looser (99th)
+`step_by_step.py check` prints Jev's three coherence scores once and gives the verdict under both cut-offs:
+- **Current:** the calibrated 95th percentile of the real questions' scores. 9 of 77 real questions are rejected; 14 of 14 bad ones are caught.
+- **Looser:** the 99th percentile of the same scores. 2 of 77 real questions are rejected; 14 of 14 bad ones are still caught.
+
+`--cut current|looser` decides the stage. The pipeline itself still uses the current cut-offs (`qfirst.COHERENCE_PERCENTILE = None`) until the author chooses, after two random real questions. Trigger: 2020P1_Q15, which is in the calibration set, rejected at glued 18 % and arbitrary 45 %. `real` now draws only from questions not tested yet (`output/step_by_step/real_tested.json`).
+
+### Only the picked values must matter; a faked use is seen through
+The first real-question check (`step_by_step.py real`, 2020P1_Q15, fuel cell → adiabatic compression) found three things:
+- **Luna's program was right.** On the real numbers it gave 13.3248 against the official 13.32.
+- **Our rule rejected a real JEE question.** The question states "standard conditions at 1 bar and 298 K", which the answer does not need, and our every-value rule rejected that.
+- **The coder faked using the values.** To satisfy the rule, Luna wrote `(P / P) * (T / T)` into its program.
+
+Changes:
+- **The rule:** only the values the number step picks (range blanks) must matter. The writer's fixed values may be background, as in real papers (decided by the author). `pick_numbers` and the probe exempt every fixed value; the writer's rules say so.
+- **The coder's prompt:** never put a value into the program only to have used it (`P / P`); a value the answer does not need is left out.
+- **Bug fixed (`sandbox._input_role`):**
+  - The check moved 1 bar to 0. `P / P` then failed, and the failure counted as "P matters".
+  - A change the program cannot take now proves nothing; only a value that cannot be changed at all counts as used.
+  - Only true counts (ints) move by one. A float such as 298.0 moves by a few per cent.
+- **Replayed offline** on the user's run: the number step now passes (answer 9.561 K on new numbers, 4 typical mistakes, 1.0 % rounding). The fake `P / P` is reported as unused.
+
+## 2026-11-17
+
+### `step_by_step.py real`: a real JEE Advanced question through the pipeline (a check, never saved)
+`python tools/step_by_step.py real [--id 2018P1_Q8]` takes a random real physical question from `data/jee_advanced` (the 49 whose formulas are all engine steps, as `tools/calibrate_coder.py` selects them). The pipeline's writer model puts its numbers into blanks with ranges under the same rules it writes with (`qfirst.BLANK_RULES`, moved out of the writer's prompt; the prompt is unchanged, checked character for character), and gives each blank's real number. Then the usual stages run: `solve`, `numbers`, `check`, `judge`. `solve` also runs coder 2's program on the real numbers and compares the result with the official answer. A real question is never saved to the question bank. The pipeline itself is not changed for this.
+
+### New core flow: blanks → coder 2's program → code picks the numbers
+The answer is no longer fixed before the solving program exists (the number program computed the "intended" answer and the solving program only had to reproduce it).
+- **Writer:** every number in the question is a blank `[[name]]`. Each blank gets a realistic `"range"`, or a `"value"` only where the value belongs to the substance or situation (a molar mass, E°, ΔfH°, the 8 corners of a cube). A count is marked `"whole": true`. The writer also gives an `"answer_range"`. The constants of the Given line are blanks with their standard value. `qfirst.parse_values` and `blank_problems` handle this; problems with the blanks go back to the writer before any program is paid for.
+- **Coder 2 (Luna)** writes the solving program from the question with its blanks and no numbers (`qfirst.write_blank_program` and `solver_program`). The blanks are variables of the program.
+  - A probe runs the program on value sets from the ranges. A program that crashes, assigns to a blank, never uses one, or leaves out a drawn formula that cannot be dropped goes back to the coder with the error.
+  - "cannot" goes to the writer.
+  - If no value set runs twice in a row, the ranges are at fault and the writer is told.
+- **Coder 1, the number step** (code, not a model: `qfirst.pick_numbers` → `sandbox.search_numbers`) draws value sets in the ranges. Wide positive ranges are drawn log-uniform, every value is rounded to 3 significant figures as printed, and counts are whole. Each set runs through coder 2's program. A set is taken only if:
+  - the answer is in `answer_range`;
+  - rounding the steps to 3 figures moves it by at most 2 % (`FRAGILE_TOL`; the 2.03 pm iron question);
+  - at least 2 typical mistakes change it;
+  - every blank is used (except stated constants the formulas hold).
+- **Every blank must matter:** a blank the program never reads, or that feeds neither a formula nor the answer, is rejected. A blank that feeds the formulas but cancels in the answer (T in a ratio of two isothermal steps) is allowed: no value of it can contradict the others.
+- The picked values are then printed in the question (`filled_question`), exactly the values the program ran on. Failures go to the writer in its own terms (answer range never reached and where the answers fell, too fragile, too few mistakes, a blank unused, an impossible situation). A program that breaks or hangs on other values goes back to the coder, never to the writer.
+- **Removed:** the number program (`write_forward`, `construct_numbers`, `sandbox.run_forward`, `question_checks_from_numbers`, `forward_irrelevant`, `_find_hint`) and `models.NUMBER_CODER` (Devstral). Questions without blanks still go through the old `program_for` path only when `REQUIRE_PLACEHOLDERS` is off (tests).
+- **Unchanged:** draw, design and the Jev design check, the Jev level check (it now reads each range blank at a typical value), the code checks, Jev coherence, the ladder (kept as it is), the verifier, refinement, saving and the solution. A rewrite sees the earlier blanks and ranges. A parked question stores its values (`qfirst.preset`) and is re-run on them.
+- **`tools/step_by_step.py`:** the stages are now draw → design → write → solve → numbers → check → judge → save → solution. A program that breaks on the picked numbers sends you back to `solve`, with the error, instead of to `write`.
+- **Verified offline** (no API call): 411 tests pass. A scripted dry run of every `step_by_step` stage from draw to solution ran end to end, including the "back to solve" path, and the coder's prompt contained no numbers.
+
+### Jev's level check reads the question as it will be printed
+`qfirst.preview_text` prints the writer's values the way `fill_template` does (a whole-number count as "8", not "8.00 corner positions"), so Jev's level check reads the same text the student will.
+
+### Inorganic pipeline: plan
+`docs/inorganic_pipeline_plan.md` (draft): the question-first pipeline for inorganic (multiple correct, single correct, integer count, numerical); the answer key from the inorganic reaction graph, new property functions (oxidation state, unpaired electrons, shape, MO bond order, CFSE, isomer counts) and fact tables. Physical's stages, roster and calibration tools carry over.
+
+### One design per draw
+`qfirst.DESIGN_TRIES = 1` (was 2): a design Jev rejects means a new draw, not a second design on the same formulas (a Gemini Pro design costs 4-8 cents; the K_p / K_c / Dalton draw gave the same contrived equality three times).
+
+### The "condition" twist asks for a physical state, not an equality
+`qfirst.TWISTS["condition"]`: the condition the experimenter sets brings the system to a physically meaningful state (a given degree of dissociation, a partial pressure or mole fraction reaching a value, a precipitate just forming, a reaction becoming spontaneous); never an equality of quantities of different kinds. "Two results become equal" drew "Kc numerically equal to a partial pressure" in three designs running (PCl₅, N₂O₄; Jev rejected the last: invented relation 76 %, arbitrary condition 72 %).
+
+### Jev checks the design (calibrated), before anything is written
+- `tools/check_design.py`: Jev's three coherence questions on the saved design. On the PCl₅ design ("Kc numerically equal to the partial pressure of PCl₅") Jev gave invented relation 78 %, arbitrary condition 71 %, glued parts 7 % (question cuts 18 / 31 / 13 %).
+- `tools/calibrate_design.py reverse`: Gemini Flash describes ~30 real JEE Advanced questions (2+ engine formulas, `docs/advanced_formula_map.py`) in our design format, saved for review (`knowledge/design_calibration_designs_physical.json`): each checked against its question and official answer by Claude (AI assistant) as a suggestion (28 ok; 2 bad: 2018P2_Q12 has a sign error in ΔS° = ΔG°/T, 2020P1_Q16 names Al instead of H₂SO₄ as limiting), shown in `knowledge/design_calibration_review_sheet.md`; `accept` records them as the author's review, with who suggested them; `score`: Jev on the reviewed real designs and 10 bad ones (the three failed designs of 2026-11-16/17 and hand-written ones, by fault); per-fault cut = 95th percentile of the real designs; written to `knowledge/design_coherence_calibration_physical.json` only if it catches at least half of the bad ones.
+- `qfirst.design_problems` (and `design_plan_text`): with that file, a design Jev flags is redesigned before writing (`write_and_solve`, `step_by_step.py design`); without it, no check (an uncalibrated design check rejected good designs, 2026-11-16). Tests added (399 pass).
+
+### Designer Gemini 3: its own thinking level, room to finish
+Gemini 3 models ignore numeric thinking budgets (reported by developers: a 32768 and a 1024 budget gave the same thinking; Google: use thinking_level). A Gemini 3 designer now gets no budget but a thinking level, "low" (`models.GEMINI3_DESIGN_LEVEL`, `step_by_step.py design --effort low|high`; the cheaper one, to be raised if its designs are shallow), and an 8000-token cap (`GEMINI3_DESIGN_CAP`, `--cap`); only the tokens used are paid.
+
+### Design prompt: a length limit
+The design prompt says the thinking and the full design together must not exceed 2500 words. Gemini 3 Pro ignores numeric thinking budgets (it thinks at its default "high" level); on OpenRouter too the design was cut off at 6500 tokens after ~6000 of thinking ($0.08, NOBr), as twice on airouter.
+
+### Designer on airouter: an effort level, not a token budget
+On the design prompt Gemini Pro on airouter ignored the 3000-token budget (the cut-off replies show ~4800 and ~6300 tokens of thinking and ~200 of design; $0.14). On airouter only, `design_question` sends `reasoning_effort` = `models.AIROUTER_DESIGNER_EFFORT` ("medium") with a reply cap `AIROUTER_DESIGN_CAP` (6500); OpenRouter keeps the token budget. `tools/step_by_step.py design --effort low|medium|high --cap N` for one run.
+
+### Designer: room for Gemini Pro's longer design
+The design call's reply limit is thinking + 3500 tokens (was + 2000): Gemini Pro on airouter kept to its thinking budget (854 of 1000 on `tools/check_thinking.py`) but its design text did not fit in 2000 (NH₄HS design cut off, $0.06). At most ~8 cents a design.
+
+### find() for whole-number inputs; coders without thinking; number-coder candidates
+- `sandbox` `find()`: a whole-number input (kinds integer/count/posint: x in AxBy, a charge) is found by trying the whole numbers in its range (up to 200) instead of bisection, which landed on 1.0000000000000002 and was refused by the step (Codestral, 2022P2_Q3). Test added (397 pass).
+- `LLM_ROUTER=airouter` (environment) sends every call airouter carries to airouter even with an OpenRouter key: in PowerShell `$env:OPENROUTER_KEY=""` deletes the variable and .env sets it again. `tools/check_thinking.py` shows each call's router.
+- `models.AIROUTER_STANDINS`: on airouter, Devstral (the number coder) is served by Qwen3 Coder Next; on OpenRouter Devstral itself. Every question record has `served_by` (`models.SERVED`: roster model → router:model that really answered), so the paper can say which model made each question's numbers. After the import line was named in the prompts, Qwen's 8-question run: 6/8, 1.25 tries a question (1.62 before), $0.0025 a question.
+- Number-coder stand-in on airouter: Qwen3 Coder Next (`alibaba/qwen3-coder-next`, Alibaba, a family no checker uses, does not think): 6/8 real JEE Advanced questions right, 1.62 tries a question, $0.0032 a question, run one question at a time (`--parallel 1`: four at once, airouter dropped connections). Its basic slips (an import line in 5 of 8 first programs, one syntax error) are now named in both coder prompts: math is already there, any import line is rejected. Mistral Large 4 ignored a 1500-token thinking budget on the coder prompt (empty replies) and Mistral Medium 3.5 without thinking answered a test wrongly.
+- `models._client`: timeout 180 s and no silent SDK retries (its defaults, 10 minutes and 2 hidden retries, let a stuck airouter call hang a run with no output); a timeout is retried by `core.llm.call_with_retry`, which prints it. `models.THINKING_BUDGET` and `tools/calibrate_coder.py --thinking N --verbose`.
+- `models.THINKING_OFF` (models asked not to think when a call sets no thinking) and `tools/calibrate_coder.py --no-thinking`.
+- Number coder on airouter (Devstral is not there), 8 real JEE Advanced questions: Mistral Large 4 returned nothing in 5 minutes (a thinking model; ~$0.05); Codestral 2/8 right (wrong formula use, solve_for brackets, the find() case above).
+- `tools/calibrate_coder.py` keeps each coder's result beside the others' (a failed run had replaced Devstral's 8 programs); the junk Mistral Large 4 entry (invalid model ID) and Devstral's 2-question run were removed from the result files (backups kept outside the project).
+
+### Ladder bottom step: Llama 3.3 70B instead of phi-4
+phi-4 is not on airouter.in. From the saved calibration (`calibration/ladder_separation.py`, no new calls): phi-4 fails 14.3 % of easy Mains / 52.9 % of Advanced-level (gap 38.7); Llama 3.3 70B 28.6 % / 66.2 % (gap 37.6, $0.0010 a question); Llama 4 Scout gap 11.6; Llama 4 Maverick gap 13.7. `models.LADDER[0] = ("llama-3.3-70b", "meta-llama/llama-3.3-70b-instruct")` (airouter: `meta/llama-3.3-70b`); Meta has no other role. Trade-off: twice as many easy Mains questions fail the bottom step and go on to the GLM label.
+
+### Router: OpenRouter first, airouter.in when it runs out; Jev on airouter
+- `models.router(model)`: OpenRouter while it has a key and credit; on its first HTTP 402 of a run (`openrouter_out()`) every later call goes to airouter.in, and the failed call is repeated there (`ask_json`, `refine._jev_post`). Models airouter does not carry (`AIROUTER_MISSING`: microsoft/phi-4, mistralai/devstral-2512) always go to OpenRouter.
+- A model OpenRouter does not carry (HTTP 400 "not a valid model ID", e.g. Mistral Large 4) goes to airouter for the rest of the run, and the call is repeated there.
+- Jev on airouter works (`tools/check_models.py --jev`: P = 0.93, choice "combustion" 100 %, level 0.04; OpenRouter gave 0.93, 100 %, 0.05 on the same questions). airouter's own decisions format, learnt from its errors (undocumented): `input` as text (the state as JSON), `questions` as a list with each question's id under `name`, yes/no as `predicate`, choice options as `choices: [{value, description}]`, score levels as `levels: [{label}]`; answers come back with `probability` and lists of probabilities (`refine._airouter_question`, `_airouter_answer`). The call goes through the openai client (`client.post("/decisions")`): airouter's Cloudflare closed urllib's connections. Retries pause 5/10/15 s.
+- Jev on airouter (`typesafe-ai/jev-1.14.0`) answered "403 error code: 1010": Cloudflare refuses urllib's own User-Agent; `_jev_post` sends one.
+- `tools/check_models.py` shows each model's router (`op`/`ai`) and its tokens out (a long wait with ~5 tokens is the router's delay, hundreds are thinking). Tests: 395 pass with OpenRouter only, airouter only, and both.
+
+### airouter.in as a second router
+OpenRouter needs an international card; airouter.in takes UPI. `core/models.py`: with `AIROUTER_KEY` set in .env every call goes to airouter (`router()`, `api_key()`, `_client()`, `decisions_url()`), the roster keeps OpenRouter's names and `route_model()` gives airouter's (`zai/`, `mistral/`, `typesafe-ai/jev-1.14.0`); OpenRouter-only request fields (fallback `models`, `usage.include`) are not sent; cost is read from `cost` or airouter's `total_cost`. Jev goes to airouter's `/v1/decisions` (`refine._jev_post`, which now reports the router's error text). `tools/check_models.py` prints the router and each model's routed name. Not on airouter (2026-11-17): microsoft/phi-4 and mistralai/devstral-2512. Tests: 394 pass, with and without an airouter key.
+
+### Designer: Gemini 3.1 Pro, thinking 3000 tokens
+The design decides whether a question is JEE Advanced, so it gets the strongest model of a maker-only family, cost second: `models.DESIGNER = "google/gemini-3.1-pro-preview"` (pinned, not "pro-latest", so the paper names one model), `DESIGNER_THINKING = 3000` (reply limit 5000; at most ~6 cents a design). Cheaper designers failed live: Gemini 3.8 Flash (a JEE Main design; an impossible one), Kimi K2.6 (ignored its thinking budget; with thinking off, a self-contradictory design). Run `tools/check_thinking.py google/gemini-3.1-pro-preview` before relying on the budget.
+
+### Design prompt: a checklist; tools/check_thinking.py
+- `qfirst.design_question`: before answering, the designer checks its design is physically real, determined by the given data, not a textbook one-liner, and that "hidden" is truly unstated yet not needed; each from a failed live design (N₂O₄ at T = 1/R ≈ 12 K, a volume with α unknown and no K, polonium "a = 2r" stated while hidden).
+- `models.ask_json(reasoning_tokens=0)` switches thinking off; `tools/step_by_step.py design --thinking N` sets the designer's budget for one run (0 = off). Kimi K2.6 ignored a 1000-token budget (thought 1800, cut off, no answer); with thinking off it answered in 14 s.
+- `tools/check_thinking.py MODEL...` (`--no-thinking`): one short chemistry task with a thinking budget (`reasoning.max_tokens`); reports tokens thought, whether the JSON came back, seconds and cost: whether a candidate designer (Kimi K2.6) keeps to a budget before it is used.
+
+### Designer: a fixed thinking budget
+At "medium" effort the designer thought until its 8000-token reply was cut off ($0.03, no design: phosgene ⇌ CO + Cl₂). `models.ask_json(..., reasoning_tokens=N)` sends OpenRouter `reasoning.max_tokens` (a thinking budget inside the reply's limit); the design call thinks for `models.DESIGNER_THINKING` = 3000 tokens with 2500 left for the design (~2 cents at most).
+
+### Designer thinks less
+`models.DESIGNER_EFFORT` "high" → "medium" and the design call's limit 16000 → 8000 tokens (at most ~3 cents): on its first live run (Solid State, inverse twist) Gemini 3.8 Flash at "high" spent all 16000 tokens ($0.06) thinking aloud in its reply and returned no design; at "low" it returned a JEE Main design (polonium, density → edge → radius, packing fraction unused; Jev's level check scored the written question 1.73, above the real Advanced median of 1.66, so it passed).
+
+### The number program gets its own coder (Mistral Devstral 2)
+The number program computes the question's numbers, so it is part of making the question; GPT-6 Luna wrote it and also sits on the ladder, so OpenAI judged what it had helped make. `models.NUMBER_CODER = "mistralai/devstral-2512"` (fallback Codestral) writes it now (`write_forward`, `coder_for(ladder_ok=False)`; the same failure twice stops, no escalation); Luna (`models.CODER`) writes only the solving program, with no fallback (Codestral is Mistral, now a maker). Mistral is used nowhere else. Makers: Google (design, writing, solution text) and Mistral (numbers); checkers: OpenAI, Microsoft, Z.ai, Anthropic, TypeSafe. Qwen3.8 Flash and DeepSeek V4 Pro, both thinking models, returned nothing within minutes (DeepSeek spent $0.05); Devstral 2 does not think: 2/2 real JEE Advanced questions right on the first try at $0.0012 each. `tools/check_models.py` checks it. Tests pass (393).
+
+### The solving program only has to get the answer
+On 4 real JEE Advanced questions (`tools/calibrate_coder.py --ids`) Luna reached the official answer every time, but our checks threw out 3 of the 4 programs: a formula used on both sides of a ratio looked unused, ²³⁸₉₂U was not read as 238 and 92, and "equimolar" was not read as 0.5.
+- `qfirst.program_for(..., built=True)`: a program that runs is kept; its answer is compared with the engine's (or the official) one by the caller. `program_problems` (exact quotes, every formula called, dummy calls, every stated number taken) and `_quote_found` are removed. Without an independent answer (an old question without placeholders, `built=False`) the program is the answer key and must still call every formula.
+- With numbers built by the engine, the number program decides which formulas matter: `construct_numbers` notes its irrelevant formulas, `forward_irrelevant(bb)` reads them, and formulas are dropped from those; `question_problems(..., built=True)` skips the formula and trap checks (`question_checks_from_numbers` already made them). `tools/step_by_step.py` the same.
+- `sandbox`: a step's results are scaled for every call at once and then for each call alone (`_scalings`), so a formula on both sides of a ratio counts as used (number program and solving program).
+- `tools/calibrate_coder.py --recheck` reruns the saved programs and compares with the official answer. Tests updated (393 pass).
+
+## 2026-11-16
+
+### Coder chosen on real JEE Advanced questions
+`tools/calibrate_coder.py` (new): each candidate coder writes the solving program (`qfirst.program_for`, up to 3 tries, no hand-over) for 12 real JEE Advanced physical questions (default; `--limit`), the same set for every coder, spread over 2012–2024. Pool: numeric answer, every formula of the solution an engine step (`docs/advanced_formula_map.py`), no graph or figure (49 questions). An answer is right within 2 % of the official one or at its stated decimals. Reports per coder: right (some try reached the official answer), accepted (the pipeline's checks passed too), tries per question, cost; a coder stops at `--max-spend` (default $0.15). Written to `knowledge/coder_calibration_physical.json`. Supersedes `tools/compare_coders.py` (one generated question) for the choice.
+
+### Bad questions rejected on review; honest difficulty labels
+- `tools/results.py reject`: GEN_20261115T221723 (invented relation ΔG° = −(purity × peaks × 100)) and GEN_20261012T235813 (garbled LaTeX text) are in results/rejected.json with their reasons (outputs/ keeps the raw records; a backup was taken). `qfirst.accepted_questions` now skips every rejected question, so the writer is never shown one as a "used situation" and the copy check ignores them (two earlier smoke-test rejections were already in the list).
+- Labels: by the ladder's own calibration, "phi-4 fails, GLM solves" happens to 47 % of hard Mains questions and 38 % of real Advanced ones, so GLM-first cannot mean "advanced" by itself. `flow._judge`: a GLM-first question is labelled by Jev's calibrated level check (`advanced` at or above the floor, `mains_hard` below); before calibration, or if Jev is down, `advanced_or_mains_hard`. The record keeps `jev_level`. Acceptance is unchanged. Luna-first stays `hard_advanced`, none `frontier`.
+
+### Jev coherence check calibrated per fault
+`tools/calibrate_coherence.py` (~1 cent): Jev's three coherence questions (invented relation, glued parts, arbitrary condition) on 77 real JEE Advanced physical numerical questions (GOOD) and 14 known bad ones (the two such questions the pipeline once accepted, and 12 hand-written ones, 4 per fault, labelled). Per fault, the cut is the 95th percentile of the real questions' scores (≤ 5 % of real questions flagged for it); the share of bad ones caught is reported, and compared with the old single 50 % cut. Written to `knowledge/coherence_calibration_physical.json` only if it catches at least half of the bad ones; `qfirst.coherence_problems` reads the per-fault cuts (`_coherence_cuts`), else 50 % as before.
+
+### Jev level check after writing; solutions by Gemini, not Luna
+- `qfirst.level_problem`: right after the writer (before any program is paid for), Jev's ordered-scale ("score") question places the question, as a reader sees it (`preview_text`: the writer's values in, values still to compute as "…"), on `LEVELS` (0 JEE Main easy … 4 JEE Advanced hard). Below the floor it goes back to the writer with what to change. The floor comes only from `tools/calibrate_level.py` (real physical numerical questions: 93 JEE Main, 77 JEE Advanced; floor = the 20th percentile of the Advanced scores; written only if at most half of the Main questions reach it); with no calibration file the check never blocks. The calibration also scores our accepted questions. `refine.jev_score`; `tools/check_models.py` checks a score question; the stage tool shows the preview and the level after `write`.
+- `models.SOLUTION_WRITER` = google/gemini-3.8-flash (was GPT-6 Luna, also the coder and the ladder's top solver). Luna now: the coder and the top of the ladder.
+
+### The design step: a stronger model, built around a hidden link; the writer writes it up
+Review of the 11 accepted physical questions: 3 genuine JEE Advanced questions (each turns on one conceptual link), several Mains-level ones labelled "advanced", 3 flawed. The weak ones are long chains of plug-ins: the design was done by the writer's model (Gemini 3.7 Flash, reasoning "low") with a prompt asking for a scenario.
+- `models.DESIGNER` = google/gemini-3.8-flash with reasoning "high" (Google: the family that only generates; OpenAI, Microsoft, Z.ai, Anthropic and TypeSafe judge). `--designer` on both scripts (e.g. ~google/gemini-pro-latest to compare).
+- `design_question`: ONE design, chemistry only (no format rules), around a HIDDEN LINK: the quantity two formulas share but the question never states, what the student must notice there, the trap at it, what is given and what stays hidden; two real JEE Advanced questions with the twist set the level; no giveaways. Old two-design replies are still read.
+- `write_question` with a design: its job is to WRITE UP the design faithfully: state exactly the "given" quantities, never the "hidden" ones or the point to notice, data not in the order used; no examples (the design carries the level). Both paths: no giveaways (ratios, n-factors, equivalent masses).
+
+### Design gates off (`qfirst.DESIGN_GATES = False`)
+Live run: the Jev plan check (uncalibrated 50 % cut-off) rejected 3 of 4 designs as "vague" at 50-61 %, concrete ones included, and the feasibility check (run by Luna since the coder change) rejected a design for needing a formula run backwards, which find() does. Two of three draws died before any question was written. Both checks are off; impossible designs are still caught after the number program (`question_checks_from_numbers`) and by Jev's check of the finished question. The functions stay (tests turn them on).
+
+### Feasibility check: the coder's token budget
+Live run: "[coder] unusable reply (empty completion (finish_reason=length))" twice: the design's feasibility check still allowed 800 tokens, enough for Codestral, but Luna (a thinking model) used them all thinking. It now gets `models.coder_tokens(CODER)` with reasoning effort "low", and a reply cut off at the limit is not asked again at the same limit. Every other coder call already had the full budget.
+
+### Luna codes; the question's own flaws are found before the solving coder
+Live run: every basic error (undefined names, find() misused, syntax errors, wrong units, wrong quotes) came from Codestral; the question-level rejections ("only 0 of the typical mistakes changes the answer", "step_72 … does not affect the answer") were found only after the solving coder and its stronger retry had been paid for.
+- `models.CODER` = openai/gpt-6-luna for both programs (≈ the same price per call as Codestral, ~$0.0017 vs $0.0015; correct programs whenever it ran); Codestral only as the provider fallback; `CODER_STRONG` = None (no escalation).
+- `sandbox.run_forward` also returns the formulas that change no stated or asked value (`irrelevant_steps`) and the typical mistakes that change one (`traps`), at no model cost. `qfirst.question_checks_from_numbers`: an unneeded formula (when dropping it would leave < 3) or fewer than `MIN_TRAPS` mistakes goes back to the writer at once, in plain words, with the mistakes it could use. The van der Waals question accepted today passes (4 mistakes); the photoelectric difference question of this run is caught (0 mistakes: the work function cancels).
+- `explain`: "does not affect the answer" also becomes "your question does not need the formula …".
+
+### Powers written as a^b
+One plain form for every power: the code prints 5.20 × 10^14 (was 10¹⁴) and the writer is told to write every power as a^b (2^6, e^12, (1/2)^3). `stated_numbers` reads each power as the one number it is (10^-3 → 0.001, 2^6 → 64, e^12, (1/2)^3 → 0.125; superscripts too; Fe³⁺, cm³ are not powers of a number). A count the writer gives as a whole number (6 half-lives) is printed as 6, not 6.00.
+
+### Powers of ten: the code prints them, the writer never writes them
+Live run: the writer gave "… Hz (× 10¹⁴ Hz)": a placeholder followed by × 10¹⁴ and a unit with a power of ten, which code cannot use. The writer prompt still said "powers of ten as × 10ⁿ" (from before placeholders): removed; now a POWERS OF TEN rule (RIGHT "[[nu0]] Hz" with 5.2e14 in free; WRONG "[[nu0]] × 10¹⁴ Hz" with 5.2 or unit "× 10¹⁴ Hz"), free values are plain JSON numbers, the unit is plain. `construct_numbers` sends such a draft straight back before any coder call.
+
+### The number program sees what each chosen value means
+It got the writer's values as bare JSON ({"P_aq": 0.031, "R_const": 0.0821, ...}) and had to guess each name's meaning and unit. `qfirst.named_values`: each chosen value and each value to compute is listed with the words of the question around its placeholder (meaning and unit), or marked as the asked quantity / a value not shown.
+
+### Coder prompts: the exact calls written out, and the mistakes named
+Both coder prompts (number program and solving program) now carry EXACT CALLS (`qfirst.exact_calls`): for each drawn formula, the forward call and, for each numeric input, the backward find() call, with the engine's own argument and output names; a HOW TO PROCEED rule (all inputs known → forward line; output known → backward line; two unknowns → solve_for); and COMMON MISTAKES, each WRONG/RIGHT from today's runs (the output under its own name in find, an output passed as an input, an undefined name, typed formulas or dummy calls, positional arguments / C / imports). find() still accepts the output's own name as a safety net.
+
+### find() forgiving; the writer is not sent backwards; the number program stops sooner
+Live run (vapour density → α → Kp; ΔG° → K; wet H2 over water):
+- `sandbox.find`: the target may be given under the formula's own output name (`equilibrium_constant=0.21`, written 5 times instead of `result=`); a wrong or missing input name is reported at once with the call to write (it was hidden inside "no value of … gives …").
+- `construct_numbers`: the asked quantity in free with nothing derived now says "REMOVE it from free: the engine computes it". The old "list the observed results in derived" made the writer turn the stated zinc mass into a derived value (a backward construction: `NameError: mass_Zn` ×3). The writer prompt says when the asked quantity belongs in free.
+- The number program stops after the same failure twice (it has no stronger coder to hand over to; it tried a third time).
+
+### The first set over the floor is taken
+`best_draw` scores a batch 3 at a time (`FIT_PARALLEL`) and takes the FIRST set at or over the floor; the sets of the batch not yet sent are cancelled (not scored, not paid).
+
+### Formula-fit floor 0.60, drawn until reached
+Calibration (Jev): real JEE Advanced sets median 66 %, random draws median 32 %. `qfirst.FIT_FLOOR` = 0.60 (66 % of real sets, 54 % of real 3+-formula sets and ~3 % of random draws reach it: ~30 sets, ~$0.001 a draw); new batches of 6 are drawn until one reaches it, `FIT_BATCHES` = 30 only as a stop if Jev never says yes. The calibrated 0.50 stays in the file.
+
+### Formula-fit floor calibrated on real JEE Advanced sets
+`tools/calibrate_fit.py`: Jev scores the formula sets of the 53 real JEE Advanced physical questions that use 2+ formulas (docs/advanced_formula_map.py) and 60 random draws; the floor is the 20th percentile of the real scores (80 % of real JEE sets reach it), with the share of random draws that reach it, written to `knowledge/fit_calibration_physical.json` (~half a cent). `qfirst.best_draw`: while the best of a batch of 6 is under the floor, another batch is scored (at most `FIT_BATCHES` = 3); the best set seen is written either way. Without the file: best of one batch, as before.
+
+### Strong coder: back to GPT-6 Luna, with the number program kept off the ladder
+Tried on the van der Waals solve: Grok Code Fast 1 is deprecated (404); Grok 4.3 costs ~3× Luna; MiniMax M2.5 spent 1.5¢ on one reply and returned the prompt's placeholder `{"cannot": "the reason"}`. Luna solved it for 0.35¢ (the stage). `CODER_STRONG` = openai/gpt-6-luna again, but `coder_for(ladder_ok=False)` for the number program: the answer the ladder is graded against never comes from a ladder model; the solving program, which Luna may write, only has to reproduce it. `write_program`: the format line no longer shows a placeholder reason, and a reply whose "cannot" is a placeholder (or too short, with no code) is an unusable reply, not a verdict.
+
+### Refinement: one Jev choice question over the cases
+`refine.classify` asked Jev 8 separate yes/no questions (each judged alone, probabilities not comparable). Now ONE `choice` question (Jev's own type: `criteria` = the unused cases; answer `choice`, `confidence`, `probabilities` summing to 1) via `refine.jev_choose`; `_jev_post` is the shared request. The pick prints "Jev's pick: <case> (confidence …)". `tools/check_models.py` checks a choice question too.
+
+### The last coder try goes to xAI, not to a ladder member
+`models.CODER_STRONG` = minimax/minimax-m2.5 ($0.15/$1.15 per M; Grok Code Fast 1 is deprecated and Grok 4.3 cost about 3× as much; was openai/gpt-6-luna, the ladder's top solver: a misreading shared by the solving program and the ladder would look like agreement). MiniMax is a family used nowhere else in the pipeline. In `tools/check_models.py` and `ROSTER`.
+
+### Readable solutions: symbols are not units; no repeated steps
+GEN_20261116T101250 was saved without a solution: (1) `solution_check.arithmetic_errors` read "8a/(27Rb) = (8 × 3.60)/(27 × 0.0821 × 0.0428) = 303.7" as 8/27 = 303.7, because `core.units` takes 'a' for a year and 'Rb' for a ronnabarn: a calculation is now checked only when every unit word is a chemistry unit (`_chem_unit`); false arithmetic is still caught. (2) `flow.trace_text` listed the Boyle step four times (the program's repeated calls) with 12-digit values: each distinct calculation once, values to 5 figures. `tools/step_by_step.py solution` writes the solution again for the question saved last.
+
+### First question accepted stage by stage; `save` stage
+Van der Waals (formulas 107, 106, 108, 105, 103): T_B and B → a, b; P from van der Waals; P_r = 0.841. Ladder: phi-4 and GLM failed (genuine difficulty), GPT-6 Luna solved; both solved with the insight hint → accept, hard_advanced. About 2.5¢ along the successful path. `tools/step_by_step.py`: `judge` keeps the whole decision; `save` writes an accepted question exactly as the full pipeline does (`run_groundup_final.save_accepted`: record, coverage, duplicate store, results/); the candidate carries the graph's own edge ids. A "reword" decision becomes the next `write`'s feedback.
+
+### Coder escalation, a token cap for Codestral, built numbers are not "inconsistent"
+Stage run (van der Waals solve): Codestral looped on one nested call (step_103(P=step_108(P=step_107(... ) until 12000 tokens, twice ($0.026, unparseable), then derived a negative a; the writer was told its data were inconsistent, though the engine had built them.
+- `models.CODER_STRONG` (openai/gpt-6-luna): `qfirst.coder_for` gives the last coder try of a question (or the next one after the same failure twice) to it, with the errors so far; both the number program and the solving program. No escalation when --coder already names it.
+- `models.coder_tokens`: 4000 for Mistral (non-thinking) coders, 12000 for thinking ones.
+- `explain(..., consistent=True)` when the numbers were built by the engine: an impossible value in the solve means a misreading, and the writer is asked for plainer wording, not new data.
+
+### Dummy calls are the coder's problem; relevance scales every result
+Stage run: the solving program typed the van der Waals, Boyle and B formulas by hand and called steps 106, 105, 103 at the end with their results thrown away ("Call all required functions at least once"). `program_problems`: a drawn step that is called but irrelevant goes back to the CODER ("use each function's result instead of typing its formula"); both coder prompts say so. `sandbox`: the relevance test scales a step's other results too (formula 107's Tc and Pc beside its answer), not only the answer: an honest program using out['Pc'] made 107 look irrelevant. Tests with both programs.
+
+### NameError hints for the solving coder
+Stage run: the solving program failed three times on "name 'C' is not defined" (the coder wanted a constants module). `_coder_hint`: a NameError now says what is predefined, to define the name inside solve(), and, for C/R/F/N_A..., that constants are taken from the question with given(). Used by both coders.
+
+### Unneeded formulas are dropped, not rejected
+A drawn formula the solving program does not use, or whose result does not change the answer, is dropped while at least `FORMULAS_MIN` (3) remain (`qfirst.unneeded`; `program_problems(may_drop=True)`; `write_and_solve` keeps the rest as the question's formulas). With fewer left, the question is rejected as before. The stage tool does the same in `solve`.
+
+### Number program: a find() hint, and the writer is not blamed
+Stage run (van der Waals: a, b chosen; P from the vdW equation): the number program never ran formula 103 backwards and the writer was told its question "does not need" van der Waals, which it did. `find(step_103, 'P', result=a, ...)` computes it (P = 61.27 atm, P_r = 0.842). Now a "never calls step_N" in the number program gets `_find_hint` (the find() line to write) on the coder's retry, and its final failure is worded as the number program's, which `explain` does not turn into "your question does not need formula N".
+
+### Jev checks the plan right after the design
+Stage run: the next design used the K of 2CO + O2 ⇌ 2CO2 for FeO(s) + CO ⇌ Fe(s) + CO2 (an invented link) and offered alternative reactions; the feasibility check passed it (it asks only whether a program could run). `design_coherence`: Jev on the plan (invented relation, glued parts, vague reaction) before the feasibility check; a rejected plan is redesigned with the reason. Never blocks when Jev is down. In `tools/step_by_step.py design` too.
+
+### The designer and writer see each formula's conditions
+Stage run: the designer planned the Boudouard reaction C(s) + CO2 ⇌ 2CO for formula 154 ("all species gaseous") and formula 367 ("solid + X(g) ⇌ solid + Y(g)", Kp = p(Y)/p(X)), and the feasibility check passed it: both saw only "K_p = K_c (RT)^Δn_g". `formulas_text` now adds a "takes:" line per formula (each input's description and unit, where such conditions are written); the feasibility check rejects a situation that breaks a condition written in an input's description.
+
+### Stage-by-stage runner; --coder
+- `tools/step_by_step.py`: one stage per command (draw, design, write, numbers, solve, check, judge, show), each printing what it read and produced and its cost; state in `output/step_by_step/state.json`; a failed stage saves the writer-facing feedback for the next `write`. `draw --txs ... --twist ...` picks the formulas by hand. `--coder MODEL` on both scripts.
+- Coder calls: 12000 max tokens (a thinking coder such as GPT-6 Luna was cut off at 4000).
+
+### find(): a formula run backwards without hand-written mismatches
+Live run: the number program for a conductivity question (Ka, C → α → Λm → κ → R) had to invert three formulas and failed eight times (NameError, α = 10⁷, wrong input names). `sandbox`: `find(step_N, "input", result=..., **other inputs)` solves one formula for one input over the input's own range; both coder prompts explain it. Round trip tested: forward R = 5199 Ω, the backward solve gives C = 0.0200 M. `clean_code`: subscript digits outside strings become ASCII ('CO₂ = ...' was a syntax error), quotes keep theirs.
+
+### An unused formula is the writer's to fix, in the writer's words
+Live runs: many questions failed with "the program never calls step_N" / "does not change the answer", and the message went to the coder (who cannot fix a question) and reached the writer only in the coder's words. Now:
+- `explain(problem, drawn)` turns it into "Your question does not need the formula '<what it gives>: <formula>' … state the inputs this formula takes and make its result feed another formula or the answer"; an unused stated number becomes "remove that number".
+- The writer plans `links` first: one line per formula saying what it takes and where its result goes; a formula whose result is known by heart (Z = 4 for fcc) must be made necessary.
+- Both coder prompts: never type in a value a function computes (Z = 4, an n-factor, 22.4 L); call it.
+- `call_json(retry_cut_off=False)` for the designer and the writer only (council members are still re-asked).
+
+### Designer output limit
+Live run: the designer's reply was cut off ("Could not parse JSON") and asked for again at the same limit. The designer now runs with reasoning effort "low" and 8000 max tokens (was 3000, which Gemini's thinking used up); `llm.call_json` no longer re-asks a reply cut off at the output limit (finish_reason "length"), it fails at once with that reason.
+
+### Formula fit ranks instead of cutting off
+Live run: with the cut-off at 0.5, eleven draws in a row were skipped (scores 18-49 %), among them the classic Z / van der Waals a / Boyle / critical-constants set at 37 %: Jev's probabilities are not calibrated. Now each draw scores `FIT_CANDIDATES` (6) random sets in parallel and writes the best (`best_draw`, `pick_best`); a low score never stops the writing; Jev down: the first set. About $0.0002 a draw.
+
+### Formula-fit threshold 0.5
+`FIT_REJECT_BELOW` 0.35 → 0.5 and `MAX_FIT_SKIPS` 12 → 20: a skipped draw costs about $0.00003, a written one several cents.
+
+### The writer's values are variables of the forward program
+Live run: the number program failed twice with "NameError: name 'P_wet_H2' is not defined" (it used the writer's names without defining them). `sandbox.run_forward(..., free=)` now defines every chosen value as a variable under its own name before solve() runs; the prompt says so; a remaining NameError lists the predefined names. A formula set Jev rated 28 % was skipped before any writing, as intended.
+
+### Species names: states and subscripts
+Live run: the engine said 'CH4(g)' "does not appear in" 'CH4(g) + CO2(g) → 2CO(g) + 2H2(g)': the equation parser drops "(g)", the comparison did not. `chem.species_key` (no spaces, no state, ASCII digits) is now used wherever a species is matched (stoichiometry, equilibrium, thermo, advanced), and `parse_formula` accepts a state suffix ('H2(g)' was "cannot read").
+
+### Formula-fit check before writing; model check tool
+- `qfirst.formulas_fit`: before any design or writing, Jev gives P(the drawn formulas make one natural problem); below `FIT_REJECT_BELOW` (0.35) the draw is skipped. Jev unreachable: the draw goes ahead. (A ppm + % w/V + softening + Faraday II set cost a design, three writes and a dozen coder calls before failing.)
+- When the intended answer and the independent solve disagree, the writer is shown how the solver read each value.
+- `tools/check_models.py`: one tiny call to every model the pipeline uses and to Jev; prints ✓/✗ and the spend.
+- Draws Jev finds unfit do not count toward `MAX_DRAWS`; after `MAX_FIT_SKIPS` (12) the check stands aside, so a run always writes.
+- `_fmt_number`: never Python notation (96500 had become "9.65e+04", 1000 "1.00e+03"); the writer's values keep all their digits (101325 had lost one).
+- The forward coder is told the asked quantity's unit; the writer gives the intended value in the answer unit; a mismatch by exactly a power of ten tells the writer a unit is unclear.
+
+### Placeholders required; fewer wasted calls (live run of 2026-11-16)
+The writer ignored the placeholders and stated its own numbers (a negative equilibrium amount again); no question, $0.17.
+- `qfirst.REQUIRE_PLACEHOLDERS`: a stem without `[[name]]` placeholders is sent back before any coder call.
+- The coder stops after the same failure twice (it was 3 identical tries).
+- The writer runs with reasoning effort "low" and 8000 max tokens (it was ~$0.02 a call).
+- The spending cap is checked before every write attempt, not only per draw.
+- Computed values are stated to 4 significant figures (at 3, a rounded EMF moved a K by ~2 %, past the intended-answer check).
+- The forward (number) program also stops after the same failure twice; "comes out zero or negative" and "impossible result" now count as inconsistent data for the writer.
+- `sandbox`: the wrong-unit hint is added only to out-of-range errors (it was also added to a species-name error, which misled the coder).
+- Test: a stem with plain numbers is sent back once, then built from placeholders and accepted.
+- Second live run: placeholders worked. Fixed: `solve_for` treats an overflow at the far end of the widened range as "no root" (it crashed with OverflowError); a wrong input kind names the input and the value passed ("input electrons must be a whole number, you passed 1e-07"); free values written as "5.0 × 10⁻³" or "300 K" are read (they were dropped); a value the writer also gave for a derived name is ignored (the engine computes it); the writer is told not to state a free value the answer follows from directly when an observation should lead to it.
+
+### Numbers by construction
+The most common live failure: the writer invents numbers that do not agree (a purity of 72264 %, a negative equilibrium amount) because it cannot do the arithmetic in its head.
+- `core/pipeline/qfirst.py`: the writer writes every number as a placeholder `[[name]]`, gives values only for the independent ones (`free`, including the intended value of an asked input) and lists the ones that follow (`derived`: an observed EMF, a titre). `construct_numbers` has the coder write a forward program (`write_forward`) that computes the derived values (and the intended answer) through the engine's steps; `fill_template` puts them in (computed values to 3 significant figures, free ones with their figures). The independent solve() must then give back the intended answer (within 2 % or the rounding tolerance), or the question does not determine it and is rewritten. A question without placeholders goes the old way.
+- `core/engine/sandbox.py`: `run_forward` (solve() returns a dict of named values; every drawn step must be called).
+- Tests: a full run built this way; filling and refusals. Suite passes.
+
+### Connected draws, a per-run spending cap, a cheaper designer
+A run spent $0.21 on 6 draws and accepted nothing: most sets shared no quantity, so the writer refused them or the designer forced a link that then failed.
+- `core/pipeline/adapters.py`, `random_formulas` **changed**: the first formula at random, each next one at random among those sharing a quantity (a graph node) with one already drawn. In a sample of 1000 draws, 91 % reach their size and use ~1.8 chapters.
+- `run_groundup_final.py`: `--max-run-spend` (default $0.12; 0 for none); `qfirst.over_budget` stops new draws and refinement rounds once the run has spent it.
+- `core/pipeline/qfirst.py`: the designer proposes 2 designs, briefly, with a 3000-token cap (it was 3 designs, 6000 tokens, 40 % of a run's cost).
+- Tests: connected draws, the spending cap. Suite: 352 pass.
+
+### From the live runs of 2026-11-16 (Codestral coder)
+- `core/engine/sandbox.py`: only exact names `step_<number>` are formula calls (`step_100_result` is a variable).
+- `core/pipeline/qfirst.py`: the feasibility check counts any value a question can state (an EMF or E°, a temperature, a mass) as provided and rejects only a formula that cannot fit the situation (it had rejected an Ag/Cu refining design for "no EMF given"); conversions and constants a question states (760, 101325, R, F, N_A ...: `STANDARD_NUMBERS`) need not be taken with given(); the coder is told that steps return dicts, that there is no `C` inside solve(), and to take givens before inner functions; an impossible engine value (a purity of 72264 %) is explained to the writer as inconsistent data (`explain`), and the coder stops retrying when it gets the same impossible value twice.
+- `core/pipeline/gate.py`: given exponentials with superscripts or braces (`e² = 7.389`, `e^{2} = 7.389`).
+- Tests: 6 more. Suite: 351 pass.
+
+### Formula limits, feasibility check, wider root search, no LaTeX
+A run designed around "an unknown metal sulfate" for formula 54, whose n-factor covers only MnO2/HCl and Cl2/hot alkali: 2 drafts and 6 programs failed before the draw was dropped.
+- `core/pipeline/qfirst.py`: `formulas_text` lists each formula's limits (a "choice" input's cases), so the designer and the writer see them. `design_problem` (new): right after a design, the coder says whether a program could compute it with these formulas and their listed cases; if not, one redesign with the reason (`DESIGN_TRIES` 2), then a new draw. The writer is told never to use LaTeX.
+- `core/engine/sandbox.py`, `solve_for`: `_bracket` scans the coder's range for a sign change and widens it up to 10⁶× before giving up.
+- Tests: 4 more. Suite passes.
+
+### Coder: Mistral Codestral, with a fallback; a coder failure no longer crashes a run
+- `core/models.py`: `CODER` is `mistralai/codestral-2508` ($0.30/M in, $0.90/M out, no thinking); Qwen3 Coder Next's provider returned 502 on every call of its first live run. `CODER_FALLBACKS` (`mistralai/devstral-2512`) go to OpenRouter as `models`, tried in order if the coder fails. `ask_json` takes `fallbacks`.
+- `core/pipeline/qfirst.py`, `program_for`: any coder error (a provider down after its retries) is a failed attempt, not a crash; out of credits (402) still stops the run.
+- Tests: coder provider down; fallback named. Suite: 343 pass.
+
+### Coder replaced; empty replies explained; discrete answers
+- `core/models.py`: `CODER` is Qwen3 Coder Next (`qwen/qwen3-coder-next`, $0.12/M in, $0.80/M out, never thinks) instead of DeepSeek V4 Flash, which kept spending its whole budget thinking and replying empty even at low effort. `core/pipeline/qfirst.py`: coder output capped at 4000 tokens.
+- `core/llm.py`, `call_json`: an empty reply says why (`finish_reason`), and an answer found in the model's reasoning field is used.
+- `core/engine/sandbox.py`: "does each formula matter" scales a step's result by 1.001, then 0.5, 2, 0.1 and 10 (`RELEVANCE_FACTORS`): a discrete answer (a coordination number from a radius ratio) only moves when a result crosses a boundary.
+- Tests: a step feeding a discrete answer. Suite: 341 pass.
+
+### Design step, trimmed writer, stricter difficulty label
+Compared with a reference question for the same draw, the pipeline's question was JEE Mains medium (straight plug-in, an arbitrary link, no concept trap) yet was labelled "advanced" because Phi-4 answered 3.8 × 10²⁸ L for 25.1 L.
+- `core/pipeline/qfirst.py`, `design_question` (new): before writing, the generator (role "designer") proposes 3 designs (situation, links, the non-obvious insight, what is asked, the wrong routes it invites) and picks the best; the writer builds on it and must make the insight needed but never stated. Run once per draw (kept for rewrites and refinement rounds); "impossible" now usually comes from here, before any writing. The writer returns only stem, asks and unit (its hidden outline fields are gone; they were most of its output tokens).
+- `core/pipeline/flow.py`: a bottom-step answer that is no number, or more than 1000× off the engine's (`_garbage`, `NONSENSE_FACTOR`), is asked again; nonsense twice means the bottom step's failure does not count, and a question the next step solves is too easy, not "advanced". Discarded attempts get no hint tests or engine-wrong checks.
+- Tests: design runs once and reaches the writer; nonsense bottom answers; tests never call the real Jev. Suite passes.
+
+### Second live run: coder cost, a give-away, an arbitrary link
+Run cost $0.064; the Jev coherence check ran through OpenRouter ($0.00003).
+- `core/pipeline/qfirst.py`: the coder runs at reasoning effort "low" (it spent 85k tokens, a third of the run, mostly on empty replies that ran out of room while thinking) and is told to call steps with keyword arguments; a third Jev coherence question, "arbitrary condition" ("until the heat absorbed equals 1.20 % of the electrical energy").
+- `core/engine/sandbox.py`: a positional call to a step says how to call it (`step_117(n=..., T=..., V1=..., V2=...)`).
+- `core/pipeline/gate.py`, `computed_values`: also catches given exponentials (`e^2.3214 = 10.19`, `exp(x) = y`).
+- Tests: 3 more. Suite: 338 pass.
+
+### Variety: no repeats of our own questions
+- `core/pipeline/qfirst.py`: `accepted_questions` reads the subject's accepted computed questions; `question_problems` also rejects a draft too close to any of them (same test as for the two examples: 30 % of word 4-grams, or 3 distinctive values); `used_situations` gives the writer the openings of the 8 most recent accepted questions on the same chapters, as situations not to reuse.
+- Tests: class `OwnQuestions` (3).
+
+### First live run: an invented relation got through; three fixes
+The first live run (cost $0.052) drew five formulas from three unrelated chapters; the writer joined them by a made-up law (ΔG° = −(purity × radial peaks × 100)) and the question was accepted as "frontier", hard only because it was not chemistry.
+- `core/pipeline/adapters.py`, `random_formulas` **changed**: the first formula is drawn from all steps, the others from its topic and the topics bridged to it (`BRIDGES`).
+- `core/pipeline/qfirst.py`: the writer's prompt forbids inventing any relation or gluing sub-problems (reply "impossible" instead); `coherence_problems` asks Jev two yes/no questions on every draft that passed the code checks ("invented relation", "glued parts"); 50 % or more on either sends it back to the writer. Jev unreachable: the check is skipped, never blocks. Spend under "coherence_check".
+- `core/pipeline/refine.py`: `jev_decide` takes the spend role.
+- Tests: class `Coherence` (4) and the related-chapters draw. Suite passes.
+
+### Refinement loop: 8 cases decided by Jev, rewritten by the writer
+- `core/pipeline/refine.py` (new): `CASES` (8 reasons a question was easy, each with a fixed instruction for the writer), `jev_decide` / `classify` (one Jev request, one yes/no question per unused case, probabilities only), `pick` (the likeliest unused case, one per round; the writer gets only that case's instruction), `instructions`.
+- `core/pipeline/qfirst.py`: `refine_round` replaces the plain "too easy" rewrite: Jev decides, code picks and applies (a new twist for `plugin_order` / `one_system`, one more random formula for `too_few_steps`), the writer (Gemini 3.7 Flash, now for every rewrite) rewrites. No chat model takes part in the decision. Jev unreachable: a random unused case.
+- `core/models.py`: `JEV_MODEL` (typesafe/jev-1.14), called through OpenRouter's Decisions API (`JEV_URL` = openrouter.ai/api/alpha/decisions; Jev is refused on /chat/completions) with the same `OPENROUTER_KEY`; $0.042 per million input tokens (spend under "refiner").
+- Tests: `tests/test_qfirst.py` class `Refinement` (pick rules, Jev decides and the writer gets each case's instruction, one more formula, Jev unreachable, request shape) and the too-easy run. Suite: 328 tests pass.
+
+## 2026-11-15
+
+### Question first: examples, novelty, coder input
+- `core/pipeline/qfirst.py`: the writer is told to write a hard JEE Advanced style question of its own and not to copy the two examples or put one of them into a different scenario; `too_close_to_past` compares the question only with those two examples (not every past paper).
+- The coder sees, for each drawn formula, its chapter, formula, inputs, outputs and the engine's own code (`sandbox.step_source`: the `Step(...)` definition and the helpers its computation uses; trap code left out).
+- Tests: `test_step_code_is_the_engines_own`, novelty against the shown examples only.
+
+### Question-first generation for computed questions
+Agreed flow: 3-5 formulas drawn truly at random (not a chain) → random twist → a model writes a new hard question on exactly those formulas → a second model writes a program that may only call those engine steps → code checks → ladder and verifier as before. Modelled on the "Infinite Problem Generator" paper (arXiv 2603.14486: formulas as code, 3-5 axioms, program-of-thought solving), with checks it lacks: the program must quote every value from the question, every step must feed the next, and the ladder and verifier still judge the result.
+- `core/pipeline/qfirst.py` (new): the flow (`run`, `write_and_solve`, `program_for`), the writer and coder calls, the code checks (`program_problems`, `question_problems`), novelty against the two example questions the writer was shown (`too_close_to_past`), `rebuild_result` for parked items.
+- `core/engine/sandbox.py` (new): `check_code` (static rules), `library_doc` (what the coder may call), `evaluate` (separate process, 30 s): answer, trace, givens, traps through the whole program, rounding tolerance, dependency depth, intermediates.
+- `core/pipeline/adapters.py`: `random_formulas()` draws 3-5 steps uniformly from all 311, with no graph or chain condition; the writer connects them or replies `impossible` (redrawn, up to 6 draws per run). `all_chains()` / `random_chain()` (every linked chain of 3-5 steps; 6,994 physical) are kept for chain subjects such as organic, unused by the physical flow.
+- The writer and the coder get only the drawn formulas (no catalogue: it cost ~5,000 words per call). The coder must call every drawn step and may write simple standard relations (n = m/M) and unit conversions itself, never a physical constant; any other graph step it calls still runs (`any_step=True`) and is recorded as `engine.extra_txs`.
+- Check "every formula matters" (`sandbox`: each step's result scaled by 1.001 must move the answer) replaces "3 formulas in a row", which unrelated formulas cannot meet.
+- `core/pipeline/flow.py`: `run()` hands chain runs to `qfirst.run()` when the config sets `question_first`.
+- `run_groundup_final.py`: `--flow question|engine` (default question); records carry `generation_mode: question_first` and `engine.solver_code`; parking stores the program and recheck runs it again.
+- `core/models.py`: `CODER` (DeepSeek V4 Flash, not the writer's family).
+- `tools/build_twist_exemplars.py` (new) → `knowledge/jee_adv_twist_exemplars_physical.json`: real questions per twist (inverse 15, two-state ratio 15, simultaneous 10, condition 6, two-state difference 4).
+- Tests: `tests/test_qfirst.py` (24: random formulas, another graph formula used by the program, an ignored step result, sandbox rules and timeout, checks, novelty, chain enumeration, full offline runs incl. coder retry, writer rewrite, too easy, park and recheck). `tests/test_pipeline_offline.py` runs the engine-first flow explicitly (`--flow engine`). Suite: 322 tests pass.
+- Not yet run against the live models (no network from this machine). Refinement on "too easy" is a plain rewrite until the new refinement loop is designed.
+
+### Physical engine: every formula of the JEE Advanced 2012-2025 physical questions
+`docs/advanced_formula_map.py` listed 42 formulas real questions use that the engine had no step for. All are now steps, so all 91 mapped questions are made only of engine formulas.
+- `core/engine/physical/advanced.py` (new, tx 348-392, 45 steps): molality ↔ mole fraction and molarity (348, 358, 362, 370, 373, 374), ΔT → molality (349), Bohr KE and Coulomb PE (350, 376), order from t₇₅/t₅₀ and from a mechanism (351, 390), ΔH per gram (352), acid-catalysis rate → pH (353), pH + C → K_a (354), Graham meeting point (355), energy balance between two processes (356), isothermal q = −w (357), mean free path and diffusion coefficient (359, 360), ICE from an extent (361), ΔG = −nFE non-standard (363), phase equilibrium under pressure (364), salt-of-weak-acid solubility at a pH (365), Hess on ΔG° (366), gas–solid partial pressure (367), K from A and E_a of both directions (368), ΔG° from K (369), residual ion after precipitation (371), rate from orders (372), adiabatic ΔT from useful work (375), ΔS° from an intercept (378), equivalents → moles with aliquot (379), photon recoil (380), calorimeter heat → ΔU, ΔfH by Hess (381, 382), E° from other couples (383), diprotic neutralisation → buffer (384), sulfate solubility with HSO₄⁻ (385), P from Z (386), area per adsorbed molecule (387), ΔS at another T via ΔC_p (388), ΔH = nC_pΔT (389), I = Q/t (391), w = −Δn_gRT (392).
+- `core/engine/physical/equilibrium.py`, `tx 175` **changed**: [H⁺] of a weak acid now includes water's H⁺ (cubic, exact), so very dilute or very weak acids (2025 Q9) come out right; new trap `ignores_water`.
+- Chain wiring for the new steps: `gives`/`carries`/`not_after` on existing steps so a chain never states a value twice or passes one on in another meaning (e.g. 356 only after a driven half-reaction, 357 and 375 not after 392, 361 not after 32, 369 not after 135).
+- `core/engine/base.py`, `plan_tree`: a step that hands on a value it read (113 passing on the equation) no longer counts as computing it, so tree 113 + 131 → 132 is allowed again.
+- `knowledge/concept_book_physical.json`: 45 entries (index 348-392) with their chapters; `knowledge/reaction_graph_physical.json` rebuilt: 185 nodes, 238 edges (was 174 / 199; no edge removed, ids stable).
+- `docs/advanced_formula_map.py/.md`: MISSING entries replaced by tx ids; a `DATA:` mark for what a question needs that no formula gives (2013 P1 Q21 reads its order from a graph). 91/91 questions have every formula in the engine; 57 could be built by the walk as one chain (the rest are two-state, simultaneous or inverse uses).
+- `tools/audit_engine.py`: units for the new outputs; expected repeats. Audit: 311 steps, 536 pairs, 998 triples, 0 flags.
+- Tests: `tests/test_engine_advanced.py` (41) reproduces each question's published answer; `tests/engine_samples.py` fixtures for the new text/dict inputs. Suite: 298 tests pass.
+
+### README and Flow brought up to date
+- `README.md`: generation loop gains the Form step and the duplicate check before the stem; ladder bottom step Phi-4 (was Llama 3.3) and solution writer GPT-6 Luna (was Mistral Small 3.2) in the loop, the commitments and the models table; the verifier also checks the written solution; prerequisite Python 3.12+ (was 3.9+; `core/pipeline/stages.py` uses f-string syntax 3.10 rejects); tests run the whole suite plus `tools/audit_engine.py`; engine section adds the "nothing stated twice" rule and corrects the step count to 266; parking covers hint re-solves and the verifier; layout lists `forms` and `forms_layer`.
+- `docs/Flow.md`: the same ladder and solution-writer corrections; duplicate check moved before the stem; the "nothing stated twice" rule in the engine section; parking, error sources and the organic/inorganic skip as above.
+
+### Physical engine: chains that stated a value twice or passed one on in the wrong meaning
+Found by reading every physical step and every pair of steps the walk can link (395 pairs), plus the 6 items in `queue_engine_wrong_physical.json`. The formula inside each step was correct in every case; the errors were in how steps join.
+- `core/engine/physical/thermo.py`, `tx 114` (Kirchhoff) **bug fixed**: after a cell step (240), which fixes ΔS = nF(∂E/∂T), the ΔG step stated a second, free ΔS at T₂. Kirchhoff now carries a known ΔS and moves it to T₂ (ΔS(T₁) + ΔC_p ln(T₂/T₁)); with no ΔS known before it, ΔS stays a given. Accepted question GEN_20261014T021446 (240 → 114 → 132) was consistent only because its stated ΔS happened to equal the computed one.
+- `core/engine/physical/electro_solutions.py`, `tx 239, 241` (Nernst, concentration cell) **bug fixed**: E from 0.0591/n is at 298 K, but the next step (240, ΔH from (∂E/∂T)) asked for a temperature that could differ. Both now hand T = 298 K on.
+- `core/engine/physical/thermo.py`, `tx 125` (ΔS of an ideal gas) **bug fixed**: after a gas-law step had fixed P, V and T, the question also stated n, which could contradict PV/RT. n is now derived from the initial state (n = P₁V₁/RT₁) and never stated. A standalone ΔS question now states the initial pressure instead of the amount.
+- `core/engine/physical/kinetics.py`, `tx 200 → 201` **bug fixed**: the rate of reaction −(1/a)Δ[A]/Δt was read as −d[A]/dt, so d[C]/dt came out too small by the factor a. The two rates now carry different roles and no longer link. `tx 200 → 202`: [A] of run 1 was stated twice; 200 now hands it on.
+- `core/engine/physical/thermo.py`, `tx 135 → 154` **bug fixed**: K from ΔG° = −RT ln K is K° (K_p for a gas reaction) and was then treated as K_c in K_p = K_c(RT)^Δn. 135's K carries the role "K°"; 136 (van 't Hoff) and 155 (K_p → K_x) accept it, 154 does not.
+- `core/engine/base.py`, `plan_tree` **bug fixed**: a tree could take an input from one branch when another branch's last step already computes it (van 't Hoff gives ΔS with ΔH; a redox-reagent step gives its molar mass with its n-factor). Such trees are refused.
+- `core/engine/physical/thermo.py`: C_v of a linear triatomic gas is 5R/2 or 7R/2 depending on the book; the engine uses 7R/2 and now states it in the question's constants (`tx 115, 123, 125`). The other gas types are standard and are not given away.
+- `tools/audit_engine.py`: unit of the new `concentration` output.
+- The 6 queued engine_wrong items: 135 → 136 → 133 and 160 → 136 → 133 (a free ΔS stated next to two K values) were already fixed earlier (ΔS now comes from the van 't Hoff data); 155 → 136 → 133, 264 → 95 → 96 and 170 → 84 → 125 are already refused; 148 → 144 → 216 was the verifier misreading a trace that rounded 298.15 K, fixed earlier. None needed a new change.
+- Tests: `tests/test_engine_audit.py` class `ChainMeaning` (7); each fails on the previous code. Audit: 597 triples (was 604), 0 flags.
+
+### Duplicate check before any question call
+- `core/pipeline/flow.py` **bug fixed**: the duplicate check ran after the stem was written and the gate had read it back, and the refiner could then choose "reword", which keeps the inputs and so hits the same duplicate on every later round. The check now runs first in each round (it needs only the steps and values), and a duplicate always asks for new inputs.
+- Tests: `test_duplicate_inputs_cost_no_question_calls` (a repeat run makes only input-proposal calls).
+
+### Unmeasured attempts park the question; organic and inorganic reported up front
+- `core/pipeline/flow.py` **bug fixed**: `CouncilMemberFailed` from a hint re-solve (`stages.solve_with_hint`), and any failure of the mismatch verifier, were not caught: the run crashed with a traceback and the question was lost. `judge()` now turns any unmeasured solver or verifier call into `Parked` (exit 3, judged again next run). A failed clarification-hint call falls back to the verifier's own clarification, as a cut-off reply already did.
+- `run_groundup_final.py` **bug fixed**: a parked fact question whose subject has no fact adapter raised `NotImplementedError` on every later run; it is now dropped like any question that cannot be recomputed. `--kind auto` ignores a `fact_share` on a subject with no fact adapter instead of exiting 2.
+- `generate_questions.py`: a subject with no engine in `core/pipeline/adapters.py` (organic, inorganic) is reported before any run is launched, skipped, and marked "no engine for this subject" in the summary; the batch exits 1 at once if no requested subject has an engine.
+- `subject_config.py`: removed keys nothing reads (`chemist_role`, `default_chapter`, `seed_id_prefix`, `start_nodes`, `mandatory_checks_block`, `verifier_checks_block`); the check blocks were prompts of the pre-engine pipeline and remain in git history.
+- `core/graph_traversal.py`: removed the LLM tool-call layer of the pre-engine pipeline (`get_edges_from`, `get_paths`, `get_node`, `get_coverage` wrappers, `dispatch_tool`, `GRAPH_TOOLS`); nothing called them. `get_ordering()` (reads `knowledge/reaction_orders.json`) is kept.
+- Tests: `test_hint_resolve_failure_parks`, `test_verifier_failure_parks`, `test_parked_fact_without_a_fact_engine_is_dropped`; 257 in total.
+
 ## 2026-10-14
 
 ### Trees and conditions in the pipeline; K_b of a solvent no longer read as a base's K_b

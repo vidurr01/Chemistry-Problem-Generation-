@@ -6,8 +6,6 @@ data; every decision that follows (accept, retry, queue) is made in code by flow
     write_stem          generator: the question text around fixed inputs
     gate_extract        extractor: the facts a stem states, read back into a form
     council_solve       council: closed-book solves in parallel (all members, or a named subset)
-    verify_member       verifier: one member's attempt against the engine's trace
-    clarification_hint  generator: a plain restatement of an unclear part
     solve_with_hint     council member: re-solve with a hint appended
     write_solution      solution writer: readable worked solution (accepted questions only)
 """
@@ -15,6 +13,7 @@ data; every decision that follows (accept, retry, queue) is made in code by flow
 from __future__ import annotations
 
 import json
+import math
 import re
 import queue
 import threading
@@ -325,6 +324,12 @@ Return JSON: {{"values": {{"<field>": <value or null>, ...}}, "asked": <option n
 # ── 4. Council ───────────────────────────────────────────────────────────────
 
 _COUNCIL_SYSTEM = "You are a strong JEE Advanced chemistry student. Output JSON only."
+# Added whenever the calculator is offered. Llama 3.x's chat template adds "Environment: ipython" when tools
+# are passed, so Llama wrote Python programs instead of calling the calculator and then replied with nothing
+# (it parked the flask question twice). Probe of 2026-11-19, 5 tries each on that question: with the tool
+# 0/5 usable (4 programs, 1 loop of 12 calls); with this line 5/5 JSON.
+NO_CODE = (" You have NO Python interpreter and no code runs: never write code. For arithmetic call the "
+           "calculate function; then reply with only the JSON object.")
 
 
 def _council_prompt(stem: str, hint: str | None = None, spec: dict | None = None) -> str:
@@ -392,9 +397,10 @@ def _solve(slug: str, stem: str, hint: str | None = None, spec: dict | None = No
     RENDER. A line that cannot be used gets one restate request; a blank reply is asked
     again, and still blank raises (the question parks)."""
     for attempt in range(BLANK_RETRIES + 1):
-        out = models.ask_json("council", slug, _COUNCIL_SYSTEM, _council_prompt(stem, hint, spec),
+        out = models.ask_json("council", slug, _COUNCIL_SYSTEM + NO_CODE, _council_prompt(stem, hint, spec),
                               max_tokens=COUNCIL_MAX_TOKENS, temperature=0.2,
-                              reasoning_effort=models.COUNCIL_REASONING_EFFORT)
+                              reasoning_effort=models.COUNCIL_REASONING_EFFORT,
+                              tools=models.CALC_TOOL)
         working = _first(out, _WORKING_KEYS)
         if isinstance(working, (dict, list)):
             working = json.dumps(working, ensure_ascii=False)
@@ -466,74 +472,6 @@ def solve_with_hint(member: dict, stem: str, hint: str, spec: dict | None = None
         raise CouncilMemberFailed(f"{member['name']} (hint re-solve): {type(e).__name__}: {str(e)[:160]}")
 
 
-# ── 5. Mismatch verifier ─────────────────────────────────────────────────────
-
-VERDICTS = ("correct", "right_answer_wrong_reasoning", "wrong", "reference_wrong")
-FAILURES = ("genuine_difficulty", "unclear_wording", "missing_knowledge", "slip")
-
-
-def verify_member(stem: str, trace_text: str, answer_text: str, member: dict, after_hint: str | None = None) -> dict:
-    obj = member.get("objection")
-    objection = f"\nThe student objected ({obj['type']}): {obj['detail']}\n" if obj else ""
-    hint = f"\nThe student was given this hint before this attempt: {after_hint}\n" if after_hint else ""
-    prompt = f"""Compare a student's attempt with the reference solution of a chemistry problem.
-
-PROBLEM:
-{stem}
-
-REFERENCE SOLUTION (computed exactly; the intended answer is {answer_text}):
-{trace_text}
-{hint}
-STUDENT'S WORKING:
-{member.get("working", "")}
-
-STUDENT'S FINAL ANSWER: {member.get("final_answer")} {member.get("unit", "")}
-{objection}
-Judge:
-- "answer_equivalent": true if the student's FINAL ANSWER states the same result as the
-  intended answer, ignoring the working, wording, notation and formatting (e.g. "Yes" to
-  "does a precipitate form?" equals "precipitate forms"; "shifts to the right" equals
-  "forward"; "²³⁴₉₀Th" equals "Th-234"); false if it states a different result or none.
-- "verdict": "correct" (right answer by sound reasoning), "right_answer_wrong_reasoning"
-  (right answer reached by a wrong or lucky route), "wrong", or "reference_wrong" (the
-  reference solution or the problem itself is actually wrong, so the student is not at fault).
-- If "wrong", "failure_type": "genuine_difficulty" (a real chemistry/reasoning error, e.g.
-  fell into the intended difficulty), "unclear_wording" (the wording reasonably supports the
-  student's different reading), "missing_knowledge" (did not know a needed fact or formula),
-  or "slip" (method and chemistry right; careless arithmetic, a miscopied number, or a
-  format/unit error).
-- "failed_step": the number of the reference step where the student first went wrong (or null).
-- For a slip: "member_expression": the arithmetic the student set up for the final answer (if the
-  answer has several values: a JSON list with one expression per value, in the order of the
-  reference answer, and null for each value the student already got right),
-  with any miscopied number replaced by the value the problem gives, in the unit asked
-  (numbers and + - * / ^ ( ) log ln sqrt exp only).
-- For unclear wording: "ambiguous_text" (quote) and "clarification" (one plain sentence).
-- For missing knowledge: "missing_fact".
-- "objection_assessment": "valid", "invalid" or "unsure" if the student objected, else null.
-- "reasoning": two or three sentences.
-
-Return JSON with exactly these keys: answer_equivalent, verdict, failure_type, failed_step,
-member_expression, ambiguous_text, clarification, missing_fact, objection_assessment, reasoning."""
-    out = models.ask_json("verifier", models.VERIFIER,
-                          "You are a meticulous chemistry examiner. Output JSON only.", prompt,
-                          max_tokens=8000, temperature=0.0)
-    verdict = out.get("verdict") if out.get("verdict") in VERDICTS else "wrong"
-    failure = out.get("failure_type") if out.get("failure_type") in FAILURES else None
-    if verdict == "wrong" and failure is None:
-        failure = "genuine_difficulty"
-    step = as_number(out.get("failed_step"))
-    eq = out.get("answer_equivalent")
-    return {"answer_equivalent": as_bool(eq, default=None) if eq is not None else None,
-            "verdict": verdict, "failure_type": failure if verdict == "wrong" else None,
-            "failed_step": int(step) if step is not None else None,
-            "member_expression": out.get("member_expression"),
-            "ambiguous_text": out.get("ambiguous_text"), "clarification": out.get("clarification"),
-            "missing_fact": out.get("missing_fact"),
-            "objection_assessment": out.get("objection_assessment") if obj else None,
-            "reasoning": str(out.get("reasoning", ""))[:1500]}
-
-
 # ── 5b. Refinement choice ────────────────────────────────────────────────────
 
 def choose_refinement(stem: str, solved_summary: str, modes: tuple) -> dict:
@@ -561,27 +499,6 @@ Return JSON: {{"mode": "new_inputs" or "reword", "feedback": "one or two sentenc
                           max_tokens=8000, temperature=0.4)
     mode = out.get("mode") if out.get("mode") in modes else modes[0]
     return {"mode": mode, "feedback": str(out.get("feedback") or "")[:600]}
-
-
-# ── 6. Hints ─────────────────────────────────────────────────────────────────
-
-def clarification_hint(stem: str, ambiguous_text: str, clarification: str) -> str:
-    prompt = f"""A student misread part of this question.
-
-QUESTION:
-{stem}
-
-Unclear part: {ambiguous_text}
-What it is meant to say: {clarification}
-
-Write ONE sentence that restates only the unclear part plainly. Do not add any method,
-formula, step or result.
-
-Return JSON: {{"hint": "..."}}"""
-    out = models.ask_json("generator", models.GENERATOR,
-                          "You clarify exam questions without solving them. Output JSON only.", prompt,
-                          max_tokens=4000, temperature=0.2)
-    return str(out.get("hint") or clarification or "").strip()
 
 
 # ── 7. Readable solution ─────────────────────────────────────────────────────
@@ -655,7 +572,7 @@ return an empty list.
 
 Return JSON: {{"errors": [{{"line": <line number>, "quote": "the exact wrong text, copied",
 "problem": "what is wrong and what is right"}}]}}"""
-    out = models.ask_json("solution_checker", models.VERIFIER,
+    out = models.ask_json("solution_checker", models.SOLUTION_CHECKER,
                           "You are a meticulous chemistry examiner. Output JSON only.", prompt,
                           max_tokens=6000, temperature=0.0)
     errs = out.get("errors")
@@ -687,7 +604,8 @@ def _solution_text(sol) -> str:
             for k, v in x.items():
                 if isinstance(v, (dict, list)):
                     if re.match(r"(?i)step\s*\d+|^\d+$", str(k)):
-                        lines.append(f"Step {re.sub(r'(?i)step\s*', '', str(k))}:")
+                        step_num = re.sub(r"(?i)step\s*", "", str(k))
+                        lines.append(f"Step {step_num}:")
                     walk(v, depth + 1)
                 elif v not in (None, ""):
                     label = "Final answer: " if str(k).lower().startswith("final") else ""

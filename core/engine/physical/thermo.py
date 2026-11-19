@@ -4,14 +4,37 @@ from __future__ import annotations
 
 import math
 
-from core.engine.base import EngineError, Param, Step, Trap, ln
-from core.engine.chem import C, check_balanced, const, parse_equation
+from core.engine.base import Derive, EngineError, Param, Step, Trap, ln
+from core.engine.chem import C, check_balanced, const, parse_equation, species_key
 
 P = Param
 L_ATM_J = 101.3          # J per L atm (the value JEE uses)
 _LATM = "1 L atm = 101.3 J"
 
 _CV = {"monatomic": 1.5, "diatomic": 2.5, "linear triatomic": 3.5, "non-linear polyatomic": 3.0}
+# Books disagree on a linear triatomic gas (5R/2 without vibration, 7R/2 with one vibrational
+# mode counted): the value used is stated in the question, so the answer does not depend on
+# which table the student learnt. The other three are standard and are not given away.
+_CV_STATED = {"linear triatomic": "C_v of the linear triatomic gas = 7R/2"}
+
+
+def _cv_constants(*gas_types):
+    return [_CV_STATED[g] for g in dict.fromkeys(gas_types) if g in _CV_STATED]
+
+
+def _gas_entropy(v, cp=False):
+    """ΔS of an ideal gas between two states."""
+    cv = _CV[v["gas_type"]] + (1 if cp else 0)
+    return v["n"] * C.R_J * (cv * ln(v["new_temperature"] / v["T"]) + ln(v["new_volume"] / v["V"]))
+
+
+def _kirchhoff(v):
+    """ΔH at T₂; a ΔS the chain already knows at T₁ (a cell's nF(∂E/∂T)) moves with it, so
+    the question never states a second ΔS that the data already fix."""
+    out = {"delta_h": v["delta_h"] + v["delta_cp"] * (v["T2"] - v["T1"]) / 1000, "T": v["T2"]}
+    if "delta_s" in v:
+        out["delta_s"] = v["delta_s"] + v["delta_cp"] * ln(v["T2"] / v["T1"])
+    return out
 
 
 def _signed_sum(eq_text, values, products_minus_reactants=True, use_coefficients=True):
@@ -20,7 +43,7 @@ def _signed_sum(eq_text, values, products_minus_reactants=True, use_coefficients
     total = 0.0
     for sign, side in ((1, p), (-1, r)):
         for c, f in side:
-            key = f.replace(" ", "")
+            key = species_key(f)
             if key not in values:
                 raise EngineError(f"no value given for {f}")
             total += sign * (c if use_coefficients else 1) * values[key]
@@ -30,7 +53,7 @@ def _signed_sum(eq_text, values, products_minus_reactants=True, use_coefficients
 def _norm_values(d):
     if not isinstance(d, dict) or not d:
         raise EngineError("give the values as a mapping species -> value")
-    return {k.replace(" ", ""): float(v) for k, v in d.items()}
+    return {species_key(k): float(v) for k, v in d.items()}
 
 
 def _reaction_sum(v, key, reverse=False, coefs=True):
@@ -48,6 +71,8 @@ def _vant_hoff(v):
 
 def _hess(v):
     import sympy
+    from fractions import Fraction
+    def _rat(x): f = Fraction(x).limit_denominator(1000); return sympy.Rational(f.numerator, f.denominator)
     target_r, target_p = parse_equation(v["target_equation"])
     steps = v["step_equations"]
     if not isinstance(steps, list) or len(steps) < 2:
@@ -68,8 +93,8 @@ def _hess(v):
         for k in d:
             if k not in species:
                 species.append(k)
-    M = sympy.Matrix([[sympy.nsimplify(sv.get(s, 0)) for sv in svs] for s in species])
-    b = sympy.Matrix([sympy.nsimplify(tv.get(s, 0)) for s in species])
+    M = sympy.Matrix([[_rat(sv.get(s, 0)) for sv in svs] for s in species])
+    b = sympy.Matrix([_rat(tv.get(s, 0)) for s in species])
     sol = sympy.linsolve((M, b))
     if not sol:
         raise EngineError("the target equation is not a combination of the given equations")
@@ -109,7 +134,7 @@ def _adiabatic_irrev_trap(v):
 
 
 STEPS = [
-    Step(tx=112, src="thermodynamic_process", dst="delta_u",
+    Step(tx=112, src="thermodynamic_process", dst="delta_u", not_after=(357,),   # q = −w already: ΔU = 0
          needs=(P("heat", "J", "heat absorbed by the system (negative if released)", kind="real", lo=-5000, hi=5000),
                 P("work", "J", "work done ON the system (negative if done by it)", kind="real", lo=-5000, hi=5000)),
          answer="delta_u", unit="J", kind="real",
@@ -121,9 +146,9 @@ STEPS = [
                 P("balanced_equation", "", "balanced equation with states, e.g. 'C2H6(g) + 7/2 O2(g) -> 2CO2(g) + 3H2O(l)'", kind="text"),
                 P("T", "K", "temperature", kind="temperature", lo=273, hi=1000)),
          answer="delta_h", unit="kJ mol⁻¹", kind="real", roles={"delta_h": "reaction"},
-         gives=("T1",),                   # ΔH is at this temperature: a Kirchhoff step's T₁
+         gives=("T1", "balanced_equation"),   # ΔH is at this T (Kirchhoff's T₁); the equation goes on (tx 382)
          fn=lambda v: {"delta_h": v["reaction_delta_u"] + _dng(v["balanced_equation"]) * C.R_J * v["T"] / 1000,
-                       "T1": v["T"]},
+                       "T1": v["T"], "balanced_equation": v["balanced_equation"]},
          traps=(Trap("counts_all_species", "counts liquids and solids in Δn",
                      lambda v: v["reaction_delta_u"] + _dn_all(v["balanced_equation"]) * C.R_J * v["T"] / 1000),
                 Trap("units_mixed", "adds Δn_gRT in J to ΔU in kJ",
@@ -134,11 +159,12 @@ STEPS = [
                 P("gas_type", "", "type of gas", kind="choice", choices=tuple(_CV)),
                 P("delta_T", "K", "temperature change at constant volume", kind="real", lo=-300, hi=500)),
          answer="delta_u", unit="J", kind="real",
-         fn=lambda v: {"delta_u": v["n"] * _CV[v["gas_type"]] * C.R_J * v["delta_T"]},
+         fn=lambda v: {"delta_u": v["n"] * _CV[v["gas_type"]] * C.R_J * v["delta_T"],
+                       "_constants": _cv_constants(v["gas_type"])},
          traps=(Trap("uses_cp", "uses Cp instead of Cv", lambda v: v["n"] * (_CV[v["gas_type"]] + 1) * C.R_J * v["delta_T"]),),
          constants=(const("R_J"),), formula="isochoric: w = 0, ΔU = q_v = nC_vΔT",
          asks="change in internal energy (J)"),
-    Step(tx=116, src="thermodynamic_process", dst="delta_u",
+    Step(tx=116, src="thermodynamic_process", dst="delta_u", not_after=(357,),
          needs=(P("heat", "J", "heat absorbed at constant external pressure", kind="real", lo=-5000, hi=5000),
                 P("external_pressure", "atm", "constant external pressure", lo=0.1, hi=10),
                 P("V1", "L", "initial volume", lo=0.1, hi=50), P("V2", "L", "final volume", lo=0.1, hi=50)),
@@ -152,8 +178,8 @@ STEPS = [
          needs=(P("n", "mol", "amount of ideal gas", lo=0.1, hi=10),
                 P("T", "K", "temperature", kind="temperature", lo=200, hi=1000),
                 P("V1", "L", "initial volume", lo=0.1, hi=50), P("V2", "L", "final volume", lo=0.1, hi=100)),
-         answer="work", unit="J", kind="real",
-         fn=lambda v: {"work": -v["n"] * C.R_J * v["T"] * ln(v["V2"] / v["V1"])},
+         answer="work", unit="J", kind="real", gives=("T",),        # the isothermal T goes on (q = −w, ΔS_surr)
+         fn=lambda v: {"work": -v["n"] * C.R_J * v["T"] * ln(v["V2"] / v["V1"]), "T": v["T"]},
          traps=(Trap("log10_without_2303", "uses log₁₀ without 2.303",
                      lambda v: -v["n"] * C.R_J * v["T"] * math.log10(v["V2"] / v["V1"])),
                 Trap("sign", "gives +nRT ln(V₂/V₁)", lambda v: v["n"] * C.R_J * v["T"] * ln(v["V2"] / v["V1"]))),
@@ -164,9 +190,9 @@ STEPS = [
                 P("T", "K", "temperature", kind="temperature", lo=200, hi=1000),
                 P("P1", "atm", "initial pressure", lo=0.5, hi=20),
                 P("P2", "atm", "final pressure = constant external pressure", lo=0.1, hi=20)),
-         answer="work", unit="J", kind="real",
+         answer="work", unit="J", kind="real", gives=("T",),
          fn=lambda v: {"work": -v["P2"] * (v["n"] * C.R_LATM * v["T"] / v["P2"]
-                                           - v["n"] * C.R_LATM * v["T"] / v["P1"]) * L_ATM_J},
+                                           - v["n"] * C.R_LATM * v["T"] / v["P1"]) * L_ATM_J, "T": v["T"]},
          traps=(Trap("reversible_formula", "uses −nRT ln(P₁/P₂)", lambda v: -v["n"] * C.R_J * v["T"] * ln(v["P1"] / v["P2"])),),
          constants=(const("R_LATM"), _LATM), formula="w = −P_ext(V₂ − V₁), V = nRT/P",
          asks="work done on the gas (J)"),
@@ -215,7 +241,8 @@ STEPS = [
                 P("gas2_type", "", "type of gas 2", kind="choice", choices=tuple(_CV))),
          answer="gamma", unit="", kind="positive",
          fn=lambda v: {"gamma": (v["n1"] * (_CV[v["gas1_type"]] + 1) + v["n2"] * (_CV[v["gas2_type"]] + 1))
-                       / (v["n1"] * _CV[v["gas1_type"]] + v["n2"] * _CV[v["gas2_type"]])},
+                       / (v["n1"] * _CV[v["gas1_type"]] + v["n2"] * _CV[v["gas2_type"]]),
+                       "_constants": _cv_constants(v["gas1_type"], v["gas2_type"])},
          traps=(Trap("averages_gamma", "takes the mole-weighted average of γ",
                      lambda v: (v["n1"] * (_CV[v["gas1_type"]] + 1) / _CV[v["gas1_type"]]
                                 + v["n2"] * (_CV[v["gas2_type"]] + 1) / _CV[v["gas2_type"]]) / (v["n1"] + v["n2"])),),
@@ -228,19 +255,20 @@ STEPS = [
          traps=(Trap("divides_by_cold", "divides by the cold temperature",
                      lambda v: (v["temperature"] - v["cold_temperature"]) / v["cold_temperature"]),),
          formula="η = (T_h − T_c)/T_h", asks="maximum efficiency of the engine (as a fraction)"),
+    # The amount is not stated: the initial state (P, V, T) fixes it, and a gas-law step
+    # before this one has already fixed that state (a stated n could contradict PV/RT).
     Step(tx=125, src="gas_state", dst="entropy_change",
-         needs=(P("n", "mol", "amount of ideal gas", lo=0.1, hi=10),
-                P("gas_type", "", "type of gas", kind="choice", choices=tuple(_CV)),
+         derive=(Derive("n", (P("P", "atm", "initial pressure", lo=0.1, hi=20),),
+                        lambda v: v["P"] * v["V"] / (C.R_LATM * v["T"])),),
+         needs=(P("gas_type", "", "type of gas", kind="choice", choices=tuple(_CV)),
                 P("T", "K", "initial temperature", kind="temperature", lo=200, hi=1000),
                 P("new_temperature", "K", "final temperature", kind="temperature", lo=200, hi=1500),
                 P("V", "L", "initial volume", lo=0.1, hi=50), P("new_volume", "L", "final volume", lo=0.1, hi=100)),
          answer="entropy_change", unit="J K⁻¹", kind="real", roles={"entropy_change": "system"},
-         fn=lambda v: {"entropy_change": v["n"] * C.R_J * (_CV[v["gas_type"]] * ln(v["new_temperature"] / v["T"])
-                                                    + ln(v["new_volume"] / v["V"]))},
-         traps=(Trap("uses_cp_with_volume", "uses C_p with the volume term",
-                     lambda v: v["n"] * C.R_J * ((_CV[v["gas_type"]] + 1) * ln(v["new_temperature"] / v["T"])
-                                                 + ln(v["new_volume"] / v["V"]))),),
-         constants=(const("R_J"),), formula="ΔS = nC_v ln(T₂/T₁) + nR ln(V₂/V₁)", asks="entropy change of the gas (J K⁻¹)"),
+         fn=lambda v: {"entropy_change": _gas_entropy(v), "_constants": _cv_constants(v["gas_type"])},
+         traps=(Trap("uses_cp_with_volume", "uses C_p with the volume term", lambda v: _gas_entropy(v, cp=True)),),
+         constants=(const("R_LATM"), const("R_J")),
+         formula="n = P₁V₁/RT₁; ΔS = nC_v ln(T₂/T₁) + nR ln(V₂/V₁)", asks="entropy change of the gas (J K⁻¹)"),
     Step(tx=126, src="thermodynamic_process", dst="entropy_change",
          needs=(P("n", "mol", "amount of ideal gas", lo=0.1, hi=10),
                 P("V1", "L", "initial volume", lo=0.1, hi=50), P("V2", "L", "final volume", lo=0.1, hi=100)),
@@ -251,8 +279,8 @@ STEPS = [
     Step(tx=127, src="delta_h", dst="delta_s",
          needs=(P("delta_h", "kJ mol⁻¹", "enthalpy of the phase transition", kind="real", lo=1, hi=60, role="phase transition", strict=True),
                 P("T", "K", "transition temperature", kind="temperature", lo=50, hi=1500)),
-         answer="delta_s", unit="J K⁻¹ mol⁻¹", kind="real",
-         fn=lambda v: {"delta_s": 1000 * v["delta_h"] / v["T"]},
+         answer="delta_s", unit="J K⁻¹ mol⁻¹", kind="real", gives=("T1",),   # ΔS is at this T (tx 388)
+         fn=lambda v: {"delta_s": 1000 * v["delta_h"] / v["T"], "T1": v["T"]},
          traps=(Trap("kJ_not_converted", "keeps ΔH in kJ", lambda v: v["delta_h"] / v["T"]),),
          formula="ΔS = ΔH/T at the transition temperature", asks="entropy of transition (J K⁻¹ mol⁻¹)"),
     Step(tx=129, src="entropy_change", dst="entropy_change",
@@ -307,11 +335,13 @@ STEPS = [
          fn=lambda v: {"delta_g": _reaction_sum(v, "formation_gibbs"), "balanced_equation": v["balanced_equation"]},
          traps=(Trap("ignores_coefficients", "ignores the coefficients", lambda v: _reaction_sum(v, "formation_gibbs", coefs=False)),),
          formula="ΔrG° = ΣνΔfG°(products) − ΣνΔfG°(reactants)", asks="standard Gibbs energy of reaction (kJ mol⁻¹)"),
-    Step(tx=135, src="delta_g", dst="equilibrium_constant",
+    Step(tx=135, src="delta_g", dst="equilibrium_constant", not_after=(369,),   # 369 is its inverse
          needs=(P("delta_g", "kJ mol⁻¹", "standard Gibbs energy change", kind="real", lo=-60, hi=60,
                   role="standard"),
                 P("T", "K", "temperature", kind="temperature", lo=250, hi=1200)),
+         # K° (K_p for a gas reaction, pressures in atm): never K_c, so K_p = K_c(RT)^Δn cannot follow
          answer="equilibrium_constant", unit="", kind="positive", gives=("T1", "T"),
+         roles={"equilibrium_constant": "K°"},
          carries=("delta_h", "delta_s", "balanced_equation"),
          fn=lambda v: {"equilibrium_constant": math.exp(-1000 * v["delta_g"] / (C.R_J * v["T"])),
                        "T1": v["T"], "T": v["T"]},
@@ -319,8 +349,9 @@ STEPS = [
                 Trap("kJ_not_converted", "keeps ΔG in kJ", lambda v: math.exp(-v["delta_g"] / (C.R_J * v["T"])))),
          constants=(const("R_J"),), formula="ΔG° = −RT ln K", asks="equilibrium constant K"),
     Step(tx=136, src="equilibrium_constant", dst="delta_h", not_after=(163,), not_after_any=(132, 163),
+         carries=("balanced_equation",),          # the same reaction (ΔfH of a species by tx 382)
          needs=(P("equilibrium_constant", "", "K at T₁ (K_p in atm or K_c in mol L⁻¹ units)", lo=1e-10, hi=1e10,
-                  role=("Kp", "Kc")),
+                  role=("Kp", "Kc", "K°")),
                 P("T1", "K", "temperature T₁", kind="temperature", lo=250, hi=1200),
                 P("K2", "", "K at T₂ (the same kind of constant as at T₁)", lo=1e-10, hi=1e10),
                 P("T2", "K", "temperature T₂", kind="temperature", lo=250, hi=1200)),
@@ -347,15 +378,17 @@ STEPS = [
     # ── Thermochemistry ──
     # van 't Hoff (136, 315) assumes ΔH constant over T₁…T₂: a ΔC_p correction contradicts it
     Step(tx=114, keeps_role=True, src="delta_h", dst="delta_h", not_after=(136, 315),
+         carries=("delta_s", "balanced_equation"),   # ΔS moved to T₂ by _kirchhoff when the chain knows it
          needs=(P("delta_h", "kJ mol⁻¹", "reaction enthalpy at T₁", kind="real", lo=-500, hi=500,
                   role="reaction", strict=True),
                 P("delta_cp", "J K⁻¹ mol⁻¹", "ΔrC_p = ΣC_p(products) − ΣC_p(reactants)", kind="real", lo=-100, hi=100),
                 P("T1", "K", "temperature T₁", kind="temperature", lo=250, hi=1200),
                 P("T2", "K", "temperature T₂", kind="temperature", lo=250, hi=1500)),
          answer="delta_h", unit="kJ mol⁻¹", kind="real", gives=("T",),
-         fn=lambda v: {"delta_h": v["delta_h"] + v["delta_cp"] * (v["T2"] - v["T1"]) / 1000, "T": v["T2"]},
+         fn=_kirchhoff,
          traps=(Trap("units_mixed", "adds ΔCpΔT in J to ΔH in kJ", lambda v: v["delta_h"] + v["delta_cp"] * (v["T2"] - v["T1"])),),
-         formula="Kirchhoff: ΔH(T₂) = ΔH(T₁) + ΔC_p(T₂ − T₁)", asks="reaction enthalpy at T₂ (kJ mol⁻¹)"),
+         formula="Kirchhoff: ΔH(T₂) = ΔH(T₁) + ΔC_p(T₂ − T₁); a ΔS known at T₁ becomes ΔS(T₁) + ΔC_p ln(T₂/T₁)",
+         asks="reaction enthalpy at T₂ (kJ mol⁻¹)"),
     Step(tx=139, src="enthalpy_data", dst="delta_h",
          needs=(P("balanced_equation", "", "balanced equation", kind="text"),
                 P("formation_enthalpies", "kJ mol⁻¹", "ΔfH° of each species (0 for elements)", kind="dict")),
@@ -369,8 +402,9 @@ STEPS = [
     Step(tx=140, src="enthalpy_data", dst="delta_h",
          needs=(P("balanced_equation", "", "balanced equation", kind="text"),
                 P("combustion_enthalpies", "kJ mol⁻¹", "ΔcH° of each species (0 for CO2, H2O, O2)", kind="dict")),
-         answer="delta_h", unit="kJ mol⁻¹", kind="real", roles={"delta_h": "reaction"},
-         fn=lambda v: {"delta_h": _reaction_sum(v, "combustion_enthalpies", reverse=True)},
+         answer="delta_h", unit="kJ mol⁻¹", kind="real", roles={"delta_h": "reaction"}, gives=("balanced_equation",),
+         fn=lambda v: {"delta_h": _reaction_sum(v, "combustion_enthalpies", reverse=True),
+                       "balanced_equation": v["balanced_equation"]},
          traps=(Trap("formation_order", "uses products − reactants as for formation enthalpies",
                      lambda v: _reaction_sum(v, "combustion_enthalpies")),),
          formula="ΔrH = ΣνΔcH(reactants) − ΣνΔcH(products)", asks="enthalpy of reaction (kJ mol⁻¹)"),
@@ -397,7 +431,7 @@ STEPS = [
          traps=(Trap("reversed", "uses calculated − experimental", lambda v: v["calculated_delta_h"] - v["delta_h"]),),
          formula="ΔH_res = ΔfH(exp) − ΔfH(calc)", asks="resonance energy (kJ mol⁻¹)"),
     Step(tx=144, src="heat", dst="delta_h",
-         needs=(P("heat", "J", "heat evolved on neutralisation (positive number)", lo=10, hi=1e5),
+         needs=(P("heat", "J", "heat evolved on neutralisation (positive number)", lo=10, hi=1e5, role="calorimeter"),
                 P("water_moles", "mol", "amount of water formed (= equivalents neutralised)", lo=0.001, hi=2)),
          answer="delta_h", unit="kJ mol⁻¹", kind="real", roles={"delta_h": "neutralisation"},
          fn=lambda v: {"delta_h": -v["heat"] / 1000 / v["water_moles"]},

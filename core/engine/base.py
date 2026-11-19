@@ -388,6 +388,11 @@ def plan_tree(branches: list, final: Step, feeds: dict, share: dict | None = Non
             raise EngineError(f"branch {b} (tx {end.tx}) does not compute {fld!r}")
         if end.tx in final.not_after or not role_ok(params[key], end.roles.get(fld)):
             raise EngineError(f"tx {end.tx} cannot feed {key!r} of tx {final.tx}")
+        # the data of another branch already fix this input (van 't Hoff gives ΔS with ΔH; a
+        # reagent's n-factor step gives its molar mass): a second value could contradict it
+        for b2, other in enumerate(ends):
+            if b2 != b and key in other.outputs:
+                raise EngineError(f"{key!r} of tx {final.tx} is computed by two branches (tx {end.tx}, tx {other.tx})")
     if any(st.tx in final.not_after_any for st in steps):
         raise EngineError(f"tx {final.tx} must not follow steps of its branches")
     w: dict = {}
@@ -431,8 +436,8 @@ def plan_tree(branches: list, final: Step, feeds: dict, share: dict | None = Non
     for qk, g in givens.items():
         k = g.param.key
         for j, st in enumerate(steps):
-            if wiring[j].get(k) == ("given", qk):
-                continue                       # the step hands on the value it was given
+            if wiring[j].get(k) == ("given", qk) or k in _params_of(st):
+                continue                       # the step hands on a value it read, it does not compute it
             if k in st.outputs and branch_of[j] is not None and any(branch_of[u] != branch_of[j] for u in g.steps):
                 raise EngineError(f"{k!r} is stated (for step {g.steps[0]}) and computed by tx {st.tx}")
     return ChainPlan(steps, wiring, givens, constants, tuple(spans))

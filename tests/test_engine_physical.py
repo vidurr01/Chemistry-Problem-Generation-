@@ -261,6 +261,17 @@ class Kinetics(Close):
         self.close(run([209], s0__fraction_remaining=0.125, s0__half_life=10), 30)
         self.close(run([213], s0__rate_constant=1, s0__T1=300, s0__k2=2, s0__T2=310), 53.6)
 
+    def test_rate_constant_from_pressures_and_the_jee_convention(self):
+        """2N₂O₅ → 2N₂O₄ + O₂ (2019P2_Q13): 1 → 1.45 atm. Per N₂O₅, k = (1/t) ln 10; JEE's k is the reaction's
+        (rate = −½ d[N₂O₅]/dt), so with a = 2 the same data give half that k. In a chain, a is left out (1)."""
+        chain = run([208], s0__initial_pressure=1, s0__total_pressure=1.45, s0__moles_of_gaseous_products=1.5,
+                    s0__time=2303)
+        self.close(chain, 1e-3)                                         # a not stated: A's own k, as before
+        v = dict(initial_pressure=1, total_pressure=1.45, moles_of_gaseous_products=1.5, time=2303)
+        self.close(step(208).fn({**v, "reactant_coefficient": 2})["rate_constant"], 5e-4)
+        ignored = next(t for t in step(208).traps if t.id == "coefficient_ignored")
+        self.close(ignored.fn({**v, "reactant_coefficient": 2}), 1e-3)  # the typical mistake
+
     def test_nuclear(self):
         self.assertEqual(run([219], s0__Z=92, s0__A=238).answer, "Th-234")
         r = run([224], s0__Z=82, s0__A=206, s0__initial_Z=92, s0__initial_A=238, s0__count="beta")
