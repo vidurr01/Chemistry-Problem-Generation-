@@ -48,9 +48,13 @@ GEMINI3_DESIGN_LEVEL = "low"    # the cheaper level (2026-11-17); "high" if its 
 GEMINI3_DESIGN_CAP = 8000
 REFINER = "google/gemini-3.8-flash"                   # too easy: reads the solvers' working, redesigns inputs or rewrites
 EXTRACTOR = "deepseek/deepseek-v4-flash-0731"          # chemistry gate: lists the facts a stem states
+# Organic start molecule (the author, 2026-11-23): the picker invents it, the engine checks the rules can carry it,
+# a different model turns the picker's NAME back into a structure blind (name and structure must agree).
+START_PICKER = GENERATOR
 # No mismatch verifier since 2026-11-19 (the author: too weak; it called a right key wrong). Ladder answers are
 # graded by code only. The same model still checks the written solution after acceptance:
 SOLUTION_CHECKER = "anthropic/claude-haiku-5.5"
+NAME_CHECKER = SOLUTION_CHECKER   # DeepSeek Flash misplaced a locant (4-oxo read as 3-oxo) and ran out of tokens
 # Question-first refinement: Jev (TypeSafe AI) decides WHY a too-easy question was easy (one of
 # core/pipeline/refine.CASES); the generator then rewrites it. Served by OpenRouter on its Decisions
 # API (not /chat/completions), with the same OPENROUTER_KEY.
@@ -115,7 +119,8 @@ DIFFICULTY_LABELS = {
 
 ROSTER = {"generator": GENERATOR, "designer": DESIGNER, "refiner": REFINER, "extractor": EXTRACTOR, "coder": CODER,
           "coder_strong": CODER_STRONG, "refine_decider": JEV_MODEL,
-          "solution_writer": SOLUTION_WRITER, "solution_checker": SOLUTION_CHECKER, "ladder": [slug for _, slug in LADDER]}
+          "solution_writer": SOLUTION_WRITER, "solution_checker": SOLUTION_CHECKER,
+          "start_picker": START_PICKER, "name_checker": NAME_CHECKER, "ladder": [slug for _, slug in LADDER]}
 
 
 # ── Router ───────────────────────────────────────────────────────────────────

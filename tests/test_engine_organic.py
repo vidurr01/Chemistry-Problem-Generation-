@@ -135,6 +135,67 @@ class Selectivity(unittest.TestCase):
             run("aldehyde_to_alkane_znhg", "O=Cc1ccccc1")          # toluene is not an alkane node member
 
 
+class RuleBugs(unittest.TestCase):
+    """Found while writing docs/organic_rule_scope.md (2026-11-22)."""
+
+    def test_ketone_rules_keep_the_whole_molecule(self):
+        # an unmapped [#6] made every ketone propan-2-ol (NaBH4) and propane (Wolff–Kishner)
+        self.assertTrue(same(run("ketone_to_alcohol_nabh", "O=C1CCCCC1").product, "OC1CCCCC1"))
+        self.assertTrue(same(run("ketone_to_alcohol_nabh", "CCC(C)=O").product, "CCC(C)O"))
+        self.assertTrue(same(run("ketone_to_alkane_nhnh", "CCC(=O)CCC").product, "CCCCCC"))
+        self.assertTrue(same(rules.RULES["ketone_to_alkane_nhnh"]("O=C1CCCCC1").product, "C1CCCCC1"))
+
+    def test_isocyanide_hydrolysis_gives_primary_amine(self):
+        r = run("isocyanide_to_amine_hydrolysis", "CC[N+]#[C-]")
+        self.assertTrue(same(r.product, "CCN"))
+        self.assertIn("O=CO", r.coproducts)
+
+    def test_every_ester_hydrolysed(self):
+        self.assertTrue(same(run("ester_to_ester_aqnaoh", "CCOC(=O)CCC(=O)OCC").product, "O=C(O)CCC(=O)O"))
+        with self.assertRaises(EngineError):        # two different acids: no single product
+            rules.RULES["ester_to_carboxylic_acid_h3odiluteaci"]("CC(=O)OCC(=O)OC")
+
+
+class Scope(unittest.TestCase):
+    """Approved substrate scopes (docs/organic_rule_scope.md, 2026-11-22), stored in the graph."""
+
+    def test_graph_matches_tool_and_names_exist(self):
+        import subprocess
+        from core.engine.organic.scope import GROUPS
+        tool = os.path.join(ROOT, "tools", "apply_rule_scope.py")
+        self.assertEqual(subprocess.run([sys.executable, tool, "--check"]).returncode, 0,
+                         "graph scope differs from tools/apply_rule_scope.py: run it")
+        for e in GRAPH["edges"]:
+            fc = e.get("firing_condition") or {}
+            for g in e["chemoselectivity"]["requires_absent"] + fc.get("requires", []) + fc.get("at_most_one", []):
+                self.assertIn(g, GROUPS, e["id"])
+
+    def test_refused_outside_scope(self):
+        for eid, smi in [("alkyl_halide_to_grignard_mg", "OCCCCBr"),           # protic group kills RMgX
+                         ("alkyl_halide_to_ether_rona", "CC(C)Br"),            # Williamson: 1° only
+                         ("alkyl_halide_to_alkyl_halide_nai", "CC(C)(C)Br"),   # Finkelstein: no 3°
+                         ("alcohol_to_aldehyde_pcc", "CC(O)CCO"),              # PCC also oxidises the 2° OH
+                         ("aldehyde_to_alcohol_nabh", "CC(=O)CCC=O"),          # NaBH4 also reduces the ketone
+                         ("alkene_to_alkyl_halide_hx", "C=CC(C)C"),            # cation would shift
+                         ("alcohol_to_alkene_conchso", "CCCCO"),               # shift gives but-2-ene
+                         ("benzene_to_ketone_rcocl", "N#Cc1ccccc1"),           # FC fails on deactivated rings
+                         ("aryl_halide_to_phenol_naoh", "Cc1ccc(Cl)cc1"),      # benzyne: isomer mixture
+                         ("epoxide_to_halohydrin_hx", "CC1CO1"),               # HX site not agreed
+                         ("amine_to_alcohol_nano", "CCCN"),                    # cation rearranges
+                         ("alkyl_halide_to_cycloalkane_mgmagnesiumm", "BrCCCCBr")]:
+            with self.assertRaises(EngineError, msg=eid):
+                run(eid, smi)
+
+    def test_kept_inside_scope(self):
+        for eid, smi, want in [("alkyl_halide_to_ether_rona", "CCCBr", "CCCOC"),
+                               ("alcohol_to_alkene_conchso", "CCCO", "C=CC"),           # 1,2-H shift, same alkene
+                               ("alcohol_to_alkene_conchso", "CC(O)C(C)C", "CC=C(C)C"),
+                               ("alcohol_to_carboxylic_acid_kmno", "OCc1ccccc1", "OC(=O)c1ccccc1"),
+                               ("alkene_to_alkyl_halide_hx", "C=CCCC", "CCCC(C)Br"),
+                               ("amine_to_alcohol_nano", "NCc1ccccc1", "OCc1ccccc1")]:
+            self.assertTrue(same(run(eid, smi).product, want), eid)
+
+
 class Classes(unittest.TestCase):
     def test_basic(self):
         self.assertIn("ketone", mol.classes("CC(C)=O"))

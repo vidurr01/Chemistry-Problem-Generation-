@@ -31,6 +31,9 @@ SUBJECT_CONFIGS = {
         "pending_file":      os.path.join(OUTPUT_DIR, "pending_questions_organic.json"),
         "default_archetype": "Long Reaction Chains",
         "default_archetype_code": "I",
+        # The starting molecule is invented by models.START_PICKER and checked by the engine
+        # (core/pipeline/org_start.py); False draws it from core/engine/organic/pool.py at random.
+        "start_picker":      True,
     },
 
     "inorganic": {

@@ -50,7 +50,58 @@ def _no(smiles: str, smarts: str, what: str):
 ALKENE = "[CX3;!a]=[CX3;!a]"
 
 
-# ── Hydrocarbons ─────────────────────────────────────────────────────────────
+def _cation_score(a) -> int:
+    """Carbocation stability of carbon a: carbons on it, +1 if benzylic."""
+    return carbon_degree(a) + (1 if any(nb.GetIsAromatic() for nb in a.GetNeighbors()) else 0)
+
+
+def _shift_possible(a) -> bool:
+    """True when a cation on carbon a would rearrange: a neighbouring sp3 carbon gives a more stable cation by a
+    1,2-H shift (it has an H) or, with no H on it, a 1,2-alkyl shift (it loses one carbon). Scope approved 2026-11-22: the rule
+    refuses such molecules rather than guess the rearranged product."""
+    here = _cation_score(a)
+    for nb in a.GetNeighbors():
+        if nb.GetSymbol() != "C" or nb.GetIsAromatic() or nb.GetHybridization() != Chem.HybridizationType.SP3:
+            continue
+        s = _cation_score(nb)
+        if (nb.GetTotalNumHs() > 0 and s > here) or (nb.GetTotalNumHs() == 0 and s - 1 > here):
+            return True
+    return False
+
+
+def _no_alkene_shift(s: str):
+    """H+ adds to the C=C so the cation sits on the more stable end; refuse if that cation would rearrange."""
+    m = mol(s)
+    for i, j in m.GetSubstructMatches(Chem.MolFromSmarts(ALKENE)):
+        a, b = m.GetAtomWithIdx(i), m.GetAtomWithIdx(j)
+        cation = a if _cation_score(a) >= _cation_score(b) else b
+        if _shift_possible(cation):
+            raise EngineError(f"{s}: the carbocation would undergo a 1,2-shift (rearranged product): not modelled")
+
+
+def _no_alcohol_shift(s: str, product: str):
+    """Acid dehydration (E1): if the cation on the C–OH carbon would rearrange to an alkene other than `product`,
+    refuse. A 1,2-H shift is simulated by moving the OH to the neighbour (propan-1-ol still gives propene, so it
+    is kept; butan-1-ol would give but-2-ene, so it is refused); a 1,2-alkyl shift is always refused."""
+    m = mol(s)
+    c = m.GetSubstructMatch(Chem.MolFromSmarts("[CX4][OX2H1]"))
+    a, o = m.GetAtomWithIdx(c[0]), c[1]
+    here = _cation_score(a)
+    for nb in a.GetNeighbors():
+        if nb.GetSymbol() != "C" or nb.GetIsAromatic() or nb.GetHybridization() != Chem.HybridizationType.SP3:
+            continue
+        sc = _cation_score(nb)
+        if nb.GetTotalNumHs() == 0 and sc - 1 > here:      # no H to move: an alkyl group shifts
+            raise EngineError(f"{s}: the carbocation would undergo a 1,2-alkyl shift (rearranged alkene): not modelled")
+        if nb.GetTotalNumHs() > 0 and sc > here:          # a 1,2-H shift wins when there is an H
+            rw = Chem.RWMol(m)
+            rw.RemoveBond(a.GetIdx(), o)
+            rw.AddBond(nb.GetIdx(), o, Chem.BondType.SINGLE)
+            moved = Chem.MolToSmiles(rw)
+            alt = pick(run("[CX4:1]([OX2H1])[CX4;!H0:2]>>[C:1]=[C:2]", moved), zaitsev, "", "x").product
+            if canon(alt) != canon(product):
+                raise EngineError(f"{s}: the carbocation would undergo a 1,2-H shift and give {alt}: not modelled")
+
 
 @rule("alkane_to_alkyl_halide_x", "Br2, hν")
 def _alkane_bromination(s):
@@ -78,6 +129,7 @@ def _aromatise(s):
 def _hydration(s):
     _one_group(s, ALKENE, "C=C")
     _need(s, ALKENE, "C=C")
+    _no_alkene_shift(s)
     return pick(run("[C:1]=[C:2]>>[C:1](O)[C:2]", s), markovnikov,
                 "acid-catalysed hydration: OH on the more substituted carbon (Markovnikov)", "anti_markovnikov_product")
 
@@ -110,6 +162,7 @@ def _hydrogenate(s):
 def _hx_add(s):
     _one_group(s, ALKENE, "C=C")
     _need(s, ALKENE, "C=C")
+    _no_alkene_shift(s)
     return pick(run("[C:1]=[C:2]>>[C:1](Br)[C:2]", s), markovnikov,
                 "HBr addition via the more stable carbocation (Markovnikov)", "anti_markovnikov_product")
 
@@ -289,11 +342,11 @@ def _ammonolysis(s):
 
 @rule("alkyl_halide_to_cycloalkane_mgmagnesiumm")
 def _intramolecular_wurtz(s):
-    m = run("[Br,Cl,I][CH2:1][C:3][CH2:2][Br,Cl,I]>>[C:1]1[C:3][C:2]1", s) or \
-        run("[Br,Cl,I][CH2:1][C:3][C:4][CH2:2][Br,Cl,I]>>[C:1]1[C:3][C:4][C:2]1", s)
+    # scope (approved 2026-11-22): the book has 1,3-dihalide -> cyclopropane only
+    m = run("[Br,Cl,I][CH2:1][C:3][CH2:2][Br,Cl,I]>>[C:1]1[C:3][C:2]1", s)
     if not m:
-        raise EngineError(f"{s}: ring closure needs a 1,3- or 1,4-dihalide")
-    return Result(smi(m[0]), why="intramolecular coupling of a 1,3/1,4-dihalide")
+        raise EngineError(f"{s}: ring closure is modelled for a 1,3-dihalide (cyclopropane)")
+    return Result(smi(m[0]), why="intramolecular coupling of a 1,3-dihalide")
 
 
 @rule("alkyl_halide_to_ether_rona", "CH3ONa")
@@ -378,8 +431,10 @@ def _dehydrate(s):
         raise EngineError(f"{s}: one OH expected")
     if _has(s, "[CX4;H2]([CX4]([#6])([#6])[#6])[OX2H1]"):
         raise EngineError(f"{s}: neopentyl-type alcohol rearranges (methyl shift)")
-    return pick(run("[CX4:1]([OX2H1])[CX4;!H0:2]>>[C:1]=[C:2]", s), zaitsev,
-                "acid dehydration (E1): the more substituted alkene", "less_substituted_alkene")
+    r = pick(run("[CX4:1]([OX2H1])[CX4;!H0:2]>>[C:1]=[C:2]", s), zaitsev,
+             "acid dehydration (E1): the more substituted alkene", "less_substituted_alkene")
+    _no_alcohol_shift(s, r.product)
+    return r
 
 
 @rule("alcohol_to_alkyl_halide_socl")
@@ -472,6 +527,9 @@ def _epoxide_acid(s, nu: str, what: str):
     _need(s, "C1OC1", "epoxide")
     prods = run(f"[C:1]1O[C:2]1>>[C:1]({nu})[C:2]O", s)
     tertiary = any(carbon_degree(atom_by_map(p, 1)) >= 3 for p in prods)
+    if not tertiary and len({smi(p) for p in prods}) > 1:
+        # 1°/2° unsymmetrical epoxide with HX: textbooks disagree on the site (scope approved 2026-11-22)
+        raise EngineError(f"{s}: unsymmetrical epoxide without a 3° carbon: HX regiochemistry not modelled")
     key = markovnikov if tertiary else anti_markovnikov
     return pick(prods, key, f"{what}: X⁻ attacks the {'tertiary' if tertiary else 'less hindered'} carbon",
                 "other_regioisomer")
@@ -658,7 +716,8 @@ def _imine(s):
 @rule("ketone_to_alcohol_nabh")
 def _nabh4_ket(s):
     _need(s, KET, "ketone")
-    return Result(exhaust("[#6][CX3:1](=[O:2])[#6]>>[#6][C:1]([O:2])[#6]", s), why="NaBH4: ketone → sec-alcohol")
+    # every atom mapped: an unmapped [#6] is deleted by RDKit with the rest of the chain behind it
+    return Result(exhaust("[#6:3][CX3:1](=[O:2])[#6:4]>>[#6:3][C:1]([O:2])[#6:4]", s), why="NaBH4: ketone → sec-alcohol")
 
 
 @rule("ketone_to_aldehyde_seo2selenium")
@@ -672,7 +731,10 @@ def _seo2(s):
 @rule("ketone_to_alkane_nhnh")
 def _wolff(s):
     _need(s, KET, "ketone")
-    return Result(exhaust("[#6][CX3:1](=O)[#6]>>[#6][C:1][#6]", s), why="Wolff–Kishner: C=O → CH2")
+    t = exhaust("[#6:3][CX3:1](=O)[#6:4]>>[#6:3][C:1][#6:4]", s)
+    if _has(t, "[CX3H1](=O)[#6]"):                 # a CHO in the same molecule is reduced to CH3 as well
+        t = exhaust("[CX3H1:1](=O)[#6:2]>>[C:1][#6:2]", t)
+    return Result(t, why="Wolff–Kishner: C=O → CH2 (a CHO also → CH3)")
 
 
 @rule("ketone_to_alkyl_halide_i2")
@@ -813,11 +875,11 @@ def _schmidt(s):
 
 @rule("carboxylic_acid_to_anhydride_hso")
 def _cyclic_anhydride(s):
-    p = run("[OX2H1]-[C:1](=[O:2])[#6:3]~[#6:4][C:5](=[O:6])-[OX2H1]>>[C:1]1(=[O:2])[#6:3]~[#6:4][C:5](=[O:6])O1", s) or \
-        run("[OX2H1]-[C:1](=[O:2])[#6:3][#6:7][#6:4][C:5](=[O:6])-[OX2H1]>>[C:1]1(=[O:2])[#6:3][#6:7][#6:4][C:5](=[O:6])O1", s)
+    # scope (approved 2026-11-22): 1,4-diacids (succinic, maleic) and phthalic acid: the 5-membered anhydride
+    p = run("[OX2H1]-[C:1](=[O:2])[#6:3]~[#6:4][C:5](=[O:6])-[OX2H1]>>[C:1]1(=[O:2])[#6:3]~[#6:4][C:5](=[O:6])O1", s)
     if not p:
-        raise EngineError(f"{s}: a cyclic anhydride needs a 1,4- or 1,5-dicarboxylic acid")
-    return Result(smi(p[0]), coproducts=["O"], why="heating a 1,4/1,5-diacid closes the 5/6-membered anhydride")
+        raise EngineError(f"{s}: a cyclic anhydride is modelled for a 1,4-diacid or phthalic acid")
+    return Result(smi(p[0]), coproducts=["O"], why="heating a 1,4-diacid closes the 5-membered cyclic anhydride")
 
 
 @rule("carboxylic_acid_to_carboxylic_acid_x", "Br2, red P")
@@ -872,10 +934,24 @@ def _dibal_ester(s):
 def _hydrolyse_ester(s):
     _need(s, "[#6]C(=O)O[#6]", "ester")
     rxn = Chem.AllChem.ReactionFromSmarts("[#6:4][C:1](=[O:2])[O:5][#6:3]>>([#6:4][C:1](=[O:2])O.[#6:3][O:5])")
-    out = Chem.Mol(rxn.RunReactants((mol(s),))[0][0])
-    Chem.SanitizeMol(out)
-    parts = canon(Chem.MolToSmiles(out)).split(".")
-    acid = [x for x in parts if _has(x, COOH)][0]
+    # excess water / NaOH hydrolyses EVERY ester group (a diester gives the diacid), not just the first match
+    # (fragment by fragment: RDKit keeps only the fragment that reacted, so the pieces cut off earlier are kept here)
+    parts, todo, n = [], canon(s).split("."), 0
+    while todo and n < 12:
+        x = todo.pop()
+        prods = rxn.RunReactants((mol(x),))
+        if not prods:
+            parts.append(x)
+            continue
+        out = Chem.Mol(prods[0][0])
+        Chem.SanitizeMol(out)
+        todo += canon(Chem.MolToSmiles(out)).split(".")
+        n += 1
+    parts = sorted(set(parts + todo))
+    acids = [x for x in parts if _has(x, COOH)]
+    if len(acids) != 1:
+        raise EngineError(f"{s}: hydrolysis gives {len(acids)} different acids: no single product")
+    acid = acids[0]
     return Result(acid, coproducts=[x for x in parts if x != acid], why="hydrolysis: acid + alcohol (phenol)")
 
 
@@ -1115,7 +1191,10 @@ def _carbylamine(s):
 @rule("isocyanide_to_amine_hydrolysis")
 def _isocyanide_hydrolysis(s):
     _need(s, "[N+]#[C-]", "isocyanide")
-    return one("[#6:1][N+]#[C-]>>[#6:1]NC", s, why="acid hydrolysis: secondary N-methyl amine + HCOOH")
+    r = one("[#6:1][N+]#[C-]>>[#6:1]N", s, why="acid hydrolysis: RNC + 2 H2O → RNH2 + HCOOH")
+    r.coproducts = ["O=CO"]
+    r.traps = {"N-methyl amine (reduction, H2/Pt or LiAlH4)": one("[#6:1][N+]#[C-]>>[#6:1]NC", s).product}
+    return r
 
 
 @rule("nitrile_to_aldehyde_dibalhdiisob")
@@ -1160,11 +1239,14 @@ def _kolbe(s):
 def apply(edge: dict, smiles: str) -> Result:
     """Run the edge's rule on the molecule and check the product is in the edge's end node; EngineError if the
     edge has no rule (concept or suspect), does not apply, or leads outside its end node (Clemmensen on
-    benzaldehyde gives toluene, not an alkane: that molecule is not used for that edge)."""
+    benzaldehyde gives toluene, not an alkane: that molecule is not used for that edge). A molecule outside the
+    edge's approved substrate scope (graph requires_absent / firing_condition, see scope.py) is refused first."""
+    from core.engine.organic import scope
     from core.engine.organic.mol import classes
     fn = RULES.get(edge["id"])
     if fn is None:
         raise EngineError(f"{edge['id']} has no rule (concept or suspect edge)")
+    scope.check(edge, smiles)
     r = fn(smiles)
     if edge["to"] not in classes(r.product):
         raise EngineError(f"{edge['id']}: {smiles} gives {r.product}, which is not a {edge['to']}")
@@ -1240,7 +1322,8 @@ def _picric(s):
 @rule("alcohol_to_amine_al2o3450c")
 def _ammonolysis_alcohol(s):
     _need(s, P_OH, "primary OH")
-    return one("[CX4;H2:1][OX2H1]>>[C:1]N", s, why="NH3 over Al2O3: the primary amine")
+    return one("[CX4;H2:1][OX2H1]>>[C:1]N", s,
+               why="NH3 over Al2O3: the primary amine is taken as the major product (in practice a mixture of amines)")
 
 
 @rule("amine_to_amine_heatsn2", "CH3I (excess)")

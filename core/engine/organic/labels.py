@@ -157,6 +157,6 @@ REAGENT_LABEL = {
     "substituted_benzene_to_carboxylic_acid_1naoh": "(i) NaOH; (ii) CO₂, 400 K, 4–7 atm; (iii) H₃O⁺",
     "substituted_benzene_to_ketone_oradicalinit": "(i) O₂, radical initiator; (ii) dil. H₂SO₄",
     "substituted_benzene_to_phenol_1conch2so4de": "(i) conc. H₂SO₄, heat; (ii) conc. HNO₃",
-    "substituted_benzene_to_substituted_benzene_conchno3": "conc. HNO₃, conc. H₂SO₄, heat",
+    "substituted_benzene_to_substituted_benzene_conchno3": "conc. HNO₃, conc. H₂SO₄, 323 K",
     "vicinal_dihalide_to_alkyne_zndeltaexces": "Zn dust, CH₃OH, heat",
 }

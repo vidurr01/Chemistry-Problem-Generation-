@@ -1,7 +1,7 @@
 """
 org_qfirst.py — the question-first flow for ORGANIC chemistry (same pattern as inorg_qfirst.py and physical's qfirst.py).
 
-    draw       a real starting molecule (core/engine/organic/pool.py) and a reaction SCHEME of 5-8 steps: a main chain
+    draw       a real starting molecule (core/engine/organic/pool.py) and a reaction SCHEME of 4-6 steps: a main chain
                with one or two branch points (R → S with one reagent and R → T with another, each branch going on);
                every step computed by its RDKit rule (core/engine/organic/rules.py); compounds labelled P, Q, R, ...
     design     the designer (models.DESIGNER) plans the question: which compounds it asks about, which property
@@ -30,7 +30,7 @@ from core.engine.organic.mol import canon
 from core.llm import CutOffError
 
 MAX_DRAWS = 6
-STEPS_MIN, STEPS_MAX = 5, 8
+STEPS_MIN, STEPS_MAX = 4, 6       # the author, 2026-11-23 (was 5-8)
 MAX_BRANCHES = 2
 LETTERS = "ABCD"
 LABELS = "PQRSTUVWXYZ"
@@ -58,8 +58,17 @@ def _single(smiles: str) -> bool:
 
 
 def _step(g, node, smiles, seen, rng, avoid=()):
-    """One applicable edge from this compound to a new single compound: (edge, result) or None."""
-    nxt = [e for e in g["out"].get(node, []) if e["id"] not in avoid]
+    """One applicable edge from this compound to a new single compound: (edge, result) or None. The edges of
+    EVERY node the compound belongs to are tried (a keto-ester can take ketone and ester steps), not only the
+    node it was reached as."""
+    from core.engine.organic.mol import classes
+    nodes = [node] + sorted(classes(smiles) - {node})
+    nxt, ids = [], set()
+    for n in nodes:
+        for e in g["out"].get(n, []):
+            if e["id"] not in avoid and e["id"] not in ids:
+                ids.add(e["id"])
+                nxt.append(e)
     rng.shuffle(nxt)
     for e in nxt:
         try:
@@ -77,17 +86,27 @@ def _step(g, node, smiles, seen, rng, avoid=()):
     return None
 
 
-def draw(adapter, rng, tried=()):
-    """A scheme of STEPS_MIN..STEPS_MAX steps with 1..MAX_BRANCHES branch points. A candidate dict, or None."""
+def draw(adapter, rng, tried=(), start=None, attempts=800):
+    """A scheme of STEPS_MIN..STEPS_MAX steps with 1..MAX_BRANCHES branch points. A candidate dict, or None.
+    start=(name, smiles): build from that molecule (the start picker's); otherwise a random pool molecule."""
+    from core.engine.organic.mol import classes
     g = _graph(adapter)
     starts = [n for n in P.POOL if g["out"].get(n)]
-    for _ in range(800):
-        node0 = rng.choice(starts)
-        name, start = rng.choice(P.POOL[node0])
+    if start is not None:
+        nodes0 = sorted(n for n in classes(start[1]) if g["out"].get(n))
+        if not nodes0:
+            return None
+    for _ in range(attempts):
+        if start is None:
+            node0 = rng.choice(starts)
+            name, start_smi = rng.choice(P.POOL[node0])
+        else:
+            node0 = rng.choice(nodes0)
+            name, start_smi = start
         target = rng.randint(STEPS_MIN, STEPS_MAX)
         # compounds: label -> {"smiles", "node", "parent", "edge", "result"}
-        comps = {"P": {"smiles": canon(start), "node": node0, "parent": None, "edge": None, "result": None}}
-        seen = {canon(start)}
+        comps = {"P": {"smiles": canon(start_smi), "node": node0, "parent": None, "edge": None, "result": None}}
+        seen = {canon(start_smi)}
         order = ["P"]
         main = ["P"]
         main_len = rng.randint(3, target - 1)
@@ -136,7 +155,7 @@ def draw(adapter, rng, tried=()):
         chapters = list(dict.fromkeys(e.get("chapter", "") for e in path))
         txs = [t for e in path for t in (e.get("tx_ids") or [])]
         cand = {"edges": list(key), "nodes": [comps[k]["node"] for k in order], "chapters": chapters, "txs": txs,
-                "trap_ids": [], "_comps": comps, "_order": order, "_start": (name, canon(start)),
+                "trap_ids": [], "_comps": comps, "_order": order, "_start": (name, canon(start_smi)),
                 "description": f"{name}: {n_steps} steps, {branches} branch point(s)",
                 "_hint": "Work out every lettered compound in order, deciding at each step which product is major; "
                          "only then judge each statement about it."}
@@ -407,11 +426,25 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     rng = rng or random.Random()
     cap = adapter.config.get("max_run_spend")
     name = adapter.config["display_name"]
+    used_starts = []
     for n_draw in range(1, MAX_DRAWS + 1):
         if over_budget(cap):
             break
-        cand = draw(adapter, rng, tried=bb.tried_edges())
+        start = None
+        if adapter.config.get("start_picker"):          # a model invents the start, the engine checks it
+            from core.pipeline import org_start
+            pick = org_start.pick_start(adapter, rng, avoid=used_starts, log=log)
+            if pick is None:
+                bb.note("start_refused", tries=org_start.PICK_TRIES)
+                print("  start picker: no acceptable starting molecule this draw")
+                continue
+            used_starts.append(pick["name"])
+            start = (pick["name"], pick["smiles"])
+        cand = draw(adapter, rng, tried=bb.tried_edges(), start=start)
         if cand is None:
+            if start is not None:
+                print("  no new scheme from this start")
+                continue
             print("  no reaction schemes left")
             break
         print(f"\n╔═══ DRAW {n_draw}: {cand['description']} ({', '.join(cand['chapters'])}) ═══╗")

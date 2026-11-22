@@ -92,6 +92,65 @@ class Draw(unittest.TestCase):
         self.assertEqual(res.answer, c["_props"][lab]["stereoisomers"])
 
 
+class StartPicker(unittest.TestCase):
+    """core/pipeline/org_start.py: the model invents the start, the engine checks it (2026-11-23)."""
+
+    def test_engine_check(self):
+        from core.pipeline import org_start as S
+        ok, why, _ = S.check_start(_adapter(), "CCC", random.Random(1))
+        self.assertFalse(ok)                                       # too small, one group
+        ok, why, _ = S.check_start(_adapter(), "CCCCCCO", random.Random(1))
+        self.assertFalse(ok)
+        self.assertIn("only 1", why)                               # one group the reagents act on
+        ok, why, st = S.check_start(_adapter(), "C=CCC(O)c1ccc(Br)cc1", random.Random(1))
+        self.assertTrue(ok, why)
+        self.assertTrue(OQ.STEPS_MIN <= st["scheme_steps"] <= OQ.STEPS_MAX)
+
+    def test_draw_from_given_start_uses_every_group(self):
+        c = OQ.draw(_adapter(), random.Random(3), start=("x", "CC(=O)CCC(=O)OCC"), attempts=300)
+        self.assertIsNotNone(c)
+        self.assertEqual(c["_start"][1], "CCOC(=O)CCC(C)=O")
+        self.assertTrue(any(c["_comps"][k]["parent"] is not None for k in c["_order"][1:]))
+
+    def test_refused_then_accepted_with_name_check(self):
+        from core.pipeline import org_start as S
+        replies = iter([{"name": "ethanol", "smiles": "CCO"},                                   # engine refuses
+                        {"name": "1-(4-bromophenyl)but-3-en-1-ol", "smiles": "C=CCC(O)c1ccc(Br)cc1"}])
+        prompts = []
+
+        def fake(role, model, system, user, **kw):
+            if role == "name_checker":
+                return {"smiles": "OC(CC=C)c1ccc(Br)cc1"}         # same molecule, written differently
+            prompts.append(user)
+            return next(replies)
+        with mock.patch.object(models, "ask_json", fake):
+            p = S.pick_start(_adapter(), random.Random(1))
+        self.assertEqual(p["tries"], 2)
+        self.assertIn("was refused", prompts[1])                   # the picker is told why
+
+    def test_name_mismatch_refused(self):
+        from core.pipeline import org_start as S
+
+        def fake(role, model, system, user, **kw):
+            if role == "name_checker":
+                return {"smiles": "C=CCC(O)c1ccc(Cl)cc1"}         # the name says chloro
+            return {"name": "1-(4-chlorophenyl)but-3-en-1-ol", "smiles": "C=CCC(O)c1ccc(Br)cc1"}
+        with mock.patch.object(models, "ask_json", fake):
+            self.assertIsNone(S.pick_start(_adapter(), random.Random(1)))
+
+    def test_no_exam_question_in_prompt(self):
+        from core.pipeline import org_start as S
+        seen = []
+
+        def fake(role, model, system, user, **kw):
+            seen.append(user)
+            return {}
+        with mock.patch.object(models, "ask_json", fake):
+            S.pick_start(_adapter(), random.Random(1))
+        self.assertTrue(seen)
+        self.assertFalse(any("JEE" in u or "jee_advanced" in u for u in seen))
+
+
 class EndToEnd(unittest.TestCase):
     """A whole organic run: tree draw -> designer -> writer claims -> code key -> ladder -> saved."""
 
@@ -112,7 +171,9 @@ class EndToEnd(unittest.TestCase):
                   mock.patch.object(entry, "compute_meta_tags_for_subject", lambda *a, **k: {"stub": True}),
                   mock.patch("core.pipeline.qf_design.design_problems", lambda d, *a, **k: None),
                   mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: None),
-                  mock.patch.object(OQ, "draw", lambda *a, **k: dict(self.cand))]
+                  mock.patch.object(OQ, "draw", lambda *a, **k: dict(self.cand)),
+                  mock.patch("core.pipeline.org_start.pick_start",
+                             lambda *a, **k: {"name": "propane", "smiles": "CCC", "why": "", "stats": {}, "tries": 1})]
         for x in self.p:
             x.start()
         store = dedup.STORE

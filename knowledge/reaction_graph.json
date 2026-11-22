@@ -562,7 +562,17 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone",
+          "carboxylic_acid",
+          "ester",
+          "anhydride",
+          "amide",
+          "nitrile",
+          "epoxide",
+          "nitro_aliphatic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -625,7 +635,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "protic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -657,7 +669,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol_2"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -809,7 +823,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "carboxylic_acid"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -936,14 +952,19 @@
         "ether solvent"
       ],
       "conditions": "CH₂N₂ (diazomethane); RT; anhydrous ether solvent; rapid O-methylation. Mechanism: proton abstraction from R-OH by CH₂N₂ → methyl diazonium → SN2 by RO⁻ → R-OCH₃ + N₂. Selectivity of CH₂N₂: RCOOH >> ArOH > ROH (pKa order). Phenol methyl ethers easy (rate: PhOH reacts at RT; ROH requires slight warming or longer time). Hazard: CH₂N₂ is toxic and explosive gas.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "CH2N2 reactivity RCOOH >> ArOH > ROH"
+      },
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
         "I",
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "carboxylic_acid",
+          "phenol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -975,7 +996,15 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene",
+          "alkyne",
+          "aldehyde",
+          "alcohol_2",
+          "benzylic_ch",
+          "phenol",
+          "amine_nh"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1032,7 +1061,10 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "amine_nh",
+          "phenol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1099,7 +1131,11 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "carboxylic_acid",
+          "phenol",
+          "amine_nh"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1164,7 +1200,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol_1"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1209,7 +1247,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "amine_nh"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1331,15 +1371,16 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone",
+          "acid_chloride"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
         32,
-        37,
-        498,
-        631
+        498
       ],
       "meta_tags": {
         "question_length_scope": 4,
@@ -1393,13 +1434,24 @@
         "heat (Delta)"
       ],
       "conditions": "Dilute NaOH (5–10%); heat (Δ, 70–80°C); aqueous ethanol. Aldol condensation: ethanal (acetaldehyde) is both enolisable donor and electrophile acceptor. Step 1: OH⁻ + CH₃CHO → ⁻CH₂CHO (enolate) → + CH₃CHO → β-hydroxyaldehyde (aldol). Step 2: heat → dehydration → (E)-but-2-enal (crotonaldehyde, trans). Cold NaOH → aldol addition (β-hydroxy aldehyde); heat → condensation (dehydrated, conjugated).",
-      "firing_condition": null,
+      "firing_condition": {
+        "at_most_one": [
+          "aldehyde"
+        ]
+      },
       "chapter": "Aldehydes & Ketones",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "amide",
+          "nitrile"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1443,7 +1495,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1475,7 +1529,10 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene",
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1519,9 +1576,10 @@
       "from": "aldehyde",
       "to": "carboxylic_acid",
       "reagents": [
-        "KMnO₄ or Tollens' or Fehling's"
+        "Tollens' reagent ([Ag(NH3)2]+, NH3/OH-)",
+        "then H3O+"
       ],
-      "conditions": "RT to mild heat; Tollens' reagent ([Ag(NH₃)₂]⁺, alkaline) → silver mirror (RT); Fehling's (Cu²⁺/tartrate, alkaline, heat) → Cu₂O brick-red precipitate; KMnO₄/H⁺ or K₂Cr₂O₇/H⁺ (acidic, RT to reflux). Benedict's: similar to Fehling's but citrate buffer (milder). Aldehydes oxidised; ketones NOT oxidised by Tollens'/Fehling's (except α-hydroxy ketones). Formic acid gives positive Tollens' (can be oxidised to CO₂).",
+      "conditions": "Tollens' reagent oxidises only the CHO to COO- (silver mirror); acid workup gives RCOOH. C=C, OH and ketones are untouched.",
       "firing_condition": null,
       "chapter": "Aldehydes & Ketones",
       "archetype": [
@@ -1535,9 +1593,6 @@
       },
       "tx_ids": [
         31,
-        445,
-        446,
-        447,
         492
       ],
       "meta_tags": {
@@ -1611,7 +1666,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1637,13 +1694,30 @@
         "② cold KMnO₄ → glycerol"
       ],
       "conditions": "Step 1: LiAlH₄ (dry ether, 0°C, anhydrous) → allyl alcohol (selective 1,2-reduction of C=O; LiAlH₄ does not reduce C=C without catalyst). Step 2: Cold KMnO₄ (dil, alkaline) or OsO₄/NMO → syn dihydroxylation of C=C → glycerol (1,2,3-propanetriol). Two-step synthesis of glycerol from acrolein.",
-      "firing_condition": null,
+      "firing_condition": {
+        "requires": [
+          "enal"
+        ],
+        "at_most_one": [
+          "aldehyde"
+        ]
+      },
       "chapter": "Aldehydes & Ketones",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone",
+          "carboxylic_acid",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "amide",
+          "nitrile",
+          "epoxide",
+          "nitro_aliphatic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1674,7 +1748,12 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol",
+          "phenol",
+          "carboxylic_acid",
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1706,7 +1785,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -1765,19 +1846,22 @@
         "then H₃O⁺"
       ],
       "conditions": "Cannizzaro reaction: an aldehyde with no α-H disproportionates into the alcohol and the carboxylic acid (as its salt).",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "2,6-disubstituted ArCHO deformylates instead"
+      },
       "chapter": "Aldehydes & Ketones",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "hindered_archo"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        460,
-        462
+        657
       ],
       "meta_tags": {
         "question_length_scope": 2,
@@ -1893,7 +1977,10 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aromatic_ring",
+          "alkene"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2062,7 +2149,9 @@
         "II"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkyne"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2108,7 +2197,11 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkyne",
+          "nitro",
+          "aldehyde"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2228,13 +2321,20 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkyne",
+          "aldehyde",
+          "alcohol_1",
+          "alcohol_2",
+          "benzylic_ch",
+          "phenol",
+          "amine_nh"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        468,
-        470
+        468
       ],
       "meta_tags": {
         "question_length_scope": 2,
@@ -2367,7 +2467,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2433,7 +2535,10 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "phenol",
+          "aryl_nh2"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2465,7 +2570,11 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkyne",
+          "phenol",
+          "aryl_nh2"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2604,13 +2713,17 @@
         "H⁺"
       ],
       "conditions": "Aqueous acidic conditions (Zn/HCl or Zn/H⁺); reductive dehalogenation. Zinc metal (or Mg) provides 2 electrons: R-X + Zn + H⁺ → R-H + ZnX⁺. Alternative: LiAlH₄ (dry ether, RT). For gem-dihalides: Zn/HCl removes both halogens to give alkene, then further reduction to alkane. Used in synthesis to remove halogens introduced in HVZ or halogenation steps.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "Zn turns a vicinal dihalide into the alkene, not the alkane"
+      },
       "chapter": "Alkyl Halides",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "vicinal_dihalide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2723,7 +2836,9 @@
         "dry acetone"
       ],
       "conditions": "Reflux; dry acetone solvent; NaI (sodium iodide). Equilibrium driven right because NaCl or NaBr is insoluble in acetone and precipitates. SN2 mechanism (inversion at C). Acetone must be anhydrous. Used to convert R-Cl or R-Br to R-I for subsequent reactions requiring better leaving group. Rate: primary > secondary >> tertiary.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "SN2: 1° > 2° >> 3°"
+      },
       "chapter": "Alkyl Halides",
       "archetype": [
         "I",
@@ -2731,7 +2846,9 @@
         "IV"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "halide_3"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -2855,7 +2972,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        368
+        365
       ],
       "meta_tags": {
         "question_length_scope": 3,
@@ -3032,13 +3149,18 @@
         "R'ONa"
       ],
       "conditions": "RT to reflux; dry aprotic solvent (DMF, DMSO, or ether); SN2. Sodium/potassium alkoxide (R'ONa/R'OK) prepared first (alcohol + Na). R'O⁻ + R-X → R-O-R' + X⁻. MUST use primary R-X (secondary gives E2; tertiary gives only E2). Best: R'ONa + CH₃I or primary alkyl halide. Dry conditions (alkoxides react with H₂O).",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "Williamson needs CH3 or 1° R–X (2° gives E2)"
+      },
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "halide_2",
+          "halide_3"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3082,7 +3204,18 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "protic",
+          "nitro",
+          "epoxide",
+          "aldehyde",
+          "ketone",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "amide",
+          "nitrile"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3363,7 +3496,15 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene",
+          "aldehyde",
+          "alcohol_1",
+          "alcohol_2",
+          "benzylic_ch",
+          "phenol",
+          "amine_nh"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3460,7 +3601,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3492,7 +3635,17 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone",
+          "carboxylic_acid",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "nitrile",
+          "epoxide",
+          "nitro_aliphatic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3552,13 +3705,17 @@
         "H₂O"
       ],
       "conditions": "0-5°C; two-step sequence: diazotization then aqueous workup",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "only CH3NH2, CH3CH2NH2 and ArCH2NH2: other 1° amines rearrange (mixtures)"
+      },
       "chapter": "Amines",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "nh2_can_shift"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3591,7 +3748,10 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol",
+          "phenol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3756,7 +3916,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        103
+        660
       ],
       "meta_tags": {
         "question_length_scope": 2,
@@ -3810,13 +3970,27 @@
         "(2) H2O (aqueous workup)"
       ],
       "conditions": "LiAlH₄ (excess, ≥2 equiv); dry ether; 0°C to reflux; anhydrous; then H₂O workup. Succinic anhydride reduced at both C=O → 1,4-diol (butane-1,4-diol = tetramethylene glycol). Mechanism: both anhydride carbonyls reduced → two primary alcohols. NaBH₄ also reduces anhydrides (more reactive than esters). BH₃: reduces anhydride → lactol or diol.",
-      "firing_condition": null,
+      "firing_condition": {
+        "at_most_one": [
+          "anhydride"
+        ]
+      },
       "chapter": "Carboxylic Acids & Derivatives",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone",
+          "carboxylic_acid",
+          "ester",
+          "acid_chloride",
+          "amide",
+          "nitrile",
+          "epoxide",
+          "nitro_aliphatic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3848,7 +4022,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "amine_aliphatic_nh2"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -3980,7 +4156,17 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "protic",
+          "epoxide",
+          "aldehyde",
+          "ketone",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "amide",
+          "nitrile"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4008,7 +4194,13 @@
         "then H⁺ (Dow's process)"
       ],
       "conditions": "Dow's process: 623K (350°C), 300 atm, concentrated NaOH (steam); then acid workup (H⁺). Mechanism: benzyne (aryne) intermediate (E2-like elimination of HCl → aryne → HO⁻ addition). High temperature and pressure needed due to poor leaving-group ability of Cl on aromatic ring. Industrial scale: chlorobenzene + NaOH(steam) → sodium phenoxide → H⁺ → phenol. No Lewis acid (aryl halides unreactive in EAS conditions).",
-      "firing_condition": null,
+      "firing_condition": {
+        "only_smiles": [
+          "Clc1ccccc1",
+          "Brc1ccccc1"
+        ],
+        "note": "benzyne on a substituted ring gives isomer mixtures"
+      },
       "chapter": "Aromatic Compounds",
       "archetype": [
         "I",
@@ -4071,9 +4263,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        308,
-        409,
-        412
+        308
       ],
       "meta_tags": {
         "question_length_scope": 3,
@@ -4150,13 +4340,20 @@
         "CuCl"
       ],
       "conditions": "Gattermann-Koch synthesis: CO + HCl (1:1) + AlCl₃/CuCl (Lewis acid catalyst); anhydrous; pressure (5–10 atm); RT to 60°C. CO/HCl + AlCl₃ → formyl cation (H-CO⁺, HAlCl₃⁻) → EAS on benzene → benzaldehyde + HCl + AlCl₃ (regenerated, catalytic). Only works for unactivated or slightly activated benzene (not alkoxy or amino-substituted — those give Duff reaction instead).",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "Gattermann–Koch: benzene and alkyl/halo benzenes only"
+      },
       "chapter": "Aromatic Compounds",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkoxy_aryl",
+          "phenol",
+          "amine_any",
+          "meta_director"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4221,7 +4418,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4278,13 +4477,19 @@
         "AlCl₃ (Friedel-Crafts)"
       ],
       "conditions": "Friedel-Crafts acylation: anhydrous AlCl₃ (>1 equiv, needed to complex with product ketone); dry CH₂Cl₂ or CS₂ or nitrobenzene solvent; RT to reflux. RCOCl + AlCl₃ → RCO⁺ (acylium, resonance-stabilised, no rearrangement). Acylium attacks benzene → ketone. Product (ketone) complexes with AlCl₃ → aqueous workup to liberate ketone. Deactivated rings (NO₂, COOH substituents) do not undergo FC alkylation/acylation.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "Friedel–Crafts fails on deactivated rings and amines"
+      },
       "chapter": "Aromatic Compounds",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "meta_director",
+          "amine_any",
+          "phenol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4349,7 +4554,11 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "alkene",
+          "alcohol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4707,7 +4916,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4739,7 +4950,17 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "amide",
+          "nitrile",
+          "epoxide",
+          "nitro_aliphatic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4819,7 +5040,9 @@
         "IV"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4876,7 +5099,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ester"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -4908,7 +5133,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5025,8 +5252,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        48,
-        386
+        48
       ],
       "meta_tags": {
         "question_length_scope": 2,
@@ -5072,10 +5298,6 @@
       },
       "tx_ids": [
         43,
-        145,
-        198,
-        242,
-        598,
         641
       ],
       "meta_tags": {
@@ -5134,7 +5356,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkyne"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5466,7 +5690,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol_2"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5524,7 +5750,13 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone",
+          "carboxylic_acid",
+          "ester",
+          "alkyl_halide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5550,7 +5782,9 @@
         "excess"
       ],
       "conditions": "PI₃ (excess, from P + I₂); heat; SN2 on primary OH. Glycerol + PI₃ → 1,2,3-triiodopropane → elimination (HI + alkali or Zn) → allyl iodide (or propene with excess HI). Phosphorus halides substitute OH with I via phosphite ester intermediate → SN2. Primary OH reacts faster than secondary.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "glycerol + PI3 ends as allyl iodide, not the triiodide: not modelled"
+      },
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
         "I",
@@ -5558,7 +5792,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "vicinal_triol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5667,7 +5903,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        175
+        143
       ],
       "meta_tags": {
         "question_length_scope": 3,
@@ -5697,7 +5933,9 @@
         "II"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aromatic_ring"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5902,14 +6140,21 @@
         "PCl5"
       ],
       "conditions": "PCl₅; anhydrous; RT to mild heat. RCOOR' + PCl₅ → RCOCl (acyl chloride) + R'Cl + POCl₃. Both O-C bonds cleaved: acyl-O gives RCOCl, alkyl-O gives R'Cl. Useful for converting esters to acyl chlorides without going through the free acid. Clean for primary R'.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "clean for R' = CH3 or 1° alkyl"
+      },
       "chapter": "Carboxylic Acids & Derivatives",
       "archetype": [
         "I",
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ester_o_not_primary",
+          "alcohol",
+          "carboxylic_acid",
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5936,13 +6181,20 @@
         "-78 degrees C"
       ],
       "conditions": "DIBALH (diisobutylaluminium hydride, DIBAL-H); dry toluene or hexane; –78°C (very low T critical!); anhydrous. Selective reduction: ester → aldehyde (stops at aldehyde at –78°C because product aldehyde-Al complex is stable; warming → alcohol). Mechanism: H⁻ from DIBALH attacks ester C=O → tetrahedral intermediate (stable Al-O chelate at –78°C) → aqueous workup → aldehyde. At RT: ester → alcohol (2 equiv DIBALH or full reduction).",
-      "firing_condition": null,
+      "firing_condition": {
+        "at_most_one": [
+          "ester"
+        ]
+      },
       "chapter": "Carboxylic Acids & Derivatives",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -5975,7 +6227,10 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "nitrile",
+          "amide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6008,7 +6263,11 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "nitrile",
+          "amide",
+          "alkyl_halide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6115,14 +6374,18 @@
         "conc HX (HI > HBr, acidic conditions, SN1 or SN2 depending on R)"
       ],
       "conditions": "Conc HX (HI > HBr >> HCl) or excess H₂SO₄; reflux. Mechanism: H⁺ protonates ether O → oxonium ion → SN1 (3° or 2° with HI/HBr) or SN2 (1° ethers, X⁻ attacks) → alkyl halide + alcohol → further halogenation of alcohol. HI cleaves fastest (I⁻ best nucleophile). Aryl ethers (PhOR): Ar-O cleaved → PhOH + R-X (aryl C-O too strong for SN on ring). Excess HI: PhOH → PhI ultimately.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "benzylic/allylic C–O cleaves by SN1 at that carbon"
+      },
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
         "I",
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "benzylic_allylic_ether"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6416,7 +6679,10 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "acid_chloride"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6454,13 +6720,17 @@
         "SeO2 (selenium dioxide)"
       ],
       "conditions": "SeO₂ (selenium dioxide); dioxane or AcOH-H₂O; reflux. Riley oxidation: SeO₂ oxidises methyl ketone at α-carbon → α-diketone (2-oxopropanal = methylglyoxal = pyruvaldehyde). Mechanism: SeO₂ ene reaction with enol → [2,3]-sigmatropic rearrangement → → α-hydroxyl → further oxidation → diketo. Product: SeO₂ + CH₃COCH₃ → CH₃CO-CHO (methylglyoxal). SeO₂ also oxidises α-C of C=C (allylic oxidation) and secondary C=C.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "SeO2 prefers an α-CH2; modelled for CH3CO– with no other α-H"
+      },
       "chapter": "Aldehydes & Ketones",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alpha_ch_ch2_ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6486,19 +6756,23 @@
         "KOH (Wolff-Kishner)"
       ],
       "conditions": "Wolff-Kishner: hydrazone formation first (NH₂NH₂, EtOH, RT) then base/heat (KOH, ethylene glycol, reflux 200°C). Mechanism: C=O + NH₂NH₂ → hydrazone (C=N-NH₂) → base removes N-H → anion → loss of N₂ → carbanion → protonation → CH₂. Base-sensitive substrates: Clemmensen (Zn-Hg/conc HCl) instead. Bamford-Stevens: tosylhydrazone + base → diazo intermediate → carbene/alkene.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "CHO is reduced to CH3 as well"
+      },
       "chapter": "Aldehydes & Ketones",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ester",
+          "alkyl_halide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        39,
-        493
+        39
       ],
       "meta_tags": {
         "question_length_scope": 4,
@@ -6543,7 +6817,6 @@
         "priority_ref": null
       },
       "tx_ids": [
-        214,
         215
       ],
       "meta_tags": {
@@ -6583,7 +6856,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6621,8 +6896,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        210,
-        471
+        210
       ],
       "meta_tags": {
         "question_length_scope": 2,
@@ -6660,7 +6934,10 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "di_tert_ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6694,7 +6971,9 @@
         "V"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6726,7 +7005,9 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6882,7 +7163,9 @@
         "II"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -6914,7 +7197,17 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone",
+          "carboxylic_acid",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "nitrile",
+          "epoxide",
+          "nitro_aliphatic"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7078,7 +7371,11 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ester",
+          "ketone",
+          "aldehyde"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7110,7 +7407,11 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alkene",
+          "alkyne",
+          "nitro"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7154,7 +7455,10 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ester",
+          "amide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7199,7 +7503,15 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "protic",
+          "aldehyde",
+          "ketone",
+          "ester",
+          "acid_chloride",
+          "anhydride",
+          "amide"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7280,13 +7592,14 @@
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        78,
-        80
+        75
       ],
       "meta_tags": {
         "question_length_scope": 4,
@@ -7317,14 +7630,21 @@
         "Zn/NaOH (1 mol)"
       ],
       "conditions": "1 equiv Zn; aqueous NaOH (1 mol, mildly basic); RT. Bimolecular reductive coupling: ArNO₂ reduced to nitrosobenzene (ArNO, 2e⁻) → condensation with ArNHOH → azobenzene via hydrazone-like TS. Basic conditions. Product is trans-azobenzene (thermodynamic). cis-azobenzene from photoisomerisation of trans.",
-      "firing_condition": null,
+      "firing_condition": {
+        "at_most_one": [
+          "nitro"
+        ]
+      },
       "chapter": "Amines",
       "archetype": [
         "I",
         "III"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "ketone"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7393,18 +7713,22 @@
         "CHCl3"
       ],
       "conditions": "Reimer-Tiemann on guaiacol (2-methoxyphenol): CHCl₃ + NaOH; 60–70°C; aqueous. :CCl₂ attacks ring → formylation at C-4 (para to OH, ortho to OMe) → 4-hydroxy-3-methoxybenzaldehyde (vanillin). Vanillin can also be made by Duff reaction or from eugenol. Reimer-Tiemann gives vanillin as major product from guaiacol.",
-      "firing_condition": null,
+      "firing_condition": {
+        "note": "2-substituted phenols formylate at ortho and para: a mixture"
+      },
       "chapter": "Alcohols, Phenols & Ethers",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ortho_substituted_phenol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        385
+        379
       ],
       "meta_tags": {
         "question_length_scope": 2,
@@ -7505,7 +7829,10 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "alcohol",
+          "amine_nh"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7740,7 +8067,9 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "carboxylic_acid"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
@@ -7945,13 +8274,14 @@
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "ortho_substituted_phenol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        379,
-        391
+        379
       ],
       "meta_tags": {
         "question_length_scope": 4,
@@ -7996,7 +8326,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        608
+        658
       ],
       "meta_tags": {
         "question_length_scope": 3,
@@ -8029,9 +8359,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        378,
-        472,
-        473
+        378
       ],
       "meta_tags": {
         "question_length_scope": 4,
@@ -8135,25 +8463,29 @@
       "from": "substituted_benzene",
       "to": "substituted_benzene",
       "reagents": [
-        "conc HNO3",
-        "conc H2SO4",
-        "stepwise increasing temperature"
+        "conc. HNO3",
+        "conc. H2SO4",
+        "323 K"
       ],
-      "conditions": "Stepwise nitration: conc HNO₃/H₂SO₄; increasing temperature (50°C for first NO₂, 70°C for second, 100°C for third). Methyl (toluene) is EDG ortho/para director → successive nitrations at ortho and para positions. Third nitration requires higher T (ring deactivated by NO₂ groups). Product: TNT (2,4,6-trinitrotoluene = 1-methyl-2,4,6-trinitrobenzene). Three equiv mixed acid.",
-      "firing_condition": null,
+      "conditions": "Mononitration (one NO2) of a monosubstituted benzene: NO2+ enters ortho/para to an o/p director (para major) or meta to a meta director.",
+      "firing_condition": {
+        "note": "mononitration"
+      },
       "chapter": "Aromatic Compounds",
       "archetype": [
         "I"
       ],
       "chemoselectivity": {
-        "requires_absent": [],
+        "requires_absent": [
+          "aldehyde",
+          "alkene",
+          "alcohol"
+        ],
         "node_redirect": {},
         "priority_ref": null
       },
       "tx_ids": [
-        382,
-        395,
-        572
+        56
       ],
       "meta_tags": {
         "question_length_scope": 4,
@@ -8207,7 +8539,7 @@
         "priority_ref": null
       },
       "tx_ids": [
-        82
+        383
       ],
       "meta_tags": {
         "question_length_scope": 3,
@@ -8238,7 +8570,9 @@
         "node_redirect": {},
         "priority_ref": null
       },
-      "tx_ids": [],
+      "tx_ids": [
+        659
+      ],
       "meta_tags": {
         "question_length_scope": 2,
         "model_solution_length": 2,

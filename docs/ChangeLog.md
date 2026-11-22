@@ -2,6 +2,22 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-11-23
+
+### Organic rule scope, four rule bugs, concept-book fixes, start picker
+- `docs/organic_rule_scope.md` (new): substrate scope for all 155 ruled edges (59 OK, 68 gaps, 28 author decisions); approved by the author 2026-11-22.
+- Scope in the graph: `knowledge/reaction_graph.json` `chemoselectivity.requires_absent` (group names) and `firing_condition`, for 78 edges; written by `tools/apply_rule_scope.py` (new) from groups in `core/engine/organic/scope.py` (new). `rules.apply()` refuses molecules outside the scope.
+- `core/engine/organic/rules.py`:
+  - Bugs fixed: NaBH4-ketone and Wolff–Kishner dropped the molecule (every ketone gave propan-2-ol / propane; unmapped `[#6]`); isocyanide hydrolysis now RNH2 + HCOOH (was R–NH–CH3); ester hydrolysis reacts at every ester.
+  - Approved scope code: 1,2-shift refusal (acid hydration, HBr addition, acid dehydration; a shift giving the same alkene is kept); unsymmetrical 1°/2° epoxide + HX refused; Mg ring closure 1,3 only; cyclic anhydride from 1,4-diacids only; Wolff–Kishner also reduces CHO.
+- `knowledge/concept_book.json`: entries 42, 100, 115, 128, 214, 215, 385 corrected; new entries 657–660 (Cannizzaro, o-xylene → phthalic anhydride, isocyanide hydrolysis, t-alkyl amine + KMnO4); about 30 mislinked `tx_ids` removed or relinked in the graph.
+- `core/pipeline/org_start.py` (new), `core/pipeline/org_qfirst.py`, `core/models.py`, `subject_config.py`: the starting molecule is invented by `START_PICKER` (Gemini Flash), checked by the engine (2+ reacting groups, branched scheme) and by `NAME_CHECKER` (Claude Haiku: name → structure blind). Schemes 4–6 steps (was 5–8). A step now tries the edges of every group a compound has.
+- `core/engine/organic/labels.py`: second nitration edge labelled 323 K (mononitration).
+- `tools/start_batch.py` (new): picker batch vs the JEE yardstick (JEE only measures; the picker never sees it).
+- Tests: `tests/test_engine_organic.py` (RuleBugs, Scope), `tests/test_org_qfirst.py` (StartPicker). 519 offline tests pass.
+- Live runs: `outputs/live_organic_5.log` (stopped by the author; draw 1 too easy, Granite solved it). Picker test: 1 pick, $0.0196 ≈ ₹1.72 (₹88/$). The first batch was stopped (its extraction was cut off, `outputs/unparseable_replies.jsonl`); spend unknown.
+- Next steps: `docs/next_session_organic.md` (new).
+
 ## 2026-11-20
 
 ### Organic level check calibrated and used as a gate

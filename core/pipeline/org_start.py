@@ -1,0 +1,167 @@
+"""
+org_start.py — choosing the STARTING MOLECULE of an organic scheme (the author, 2026-11-23).
+
+    pick_start   one call to models.START_PICKER: invent a rich starting molecule (name + SMILES)
+    check_start  the engine checks it: real and single, properties computable, at least two functional groups the
+                 rules can act on, and a branched 4-6 step scheme can be built from it
+    name check   a different model (models.NAME_CHECKER) turns the NAME back into a structure without seeing the
+                 SMILES; the two must agree (the student only ever reads the name)
+On a failed check the picker is told why and asked again (PICK_TRIES in all). No real exam question is shown to
+the picker: novelty is the point, JEE is only the yardstick (tools/start_batch.py compares features).
+"""
+
+from __future__ import annotations
+
+import random
+
+from rdkit import Chem
+
+from core import models
+from core.engine.base import EngineError
+from core.engine.organic import props as OP
+from core.engine.organic import rules as R
+from core.engine.organic import scope
+from core.engine.organic.labels import REAGENT_LABEL
+from core.engine.organic.mol import canon, classes
+
+PICK_TRIES = 3
+HEAVY_MIN, HEAVY_MAX = 5, 22
+DRAW_ATTEMPTS = 300
+FEATURE_GROUPS = ["aldehyde", "ketone", "carboxylic_acid", "ester", "acid_chloride", "anhydride", "amide", "nitrile",
+                  "epoxide", "nitro", "alkene", "alkyne", "alcohol", "phenol", "amine_any", "alkyl_halide",
+                  "alkoxy_aryl"]
+
+
+def features(smiles: str) -> dict:
+    """Size and richness of a molecule (the same measure for picks and for the JEE yardstick)."""
+    m = Chem.MolFromSmiles(smiles)
+    if m is None:
+        raise EngineError(f"not a molecule: {smiles}")
+    s = Chem.MolToSmiles(m)
+    return {"heavy": m.GetNumHeavyAtoms(), "rings": m.GetRingInfo().NumRings(),
+            "aromatic": any(a.GetIsAromatic() for a in m.GetAtoms()),
+            "groups": [g for g in FEATURE_GROUPS if scope.has(s, g)],
+            "stereocentres": len(Chem.FindMolChiralCenters(m, includeUnassigned=True, useLegacyImplementation=False))}
+
+
+def _reaction_menu(graph) -> str:
+    """What the engine can do, per functional group (node): the reagents as a question prints them."""
+    lines = []
+    for node in sorted(graph["out"]):
+        labs = sorted({REAGENT_LABEL[e["id"]] for e in graph["out"][node] if e["id"] in REAGENT_LABEL})
+        if labs:
+            lines.append(f"- {node}: " + "; ".join(labs))
+    return "\n".join(lines)
+
+
+def check_start(adapter, smiles: str, rng=None) -> tuple:
+    """(ok, reason, stats). ok means the molecule can start a branched 4-6 step scheme with two or more groups the
+    rules act on; stats always carries what was found (for the log and the batch report)."""
+    from core.pipeline import org_qfirst as O
+    rng = rng or random.Random(0)
+    if not smiles:
+        return False, "no SMILES given", {}
+    m = Chem.MolFromSmiles(smiles)
+    if m is None:
+        return False, "the SMILES does not parse", {}
+    if "." in smiles:
+        return False, "one molecule only (no salts or mixtures)", {}
+    nitro = {i for match in m.GetSubstructMatches(Chem.MolFromSmarts("[N+](=O)[O-]")) for i in match}
+    if any(a.GetFormalCharge() and a.GetIdx() not in nitro for a in m.GetAtoms()):
+        return False, "a neutral molecule only", {}
+    smi = canon(smiles)
+    st = features(smi)
+    if not HEAVY_MIN <= st["heavy"] <= HEAVY_MAX:
+        return False, f"{st['heavy']} heavy atoms: use {HEAVY_MIN}-{HEAVY_MAX}", st
+    try:
+        OP.askable(smi)
+    except EngineError as e:
+        return False, f"its properties cannot be computed ({e})", st
+    g = O._graph(adapter)
+    first, nodes_used = [], set()
+    for n in sorted(classes(smi)):
+        for e in g["out"].get(n, []):
+            try:
+                r = R.apply(e, smi)
+            except EngineError:
+                continue
+            if "." not in r.product:
+                first.append(e["id"])
+                nodes_used.add(n)
+    st.update(classes=sorted(classes(smi)), first_steps=len(set(first)), groups_reacting=sorted(nodes_used))
+    if len(nodes_used) < 2:
+        return False, (f"the engine's reagents act on only {len(nodes_used)} of its groups "
+                       f"({', '.join(nodes_used) or 'none'}): give two or more groups that the listed reagents attack"), st
+    cand = O.draw(adapter, rng, start=("start", smi), attempts=DRAW_ATTEMPTS)
+    if cand is None:
+        return False, "no branched 4-6 step scheme can be built from it with the listed reagents", st
+    st["scheme_steps"] = len(cand["_order"]) - 1
+    st["selectivity_steps"] = sum(1 for k in cand["_order"][1:] if cand["_comps"][k]["result"].traps)
+    return True, "", st
+
+
+def _same(a: str, b: str) -> bool:
+    try:
+        stereo = "@" in a or "/" in a or "\\" in a
+        return canon(a, stereo=stereo) == canon(b, stereo=stereo)
+    except EngineError:
+        return False
+
+
+def name_matches(name: str, smiles: str) -> tuple:
+    """(ok, the checker's SMILES): a different model turns the name into a structure without seeing ours."""
+    try:
+        d = models.ask_json("name_checker", models.NAME_CHECKER,
+                            "You convert IUPAC names to SMILES. Output JSON only.",
+                            f'Give the SMILES of this compound, with stereochemistry if the name states it.\nName: {name}\n'
+                            'Return JSON: {"smiles": "..."}', temperature=0.0, max_tokens=3000)
+    except Exception as e:  # noqa: BLE001  (a failed check is a failed pick, never a crash)
+        return False, f"(name check failed: {str(e)[:80]})"
+    theirs = str(d.get("smiles") or "")
+    return _same(smiles, theirs), theirs
+
+
+def pick_start(adapter, rng=None, avoid=(), log=None) -> dict | None:
+    """{"name", "smiles", "why", "stats", "tries"} for a start the engine accepts, or None after PICK_TRIES."""
+    from core.pipeline import org_qfirst as O
+    rng = rng or random.Random()
+    menu = _reaction_menu(O._graph(adapter))
+    avoid_txt = ("\nDo not reuse any of these (already used): " + "; ".join(avoid)) if avoid else ""
+    feedback = ""
+    for t in range(1, PICK_TRIES + 1):
+        prompt = f"""Invent ONE starting molecule for a hard multi-step organic reaction scheme (4-6 steps, with a branch:
+one intermediate is treated with two different reagents). The scheme will be built ONLY from these reagents, listed
+by the functional group they act on:
+{menu}
+
+What makes a starting molecule good:
+- two or three DIFFERENT functional groups that the reagents above act on, so that a reagent must choose between
+  them (chemoselectivity) and later steps depend on which group reacted;
+- at least one of: a ring, a stereocentre, an unsymmetrical C=C or ketone (regioselectivity), two similar groups
+  in different environments (1° vs 2° OH, aryl vs alkyl);
+- {HEAVY_MIN}-{HEAVY_MAX} heavy atoms; a real, stable, neutral compound with a correct IUPAC name;
+- not a textbook one-group molecule (no propane, ethanol, benzene, acetone) and not copied from any exam question.{avoid_txt}
+{feedback}
+Return JSON: {{"name": "IUPAC name", "smiles": "SMILES", "why": "one line: which groups compete for which reagent"}}"""
+        try:
+            d = models.ask_json("start_picker", models.START_PICKER, "You are an organic chemist. Output JSON only.",
+                                prompt, temperature=1.0, max_tokens=1500)
+        except Exception as e:  # noqa: BLE001
+            feedback = ""
+            if log:
+                log({"event": "start_pick_error", "try": t, "error": str(e)[:200]})
+            continue
+        name, smi = str(d.get("name") or "").strip(), str(d.get("smiles") or "").strip()
+        ok, reason, st = check_start(adapter, smi, rng)
+        if ok:
+            same, theirs = name_matches(name, smi)
+            if not same:
+                ok, reason = False, f"the name '{name}' is the structure {theirs}, not {smi}: name and SMILES must agree"
+        if log:
+            log({"event": "start_pick", "try": t, "name": name, "smiles": smi, "ok": ok, "reason": reason,
+                 "stats": st, "why": d.get("why")})
+        print(f"  [start] try {t}: {name} ({smi}) → {'accepted' if ok else 'refused: ' + reason[:140]}")
+        if ok:
+            return {"name": name, "smiles": canon(smi), "why": d.get("why"), "stats": st, "tries": t}
+        feedback = f"\nYour previous molecule {name} ({smi}) was refused: {reason}. Invent a different one."
+    return None
