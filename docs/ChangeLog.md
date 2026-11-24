@@ -4,6 +4,18 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-24
 
+### Live physical run (final check, second try): good question
+- `outputs/live_physical_final_2.log` ($0.1971 ≈ ₹17.34 at ₹88/$). Accepted GEN_20261124T101359 on the first draw: 3 HNO2 ⇌ HNO3 + 2 NO + H2O; the NO is oxidised to NO2, absorbed in water (HNO2 + HNO3), and that HNO2 is titrated with KMnO4; find Kc. Checked by hand: n(MnO4⁻) 0.0975 → HNO2 0.2438 → NO 0.4877 → ξ 0.2438; HNO2 left 0.3285; Kc = 0.2438 × 0.4877² / 0.3285³ = 1.64 (Δn = 0, so the volume cancels). Correct. Granite and GLM failed, minimax-m3 solved (advanced_medium); Jev 3.27.
+
+### Physical engine: nuclide names past uranium
+- Found in the physical live run below: β⁻ decay of U-236 failed with "no nuclide with Z = 93" because the element list ends at U. `core/engine/physical/kinetics.py`: `_nuclide_name` also knows Np–Lr (Z 93–103). Test: `Kinetics.test_nuclear` (U-236 → Np-236).
+
+### Live physical run (final check): no question
+- `outputs/live_physical_final.log` ($0.2535 ≈ ₹22.31 at ₹88/$; the spend cap is checked between draws, so one long draw overshot it). Four draws: one too easy (Granite solved), two designs refused by the coherence check, one stopped by the Np bug above. Nothing wrong accepted.
+
+### Live organic run 20: good question
+- `outputs/live_organic_20.log` ($0.0583 ≈ ₹5.13). Two schemes held (bromohydrin closing to an epoxide in NaOH; aqueous acid on a nitrile + alkene). The third, from 4-(2-methylprop-1-enyl)cyclohexanone, passed: NaBH4, SOCl2/py, NaCN, HBr (Markovnikov, 3° Br); Br2/H2O (3° OH). Accepted GEN_20261124T092340 (msq, key AC). Checked by hand: correct (T has no chiral carbon; the stereocentre fix matters here). Granite failed, minimax-m3 solved (advanced_medium); Jev 2.93.
+
 ### Live organic run 19: good question (final check before commit)
 - `outputs/live_organic_19.log` ($0.0717 ≈ ₹6.31 at ₹88/$). Three schemes from 4-propargylbenzaldehyde were held for real reasons (CHCl2 hydrolysis in aqueous acid, an α-bromohydrin closing to an epoxide, imine reactions). The fourth, from 1-(4-allylphenyl)ethanone, passed: NaBH4; CH2N2/HBF4 (methyl ether), then oxymercuration in MeOH; Br2/H2O (Markovnikov), NaCN, H2/Ni. Accepted GEN_20261124T091357 (count format, key 4: S has 2 stereocentres, U nitrile, Q iodoform, V carbylamine; R's DoU is 5 not 6; T has 5 sp3 C not 3). Checked by hand: correct. Granite failed, GLM solved; Jev 3.26.
 

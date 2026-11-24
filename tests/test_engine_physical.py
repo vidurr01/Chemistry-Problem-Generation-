@@ -274,6 +274,7 @@ class Kinetics(Close):
 
     def test_nuclear(self):
         self.assertEqual(run([219], s0__Z=92, s0__A=238).answer, "Th-234")
+        self.assertEqual(run([220], s0__Z=92, s0__A=236).answer, "Np-236")   # past uranium (live run, 2026-11-24)
         r = run([224], s0__Z=82, s0__A=206, s0__initial_Z=92, s0__initial_A=238, s0__count="beta")
         self.assertEqual(r.answer, 6)
         self.assertEqual(run([224], s0__Z=82, s0__A=206, s0__initial_Z=92, s0__initial_A=238, s0__count="alpha").answer, 8)

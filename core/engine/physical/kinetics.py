@@ -12,10 +12,15 @@ M_H = 1.007825      # u, hydrogen atom (atomic masses absorb the electrons)
 M_N = 1.008665      # u, neutron
 
 
+# daughters of the heaviest natural parents (U, Th) can lie past uranium: β⁻ of U-236 gives Np-236
+_TRANSURANIC = ["Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr"]
+
+
 def _nuclide_name(Z, A):
-    if not 1 <= Z <= len(SYMBOLS) or A < Z:
+    symbols = SYMBOLS + _TRANSURANIC
+    if not 1 <= Z <= len(symbols) or A < Z:
         raise EngineError(f"no nuclide with Z = {Z}, A = {A}")
-    return f"{SYMBOLS[Z - 1]}-{A}"
+    return f"{symbols[Z - 1]}-{A}"
 
 
 def _decay(v, dz, da):

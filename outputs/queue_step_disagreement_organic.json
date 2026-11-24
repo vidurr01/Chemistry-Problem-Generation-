@@ -1618,5 +1618,81 @@
         "reason": "mCPBA preferentially oxygenates the more nucleophilic imine to an oxaziridine under standard selective conditions, leaving the ketone unchanged."
       }
     ]
+  },
+  {
+    "id": "STE_20261124T092050_37",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-24T09:20:50.256192+00:00",
+    "chain": [
+      "ketone_to_lactone_diazomethane",
+      "alkene_to_halohydrin_br",
+      "alkyl_halide_to_alcohol_naoh",
+      "ketone_to_alcohol_nabh",
+      "alkene_to_alcohol_ho",
+      "alcohol_to_substituted_benzene_4methylbenze"
+    ],
+    "start": [
+      "4-(2-methylprop-1-en-1-yl)cyclohexan-1-one",
+      "CC(C)=CC1CCC(=O)CC1"
+    ],
+    "structures": {
+      "P": "CC(C)=CC1CCC(=O)CC1",
+      "Q": "CC(C)=CC1CCCC(=O)CC1",
+      "R": "CC(C)(O)C(Br)C1CCCC(=O)CC1",
+      "S": "CC(C)(O)C(O)C1CCCC(=O)CC1",
+      "T": "CC(C)(O)C(O)C1CCCC(O)CC1",
+      "U": "CC(C)(O)CC1CCCC(=O)CC1",
+      "V": "Cc1ccc(S(=O)(=O)OC(C)(C)CC2CCCC(=O)CC2)cc1"
+    },
+    "steps": [
+      {
+        "label": "S",
+        "edge": "alkyl_halide_to_alcohol_naoh",
+        "substrate": "CC(C)(O)C(Br)C1CCCC(=O)CC1",
+        "reagent": "aq. NaOH",
+        "engine": "CC(C)(O)C(O)C1CCCC(=O)CC1",
+        "verdict": "disagree",
+        "checker_product": "CC1(C)OC1C2CCCC(=O)CC2",
+        "reason": "Aqueous NaOH promotes intramolecular ring closure of the vicinal bromoalcohol by substitution at the secondary C–Br center, giving the epoxide while leaving the ketone unchanged."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261124T092114_38",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-24T09:21:14.613104+00:00",
+    "chain": [
+      "ketone_to_lactone_diazomethane",
+      "ketone_to_cyanohydrin_hcn",
+      "alkene_to_ether_hgoacrohorhg",
+      "alcohol_to_ester_rcocl",
+      "alkene_to_alcohol_ho",
+      "diol_to_diol_2eqchcooh"
+    ],
+    "start": [
+      "4-(2-methylprop-1-en-1-yl)cyclohexan-1-one",
+      "CC(C)=CC1CCC(=O)CC1"
+    ],
+    "structures": {
+      "P": "CC(C)=CC1CCC(=O)CC1",
+      "Q": "CC(C)=CC1CCCC(=O)CC1",
+      "R": "CC(C)=CC1CCCC(O)(C#N)CC1",
+      "S": "COC(C)(C)CC1CCCC(O)(C#N)CC1",
+      "T": "COC(C)(C)CC1CCCC(C#N)(OC(C)=O)CC1",
+      "U": "CC(C)(O)CC1CCCC(O)(C#N)CC1",
+      "V": "CC(=O)OC(C)(C)CC1CCCC(C#N)(OC(C)=O)CC1"
+    },
+    "steps": [
+      {
+        "label": "U",
+        "edge": "alkene_to_alcohol_ho",
+        "substrate": "CC(C)=CC1CCCC(O)(C#N)CC1",
+        "reagent": "dil. H₂SO₄",
+        "engine": "CC(C)(O)CC1CCCC(O)(C#N)CC1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "Dilute aqueous H₂SO₄ can hydrate the alkene, hydrolyze the nitrile under sufficiently forcing conditions, and cleave the acid-labile cyanohydrin to a ketone and HCN, so the unspecified conditions do not define a unique major product."
+      }
+    ]
   }
 ]
