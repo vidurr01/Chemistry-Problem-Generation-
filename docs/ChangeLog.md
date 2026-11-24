@@ -4,6 +4,87 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-24
 
+### Inorganic live run 8 (normal mix): good question
+- `outputs/live_inorganic_8.log` ($0.0075 ≈ ₹0.66 at ₹88/$). First draw, hidden products, all 8 confirmed blind: accepted GEN_20261124T162413, a diamagnetic count over CuO > 1100 °C (Cu₂O), the cyanide process ([Au(CN)₂]⁻), Cr₂O₇²⁻ + reducing agent (Cr³⁺), FeS₂ roasting (Fe₂O₃), ZnS roasting (ZnO), Cu(OH)₂ heat (CuO), Na₂CrO₄ + H₂SO₄ (Na₂Cr₂O₇) and CuSO₄ + excess KI (CuI). Key 5. Checked by hand: correct; with excess KI, [CuI₂]⁻ is also Cu(I) d¹⁰, so the key holds. Jev 2.68; Granite 3, GLM solved; Granite solved with the insight hint: advanced, difficulty confirmed.
+- Hidden-products level so far (runs 5–8): Jev 2.32, 2.55, 2.66, 2.68, against 1.90 for real Advanced list questions and 1.11 for real Main ones. Every one: Granite fails, GLM solves.
+
+### Inorganic live run 7 (normal mix, after the edge block list): good question
+- `outputs/live_inorganic_7.log` ($0.0080 ≈ ₹0.70 at ₹88/$). Draw 1, a T-shaped species list (Jev 1.64), was solved by Granite: too easy. Draw 2, hidden products, all 7 confirmed blind: accepted GEN_20261124T161943, a d²sp³ count over Haber (NH₃), CuCl₂ + excess Cl⁻ ([CuCl₄]²⁻), CoCl₃ + NH₃ ([Co(NH₃)₆]Cl₃), K⁺ + Na₃[Co(NO₂)₆] (K₂Na[Co(NO₂)₆]), Ag + KCN + O₂ (K[Ag(CN)₂]), Fe(CN)₂ + KCN (K₄[Fe(CN)₆]) and ZnCl₂ + excess NaOH (Na₂[Zn(OH)₄]). Key 3. Checked by hand: correct. Every Werner ammine of Co(III) is d²sp³, so the key holds whichever one a student writes. Jev 2.66; Granite 2, GLM solved: advanced.
+- Fixed: `inorg_products._conditions` drops the parts of a graph "conditions" text that are notes, not conditions: mechanisms, "study", "commercial", "industrial", "via …", "(used in …)". "Werner's study" → nothing; "Trace alkali, push-pull mechanism" → "trace alkali". Test: `Parts.test_notes_are_not_printed_as_conditions`.
+
+### Inorganic concept book: the 134 exception notes reviewed
+- New `tools/audit_inorg_exceptions.py`: GPT-6 Luna reviews each note; `outputs/inorg_exception_audit.json` / `.log`. Three runs, $0.115 ≈ ₹10.1 in all. In the first two, batches of 8 mixed up note numbers and faulted the "standard_case", which is by design the naive belief. The third used batches of 3, a clearer prompt, and each reply had to quote its note's exception or be asked again.
+- Hand review. Factual errors in 9 notes:
+  - 51: B₂H₆ called polymeric.
+  - 56: NCl₃ + H₂O gives NH₃ + HOCl, not HCl.
+  - 68: limestone called CaO + SiO₂.
+  - 72: Zn boils at 907 °C, not 920 °C.
+  - 79: "lower oxides are neutral" as the reason.
+  - 97: covalent character raises the measured lattice energy; it does not lower it.
+  - 108: Ca/Ba/Pb nitrates do give the brown ring.
+  - 111: NH₄NO₃ + NaOH gives NH₃; N₂O comes from heating it.
+  - 112: Sr/Ba carbonates also dissolve as bicarbonates.
+- Loose wording: 107 calls S white; it is milky or pale yellow.
+- Not real exceptions: 25 and 133, and about 12 "minor" notes whose example obeys the rule (11, 42, 43, 49, 66, 73, 74, 96, 106, 115, 130, 131).
+- Luna was too strict on 9, 75, 117; they are kept. Arsenate needs boiling with molybdate; van Arkel is used for B.
+- Applied (the author) in `knowledge/concept_book_inorg.json` → `interpretive_operators.number_of_exceptions.exceptions`; each changed note carries an `audit_note` with the date and what was wrong.
+  - 8 corrected in place: 51, 56, 68, 72, 79, 97, 107, 108. Note 108 is rewritten to a true exception: nitrite also gives the brown ring; Br⁻ and I⁻ interfere.
+  - 16 marked `"not_exception": true`: 111 and 112 (false claims, text corrected), 25, 133, and the 12 whose example obeys the rule.
+  - `standard_case` is unchanged everywhere, since `tools/extract_notes.py` keys on it. No question code reads these notes.
+
+### Inorganic: wrong and condition-dependent graph edges removed from question drawing
+- New `knowledge/inorg_blocked_edges.json`: 28 edge ids with a reason each. 15 are wrong: the product contradicts the conditions, a reagent is missing, or the entry is broken. 13 depend on amounts or conditions. The author asked for them to be removed. They come from the graph audit, checked by hand.
+- `core/pipeline/inorg_qfirst.py` `_graph`: drops them on load, so neither reaction chains nor hidden products can use them. The graph JSON and the concept book are not changed, so a rebuild cannot bring them back. Test: `Draw.test_blocked_edges_never_drawn`.
+
+### Inorganic graph audit (blind) and exceptions re-check
+- New `tools/audit_inorg_graph.py`: GPT-6 Luna names the product of all 381 non-synthetic edges blind; `outputs/inorg_graph_audit.json` / `.log`, $0.0401 ≈ ₹3.53. 278 agree, 19 another form of the same species, about 70 differ. By hand: about 13 graph errors (product contradicts the printed conditions, or a reagent is missing: CuSO₄ + excess NH₃ → Cu(OH)₂; Na + excess O₂ → Na₂O; Mg₃N₂ + D₂O → MgO; HgCl₂ with no SnCl₂; H₂S → CuS with no Cu²⁺; Na₂C₂O₄ → CaC₂O₄ with no Ca²⁺; AgNO₃ → AgCl with no Cl⁻; Zeise's salt → C₂H₄ with no reagent; NH₄Cl → "NH4"; three Werner CoCl₃ + NH₃ edges with the same text and different products; HCO₂⁻ + AgNO₃; AgCl + NaOH → Ag₂O; B₄H₁₀ → B₂H₆), about 11 ratio- or condition-dependent (KOH + CO₂, NaOH + H₂S, Cl₂ + H₂O, ClO₂ + NaOH, CS₂ + NaOH, H₂S₂O₈ + H₂O, KMnO₄ heat, BF₃ + H₂O, CuSO₄ + NH₃, Fe₂O₃ + CO, SiO₂ + HF); the rest are forms (salt vs ion) or the audit naming another element. Not yet fixed in the graph.
+- `core/pipeline/inorg_products.py` `_plain`: reads U+2212 minus ("[BeCl4]2−"); the live check called such answers different.
+- `core/engine/inorganic/properties.py` `complex_info`: octahedral d⁸–d¹⁰ is never d²sp³ (no two empty 3d), even with a strong-field ligand ([Ni(en)₃]²⁺ sp³d²). No species in the tables or graph was affected. Test: `test_no_inner_orbital_for_d8_to_d10`.
+- Every complex the code can be asked about (42) re-checked by hand: correct, except [Cu(NH₃)₄]²⁺ (already excluded from shape claims).
+
+### Inorganic live run 6 (hidden products): good question; reagent text fix
+- `core/pipeline/inorg_products.py` `_reaction`: a reagent that only repeats the start's name (`START_NAMES`: borax, borazine, dolomite) is not printed; an edge with the placeholder reagent "M" is skipped. Test: `Parts.test_reaction_text`.
+- `outputs/live_inorganic_6.log` ($0.0086 ≈ ₹0.76 at ₹88/$). Four draws lost to the product check (BO₂⁻ vs NaBO₂; Fe(SCN)₃ vs [Fe(SCN)]²⁺; [Co(NH₃)₃Cl₃] and [Cu(NH₃)₄]SO₄·H₂O vs their aqua/hexammine forms; H₂SO₄ vs H₂SO₅). Accepted GEN_20261124T155024: sp count over SO₂/H₂O₂ (H₂SO₄), oxalate/conc. H₂SO₄ (CO₂), C/S 850 °C (CS₂), CuCl₂/excess Cl⁻ ([CuCl₄]²⁻), cyanide process ([Au(CN)₂]⁻), CO₂/H₂O (H₂CO₃); key 3. Checked by hand: correct. Jev 2.55; Granite 2 (wavered on CS₂), GLM solved: advanced.
+
+### Inorganic live run 5 (hidden products, after the audit): good question
+- `outputs/live_inorganic_5.log` ($0.0070 ≈ ₹0.61 at ₹88/$). Three draws lost to the blind product check (Fe(SCN)₃ vs [Fe(SCN)]²⁺; BO₂⁻ vs NaBO₂; [Co(NH₃)₄Cl₂]Cl vs [Co(NH₃)₆]Cl₃). Accepted GEN_20261124T154713: sp² count over AsCl₃/H₂O (H₃AsO₃), borax/HF/H₂SO₄ (BF₃), CuCl₂/excess Cl⁻ ([CuCl₄]²⁻), Haber (NH₃), B₂H₆/H₂O (H₃BO₃); key 2. Checked by hand: correct. Jev 2.32; Granite answered 0 (called H₃BO₃ sp³), GLM solved: advanced.
+- Cosmetic, open: a reagent list can repeat the start's name ("Na₂B₄O₇, Borax, ...").
+
+### Inorganic: blind audit of every askable property; rulings applied
+- New `tools/audit_inorg_props.py`: GPT-6 Luna gives each of the 371 properties a count question can ask (species-list rows and hidden-products pool) blind; code compares. Run: `outputs/inorg_prop_audit.json` / `.log`, $0.0148 ≈ ₹1.30. 10 disagreements, 15 agreements with a doubt.
+- Rulings (the author approved): `core/pipeline/inorg_products.py` `NO_SHAPE` (no geometry or hybridisation claim): [Cu(NH₃)₄]SO₄·H₂O (code gives d⁹ tetrahedral; JEE square planar), PH₄Br (read as one molecule), N₂O (central atom taken as O), SbOCl (layered solid). `METAL_CENTRES` now also covers the oxoacid route (Al(OH)₃ "trigonal planar"). `inorg_list.NO_HYBRID` adds AsH₃, SbH₃, H₂Se, H₂Te (Drago, as PH₃ and H₂S), applied to products too.
+- Kept: [Co(H₂O)₆]³⁺ diamagnetic / d²sp³ (low spin; the checker fell for "water is weak field"). The doubts on PCl₅, I₃⁺, Te(OH)₆, metal oxides and sulfides keep the textbook answer.
+
+### Inorganic: "hidden products" count questions; live run 4
+- New `core/pipeline/inorg_products.py`: 5–8 reactions from the inorganic graph, products not printed ("→ product containing Mn"); the student works out each product, then counts those with a property (magnetism, geometry or hybridisation of the named element). Key by code (`species.askable`). Same Jev gate, dedup and ladder as list questions. Shares in `inorg_qfirst.py`: hidden products 0.5, species lists 0.3, reaction chains 0.2.
+- Blind product check (GPT-6 Luna) before anything is paid for: a reaction whose product it names differently is left out for the rest of the run. Another form of the same answer is agreed (`same_answer`: a salt and its ion, a complex salt and its entity); a salt against a complex is not.
+- Run 4 (`outputs/live_inorganic_4.log`, $0.016 ≈ ₹1.41): five draws lost to the check, mostly salt-vs-ion forms (fixed by `same_answer`) plus real differences (Cu(OH)₂ vs the ammine complex with excess NH₃; NO₂ vs NO). Accepted GEN_20261124T153416 (sp³ count over PbO₂/HCl, Sn/HCl, H₂S₂O₇/H₂O, S/O₂, Al₄C₃/HCl; key 2). Hand check: not clean. The key counts PbCl₂ and SnCl₂ as sp² (lone-molecule VSEPR); Granite and GLM said sp³ (solid-state lone pair), so the ladder result rests on a debatable item.
+- GEN_20261124T153416 removed (the author) from `outputs/generated_questions_inorganic.json` and `results/generated_questions_inorganic_final.json`; its counts taken back out of `outputs/coverage_state_inorganic.json`. The run log and attempts file keep it.
+- Fix: no geometry or hybridisation claim on products whose central atom makes ionic or polymeric solids (`METAL_CENTRES`: Be, Mg, Al, Ga, In, Tl, Sn, Pb, Bi).
+- Tests: `tests/test_inorg_products.py` (new), two end-to-end tests in `tests/test_inorg_qfirst.py`.
+
+### Inorganic live runs 2 and 3; level check gates list questions
+- Run 2 (`outputs/live_inorganic_2.log`, $0.0056 ≈ ₹0.49 at ₹88/$): a polarity list (BrF₅, BF₃, SiCl₄, IF₇, PCl₅, H₂O, BCl₃, XeO₂F₂; key 5, correct) was accepted as mains_hard (Jev 1.33 < floor 1.59): list questions were not gated on level. GEN_20261124T130954 kept, labelled mains_hard.
+- `core/pipeline/inorg_qfirst.py` `_list_question`: Jev's level check before the ladder, as in organic; below the floor, next draw.
+- Jev on 50 generated lists (₹0.14): median 1.72, 33/50 over the floor (real Advanced list questions 1.90, 16/19; real Main 1.11, 1/8). By property: magnetism 14/14, hybridisation 13/14, shape 5/8, polarity 1/14. Polarity kept (the author): the gate filters it.
+- Run 3 (`outputs/live_inorganic_3.log`, $0.0534 ≈ ₹4.70): accepted GEN_20261124T132711 (paramagnetic count among [Mn(H₂O)₆]²⁺, C₂, [FeF₆]³⁻, CN⁻, [Cu(CN)₄]³⁻, NO⁺, [PtCl₄]²⁻; key 2). Checked by hand: correct. Jev 1.95; Granite and GLM both answered 3 (both called C₂ paramagnetic: the s–p mixing trap), minimax-m3 solved: advanced_medium. Reasoning traces saved (minimax 112k characters, 3 rounds).
+- `core/pipeline/qf_coder.py`: the coder's reply carries `reasoning` only when the provider sent it (`_thinking`); an exact-reply test broke on `reasoning: None`.
+- Seen in the full suite, not from this work: `test_forms_shapes.ShapedIdeas.test_each_idea_is_sound` fails only inside the full suite (passes alone): a physical "two systems" idea listed "final temperature" twice as a given. Left open.
+
+### Reasoning traces kept (for the Hugging Face dataset, SFT)
+- Why: the author plans a public dataset; models' thinking and calculator use are training data. Before, a solver's thinking was used only when it wrote no working, then thrown away; the coder's never kept.
+- `core/models.py`: the calculator tool loop records every round (`_thought`: the provider's `message.reasoning`): its thinking, content, the calculator call and its result. `ask_json` returns them as `_turns`, and `_reasoning` is now all rounds' thinking (was the last round only).
+- `core/pipeline/stages.py` `_solve`: each ladder entry keeps `reasoning` and `turns` (never graded). `run_groundup_final.py`: the record's `council` entries carry them; `engine.solver_reasoning` is the coder's thinking behind the accepted program (`_solver_reasoning`, from the blackboard).
+- `core/pipeline/qf_coder.py`: `_code_reply` returns the coder's `reasoning`; every `program` blackboard event keeps it. Physical, organic and inorganic all get the ladder traces (shared code); only physical has a coder.
+- Traces are present only when the provider returns them (granite-4.2-8b may send none). Records grow by roughly 5–20 KB per model per question.
+- Test: `ToolCalls.test_thinking_and_calculator_rounds_are_kept`.
+
+### Inorganic: "how many species in this list" questions, built by code
+- Why: in the 167 real JEE Advanced inorganic questions, 89 % make the student judge every species in a list (Main: 22 %); the lists mix complexes, molecules, ions and diatomics so that the usual rule fails on some (d⁸ Pd square planar, d¹⁰ Cu(I) tetrahedral, XeF₄ square planar). Our inorganic pipeline only made questions from reaction walks.
+- `core/pipeline/inorg_list.py` (new): code picks a property (shape/geometry, central-atom hybridisation, magnetism, polarity of molecules) and a value, then 7–10 species with 2 to n−2 having the value, at least 2 lookalikes that do not (same number of attached atoms or ligands; for magnetism, the same kind of species) and, except for polarity, at least two classes of species. Stem, key (an integer) and traps by code; no designer or writer call. Species pool: the fact tables' lists plus 6 complexes and 21 molecules/ions (values checked by hand); left out where books differ: PH₃/H₂S hybridisation (Drago), XeF₆ polarity, ions' polarity, [Co(NH₃)₆]²⁺; diatomics with bond order 0 dropped.
+- `core/pipeline/inorg_qfirst.py`: `LIST_SHARE` = 0.6 of draws are list questions (`_list_question`: build → dedup → `flow.judge` → save); the rest are reaction-chain questions as before. Physical and organic unchanged.
+- Tests: `tests/test_inorg_list.py` (known values, left-out species, 200 draws are fair lists, stem); `tests/test_inorg_qfirst.py`: `EndToEnd.test_species_list_question_end_to_end`, and the chain test pins `LIST_SHARE` to 0. Not yet run live.
+
 ### Live physical run (final check, second try): good question
 - `outputs/live_physical_final_2.log` ($0.1971 ≈ ₹17.34 at ₹88/$). Accepted GEN_20261124T101359 on the first draw: 3 HNO2 ⇌ HNO3 + 2 NO + H2O; the NO is oxidised to NO2, absorbed in water (HNO2 + HNO3), and that HNO2 is titrated with KMnO4; find Kc. Checked by hand: n(MnO4⁻) 0.0975 → HNO2 0.2438 → NO 0.4877 → ξ 0.2438; HNO2 left 0.3285; Kc = 0.2438 × 0.4877² / 0.3285³ = 1.64 (Δn = 0, so the volume cancels). Correct. Granite and GLM failed, minimax-m3 solved (advanced_medium); Jev 3.27.
 

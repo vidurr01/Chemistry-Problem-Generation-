@@ -18,6 +18,7 @@ graph species, not a program over engine steps).
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
 
@@ -31,14 +32,34 @@ CHAIN_MIN, CHAIN_MAX = 2, 4
 LETTERS = "ABCD"
 FORMATS = ("msq", "mcq_correct", "mcq_incorrect", "count", "identify")
 CLAIM_RETRIES = 1        # a draft whose claims code cannot read is sent back once with the exact problems
+PRODUCTS_SHARE = 0.5     # share of draws that are "hidden products" counts (inorg_products.py): reactions whose
+                         # products the student works out, then judges one by one (identity + enumeration + trap)
+LIST_SHARE = 0.3         # share that are "how many species in this list" questions (inorg_list.py); about nine
+                         # in ten real Advanced inorganic questions make the student judge every item of a list
 
 
 # ── draw ─────────────────────────────────────────────────────────────────────
+
+BLOCKED_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                            "knowledge", "inorg_blocked_edges.json")
+
+
+def blocked_edges() -> set:
+    """Edge ids never used for a question (wrong or condition-dependent; graph audit of 2026-11-24)."""
+    try:
+        with open(BLOCKED_PATH, encoding="utf-8") as f:
+            b = json.load(f)
+    except OSError:
+        return set()
+    return set(b.get("wrong", {})) | set(b.get("depends_on_conditions", {}))
+
 
 def _graph(adapter):
     if not hasattr(adapter, "_g"):
         with open(adapter.config["graph_path"], encoding="utf-8") as f:
             g = json.load(f)
+        blocked = blocked_edges()
+        g["edges"] = [e for e in g["edges"] if e["id"] not in blocked]
         out = {}
         for e in g["edges"]:
             out.setdefault(e["from"], []).append(e)
@@ -325,6 +346,13 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     for n_draw in range(1, MAX_DRAWS + 1):
         if over_budget(cap):
             break
+        r = rng.random()
+        if r < PRODUCTS_SHARE + LIST_SHARE:
+            made = _list_question(adapter, rng, bb, log, n_draw,
+                                  kind="products" if r < PRODUCTS_SHARE else "list")
+            if made is not None:
+                return made
+            continue
         cand = draw(adapter, rng, tried=bb.tried_edges())
         if cand is None:
             print("  no reaction chains left")
@@ -392,3 +420,66 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
         print(f"  ✗ {decision['decision']}" + (f" ({decision.get('reason')})" if decision.get("reason") else "")
               + "; next draw")
     return {"status": "none"}
+
+
+def _list_question(adapter, rng, bb, log, n_draw, kind="list"):
+    """One count question built and keyed by code, then judged like any other: kind "list" (how many species
+    in this list, inorg_list.py) or "products" (hidden products of listed reactions, inorg_products.py).
+    The accepted result, or None (a product not confirmed, too easy, a duplicate, nothing left to draw)."""
+    from core.pipeline import flow, inorg_list, inorg_products
+    if kind == "products":
+        if not hasattr(adapter, "_bad_products"):
+            adapter._bad_products = set()          # reactions the blind check did not confirm in this run
+        cand = inorg_products.draw(list(_graph(adapter)["edges"].values()), rng, tried=bb.tried_edges(),
+                                   bad=adapter._bad_products)
+    else:
+        cand = inorg_list.draw(rng, tried=bb.tried_edges())
+    if cand is None:
+        print(f"  no {'reaction list' if kind == 'products' else 'species list'} left")
+        return None
+    print(f"\n╔═══ DRAW {n_draw}: {cand['description']} ({', '.join(cand['chapters'])}) ═══╗")
+    bb.start_chain(cand)
+    if kind == "products":                         # every product named blind before anything else is paid for
+        bad = inorg_products.check(cand)
+        bb.note("product_check", disagree=bad)
+        if bad:
+            adapter._bad_products.update(b["edge"] for b in bad)
+            log({"event": "product_disagreement", "chain": cand["edges"], "reactions": bad})
+            print(f"  ✗ product check (GPT-6 Luna, blind) differs on {len(bad)} reaction(s): "
+                  + "; ".join(f"{b['graph']} vs {b['checker']}" for b in bad)[:240] + "; next draw")
+            return None
+        print(f"  [product check] all {len(cand['_products']['rows'])} products confirmed (GPT-6 Luna, blind)")
+        stem, result = inorg_products.question(cand)
+    else:
+        stem, result = inorg_list.question(cand)
+    values = {"options": result.options, "mode": "hidden_products" if kind == "products" else "species_list",
+              "labels": {}}
+    bb.note("qfirst", stem=stem, answer=result.answer, trace=result.trace, traps=result.traps)
+    print(f"  [question] {stem.splitlines()[0]}")
+    print(f"  [key] {result.answer} (computed by code)")
+    from core.pipeline import qf_checks            # Jev's level check, calibrated on real inorganic papers
+    floor = qf_checks._level_floor(adapter.subject)
+    if floor is not None:                          # live run of 2026-11-24: a Main-level list (1.33) was accepted
+        lvl = qf_checks.jev_level(stem)
+        if lvl is not None:
+            print(f"    [level] Jev: {lvl:.2f}; floor {floor:.2f}")
+            bb.note("level", score=lvl, floor=floor)
+            if lvl < floor:
+                log({"event": "too_easy", "chain": cand["edges"], "reason": f"level {lvl:.2f} < {floor:.2f}"})
+                print("  ✗ below JEE Advanced level (before the ladder is paid for); next draw")
+                return None
+    sig = dedup.signature(adapter.subject, cand["edges"], values)
+    if dedup.duplicate_of(sig):
+        print("  [dedup] same as an accepted question; next draw")
+        return None
+    decision = flow.judge(adapter, cand, None, values, result, stem, bb, log)
+    log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"], "stem": stem,
+         "answer": result.answer, "reason": decision.get("reason")})
+    if decision["decision"] == "accept":
+        return {"status": "accepted", "payload": {
+            "cand": cand, "plan": None, "values": values, "scenario": ("inorganic hidden products (count)" if kind == "products"
+                                                     else "inorganic species list (count)"),
+            "result": result, "stem": stem, "decision": decision, "sig": sig, "solver_code": None}}
+    print(f"  ✗ {decision['decision']}" + (f" ({decision.get('reason')})" if decision.get("reason") else "")
+          + "; next draw")
+    return None

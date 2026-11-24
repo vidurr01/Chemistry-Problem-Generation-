@@ -419,7 +419,10 @@ def _solve(slug: str, stem: str, hint: str | None = None, spec: dict | None = No
     else:
         objection = None
     rec = {"working": str(out.get("working", ""))[:20000], "objection": objection,
-           "answer_line": None if line is None else str(line)}
+           "answer_line": None if line is None else str(line),
+           # the model's own thinking and, with the calculator, every round (thinking, call, result): kept
+           # for the dataset (supervised fine-tuning traces), never graded
+           "reasoning": out.get("_reasoning"), "turns": out.get("_turns")}
     if not spec:                                                 # no spec: the raw answer is graded
         rec.update(final_answer=line, unit=str(out.get("unit") or ""))
         return rec

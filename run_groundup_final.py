@@ -151,6 +151,14 @@ def _taken_ids(config, subject):
 
 # ── acceptance ───────────────────────────────────────────────────────────────
 
+def _solver_reasoning(bb):
+    """The coder's thinking behind the program that was accepted (None when the provider sent none)."""
+    for e in reversed((bb.current or {}).get("events") or []):
+        if e.get("stage") == "program" and e.get("ok"):
+            return e.get("reasoning")
+    return None
+
+
 def build_record(subject, config, payload, bb):
     cand, result, decision = payload["cand"], payload["result"], payload["decision"]
     graded = decision["graded"]
@@ -190,7 +198,7 @@ def build_record(subject, config, payload, bb):
         "jev_level": decision.get("jev_level"),
         "council": [{k: g.get(k) for k in ("name", "model", "final_answer", "unit", "answer_matches", "match_by", "counts_as_solved",
                                            "verdict", "failure_type", "slip_confirmed", "objection", "diagnosis",
-                                           "working")}
+                                           "working", "reasoning", "turns")}
                     for g in graded],
         "hint_tests": decision.get("hints", []),
         "engine": {"txs": cand["txs"], "extra_txs": cand.get("extra_txs", []),
@@ -200,7 +208,8 @@ def build_record(subject, config, payload, bb):
                    "shape": cand.get("_shape"),
                    "form": getattr(result, "form", "forward"), "form_detail": getattr(result, "detail", {}),
                    "form_note": getattr(result, "form_note", ""),
-                   "solver_code": getattr(result, "solver_code", None)},
+                   "solver_code": getattr(result, "solver_code", None),
+                   "solver_reasoning": _solver_reasoning(bb)},
         **({"options": [f"({chr(65 + i)}) {o}" for i, o in enumerate(payload["values"]["options"])],
             "fact_mode": payload["values"]["mode"]} if "_fact" in cand or isinstance(payload["values"], dict)
            and "options" in payload["values"] and "mode" in payload["values"] else {}),

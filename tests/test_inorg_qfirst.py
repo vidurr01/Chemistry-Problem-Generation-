@@ -36,6 +36,15 @@ def _cand_with(sid_pred):
 
 
 class Draw(unittest.TestCase):
+    def test_blocked_edges_never_drawn(self):
+        """Wrong and condition-dependent edges (graph audit of 2026-11-24) are gone for both paths."""
+        blocked = IQ.blocked_edges()
+        self.assertIn("Na_to_Na2O_na", blocked)
+        self.assertEqual(len(blocked), 28)
+        g = IQ._graph(_adapter())
+        self.assertFalse(blocked & set(g["edges"]))
+        self.assertFalse(blocked & {e["id"] for es in g["out"].values() for e in es})
+
     def test_chains_are_connected_and_askable(self):
         ad, rng = _adapter(), random.Random(1)
         for _ in range(30):
@@ -111,7 +120,9 @@ class EndToEnd(unittest.TestCase):
                   mock.patch.object(entry, "compute_meta_tags_for_subject", lambda *a, **k: {"stub": True}),
                   mock.patch("core.pipeline.qf_design.design_problems", lambda d, *a, **k: None),
                   mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: None),
-                  mock.patch.object(IQ, "draw", lambda *a, **k: dict(self.cand))]
+                  mock.patch.object(IQ, "draw", lambda *a, **k: dict(self.cand)),
+                  mock.patch.object(IQ, "LIST_SHARE", 0),                  # the reaction-chain path
+                  mock.patch.object(IQ, "PRODUCTS_SHARE", 0)]
         for x in self.p:
             x.start()
         # the store's path was bound as a default argument at import: point it at the temporary store only
@@ -161,6 +172,69 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(r["subject"], "inorganic")
         self.assertEqual(len(r["options"]), 4)
         self.assertIn("(A) opt0", r["question"])
+
+    def test_species_list_question_end_to_end(self):
+        """A "how many species" draw: built and keyed by code, judged by the ladder, saved."""
+        from core.pipeline import inorg_list as IL
+        cand = IL.draw(random.Random(2))
+        want = sum(cand["_list"]["truth"])
+        bottom = models.LADDER[0][1]
+
+        def fake(role, model, system, user, **kw):
+            if role in ("designer", "generator") and "Write ONE" in user:
+                raise AssertionError("a list question needs no designer or writer")
+            if role == "council":
+                a = str(want + 1) if model == bottom else str(want)
+                return {"working": "w", "answer": a, "final_answer": a}
+            return self.fake(role, model, system, user, **kw)
+        with mock.patch.object(IQ, "LIST_SHARE", 1), mock.patch.object(IL, "draw", lambda *a, **k: dict(cand)),                 mock.patch.object(models, "ask_json", fake),                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
+            self.assertEqual(self.entry.main(), 0)
+        with open(self.cfg["output_file"], encoding="utf-8") as f:
+            r = json.load(f)[0]
+        self.assertEqual(int(r["answer"]), want)
+        self.assertIn("the total number of", r["question"])
+
+    def _products_run(self, checker_agrees):
+        from core.pipeline import inorg_products as IP
+        with open(self.cfg["graph_path"], encoding="utf-8") as f:
+            edges = json.load(f)["edges"]
+        cand = IP.draw(edges, random.Random(2))
+        rows = cand["_products"]["rows"]
+        want = sum(cand["_products"]["truth"])
+        bottom = models.LADDER[0][1]
+        calls = []
+
+        def fake(role, model, system, user, **kw):
+            if role in ("designer", "generator") and "Write ONE" in user:
+                raise AssertionError("a hidden-products question needs no designer or writer")
+            if role == "step_checker":
+                calls.append(user)
+                prods = [{"n": i + 1, "formula": r["edge"]["to"], "charge": 0} for i, r in enumerate(rows)]
+                if not checker_agrees:
+                    prods[0]["formula"] = "XeF4"
+                return {"products": prods}
+            if role == "council":
+                a = str(want + 1) if model == bottom else str(want)
+                return {"working": "w", "answer": a, "final_answer": a}
+            return self.fake(role, model, system, user, **kw)
+        draws = iter([dict(cand)] + [None] * 10)
+        with mock.patch.object(IQ, "PRODUCTS_SHARE", 1),                 mock.patch.object(IP, "draw", lambda *a, **k: next(draws)),                 mock.patch.object(models, "ask_json", fake),                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
+            self.entry.main()
+        return cand, want, calls
+
+    def test_hidden_products_question_end_to_end(self):
+        """Reactions with hidden products: checked blind, keyed by code, judged by the ladder, saved."""
+        cand, want, calls = self._products_run(checker_agrees=True)
+        self.assertEqual(len(calls), 1)
+        with open(self.cfg["output_file"], encoding="utf-8") as f:
+            r = json.load(f)[0]
+        self.assertEqual(int(r["answer"]), want)
+        self.assertIn("product containing", r["question"])
+
+    def test_product_check_disagreement_drops_the_question(self):
+        self._products_run(checker_agrees=False)
+        self.assertFalse(os.path.exists(self.cfg["output_file"])
+                         and json.load(open(self.cfg["output_file"], encoding="utf-8")))
 
 
 class CalibrationPerSubject(unittest.TestCase):

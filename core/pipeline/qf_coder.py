@@ -107,13 +107,18 @@ def _code_reply(out: dict) -> dict:
     # a real reason only: a coder once copied the format's placeholder ("the reason") back
     if why and len(why) > 15 and why.lower() not in ("the reason", "<the reason>", "null", "none") \
             and not str(out.get("code") or "").strip():
-        return {"cannot": why}
+        return {"cannot": why, **_thinking(out)}
     if why and not str(out.get("code") or "").strip():
         raise ValueError(f"the reply has neither code nor a reason (cannot = {why!r})")
     code = str(out.get("code") or "").strip()
     if not code:
         raise ValueError("the coder returned no code")
-    return {"code": code}
+    return {"code": code, **_thinking(out)}
+
+
+def _thinking(out: dict) -> dict:
+    """The coder's thinking when the provider sent it (kept for the dataset), else nothing."""
+    return {"reasoning": out["_reasoning"]} if out.get("_reasoning") else {}
 
 
 def coder_for(attempt: int, escalate: bool, quiet: bool = False) -> str:
@@ -393,7 +398,7 @@ def solver_program(q: dict, drawn, bb, *, previous: str | None = None, errors: l
                 f"function: use each where the question needs it (if the question truly does not need one, reply "
                 f"cannot and say which)"]
         bb.note("program", attempt=attempt + 1, code=code, ok=not probs, problems=probs,
-                probe_values=pr.get("values"))
+                probe_values=pr.get("values"), reasoning=out.get("reasoning"))
         if not probs:
             print(f"    program written (attempt {attempt + 1}); it runs on values from the question's ranges")
             return code, None
@@ -447,7 +452,7 @@ def program_for(stem, asks, unit, cand, bb, built=True):
                      f"be used (if the question does not need it, reply cannot)"]
         probs = [_coder_hint(p, free=None) for p in probs]
         bb.note("program", attempt=attempt + 1, code=code, ok=not probs, problems=probs,
-                answer=run.get("answer"))
+                answer=run.get("answer"), reasoning=out.get("reasoning"))
         if not probs:
             print(f"    program solved it (attempt {attempt + 1}): {run['answer']} {unit}")
             return code, run, None

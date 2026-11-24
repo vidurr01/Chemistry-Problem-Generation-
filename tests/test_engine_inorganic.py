@@ -84,6 +84,12 @@ class Complexes(unittest.TestCase):
             self.assertEqual((c["oxidation_state"], c["d_electrons"], c["unpaired"], c["geometry"], c["hybridisation"]),
                              (ox, d, unp, geo, hyb), ent)
 
+    def test_no_inner_orbital_for_d8_to_d10(self):
+        """Strong field cannot make d8-d10 octahedral inner orbital: no two empty 3d."""
+        for ent in ("[Ni(en)3]2+", "[Zn(en)3]2+"):
+            self.assertEqual(P.complex_info(ent)["hybridisation"], "sp3d2", ent)
+        self.assertEqual(P.complex_info("[Co(CN)6]4-")["hybridisation"], "d2sp3")
+
     def test_moment_and_cfse(self):
         self.assertEqual(P.complex_info("[FeF6]3-")["spin_only_moment_BM"], 5.92)
         self.assertEqual(P.complex_info("[Fe(CN)6]4-")["cfse"], "-2.4 Δo")

@@ -1,0 +1,370 @@
+{
+ "subject": "inorganic",
+ "saved_at": "20261124T162359",
+ "spend": {
+  "total_cost_usd": 0.00139,
+  "by_role": {
+   "step_checker": {
+    "calls": 1,
+    "prompt_tokens": 318,
+    "completion_tokens": 771,
+    "cost": 0.0004173
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1316,
+    "completion_tokens": 0,
+    "cost": 5.5272e-05
+   },
+   "council": {
+    "calls": 4,
+    "prompt_tokens": 3733,
+    "completion_tokens": 2260,
+    "cost": 0.000920466
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "products:magnetism:diamagnetic:Au_to_[Au(CN)2]-_au,Cr2O72-_to_Cr3+_cro,Cu(OH)2_to_CuO_cuoh,CuO_to_Cu2O_cuo,CuSO4_to_CuI_cuso,FeS2_to_Fe2O3_fes,Na2CrO4_to_Na2Cr2O7_nacro,ZnS_to_ZnO_zns"
+    ],
+    "nodes": [
+     "[Au(CN)2]-",
+     "ZnO",
+     "CuI",
+     "Na2Cr2O7",
+     "Cu2O",
+     "Cr3+",
+     "CuO",
+     "Fe2O3"
+    ],
+    "chapters": [
+     "d_block",
+     "metallurgy"
+    ],
+    "txs": [
+     284,
+     457,
+     246,
+     449,
+     466,
+     281,
+     241,
+     292
+    ],
+    "trap_ids": [],
+    "description": "hidden products: magnetism = diamagnetic (8 reactions, 5 true)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "product_check",
+     "at": "2026-11-24T16:23:38.199200+00:00",
+     "disagree": []
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T16:23:38.199393+00:00",
+     "stem": "Consider the following reactions. In each, look at the product that contains the named element (balanced equations are not needed).\n(i) CuO, >1100°C  →  product containing Cu\n(ii) Au, NaCN, O₂, cyanide process, air  →  product containing Au\n(iii) Cr₂O₇²⁻, H⁺, reducing agent, acid medium  →  product containing Cr\n(iv) FeS₂, O₂, roasting in excess air  →  product containing Fe\n(v) ZnS, O₂, roasting at >850°C with controlled air  →  product containing Zn\n(vi) Cu(OH)₂, heating  →  product containing Cu\n(vii) Na₂CrO₄, H₂SO₄, acidification, crystallisation of Na₂SO₄ at >32°C  →  product containing Cr\n(viii) CuSO₄, KI, excess KI  →  product containing Cu\nThe number of reactions in which that product is diamagnetic is\nGive the answer as an integer.",
+     "answer": 5,
+     "trace": [
+      {
+       "tx": [
+        284
+       ],
+       "src": "CuO",
+       "dst": "Cu2O",
+       "formula": "product from the reaction graph (CuO_to_Cu2O_cuo); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "CuO, >1100°C",
+        "named element": "Cu",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "Cu2O",
+        "computed value": "diamagnetic",
+        "counted": true
+       }
+      },
+      {
+       "tx": [
+        457
+       ],
+       "src": "Au",
+       "dst": "[Au(CN)2]-",
+       "formula": "product from the reaction graph (Au_to_[Au(CN)2]-_au); complex_magnetism computed by code",
+       "inputs": {
+        "reaction": "Au, NaCN, O₂, cyanide process, air",
+        "named element": "Au",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "[Au(CN)2]-",
+        "computed value": "diamagnetic",
+        "counted": true
+       }
+      },
+      {
+       "tx": [
+        246
+       ],
+       "src": "Cr2O72-",
+       "dst": "Cr3+",
+       "formula": "product from the reaction graph (Cr2O72-_to_Cr3+_cro); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "Cr₂O₇²⁻, H⁺, reducing agent, acid medium",
+        "named element": "Cr",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "Cr3+",
+        "computed value": "paramagnetic",
+        "counted": false
+       }
+      },
+      {
+       "tx": [
+        449
+       ],
+       "src": "FeS2",
+       "dst": "Fe2O3",
+       "formula": "product from the reaction graph (FeS2_to_Fe2O3_fes); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "FeS₂, O₂, roasting in excess air",
+        "named element": "Fe",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "Fe2O3",
+        "computed value": "paramagnetic",
+        "counted": false
+       }
+      },
+      {
+       "tx": [
+        466
+       ],
+       "src": "ZnS",
+       "dst": "ZnO",
+       "formula": "product from the reaction graph (ZnS_to_ZnO_zns); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "ZnS, O₂, roasting at >850°C with controlled air",
+        "named element": "Zn",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "ZnO",
+        "computed value": "diamagnetic",
+        "counted": true
+       }
+      },
+      {
+       "tx": [
+        281
+       ],
+       "src": "Cu(OH)2",
+       "dst": "CuO",
+       "formula": "product from the reaction graph (Cu(OH)2_to_CuO_cuoh); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "Cu(OH)₂, heating",
+        "named element": "Cu",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "CuO",
+        "computed value": "paramagnetic",
+        "counted": false
+       }
+      },
+      {
+       "tx": [
+        241
+       ],
+       "src": "Na2CrO4",
+       "dst": "Na2Cr2O7",
+       "formula": "product from the reaction graph (Na2CrO4_to_Na2Cr2O7_nacro); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "Na₂CrO₄, H₂SO₄, acidification, crystallisation of Na₂SO₄ at >32°C",
+        "named element": "Cr",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "Na2Cr2O7",
+        "computed value": "diamagnetic",
+        "counted": true
+       }
+      },
+      {
+       "tx": [
+        292
+       ],
+       "src": "CuSO4",
+       "dst": "CuI",
+       "formula": "product from the reaction graph (CuSO4_to_CuI_cuso); metal_ion_magnetism computed by code",
+       "inputs": {
+        "reaction": "CuSO₄, KI, excess KI",
+        "named element": "Cu",
+        "counted when": "diamagnetic"
+       },
+       "outputs": {
+        "product": "CuI",
+        "computed value": "diamagnetic",
+        "counted": true
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "reactioni",
+       "desc": "wrong product or misjudges it in reaction (i)",
+       "wrong_answer": 4
+      },
+      {
+       "id": "reactionii",
+       "desc": "wrong product or misjudges it in reaction (ii)",
+       "wrong_answer": 4
+      },
+      {
+       "id": "reactioniii",
+       "desc": "wrong product or misjudges it in reaction (iii)",
+       "wrong_answer": 6
+      },
+      {
+       "id": "reactioniv",
+       "desc": "wrong product or misjudges it in reaction (iv)",
+       "wrong_answer": 6
+      },
+      {
+       "id": "reactionv",
+       "desc": "wrong product or misjudges it in reaction (v)",
+       "wrong_answer": 4
+      },
+      {
+       "id": "reactionvi",
+       "desc": "wrong product or misjudges it in reaction (vi)",
+       "wrong_answer": 6
+      },
+      {
+       "id": "reactionvii",
+       "desc": "wrong product or misjudges it in reaction (vii)",
+       "wrong_answer": 4
+      },
+      {
+       "id": "reactionviii",
+       "desc": "wrong product or misjudges it in reaction (viii)",
+       "wrong_answer": 4
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T16:23:38.822883+00:00",
+     "score": 2.68,
+     "floor": 1.594
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T16:23:53.164593+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Identify product containing named element for each reaction and determine its magnetic nature (diamagnetic vs paramagnetic). Diamagnetic species have all electrons paired. Evaluate typical products:\n(i) CuO heated >1100°C reduces to Cu metal (Cu⁰). Elemental Cu is diamagnetic (Cu has 3d10 4s1? Actually Cu ground state is 3d10 4s1, but in bulk metal all electrons paired? Cu metal is paramagnetic due to conduction electrons? However typical exam context: elemental Cu is paramagnetic? Need check: Cu metal is paramagnetic with small susceptibility. But many simple problems treat elemental metals as diamagnetic? However Cu2+ is paramagnetic. Likely product is Cu2O or CuO? Reaction CuO >1100°C may decompose to Cu and O2? Usually CuO stable. Might produce Cu2O? Not sure. Assume product is CuO (Cu2+) paramagnetic. But phrase 'product containing Cu' could be CuO itself. However heating CuO alone likely remains CuO. So product CuO (Cu2+) paramagnetic.\n(ii) Au in cyanide process yields AuCN or Na3AuCN4? Final product Au metal precipitate (Au0) diamagnetic.\n(iii) Cr2O7^2- reduced in acid yields Cr3+ (d3) paramagnetic.\n(iv) FeS2 roasting yields Fe2O3 (Fe3+) paramagnetic.\n(v) ZnS roasting yields ZnO (Zn2+ d10) diamagnetic.\n(vi) Cu(OH)2 heating yields CuO (Cu2+) paramagnetic.\n(vii) Na2CrO4 acidified yields CrO3 or Cr2O3? Likely Cr2O3 (Cr3+) paramagnetic.\n(viii) CuSO4 + excess KI gives CuI (Cu+) d10 diamagnetic.\nThus diamagnetic products: (ii) Au metal, (v) ZnO, (viii) CuI. Possibly (i) if Cu metal formed. But typical roasting CuO stays CuO. So count 3.\nThus answer 3.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: 3] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "reasoning": "Need count diamagnetic products. Likely most are metallic Cu etc diamagnetic? Cu metal paramagnetic? Cu2+ paramag. Cu metal diamagnetic? Cu metal is diamagnetic? I think elemental Cu is diamagnetic? Actually Cu metal is paramagnetic? I recall Cu metal is paramagnetic? Might be diamagnetic? Quick: Cu metal is paramagnetic? I think Cu metal is paramagnetic with small susceptibility. Probably diamagnetic for CuO? CuO contains Cu2+ d9 paramagnetic. So diamagnetic products are those that are elemental metal? Let's pick: (i) CuO -> Cu2+? product containing Cu likely Cu2O or Cu? At >1100°C CuO reduces to Cu? CuO -> Cu? Cu metal diamagnetic? assume diamagnetic. (ii) Au product Au metal diamagnetic? Au is diamagnetic? Au metal is diamagnetic? I think Au is paramagnetic? Not sure. (iii) Cr2O7^2- reduced to Cr3+ paramag. (iv) FeS2 roasting -> FeO or Fe2O3 diamagnetic? Fe3+ paramag. (v) ZnS roasting -> ZnO diamagnetic? Zn2+ diamag. (vi) Cu(OH)2 heating -> CuO paramag. (vii) Na2CrO4 acid -> CrO3? Cr6+ paramag. (viii) CuSO4 + KI -> CuI precipitate Cu+ paramag? Cu+ diamag? Cu+ is diamagnetic? Cu+ d10 diamag. So count diamagnetic: (i) Cu? maybe Cu metal diamag? (ii) Au metal diamag? Au is diamagnetic? I think Au is diamagnetic? Actually Au is paramagnetic? I recall Au is diamagnetic? Not sure. Let's assume Au metal diamag. (iii) no. (iv) no. (v) yes. (vi) no. (vii) no. (viii) Cu+ diamag yes. So count maybe 3? (i),(ii),(v),(viii) =4. Choose 4.\n",
+       "turns": [
+        {
+         "reasoning": "Need count diamagnetic products. Likely most are metallic Cu etc diamagnetic? Cu metal paramagnetic? Cu2+ paramag. Cu metal diamagnetic? Cu metal is diamagnetic? I think elemental Cu is diamagnetic? Actually Cu metal is paramagnetic? I recall Cu metal is paramagnetic? Might be diamagnetic? Quick: Cu metal is paramagnetic? I think Cu metal is paramagnetic with small susceptibility. Probably diamagnetic for CuO? CuO contains Cu2+ d9 paramagnetic. So diamagnetic products are those that are elemental metal? Let's pick: (i) CuO -> Cu2+? product containing Cu likely Cu2O or Cu? At >1100°C CuO reduces to Cu? CuO -> Cu? Cu metal diamagnetic? assume diamagnetic. (ii) Au product Au metal diamagnetic? Au is diamagnetic? Au metal is diamagnetic? I think Au is paramagnetic? Not sure. (iii) Cr2O7^2- reduced to Cr3+ paramag. (iv) FeS2 roasting -> FeO or Fe2O3 diamagnetic? Fe3+ paramag. (v) ZnS roasting -> ZnO diamagnetic? Zn2+ diamag. (vi) Cu(OH)2 heating -> CuO paramag. (vii) Na2CrO4 acid -> CrO3? Cr6+ paramag. (viii) CuSO4 + KI -> CuI precipitate Cu+ paramag? Cu+ diamag? Cu+ is diamagnetic? Cu+ d10 diamag. So count diamagnetic: (i) Cu? maybe Cu metal diamag? (ii) Au metal diamag? Au is diamagnetic? I think Au is diamagnetic? Actually Au is paramagnetic? I recall Au is diamagnetic? Not sure. Let's assume Au metal diamag. (iii) no. (iv) no. (v) yes. (vi) no. (vii) no. (viii) Cu+ diamag yes. So count maybe 3? (i),(ii),(v),(viii) =4. Choose 4.\n",
+         "content": "\n{\n  \"working\": \"Identify product containing named element for each reaction and determine its magnetic nature (diamagnetic vs paramagnetic). Diamagnetic species have all electrons paired. Evaluate typical products:\\n(i) CuO heated >1100°C reduces to Cu metal (Cu⁰). Elemental Cu is diamagnetic (Cu has 3d10 4s1? Actually Cu ground state is 3d10 4s1, but in bulk metal all electrons paired? Cu metal is paramagnetic due to conduction electrons? However typical exam context: elemental Cu is paramagnetic? Need check: Cu metal is paramagnetic with small susceptibility. But many simple problems treat elemental metals as diamagnetic? However Cu2+ is paramagnetic. Likely product is Cu2O or CuO? Reaction CuO >1100°C may decompose to Cu and O2? Usually CuO stable. Might produce Cu2O? Not sure. Assume product is CuO (Cu2+) paramagnetic. But phrase 'product containing Cu' could be CuO itself. However heating CuO alone likely remains CuO. So product CuO (Cu2+) paramagnetic.\\n(ii) Au in cyanide process yields AuCN or Na3AuCN4? Final product Au metal precipitate (Au0) diamagnetic.\\n(iii) Cr2O7^2- reduced in acid yields Cr3+ (d3) paramagnetic.\\n(iv) FeS2 roasting yields Fe2O3 (Fe3+) paramagnetic.\\n(v) ZnS roasting yields ZnO (Zn2+ d10) diamagnetic.\\n(vi) Cu(OH)2 heating yields CuO (Cu2+) paramagnetic.\\n(vii) Na2CrO4 acidified yields CrO3 or Cr2O3? Likely Cr2O3 (Cr3+) paramagnetic.\\n(viii) CuSO4 + excess KI gives CuI (Cu+) d10 diamagnetic.\\nThus diamagnetic products: (ii) Au metal, (v) ZnO, (viii) CuI. Possibly (i) if Cu metal formed. But typical roasting CuO stays CuO. So count 3.\\nThus answer 3.\",\n  \"answer\": \"[TYPE: chemistry] [CALC_VALUE: 3] [CALC_UNIT: none] [SUBSTANCE: null]\",\n  \"objection\": null\n}"
+        }
+       ],
+       "final_answer": "3",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        3.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        3.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "(i) CuO above 1100°C → Cu₂O (Cu⁺, d¹⁰) diamagnetic. (ii) Cyanide process → [Au(CN)₂]⁻ (Au⁺, d¹⁰) diamagnetic. (iii) Cr₂O₇²⁻ reduced → Cr³⁺ (d³) paramagnetic. (iv) FeS₂ roasted in excess air → Fe₂O₃ (Fe³⁺, d⁵) paramagnetic. (v) ZnS roasted >850°C → ZnO (Zn²⁺, d¹⁰) diamagnetic. (vi) Cu(OH)₂ heated → CuO (Cu²⁺, d⁹) paramagnetic. (vii) Na₂CrO₄ + H₂SO₄, Na₂SO₄ crystallises above 32°C → Na₂Cr₂O₇ (Cr(VI), d⁰) diamagnetic. (viii) CuSO₄ + excess KI → CuI precipitate (Cu⁺, d¹⁰) diamagnetic. Diamagnetic products: (i),(ii),(v),(vii),(viii) = 5.",
+       "objection": null,
+       "answer_line": "[TYPE: coordination] [CALC_VALUE: 5] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "reasoning": "(i) CuO >1100°C → Cu₂O (d³? Cu(I) d¹⁰ diamagnetic). Yes.\n(ii) Au cyanide → Au(CN)₂⁻, Au(I) d¹⁰ diamagnetic.\n(iii) Cr₂O₇ + reducing → Cr³⁺ d³ paramagnetic.\n(iv) FeS₂ roasting → Fe₂O₃, Fe³⁺ d⁵ paramagnetic.\n(v) ZnS >850°C controlled air → ZnO, Zn²⁺ d¹⁰ diamagnetic.\n(vi) Cu(OH)₂ heating → CuO, Cu²⁺ d⁹ paramagnetic.\n(vii) Na₂CrO₄ acidification → Na₂Cr₂O₇, Cr(VI) d⁰ diamagnetic.\n(viii) CuSO₄ + KI → CuI precipitate (Cu(I) d¹⁰ diamagnetic) plus I₂.\n\nDiamagnetic: i, ii, v, vii, viii = 5.\n\nAnalyze each:\n(i) CuO >1100°C → Cu₂O (diamagnetic, d¹⁰). Yes.\n(ii) Au → [Au(CN)₂]⁻, Au(I) d¹⁰ diamagnetic.\n(iii) Cr₂O₇²⁻ + reducing agent → Cr³⁺ d³ paramagnetic.\n(iv) FeS₂ roasted excess air → Fe₂O₃, Fe³⁺ d⁵ paramagnetic.\n(v) ZnS >850°C controlled air → ZnO, d¹⁰ diamagnetic.\n(vi) Cu(OH)₂ heated → CuO, Cu²⁺ d⁹ paramagnetic.\n(vii) Na₂CrO₄ + H₂SO₄ → Na₂Cr₂O₇ (Na₂SO₄ crystallizes >32°C), Cr(VI) d⁰ diamagnetic.\n(viii) CuSO₄ + excess KI → CuI precipitate (Cu(I) d¹⁰ diamagnetic).\nCount diamagnetic: (i),(ii),(v),(vii),(viii) = 5.",
+       "turns": [
+        {
+         "reasoning": "(i) CuO >1100°C → Cu₂O (d³? Cu(I) d¹⁰ diamagnetic). Yes.\n(ii) Au cyanide → Au(CN)₂⁻, Au(I) d¹⁰ diamagnetic.\n(iii) Cr₂O₇ + reducing → Cr³⁺ d³ paramagnetic.\n(iv) FeS₂ roasting → Fe₂O₃, Fe³⁺ d⁵ paramagnetic.\n(v) ZnS >850°C controlled air → ZnO, Zn²⁺ d¹⁰ diamagnetic.\n(vi) Cu(OH)₂ heating → CuO, Cu²⁺ d⁹ paramagnetic.\n(vii) Na₂CrO₄ acidification → Na₂Cr₂O₇, Cr(VI) d⁰ diamagnetic.\n(viii) CuSO₄ + KI → CuI precipitate (Cu(I) d¹⁰ diamagnetic) plus I₂.\n\nDiamagnetic: i, ii, v, vii, viii = 5.",
+         "content": null,
+         "tool_call": {
+          "name": "calculate",
+          "arguments": "{\"expression\": \"5\"}"
+         },
+         "tool_result": "5"
+        },
+        {
+         "reasoning": "Analyze each:\n(i) CuO >1100°C → Cu₂O (diamagnetic, d¹⁰). Yes.\n(ii) Au → [Au(CN)₂]⁻, Au(I) d¹⁰ diamagnetic.\n(iii) Cr₂O₇²⁻ + reducing agent → Cr³⁺ d³ paramagnetic.\n(iv) FeS₂ roasted excess air → Fe₂O₃, Fe³⁺ d⁵ paramagnetic.\n(v) ZnS >850°C controlled air → ZnO, d¹⁰ diamagnetic.\n(vi) Cu(OH)₂ heated → CuO, Cu²⁺ d⁹ paramagnetic.\n(vii) Na₂CrO₄ + H₂SO₄ → Na₂Cr₂O₇ (Na₂SO₄ crystallizes >32°C), Cr(VI) d⁰ diamagnetic.\n(viii) CuSO₄ + excess KI → CuI precipitate (Cu(I) d¹⁰ diamagnetic).\nCount diamagnetic: (i),(ii),(v),(vii),(viii) = 5.",
+         "content": "{\"working\":\"(i) CuO above 1100°C → Cu₂O (Cu⁺, d¹⁰) diamagnetic. (ii) Cyanide process → [Au(CN)₂]⁻ (Au⁺, d¹⁰) diamagnetic. (iii) Cr₂O₇²⁻ reduced → Cr³⁺ (d³) paramagnetic. (iv) FeS₂ roasted in excess air → Fe₂O₃ (Fe³⁺, d⁵) paramagnetic. (v) ZnS roasted >850°C → ZnO (Zn²⁺, d¹⁰) diamagnetic. (vi) Cu(OH)₂ heated → CuO (Cu²⁺, d⁹) paramagnetic. (vii) Na₂CrO₄ + H₂SO₄, Na₂SO₄ crystallises above 32°C → Na₂Cr₂O₇ (Cr(VI), d⁰) diamagnetic. (viii) CuSO₄ + excess KI → CuI precipitate (Cu⁺, d¹⁰) diamagnetic. Diamagnetic products: (i),(ii),(v),(vii),(viii) = 5.\",\"answer\":\"[TYPE: coordination] [CALC_VALUE: 5] [CALC_UNIT: none] [SUBSTANCE: null]\",\"objection\":null}"
+        }
+       ],
+       "final_answer": "5",
+       "unit": "",
+       "answer_type": "coordination",
+       "calc_value": [
+        5.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        5.0
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T16:23:59.035175+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Write the product of every reaction first; then count the electrons of the named element in it (d electrons, lone pairs) before judging its spin or geometry.",
+       "solved": true,
+       "answer": "5"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

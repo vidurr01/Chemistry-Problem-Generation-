@@ -100,6 +100,19 @@ class ToolCalls(unittest.TestCase):
         out, served = self._ask([_reply(tool_calls=[call]), _reply('{"answer": "2.24"}')])
         self.assertEqual((out["answer"], len(served)), ("2.24", 2))
 
+    def test_thinking_and_calculator_rounds_are_kept(self):
+        """Kept for the dataset (SFT traces): every round's thinking, the calculator call and its result."""
+        call = SimpleNamespace(id="c1", function=SimpleNamespace(name="calculate",
+                                                                 arguments='{"expression": "0.1*22.4"}'))
+        first, last = _reply(tool_calls=[call]), _reply('{"answer": "2.24"}')
+        first.choices[0].message.reasoning = "n = 0.1 mol at STP, so V = n × 22.4"
+        last.choices[0].message.reasoning = "the calculator gave 2.24 L"
+        out, _ = self._ask([first, last])
+        self.assertEqual(out["_reasoning"], "n = 0.1 mol at STP, so V = n × 22.4\n\nthe calculator gave 2.24 L")
+        self.assertEqual(out["_turns"][0]["tool_call"], {"name": "calculate", "arguments": '{"expression": "0.1*22.4"}'})
+        self.assertEqual(out["_turns"][0]["tool_result"], "2.24")
+        self.assertEqual(out["_turns"][1]["content"], '{"answer": "2.24"}')
+
     def test_out_of_credit_moves_to_airouter(self):
         class Out(Exception):
             status_code = 402

@@ -377,6 +377,13 @@ EMPTY_NUDGE = ("Your last reply was empty. Reply now with ONLY the JSON object, 
                "asked for.")
 
 
+def _thought(msg):
+    """The model's thinking on one reply, when the provider returns it (OpenRouter: message.reasoning)."""
+    if msg is None:
+        return None
+    return getattr(msg, "reasoning", None) or (getattr(msg, "model_extra", None) or {}).get("reasoning")
+
+
 def _ask_json_with_tools(role, model, asked_for, where, system, user,
                           max_tokens, temperature, extra, tools, holder):
     """Tool-calling loop: execute calculator calls until the model returns its final JSON."""
@@ -385,6 +392,7 @@ def _ask_json_with_tools(role, model, asked_for, where, system, user,
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
     client = _client(where)
     nudges = 0
+    holder["turns"] = turns = []                  # every round: its thinking, its calculator call and result (kept)
     force = role in FORCE_FIRST_TOOL_CALL         # ladder solvers: the first turn must call the calculator
 
     def create(choice):
@@ -415,12 +423,13 @@ def _ask_json_with_tools(role, model, asked_for, where, system, user,
             raise ValueError("empty response in tool-calling loop")
         msg = choice.message
         tool_calls = getattr(msg, "tool_calls", None)
+        thought = _thought(msg)
 
         if not tool_calls:
             # Final reply — parse as JSON
             content = getattr(msg, "content", None) or ""
-            holder["reasoning"] = (getattr(msg, "reasoning", None)
-                                   or (getattr(msg, "model_extra", None) or {}).get("reasoning"))
+            turns.append({"reasoning": thought, "content": content})
+            holder["reasoning"] = "\n\n".join(t["reasoning"] for t in turns if t.get("reasoning")) or None
             try:
                 if not str(content).strip():
                     raise ValueError(f"empty final reply after tool calls "
@@ -456,6 +465,10 @@ def _ask_json_with_tools(role, model, asked_for, where, system, user,
             ],
         })
 
+        turns.append({"reasoning": thought, "content": getattr(msg, "content", None),
+                      "tool_call": {"name": tool_calls[0].function.name,
+                                    "arguments": tool_calls[0].function.arguments}})
+
         # Execute each tool call and return results
         for tc in tool_calls:
             fn = _TOOL_MAP.get(tc.function.name)
@@ -471,6 +484,7 @@ def _ask_json_with_tools(role, model, asked_for, where, system, user,
                 "tool_call_id": tc.id,
                 "content": result,
             })
+            turns[-1]["tool_result"] = result
         print(f"    [{role} {asked_for.split('/')[-1]}] calc tool: {len(tool_calls)} call(s) in round {_round + 1}")
 
     raise ValueError(f"tool-calling loop did not terminate after {MAX_TOOL_ROUNDS} rounds")
@@ -545,4 +559,6 @@ def ask_json(role: str, model: str, system: str, user: str, *, max_tokens: int =
         raise
     if holder.get("reasoning") and isinstance(out, dict):
         out["_reasoning"] = str(holder["reasoning"])        # the model's thinking, when the provider returns it
+    if holder.get("turns") and isinstance(out, dict):
+        out["_turns"] = holder["turns"]                     # tool loop: thinking, calculator calls and results
     return out

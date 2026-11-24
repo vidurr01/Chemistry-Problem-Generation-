@@ -281,7 +281,9 @@ def complex_info(text: str, geometry: str | None = None) -> dict:
         unpaired = _unpaired_levels([(t2g, 3), (eg, 2)])
         cfse = Fraction(-4, 10) * t2g + Fraction(6, 10) * eg
         pairs = _pairs(d, unpaired)
-        hybrid = "d2sp3" if (strong or d <= 3) else "sp3d2"
+        # inner orbital needs two empty 3d: d<=3 always, d4-d7 when low spin ([Co(CN)6]4- d7: JEE d2sp3);
+        # d8-d10 never ([Ni(en)3]2+ is sp3d2 though en is strong field; found 2026-11-24, no species used it)
+        hybrid = "d2sp3" if (d <= 3 or (strong and d <= 7)) else "sp3d2"
         cfse_text = f"{float(cfse):+.1f} Δo"
     elif geometry == "tetrahedral":
         e = min(d, 2) + max(0, min(d - 5, 2))
