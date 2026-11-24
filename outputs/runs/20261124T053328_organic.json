@@ -1,0 +1,543 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T053328",
+ "spend": {
+  "total_cost_usd": 0.07227,
+  "by_role": {
+   "start_picker": {
+    "calls": 5,
+    "prompt_tokens": 9479,
+    "completion_tokens": 5744,
+    "cost": 0.028649249999999998
+   },
+   "name_checker": {
+    "calls": 4,
+    "prompt_tokens": 438,
+    "completion_tokens": 667,
+    "cost": 0.0003773
+   },
+   "step_checker": {
+    "calls": 21,
+    "prompt_tokens": 3577,
+    "completion_tokens": 32074,
+    "cost": 0.0163947
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2723,
+    "completion_tokens": 1111,
+    "cost": 0.018778
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 3084,
+    "completion_tokens": 1061,
+    "cost": 0.00629175
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1318,
+    "completion_tokens": 0,
+    "cost": 5.5356e-05
+   },
+   "council": {
+    "calls": 6,
+    "prompt_tokens": 4646,
+    "completion_tokens": 4331,
+    "cost": 0.001723534
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_substituted_benzene_naohaqueouss",
+     "alkene_to_diol_oso",
+     "carboxylic_acid_to_alcohol_lialh",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "carboxylic_acid_to_alcohol_lialh"
+    ],
+    "nodes": [
+     "alkene",
+     "alcohol",
+     "diol",
+     "alcohol",
+     "sulfonate",
+     "alcohol"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     657,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164,
+     46,
+     432,
+     247,
+     46,
+     432
+    ],
+    "trap_ids": [],
+    "description": "(2E)-3-(4-formylphenyl)prop-2-enoic acid: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T05:30:21.180915+00:00",
+     "held": "STE_20261124T053021_1",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "aldehyde_to_substituted_benzene_naohaqueouss",
+       "substrate": "O=Cc1ccc(/C=C/C(=O)O)cc1",
+       "reagent": "conc. NaOH, then H₃O⁺",
+       "engine": "O=C(O)/C=C/c1ccc(CO)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The aromatic aldehyde has no α-hydrogen and undergoes intermolecular Cannizzaro disproportionation, giving both the corresponding benzyl alcohol and oxidized dicarboxylic acid after workup, while the carboxylic acid is first neutralized by NaOH."
+      },
+      {
+       "label": "T",
+       "edge": "alcohol_to_substituted_benzene_4methylbenze",
+       "substrate": "O=C(O)/C=C/c1ccc(CO)cc1",
+       "reagent": "TsCl, pyridine",
+       "engine": "Cc1ccc(S(=O)(=O)OCc2ccc(/C=C/C(=O)O)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "TsCl/pyridine conventionally tosylates the benzylic alcohol, but the unprotected carboxylic acid can also form a carboxylate and consume or react with TsCl, so without further conditions a unique major product cannot be assigned."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_substituted_benzene_naohaqueouss",
+     "alkene_to_epoxide_mcpba",
+     "phenol_to_substituted_benzene_chndiazometh",
+     "alkene_to_diol_oso",
+     "substituted_benzene_to_carboxylic_acid_1naoh"
+    ],
+    "nodes": [
+     "alkene",
+     "alcohol",
+     "epoxide",
+     "substituted_benzene",
+     "diol",
+     "carboxylic_acid"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Alcohols, Phenols & Ethers",
+     "Aromatic Compounds"
+    ],
+    "txs": [
+     657,
+     6,
+     119,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164,
+     378
+    ],
+    "trap_ids": [],
+    "description": "2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T05:30:55.305616+00:00",
+     "held": "STE_20261124T053055_2",
+     "steps": [
+      {
+       "label": "U",
+       "edge": "substituted_benzene_to_carboxylic_acid_1naoh",
+       "substrate": "OCc1cc(CC2CO2)ccc1O",
+       "reagent": "(i) NaOH; (ii) CO₂, 400 K, 4–7 atm; (iii) H₃O⁺",
+       "engine": "O=C(O)c1cc(CC2CO2)cc(CO)c1O",
+       "verdict": "disagree",
+       "checker_product": "OCc1cc(CC(O)CO)cc(C(=O)O)c1O",
+       "reason": "Hot aqueous NaOH opens the epoxide by attack at its less substituted carbon to give a diol, then Kolbe–Schmitt carboxylation occurs at the phenol’s only free ortho position."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_alcohol_ho",
+     "ketone_to_alcohol_nabh",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "ether_to_alkyl_halide_conchxhihbra",
+     "ether_to_alkyl_halide_conchxhihbra"
+    ],
+    "nodes": [
+     "alkene",
+     "alcohol",
+     "alcohol",
+     "sulfonate",
+     "alkyl_halide",
+     "alkyl_halide"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     8,
+     9,
+     38,
+     499,
+     247,
+     136,
+     137,
+     192,
+     272,
+     273,
+     136,
+     137,
+     192,
+     272,
+     273
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-2-en-1-yloxy)phenyl]ethan-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T05:31:43.281565+00:00",
+     "held": "STE_20261124T053143_3",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alcohol_to_substituted_benzene_4methylbenze",
+       "substrate": "CC(O)COc1ccc(C(C)O)cc1",
+       "reagent": "TsCl, pyridine",
+       "engine": "Cc1ccc(S(=O)(=O)OC(C)COc2ccc(C(C)OS(=O)(=O)c3ccc(C)cc3)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The substrate has two nonequivalent secondary alcohols, and TsCl/pyridine can tosylate either or both; without specified stoichiometry or conditions, no unique major product can be assigned."
+      },
+      {
+       "label": "T",
+       "edge": "ether_to_alkyl_halide_conchxhihbra",
+       "substrate": "Cc1ccc(S(=O)(=O)OC(C)COc2ccc(C(C)OS(=O)(=O)c3ccc(C)cc3)cc2)cc1",
+       "reagent": "HI (1 equiv)",
+       "engine": "Cc1ccc(S(=O)(=O)OC(C)CI)cc1",
+       "verdict": "disagree",
+       "checker_product": "Cc1ccc(S(=O)(=O)OC(C)COc2ccc(C(C)I)cc2)cc1",
+       "reason": "Iodide preferentially displaces the tosylate at the secondary benzylic carbon, while the less reactive tosylate and aryl–alkyl ether remain intact under the standard one-equivalent outcome."
+      },
+      {
+       "label": "U",
+       "edge": "ether_to_alkyl_halide_conchxhihbra",
+       "substrate": "CC(O)COc1ccc(C(C)O)cc1",
+       "reagent": "HI (1 equiv)",
+       "engine": "CC(O)CI",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "HI can substitute the benzylic secondary OH, the other secondary OH, or cleave the aryl–alkyl ether at its alkyl side, and one equivalent alone does not specify a unique chemoselective outcome."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_ester_mcpbametachl",
+     "alcohol_to_carbene_chndiazometh",
+     "ester_to_ester_aqnaoh",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "alkyne_to_alkene_h",
+     "alkene_to_vicinal_dihalide_x"
+    ],
+    "nodes": [
+     "alkyne",
+     "ester",
+     "ether",
+     "carboxylic_acid",
+     "sulfonate",
+     "alkene",
+     "vicinal_dihalide"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers",
+     "Carboxylic Acids & Derivatives",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     653,
+     144,
+     159,
+     247,
+     12,
+     13,
+     401,
+     11
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T05:32:24.699448+00:00",
+     "held": null,
+     "steps": []
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-24T05:32:36.943202+00:00",
+     "system": "P = 1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one. P --[mCPBA]--> Q. Q --[CH₂N₂, HBF₄]--> R. R --[(i) aq. NaOH, heat; (ii) H₃O⁺]--> S. Q --[TsCl, pyridine]--> T. R --[H₂, Pd/BaSO₄, quinoline]--> U. U --[Br₂, CCl₄]--> V.",
+     "hidden": {
+      "P": "1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one",
+      "Q": "4-(3-hydroxyprop-1-yn-1-yl)phenyl acetate",
+      "R": "4-(3-methoxyprop-1-yn-1-yl)phenyl acetate",
+      "S": "acetic acid",
+      "T": "4-(3-(tosyloxy)prop-1-yn-1-yl)phenyl acetate",
+      "U": "4-(3-methoxyprop-1-en-1-yl)phenyl acetate",
+      "V": "4-(1,2-dibromo-3-methoxypropyl)phenyl acetate"
+     },
+     "hidden_link": "Baeyer-Villiger oxidation of P migrates the aryl group instead of the methyl group, forming an aryl acetate Q.",
+     "route": "1. Baeyer-Villiger oxidation of P: Aryl group migrates preferentially over methyl, giving Q = 4-(3-hydroxyprop-1-yn-1-yl)phenyl acetate. 2. Q to R: CH2N2/HBF4 methylates the alcohol to a methyl ether, R = 4-(3-methoxyprop-1-yn-1-yl)phenyl acetate. 3. R to S: Hydrolysis of the aryl acetate gives 4-(3-methoxyprop-1-yn-1-yl)phenol and acetic acid. Since S is one of the products, we need to check the options. Wait, S is a product of hydrolysis. Since R is an acetate ester, hydrolysis yields acetic acid and a phenol. 4. Q to T: TsCl tosylates the primary alcohol. 5. R to U: Lindlar reduction of alkyne to cis-alkene. 6. U to V: Bromination of alkene gives a vicinal dibromide.",
+     "student_must_notice": "In Baeyer-Villiger, the aryl group has a higher migratory aptitude than the methyl group, leading to an aryl acetate, not a methyl ester.",
+     "trap": "If the methyl group migrates, Q would be methyl 4-(3-hydroxyprop-1-yn-1-yl)benzoate, leading to S being 4-(3-methoxyprop-1-yn-1-yl)benzoic acid instead of acetic acid.",
+     "given": "P = 1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one\nP --[mCPBA]--> Q\nQ --[CH₂N₂, HBF₄]--> R\nR --[(i) aq. NaOH, heat; (ii) H₃O⁺]--> S (where S is the lower molecular weight product)\nQ --[TsCl, pyridine]--> T\nR --[H₂, Pd/BaSO₄, quinoline]--> U\nU --[Br₂, CCl₄]--> V",
+     "asked": "Properties of S, T, U, and V",
+     "format": "msq",
+     "why_hard": "Requires knowing the migratory aptitude in Baeyer-Villiger oxidation to identify the correct ester, which drastically changes the identity of the hydrolysis product S.",
+     "question": {
+      "text": "Consider the following reaction scheme starting with P (1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one):\n\nP --[mCPBA]--> Q\nQ --[CH₂N₂, HBF₄]--> R\nR --[(i) aq. NaOH, heat; (ii) H₃O⁺]--> S (where S is the lower molecular weight organic product)\nQ --[TsCl, pyridine]--> T\nR --[H₂, Pd/BaSO₄, quinoline]--> U\nU --[Br₂, CCl₄]--> V\n\nWhich of the following statements is/are correct?",
+      "options": {
+       "A": "S has a degree of unsaturation of 1 and contains 1 sp2 hybridized carbon atom.",
+       "B": "S is an aromatic compound that decolourises bromine water.",
+       "C": "Compound U exhibits geometrical isomerism and contains 6 pi bonds.",
+       "D": "Compound V contains exactly 2 stereocentres and exists as 4 stereoisomers."
+      },
+      "answer": [
+       "A",
+       "D"
+      ]
+     },
+     "situation": "P = 1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one. P --[mCPBA]--> Q. Q --[CH₂N₂, HBF₄]--> R. R --[(i) aq. NaOH, heat; (ii) H₃O⁺]--> S. Q --[TsCl, pyridine]--> T. R --[H₂, Pd/BaSO₄, quinoline]--> U. U --[Br₂, CCl₄]--> V.",
+     "insight": "In Baeyer-Villiger, the aryl group has a higher migratory aptitude than the methyl group, leading to an aryl acetate, not a methyl ester.",
+     "links": "1. Baeyer-Villiger oxidation of P: Aryl group migrates preferentially over methyl, giving Q = 4-(3-hydroxyprop-1-yn-1-yl)phenyl acetate. 2. Q to R: CH2N2/HBF4 methylates the alcohol to a methyl ether, R = 4-(3-methoxyprop-1-yn-1-yl)phenyl acetate. 3. R to S: Hydrolysis of the aryl acetate gives 4-(3-methoxyprop-1-yn-1-yl)phenol and acetic acid. Since S is one of the products, we need to check the options. Wait, S is a product of hydrolysis. Since R is an acetate ester, hydrolysis yields acetic acid and a phenol. 4. Q to T: TsCl tosylates the primary alcohol. 5. R to U: Lindlar reduction of alkyne to cis-alkene. 6. U to V: Bromination of alkene gives a vicinal dibromide."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T05:32:46.204474+00:00",
+     "attempt": 1,
+     "lead": "An organic reaction sequence starting from 1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one (P) is shown below:",
+     "ask": "Which of the following statements is/are correct?",
+     "format": "msq",
+     "claims": [
+      {
+       "text": "The molecular formula of compound S is C₂H₄O₂.",
+       "compound": "S",
+       "property": "molecular_formula",
+       "value": "C2H4O2"
+      },
+      {
+       "text": "Compound S contains 7 sp²-hybridized carbon atoms.",
+       "compound": "S",
+       "property": "sp2_carbons",
+       "value": 7
+      },
+      {
+       "text": "Compound U exhibits geometrical isomerism.",
+       "compound": "U",
+       "property": "geometrical_isomerism",
+       "value": true
+      },
+      {
+       "text": "Compound V contains 2 stereocentres.",
+       "compound": "V",
+       "property": "stereocentres",
+       "value": 2
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T05:32:46.204504+00:00",
+     "stem": "An organic reaction sequence starting from 1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one (P) is shown below:\nP = 1-[4-(3-hydroxyprop-1-yn-1-yl)phenyl]ethan-1-one\nP --[mCPBA]--> Q\nQ --[CH₂N₂, HBF₄]--> R\nR --[(i) aq. NaOH, heat; (ii) H₃O⁺]--> S\nQ --[TsCl, pyridine]--> T\nR --[H₂, Pd/BaSO₄, quinoline]--> U\nU --[Br₂, CCl₄]--> V\nWhich of the following statements is/are correct?\n(A) The molecular formula of compound S is C₂H₄O₂.\n(B) Compound S contains 7 sp²-hybridized carbon atoms.\n(C) Compound U exhibits geometrical isomerism.\n(D) Compound V contains 2 stereocentres.\nChoose all the correct options.",
+     "answer": "ACD",
+     "trace": [
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "molecular_formula",
+       "formula": "molecular formula computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "S",
+        "structure": "CC(=O)O",
+        "claimed value": "C2H4O2"
+       },
+       "outputs": {
+        "computed value": "C2H4O2",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "sp2_carbons",
+       "formula": "number of sp² carbons computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "S",
+        "structure": "CC(=O)O",
+        "claimed value": 7
+       },
+       "outputs": {
+        "computed value": 1,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "geometrical_isomerism",
+       "formula": "shows geometrical (cis/trans) isomerism computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "U",
+        "structure": "COCC=Cc1ccc(OC(C)=O)cc1",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "V",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "V",
+        "structure": "COCC(Br)C(Br)c1ccc(OC(C)=O)cc1",
+        "claimed value": 2
+       },
+       "outputs": {
+        "computed value": 2,
+        "claim true": true
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionB",
+       "desc": "chooses option B",
+       "wrong_answer": "B"
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T05:32:46.741986+00:00",
+     "score": 3.38,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T05:33:10.978152+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Cannot solve without drawing; insufficient info.",
+       "objection": {
+        "type": "wording",
+        "detail": "Missing structural details and reaction conditions insufficient to evaluate statements."
+       },
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: null] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "format_repaired": false,
+       "final_answer": "[TYPE: chemistry] [CALC_VALUE: null] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "unit": "",
+       "answer_unusable": "CALC_VALUE 'null' is not one of the allowed answers",
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P (p-acetyl phenyl propargyl alcohol) undergoes Baeyer–Villiger oxidation with mCPBA: the aryl group migrates preferentially over methyl, giving Q = 4-(3-hydroxyprop-1-ynyl)phenyl acetate (Ar–O–COCH3, with –C≡C–CH2OH para). CH2N2/HBF4 methylates the free alcohol, so R = Ar–O–COCH3 with –C≡C–CH2OCH3 (an aryl acetate bearing an internal-izable propargyl ether; the alkyne and the acetate are the key functional groups). (i) aq. NaOH, heat hydrolyzes the acetate ester, and (ii) H3O+ gives S = acetic acid, CH3COOH, molecular formula C2H4O2 → (A) is TRUE. Acetic acid has only 1 sp2 carbon (the carboxyl carbon), not 7 → (B) is FALSE (statement B would fit an aromatic acid, contradicting formula C2H4O2, so the aromatic ring is not part of S). R, containing the –C≡C– fragment, on Lindlar reduction (H2, Pd/BaSO4, quinoline) gives U, the cis (Z)-alkene Ar–CH=CH–CH2OCH3 fragment; a cis-alkene with different substituents on each carbon exhibits geometrical isomerism → (C) is TRUE. Br2/CCl4 adds anti across the double bond of U to give the vicinal dibromide V; both alkene carbons become stereocentres (each bears H, Br, and two different carbon groups), so V contains 2 stereocentres → (D) is TRUE. Correct options: A, C, D.",
+       "objection": null,
+       "answer_line": "[TYPE: organic-reaction-sequence] [CALC_VALUE: ACD] [CALC_UNIT: none.] [SUBSTANCE: CH3COOH]",
+       "final_answer": "ACD",
+       "unit": "",
+       "answer_type": "organic-reaction-sequence",
+       "calc_value": [
+        "ACD"
+       ],
+       "calc_unit": [
+        "none."
+       ],
+       "target_unit": "",
+       "final_value": [
+        "ACD"
+       ],
+       "substance": [
+        "CH3COOH"
+       ],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T05:33:28.645819+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "B"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -7,6 +7,10 @@ Review queues — one file per reason, for the questions code cannot settle.
     objection_unresolved   a council objection neither the gate nor the verifier could settle
     ladder_consensus       every ladder model called gave the same answer and it is not the key (held for review:
                            the key may be wrong, or one trap fooled every model)
+    unconfirmed_key        organic only: accepted by the ladder but no model reached the code's key (held: a wrong
+                           engine step looks exactly like a very hard question)
+    step_disagreement      organic only: the blind step check (org_step_check.py) did not confirm a reaction step of
+                           a drawn scheme (held before any question is written)
 
 Each file is outputs/queue_<reason>_<subject>.json: a list of items, newest last.
 `python tools/results.py queue ...` lists, clears or dismisses them.
@@ -20,7 +24,8 @@ from datetime import datetime, timezone
 
 from core.llm import write_json_atomic
 
-REASONS = ("engine_unknown", "gate_unreadable", "engine_wrong", "objection_unresolved", "ladder_consensus")
+REASONS = ("engine_unknown", "gate_unreadable", "engine_wrong", "objection_unresolved", "ladder_consensus",
+           "unconfirmed_key", "step_disagreement")
 _OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "outputs")
 
 

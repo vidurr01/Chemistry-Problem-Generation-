@@ -19,7 +19,9 @@ from core.pipeline.qf_draw import TWISTS
 # One draft per draw (2026-11-19, the author): over 21 draws that reached the writer, 9 passed on the first draft,
 # 12 failed all three and none was rescued by a rewrite, so a failed draft means a new draw. (The too-easy
 # refinement is separate and keeps its rounds.) Unreadable replies are retried without counting (qfirst).
-WRITE_TRIES = 1
+# 2 since 2026-11-22 (the author): that count was taken while MIN_TRAPS was 2, the commonest rejection then; a
+# second draft gets the exact problems back. Capped at 2 because each draft costs credits.
+WRITE_TRIES = 2
 
 
 BLANK_RULES = """NUMBERS AS BLANKS. You do not choose the numbers: after a program has been written from your question, code

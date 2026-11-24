@@ -1,0 +1,410 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T063514",
+ "spend": {
+  "total_cost_usd": 0.07713,
+  "by_role": {
+   "start_picker": {
+    "calls": 8,
+    "prompt_tokens": 15315,
+    "completion_tokens": 9430,
+    "cost": 0.04684875
+   },
+   "name_checker": {
+    "calls": 6,
+    "prompt_tokens": 638,
+    "completion_tokens": 1092,
+    "cost": 0.0006098
+   },
+   "step_checker": {
+    "calls": 32,
+    "prompt_tokens": 5383,
+    "completion_tokens": 58276,
+    "cost": 0.0296763
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_alcohol_ho",
+     "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+     "diol_to_ester_conchno",
+     "alkyl_halide_to_nitrile_nacn",
+     "nitrile_to_amine_h",
+     "alcohol_to_ester_rcocl"
+    ],
+    "nodes": [
+     "cycloalkene",
+     "alcohol",
+     "alkyl_halide",
+     "ester",
+     "nitrile",
+     "amine",
+     "ester"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives",
+     "Alcohols, Phenols & Ethers",
+     "Alkyl Halides",
+     "Amines"
+    ],
+    "txs": [
+     8,
+     9,
+     196,
+     197,
+     349,
+     173,
+     20,
+     282,
+     283,
+     66,
+     81,
+     29,
+     143,
+     147,
+     638
+    ],
+    "trap_ids": [],
+    "description": "4-(2-hydroxyethyl)cyclohex-3-ene-1-carboxylic acid: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:31:19.333728+00:00",
+     "held": "STE_20261124T063119_13",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "diol_to_ester_conchno",
+       "substrate": "OCCC1(O)CCC(Br)CC1",
+       "reagent": "conc. HNO₃, conc. H₂SO₄, 273 K",
+       "engine": "O=[N+]([O-])OCCC1(O[N+](=O)[O-])CCC(Br)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The cold nitrating mixture has no aromatic ring to nitrate, and this substrate’s two alcohol groups can undergo competing acid-mediated reactions rather than a single standard textbook transformation."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_ether_na",
+     "alkene_to_aldehyde_o",
+     "aldehyde_to_acetal_roh2",
+     "ketone_to_ketone_x2",
+     "alkyl_halide_to_nitrile_nacn",
+     "ketone_to_ether_roh"
+    ],
+    "nodes": [
+     "cycloalkene",
+     "ether",
+     "aldehyde",
+     "acetal",
+     "ketone",
+     "nitrile",
+     "acetal"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Aldehydes & Ketones",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     30,
+     132,
+     133,
+     149,
+     10,
+     427,
+     35,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     20,
+     282,
+     283,
+     42
+    ],
+    "trap_ids": [],
+    "description": "4-(hydroxymethyl)cyclohex-2-en-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:32:07.329266+00:00",
+     "held": "STE_20261124T063207_14",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "aldehyde_to_acetal_roh2",
+       "substrate": "COCC(C=O)CCC(=O)C=O",
+       "reagent": "CH₃OH (excess), dry HCl",
+       "engine": "COCC(CCC(=O)C(OC)OC)C(OC)OC",
+       "verdict": "disagree",
+       "checker_product": "COCC(C(OC)OC)CCC(OC)(OC)C(OC)OC",
+       "reason": "Excess methanol and dry HCl acetalize both aldehydes and the ketone, while the pre-existing methyl ether remains intact, giving the triacetal without cleavage or rearrangement."
+      },
+      {
+       "label": "T",
+       "edge": "ketone_to_ketone_x2",
+       "substrate": "COCC(CCC(=O)C(OC)OC)C(OC)OC",
+       "reagent": "Br₂, CH₃COOH",
+       "engine": "COCC(CC(Br)C(=O)C(OC)OC)C(OC)OC",
+       "verdict": "disagree",
+       "checker_product": "COCC(CCC(=O)C(Br)(OC)OC)C(OC)OC",
+       "reason": "Under acidic bromination, the ketone enolizes preferentially on the methoxy-stabilized acetal side and bromination replaces that α-hydrogen, while the acetals remain intact under the usual nonaqueous conditions."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_alcohol_nabh",
+     "diol_to_ester_conchno",
+     "alkene_to_halohydrin_br",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alkene_to_diol_oso"
+    ],
+    "nodes": [
+     "cycloalkene",
+     "alcohol",
+     "ester",
+     "halohydrin",
+     "nitro_compound",
+     "diol"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     38,
+     499,
+     173,
+     7,
+     285,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164
+    ],
+    "trap_ids": [],
+    "description": "2-(3-hydroxypropyl)cyclohex-2-en-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:32:46.747990+00:00",
+     "held": "STE_20261124T063246_15",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "diol_to_ester_conchno",
+       "substrate": "OCCCC1=CCCCC1O",
+       "reagent": "conc. HNO₃, conc. H₂SO₄, 273 K",
+       "engine": "O=[N+]([O-])OCCCC1=CCCCC1O[N+](=O)[O-]",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "This substrate has no aromatic ring for the standard mixed-acid nitration, and its alkene and two alcohol groups can undergo competing reactions, so these conditions do not specify a unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "cycloalkene_to_alkane_o3",
+     "alcohol_to_aldehyde_pcc",
+     "ketone_to_alkane_nhnh",
+     "alkane_to_alkyl_halide_x",
+     "aldehyde_to_carboxylic_acid_kmnoortollen",
+     "ketone_to_ester_mcpbametachl"
+    ],
+    "nodes": [
+     "alkene",
+     "aldehyde",
+     "aldehyde",
+     "alkane",
+     "alkyl_halide",
+     "carboxylic_acid",
+     "ester"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     425,
+     426,
+     24,
+     434,
+     39,
+     0,
+     413,
+     414,
+     415,
+     416,
+     417,
+     31,
+     492,
+     653
+    ],
+    "trap_ids": [],
+    "description": "5-(hydroxymethyl)cyclohex-2-en-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:33:48.284432+00:00",
+     "held": "STE_20261124T063348_16",
+     "steps": [
+      {
+       "label": "V",
+       "edge": "ketone_to_ester_mcpbametachl",
+       "substrate": "O=C(O)CC(CC(=O)C(=O)O)C(=O)O",
+       "reagent": "mCPBA",
+       "engine": "O=C(O)CC(COC(=O)C(=O)O)C(=O)O",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)CC(CC(=O)O)C(=O)O",
+       "reason": "The α-keto acid undergoes Baeyer–Villiger-type migration of its carboxyl group followed by decarboxylation, converting the ketone carbonyl into a carboxylic acid and releasing CO₂."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_ether_na",
+     "alkene_to_halohydrin_br",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "alkene_to_alkyl_halide_hx",
+     "alkene_to_diol_oso"
+    ],
+    "nodes": [
+     "alcohol",
+     "ether",
+     "halohydrin",
+     "sulfonate",
+     "alkyl_halide",
+     "diol"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     30,
+     132,
+     133,
+     149,
+     7,
+     247,
+     2,
+     3,
+     182,
+     183,
+     184,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164
+    ],
+    "trap_ids": [],
+    "description": "4-(2-hydroxyethyl)cyclohex-3-ene-1-carbonitrile: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:34:17.660915+00:00",
+     "held": "STE_20261124T063417_17",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "alkene_to_alkyl_halide_hx",
+       "substrate": "COCCC1=CCC(C#N)CC1",
+       "reagent": "HBr",
+       "engine": "COCCC1(Br)CCC(C#N)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "HBr can add across the alkene and cleave the methyl ether by substitution at its methyl group, so the outcome depends on equivalents and conditions and is not uniquely specified."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_lactone_diazomethane",
+     "alkyne_to_vinyl_halide_hx1equiv",
+     "alkene_to_halohydrin_br",
+     "alkyne_to_ketone_ho"
+    ],
+    "nodes": [
+     "ketone",
+     "ketone",
+     "vinyl_halide",
+     "halohydrin",
+     "ketone"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     656,
+     185,
+     7,
+     14
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)cyclohexan-1-one: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:35:14.944495+00:00",
+     "held": "STE_20261124T063514_18",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alkene_to_halohydrin_br",
+       "substrate": "C=C(Br)CC1CCCC(=O)CC1",
+       "reagent": "Br₂, H₂O",
+       "engine": "O=C1CCCC(CC(O)(Br)CBr)CC1",
+       "verdict": "disagree",
+       "checker_product": "O=C(CBr)CC1CCCC(=O)CC1",
+       "reason": "Bromohydrin formation at the vinyl bromide places OH on the carbon already bearing Br, and that unstable geminal bromohydrin collapses to the α-bromoketone while the ring ketone remains unchanged."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

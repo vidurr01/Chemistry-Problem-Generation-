@@ -1,0 +1,389 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T044914",
+ "spend": {
+  "total_cost_usd": 0.04764,
+  "by_role": {
+   "start_picker": {
+    "calls": 2,
+    "prompt_tokens": 3716,
+    "completion_tokens": 2573,
+    "cost": 0.01243575
+   },
+   "name_checker": {
+    "calls": 1,
+    "prompt_tokens": 103,
+    "completion_tokens": 211,
+    "cost": 0.0001158
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2493,
+    "completion_tokens": 1446,
+    "cost": 0.022338
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2874,
+    "completion_tokens": 1277,
+    "cost": 0.00694425
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1360,
+    "completion_tokens": 0,
+    "cost": 5.712e-05
+   },
+   "council": {
+    "calls": 6,
+    "prompt_tokens": 6487,
+    "completion_tokens": 16752,
+    "cost": 0.005747812
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_aldehyde_pcc",
+     "alkene_to_alcohol_ho",
+     "alcohol_to_alkyl_halide_socl",
+     "aldehyde_to_carboxylic_acid_kmnoortollen",
+     "alcohol_to_carbene_chndiazometh",
+     "alkene_to_diol_oso"
+    ],
+    "nodes": [
+     "alkene",
+     "aldehyde",
+     "alcohol",
+     "alkyl_halide",
+     "carboxylic_acid",
+     "ether",
+     "diol"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Alkyl Halides",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     24,
+     434,
+     8,
+     9,
+     28,
+     187,
+     190,
+     265,
+     266,
+     269,
+     31,
+     492,
+     144,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164
+    ],
+    "trap_ids": [],
+    "description": "2-(hydroxymethyl)cyclohex-2-en-1-one: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-24T04:46:52.387122+00:00",
+     "system": "P = 2-(hydroxymethyl)cyclohex-2-en-1-one. P --[PCC, CH₂Cl₂]--> Q; Q --[dil. H₂SO₄]--> R; R --[SOCl₂, pyridine]--> S; S --[Tollens' reagent, then H₃O⁺]--> T; R --[CH₂N₂, HBF₄]--> U; Q --[OsO₄, NMO]--> V",
+     "hidden": {
+      "Q": "2-formylcyclohex-2-en-1-one",
+      "R": "1-hydroxy-2-oxocyclohexane-1-carbaldehyde",
+      "S": "1-chloro-2-oxocyclohexane-1-carbaldehyde",
+      "T": "1-chloro-2-oxocyclohexanecarboxylic acid",
+      "U": "1-methoxy-2-oxocyclohexane-1-carbaldehyde",
+      "V": "2,3-dihydroxy-2-formylcyclohexan-1-one"
+     },
+     "hidden_link": "Hydration of Q places the OH on the more substituted carbon (C2), creating a tertiary alcohol with exactly 1 stereocentre, rather than a secondary alcohol with 2 stereocentres.",
+     "route": "P is oxidised by PCC to aldehyde Q. Hydration of Q gives R, where the OH is at the more substituted carbon (forming a tertiary alcohol). R has only 1 stereocentre. S is formed by chlorination of R with SOCl2, retaining the 1 stereocentre. T is formed by oxidising the aldehyde in S to a carboxylic acid. U is the methyl ether of R. V is the syn-dihydroxylation product of Q.",
+     "student_must_notice": "The regioselectivity of the hydration of Q to R determines the number of stereocentres and the type of alcohol formed.",
+     "trap": "Students might predict anti-Markovnikov hydration yielding a secondary alcohol with 2 stereocentres, leading to incorrect stereoisomer counts for R, S, T, and U.",
+     "given": "P = 2-(hydroxymethyl)cyclohex-2-en-1-one. Scheme: P -> Q -> R -> S -> T; R -> U; Q -> V.",
+     "asked": "How many of the following statements are correct?\n1. R gives immediate turbidity with Lucas reagent.\n2. The total number of stereoisomers of S is 4.\n3. T contains exactly 1 stereocentre.\n4. U has exactly 2 stereocentres.\n5. V gives a positive Tollens' test.\n6. T gives effervescence with aqueous NaHCO3.",
+     "format": "count",
+     "why_hard": "It requires correctly identifying the regiochemistry of the hydration step to accurately determine the number of stereocentres in the subsequent products.",
+     "situation": "P = 2-(hydroxymethyl)cyclohex-2-en-1-one. P --[PCC, CH₂Cl₂]--> Q; Q --[dil. H₂SO₄]--> R; R --[SOCl₂, pyridine]--> S; S --[Tollens' reagent, then H₃O⁺]--> T; R --[CH₂N₂, HBF₄]--> U; Q --[OsO₄, NMO]--> V",
+     "insight": "The regioselectivity of the hydration of Q to R determines the number of stereocentres and the type of alcohol formed.",
+     "links": "P is oxidised by PCC to aldehyde Q. Hydration of Q gives R, where the OH is at the more substituted carbon (forming a tertiary alcohol). R has only 1 stereocentre. S is formed by chlorination of R with SOCl2, retaining the 1 stereocentre. T is formed by oxidising the aldehyde in S to a carboxylic acid. U is the methyl ether of R. V is the syn-dihydroxylation product of Q."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T04:47:00.846431+00:00",
+     "attempt": 1,
+     "lead": "An organic reaction sequence starting from 2-(hydroxymethyl)cyclohex-2-en-1-one (P) is shown below:",
+     "ask": "How many of the following statements are correct?",
+     "format": "count",
+     "claims": [
+      {
+       "compound": "R",
+       "property": "lucas_test",
+       "value": "immediate turbidity",
+       "text": "Compound R gives immediate turbidity with Lucas reagent at room temperature."
+      },
+      {
+       "compound": "S",
+       "property": "stereoisomers",
+       "value": 4,
+       "text": "The total number of stereoisomers possible for compound S is 4."
+      },
+      {
+       "compound": "T",
+       "property": "stereocentres",
+       "value": 1,
+       "text": "Compound T contains exactly 1 stereocentre."
+      },
+      {
+       "compound": "U",
+       "property": "stereocentres",
+       "value": 2,
+       "text": "Compound U contains exactly 2 stereocentres."
+      },
+      {
+       "compound": "V",
+       "property": "tollens_test",
+       "value": true,
+       "text": "Compound V gives a positive Tollens' test."
+      },
+      {
+       "compound": "T",
+       "property": "nahco3_effervescence",
+       "value": true,
+       "text": "Compound T produces brisk effervescence with aqueous NaHCO₃ solution."
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T04:47:00.846489+00:00",
+     "stem": "An organic reaction sequence starting from 2-(hydroxymethyl)cyclohex-2-en-1-one (P) is shown below:\nP = 2-(hydroxymethyl)cyclohex-2-en-1-one\nP --[PCC, CH₂Cl₂]--> Q\nQ --[dil. H₂SO₄]--> R\nR --[SOCl₂, pyridine]--> S\nS --[Tollens' reagent, then H₃O⁺]--> T\nR --[CH₂N₂, HBF₄]--> U\nQ --[OsO₄, NMO]--> V\nHow many of the following statements are correct?\n(1) Compound R gives immediate turbidity with Lucas reagent at room temperature.\n(2) The total number of stereoisomers possible for compound S is 4.\n(3) Compound T contains exactly 1 stereocentre.\n(4) Compound U contains exactly 2 stereocentres.\n(5) Compound V gives a positive Tollens' test.\n(6) Compound T produces brisk effervescence with aqueous NaHCO₃ solution.\nGive the answer as an integer.",
+     "answer": 4,
+     "trace": [
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "lucas_test",
+       "formula": "Lucas test result computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "R",
+        "structure": "O=CC1(O)CCCCC1=O",
+        "claimed value": "immediate turbidity"
+       },
+       "outputs": {
+        "computed value": "immediate turbidity",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "stereoisomers",
+       "formula": "total number of stereoisomers (meso counted once) computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "S",
+        "structure": "O=CC1(Cl)CCCCC1=O",
+        "claimed value": 4
+       },
+       "outputs": {
+        "computed value": 2,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "T",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "T",
+        "structure": "O=C(O)C1(Cl)CCCCC1=O",
+        "claimed value": 1
+       },
+       "outputs": {
+        "computed value": 1,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "U",
+        "structure": "COC1(C=O)CCCCC1=O",
+        "claimed value": 2
+       },
+       "outputs": {
+        "computed value": 1,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "V",
+       "dst": "tollens_test",
+       "formula": "positive Tollens' test computed by code",
+       "inputs": {
+        "claim": 5,
+        "compound": "V",
+        "structure": "O=CC1(O)C(=O)CCCC1O",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "T",
+       "dst": "nahco3_effervescence",
+       "formula": "effervescence with NaHCO₃ computed by code",
+       "inputs": {
+        "claim": 6,
+        "compound": "T",
+        "structure": "O=C(O)C1(Cl)CCCCC1=O",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "item1",
+       "desc": "misjudges statement 1",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item2",
+       "desc": "misjudges statement 2",
+       "wrong_answer": 5
+      },
+      {
+       "id": "item3",
+       "desc": "misjudges statement 3",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item4",
+       "desc": "misjudges statement 4",
+       "wrong_answer": 5
+      },
+      {
+       "id": "item5",
+       "desc": "misjudges statement 5",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item6",
+       "desc": "misjudges statement 6",
+       "wrong_answer": 3
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T04:47:01.365452+00:00",
+     "score": 3.59,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T04:49:06.465829+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Step 1: Identify P = 2-(hydroxymethyl)cyclohex-2-en-1-one. Structure: cyclohex-2-enone with CH2OH at C2.\nStep 2: P --[PCC, CH2Cl2]--> Q. PCC oxidizes primary alcohol to aldehyde, no reduction of ketone. So Q = 2-(methoxymethylene?) Actually hydroxymethyl becomes aldehyde: CH2OH -> CHO. So Q = 2-(methoxymethylene?) Wait: 2-(hydroxymethyl)cyclohex-2-en-1-one -> after oxidation of CH2OH to CHO gives 2-(methoxymethyl?) No, CH2OH -> CHO gives 2-(methoxymethyl?) Actually CH2OH attached to C2 of cyclohex-2-enone; oxidation gives aldehyde at C2: cyclohex-2-en-1-one with CHO at C2 (i.e., 2-(formyl)cyclohex-2-en-1-one). So Q = 2-formylcyclohex-2-en-1-one.\nStep 3: Q --[dil. H2SO4]--> R. Dilute sulfuric acid likely induces acid-catalyzed hydration of the alkene? Or rearrangement? For enone with aldehyde, acid may cause conjugate addition? Probably leads to formation of a carbonyl addition product? Might give cyclohex-3-en-1-one? Actually acid could protonate carbonyl and open double bond leading to carbocation and addition of water? But no water mentioned. Likely acid-catalyzed cyclization to give a hemiacetal? However typical sequence: PCC oxidation then acid-catalyzed hydration of alkene to give alcohol. So R likely a cyclohexanol derivative with aldehyde? Might give 2-(hydroxymethyl)cyclohex-3-en-1-one? Not sure.\nGiven limited time, evaluate statements qualitatively:\n(1) R gives immediate turbidity with Lucas reagent at RT. Lucas reagent tests for secondary/tertiary alcohols; immediate turbidity indicates tertiary alcohol. Likely R has a tertiary alcohol after acid addition, so true.\n(2) Total number of stereoisomers for S is 4. S is from R with SOCl2/pyridine converting alcohol to chloride; may create chiral center at carbon bearing Cl and carbonyl; could have two enantiomers plus maybe cis/trans? Possibly 2 stereocenters leading to up to 4? plausible true.\n(3) T contains exactly 1 stereocentre. T from S via Tollens' (oxidize aldehyde to carboxylic acid) then H3O+. Likely forms a chiral center at carbon bearing former aldehyde? Might be 1, true.\n(4) U contains exactly 2 stereocenters. U from R with CH2N2 (diazomethane) methylation? CH2N2 adds CH2 across double bond giving methylene? Could create two new stereocenters. Likely true.\n(5) V gives positive Tollens' test. V from Q with OsO4/NMO dihydroxylation of alkene; gives vicinal diol with carbonyl? OsO4 adds across double bond to give cis-diol; no aldehyde formed, so negative. False.\n(6) T produces brisk effervescence with NaHCO3. T likely carboxylic acid, which reacts with NaHCO3 to give CO2, brisk effervescence. True.\nThus correct statements likely (1),(2),(3),(4),(6) =5? But (2) maybe not 4. Given uncertainty, answer count =5? Choose 5.\n",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: 5] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "5",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        5.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        5.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P (2-(hydroxymethyl)cyclohex-2-en-1-one) → PCC oxidizes CH2OH to CHO: Q = 2-formylcyclohex-2-en-1-one. Q + dil. H2SO4: Michael-type hydration of the enone double bond gives R = 3-hydroxy-2-formylcyclohexanone (secondary alcohol + aldehyde + ketone; stereocentres at C2 and C3). R + SOCl2/pyridine: OH→Cl, S = 3-chloro-2-formylcyclohexanone (2 stereocentres, no symmetry → 4 stereoisomers; statement 2 TRUE). S + Tollens/H3O+: aldehyde oxidized to COOH, T = 3-chloro-2-oxocyclohexanecarboxylic acid — still 2 stereocentres (statement 3 FALSE), and as a carboxylic acid it effervesces with NaHCO3 (statement 6 TRUE). R + CH2N2/HBF4: ring expansion of the ketone gives U, a cycloheptanone bearing CHO and OH on adjacent carbons — exactly 2 stereocentres (statement 4 TRUE). Q + OsO4/NMO: syn dihydroxylation of the C2=C3 bond gives V = 2-formyl-2,3-dihydroxycyclohexanone, which retains the aldehyde → positive Tollens' test (statement 5 TRUE). R's alcohol is secondary, so Lucas reagent gives turbidity only slowly, not immediately (statement 1 FALSE). Correct statements: 2, 4, 5, 6 → 4.",
+       "objection": null,
+       "answer_line": "[TYPE: organic] [CALC_VALUE: 4] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "4",
+       "unit": "",
+       "answer_type": "organic",
+       "calc_value": [
+        4.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        4.0
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T04:49:14.728570+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "2"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

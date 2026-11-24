@@ -1,0 +1,335 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T071930",
+ "spend": {
+  "total_cost_usd": 0.05472,
+  "by_role": {
+   "start_picker": {
+    "calls": 2,
+    "prompt_tokens": 4117,
+    "completion_tokens": 2362,
+    "cost": 0.011945250000000001
+   },
+   "name_checker": {
+    "calls": 1,
+    "prompt_tokens": 96,
+    "completion_tokens": 117,
+    "cost": 6.81e-05
+   },
+   "step_checker": {
+    "calls": 5,
+    "prompt_tokens": 837,
+    "completion_tokens": 3143,
+    "cost": 0.0016552
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2209,
+    "completion_tokens": 2371,
+    "cost": 0.03287
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2519,
+    "completion_tokens": 1310,
+    "cost": 0.00680175
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1270,
+    "completion_tokens": 0,
+    "cost": 5.334e-05
+   },
+   "council": {
+    "calls": 4,
+    "prompt_tokens": 3113,
+    "completion_tokens": 3016,
+    "cost": 0.00132694
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_carbene_methylenepho",
+     "nitrile_to_ketone_12ch3mgbr",
+     "alkene_to_alcohol_ho",
+     "alkene_to_diol_oso",
+     "alkene_to_halohydrin_br"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "alkene",
+     "ketone",
+     "alcohol",
+     "diol",
+     "halohydrin"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Amines",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     420,
+     399,
+     437,
+     8,
+     9,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164,
+     7
+    ],
+    "trap_ids": [],
+    "description": "4-(2-oxopropyl)benzonitrile: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T07:18:26.985357+00:00",
+     "held": null,
+     "steps": []
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-24T07:18:50.252390+00:00",
+     "system": "P = 4-(2-oxopropyl)benzonitrile\nP --[Ph₃P=CH₂]--> Q\nQ --[(i) CH₃MgBr; (ii) H₃O⁺]--> R\nR --[dil. H₂SO₄]--> S\nQ --[OsO₄, NMO]--> T\nQ --[Br₂, H₂O]--> U",
+     "hidden": {
+      "P": "4-(2-oxopropyl)benzonitrile",
+      "Q": "C=C(C)Cc1ccc(C#N)cc1",
+      "R": "C=C(C)Cc1ccc(C(C)=O)cc1",
+      "S": "CC(=O)c1ccc(CC(C)(C)O)cc1",
+      "T": "CC(O)(CO)Cc1ccc(C#N)cc1",
+      "U": "CC(O)(CBr)Cc1ccc(C#N)cc1"
+     },
+     "hidden_link": "P is a ketone and a nitrile. Wittig on P reacts selectively at the ketone to give Q (alkene). Grignard on Q reacts at the nitrile, giving methyl ketone R after hydrolysis. Hydration of R gives S (Markovnikov addition, tertiary alcohol). Bromohydrin formation on Q gives U (OH on more substituted carbon).",
+     "route": "1. P undergoes Wittig olefination at the ketone to form Q (alkene). 2. CH3MgBr adds to the nitrile of Q, yielding a methyl ketone R upon hydrolysis. 3. Acid-catalysed hydration of the alkene in R follows Markovnikov's rule, placing the OH on the tertiary carbon to give S. 4. OsO4 gives syn-diol T. 5. Br2/H2O on Q forms a bromonium ion, which is opened by water at the more substituted carbon to yield halohydrin U.",
+     "student_must_notice": "The regioselectivity in both the hydration of R to S and the bromohydrin formation from Q to U, which dictates whether the resulting alcohols are primary or tertiary.",
+     "trap": "Students may form the anti-Markovnikov alcohol for S or open the bromonium ion at the less substituted carbon for U, both of which lead to primary alcohols that do not give immediate turbidity with Lucas reagent.",
+     "given": "Reaction scheme with P provided by name.",
+     "asked": "Reactivity with Lucas reagent and 2,4-DNP, and number of stereocentres.",
+     "format": "msq",
+     "why_hard": "Requires correct application of regioselectivity rules in two separate electrophilic additions to an alkene to correctly predict the outcomes of the Lucas test.",
+     "question": {
+      "text": "Consider the following reaction scheme starting with P (4-(2-oxopropyl)benzonitrile):\n\nP → Q (via Ph₃P=CH₂)\nQ → R (via (i) CH₃MgBr; (ii) H₃O⁺)\nR → S (via dil. H₂SO₄)\nQ → T (via OsO₄, NMO)\nQ → U (via Br₂, H₂O)\n\nWhich of the following statements is/are correct?",
+      "options": {
+       "A": "Compound S gives immediate turbidity with Lucas reagent",
+       "B": "Compound U gives immediate turbidity with Lucas reagent",
+       "C": "Compound T contains exactly two stereocentres",
+       "D": "Compound Q gives a positive 2,4-DNP test"
+      },
+      "correct_options": [
+       "A",
+       "B"
+      ]
+     },
+     "situation": "P = 4-(2-oxopropyl)benzonitrile\nP --[Ph₃P=CH₂]--> Q\nQ --[(i) CH₃MgBr; (ii) H₃O⁺]--> R\nR --[dil. H₂SO₄]--> S\nQ --[OsO₄, NMO]--> T\nQ --[Br₂, H₂O]--> U",
+     "insight": "The regioselectivity in both the hydration of R to S and the bromohydrin formation from Q to U, which dictates whether the resulting alcohols are primary or tertiary.",
+     "links": "1. P undergoes Wittig olefination at the ketone to form Q (alkene). 2. CH3MgBr adds to the nitrile of Q, yielding a methyl ketone R upon hydrolysis. 3. Acid-catalysed hydration of the alkene in R follows Markovnikov's rule, placing the OH on the tertiary carbon to give S. 4. OsO4 gives syn-diol T. 5. Br2/H2O on Q forms a bromonium ion, which is opened by water at the more substituted carbon to yield halohydrin U."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T07:19:01.108502+00:00",
+     "attempt": 1,
+     "lead": "Consider the following reaction sequence starting from 4-(2-oxopropyl)benzonitrile (P).",
+     "ask": "Which of the following statements is/are correct?",
+     "format": "msq",
+     "claims": [
+      {
+       "text": "Compound S reacts with Lucas reagent to give immediate turbidity at room temperature.",
+       "compound": "S",
+       "property": "lucas_test",
+       "value": "immediate turbidity"
+      },
+      {
+       "text": "Compound U reacts with Lucas reagent to give immediate turbidity at room temperature.",
+       "compound": "U",
+       "property": "lucas_test",
+       "value": "immediate turbidity"
+      },
+      {
+       "text": "The total number of stereocentres present in compound S is 1.",
+       "compound": "S",
+       "property": "stereocentres",
+       "value": 1
+      },
+      {
+       "text": "Compound R gives a precipitate when treated with 2,4-dinitrophenylhydrazine.",
+       "compound": "R",
+       "property": "dnp_test",
+       "value": true
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T07:19:01.108532+00:00",
+     "stem": "Consider the following reaction sequence starting from 4-(2-oxopropyl)benzonitrile (P).\nP = 4-(2-oxopropyl)benzonitrile\nP --[Ph₃P=CH₂]--> Q\nQ --[(i) CH₃MgBr; (ii) H₃O⁺]--> R\nR --[dil. H₂SO₄]--> S\nQ --[OsO₄, NMO]--> T\nQ --[Br₂, H₂O]--> U\nWhich of the following statements is/are correct?\n(A) Compound S reacts with Lucas reagent to give immediate turbidity at room temperature.\n(B) Compound U reacts with Lucas reagent to give immediate turbidity at room temperature.\n(C) The total number of stereocentres present in compound S is 1.\n(D) Compound R gives a precipitate when treated with 2,4-dinitrophenylhydrazine.\nChoose all the correct options.",
+     "answer": "ABD",
+     "trace": [
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "lucas_test",
+       "formula": "Lucas test result computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "S",
+        "structure": "CC(=O)c1ccc(CC(C)(C)O)cc1",
+        "claimed value": "immediate turbidity"
+       },
+       "outputs": {
+        "computed value": "immediate turbidity",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "lucas_test",
+       "formula": "Lucas test result computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "U",
+        "structure": "CC(O)(CBr)Cc1ccc(C#N)cc1",
+        "claimed value": "immediate turbidity"
+       },
+       "outputs": {
+        "computed value": "immediate turbidity",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "S",
+        "structure": "CC(=O)c1ccc(CC(C)(C)O)cc1",
+        "claimed value": 1
+       },
+       "outputs": {
+        "computed value": 0,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "dnp_test",
+       "formula": "orange precipitate with 2,4-DNP computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "R",
+        "structure": "C=C(C)Cc1ccc(C(C)=O)cc1",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionC",
+       "desc": "chooses option C",
+       "wrong_answer": "C"
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T07:19:01.646319+00:00",
+     "score": 2.93,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T07:19:24.054476+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "1. P = 4-(2-oxopropyl)benzonitrile: side chain CH2-CO-CH3 attached to benzene at para position.\n2. Reaction with Ph3P=CH2 (a Wittig reagent) converts the carbonyl (C=O) of the 2-oxopropyl group into an alkene: CH2=CH-CH3 (allyl) attached to benzene via CH2? Actually Wittig on carbonyl gives CH2=CH- (attached to CH3). Starting chain: CH3-CO-CH2- attached to benzene? Wait 2-oxopropyl = CH2-CO-CH3? Actually 2-oxopropyl = CH2-CO-CH3 (prop-2-one) attached via CH2 to benzene: benzene-CH2-CO-CH3. Wittig on carbonyl gives benzene-CH2-CH=CH2 (allyl). So Q = 4-(allyl)benzonitrile (benzene-CH2-CH=CH2).\n3. Q undergoes Grignard CH3MgBr then H3O+ to add methyl to the double bond? Grignard adds to alkene? Typically Grignard adds to carbonyl, but Q has no carbonyl now. However maybe the Grignard adds to the alkene via conjugate addition? More likely the Grignard adds to the nitrile? No, step (i) CH3MgBr then (ii) H3O+ likely adds methyl to the double bond giving a new stereocenter at the former alkene carbon. So R = 4-(2-methyl-2-propenyl?) Actually addition of methyl to allyl gives a secondary alcohol after protonation: CH2-CH(CH3)-CH2? Let's assume R is a secondary alcohol with one stereocenter.\n4. R -- dilute H2SO4 --> S: acid-catalyzed hydration of double bond? But R already saturated? Might be dehydration? Actually S likely a tertiary alcohol after rearrangement? Lucas reagent (HCl/acetone) gives turbidity with tertiary alcohols immediate. S likely tertiary alcohol -> A true.\n5. Q -- OsO4, NMO --> T: dihydroxylation of alkene to vicinal diol with two new stereocenters (cis). So T has two new stereocenters.\n6. Q -- Br2, H2O --> U: bromination of alkene with water gives bromohydrin (addition of Br and OH across double bond) giving a single stereocenter (anti addition). So U has one stereocenter.\n7. Lucas reagent reacts immediately with tertiary alcohols. S likely tertiary alcohol (if addition gave tertiary). U is bromohydrin with secondary/primary? Not tertiary, so B false.\n8. Total stereocenters in S: likely one (the alcohol carbon). So C true.\n9. R gives precipitate with 2,4-dinitrophenylhydrazine if it contains a ketone or aldehyde. R is alcohol, no carbonyl, so no precipitate. D false.\nThus correct statements: A and C.\n",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: AC] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "AC",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "AC"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "AC"
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P undergoes Wittig methylenation (Ph3P=CH2) converting the ketone to an exocyclic alkene: Q = p-NC-C6H4-CH2-C(CH3)=CH2. Q + CH3MgBr/H3O+ converts the nitrile to a methyl ketone: R = p-COCH3-C6H4-CH2-C(CH3)=CH2. R + dil. H2SO4 hydrates the alkene (Markovnikov) to tertiary alcohol S = p-COCH3-C6H4-CH2-C(OH)(CH3)2. Q + OsO4/NMO gives syn diol T; Q + Br2/H2O gives bromohydrin U = p-NC-C6H4-CH2-C(OH)(CH3)-CH2Br (tertiary alcohol). (A) S is tertiary alcohol: immediate Lucas turbidity - correct. (B) U is tertiary alcohol: immediate Lucas turbidity - correct. (C) In S the carbinol carbon has two identical CH3 groups, so 0 stereocentres, not 1 - incorrect. (D) R is a ketone, gives 2,4-DNPH precipitate - correct. Answer: ABD.",
+       "objection": null,
+       "answer_line": "[TYPE: organic] [CALC_VALUE: ABD] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "ABD",
+       "unit": "",
+       "answer_type": "organic",
+       "calc_value": [
+        "ABD"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "ABD"
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T07:19:30.159258+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "D"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

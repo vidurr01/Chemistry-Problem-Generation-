@@ -1,0 +1,564 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T084204",
+ "spend": {
+  "total_cost_usd": 0.07398,
+  "by_role": {
+   "start_picker": {
+    "calls": 2,
+    "prompt_tokens": 4014,
+    "completion_tokens": 2036,
+    "cost": 0.0106455
+   },
+   "name_checker": {
+    "calls": 2,
+    "prompt_tokens": 209,
+    "completion_tokens": 342,
+    "cost": 0.0001919
+   },
+   "step_checker": {
+    "calls": 23,
+    "prompt_tokens": 3900,
+    "completion_tokens": 43462,
+    "cost": 0.022121
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2313,
+    "completion_tokens": 2198,
+    "cost": 0.031002
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2677,
+    "completion_tokens": 1802,
+    "cost": 0.00876525
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1296,
+    "completion_tokens": 0,
+    "cost": 5.4432e-05
+   },
+   "council": {
+    "calls": 4,
+    "prompt_tokens": 3173,
+    "completion_tokens": 3027,
+    "cost": 0.00119589
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_halohydrin_br",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "alkyl_halide_to_alkyl_halide_nai",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "alkyl_halide_to_nitrile_nacn"
+    ],
+    "nodes": [
+     "ketone",
+     "halohydrin",
+     "sulfonate",
+     "alkyl_halide",
+     "carboxylic_acid",
+     "nitrile"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Alcohols, Phenols & Ethers",
+     "Alkyl Halides",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     7,
+     247,
+     23,
+     199,
+     200,
+     202,
+     206,
+     255,
+     294,
+     366,
+     505,
+     210,
+     20,
+     282,
+     283
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-1-en-2-yl)phenyl]ethan-1-one: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:39:34.485339+00:00",
+     "held": "STE_20261124T083934_31",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alkyl_halide_to_alkyl_halide_nai",
+       "substrate": "CC(=O)c1ccc(C(C)(CBr)OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "reagent": "NaI, dry acetone",
+       "engine": "CC(=O)c1ccc(C(C)(CI)OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The bromide is at a severely hindered neopentyl CH2, while the tertiary benzylic tosylate cannot undergo the textbook SN2 Finkelstein substitution, so NaI in acetone does not imply a single clean product."
+      },
+      {
+       "label": "T",
+       "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+       "substrate": "CC(=O)c1ccc(C(C)(CBr)OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+       "engine": "Cc1ccc(S(=O)(=O)OC(C)(CBr)c2ccc(C(=O)O)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Although the acetyl group is a haloform-reaction substrate, the tertiary benzylic tosylate and primary bromide are also labile under aqueous excess NaOH, so competing substitution and elimination prevent a unique textbook product from being specified."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_halohydrin_br",
+     "ketone_to_ester_mcpbametachl",
+     "alkyl_halide_to_nitrile_nacn",
+     "alcohol_to_carbene_chndiazometh",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alcohol_to_substituted_benzene_4methylbenze"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "halohydrin",
+     "ester",
+     "nitrile",
+     "ether",
+     "nitro_compound",
+     "sulfonate"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Aldehydes & Ketones",
+     "Alkyl Halides",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     7,
+     653,
+     20,
+     282,
+     283,
+     144,
+     285,
+     247
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-1-en-2-yl)phenyl]ethan-1-one: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:40:01.131134+00:00",
+     "held": "STE_20261124T084001_32",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "alcohol_to_carbene_chndiazometh",
+       "substrate": "CC(=O)Oc1ccc(C(C)(O)CBr)cc1",
+       "reagent": "CH₂N₂, HBF₄",
+       "engine": "COC(C)(CBr)c1ccc(OC(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The standard CH₂N₂/HBF₄ carbonyl homologation applies to ketones, not this acetate ester, and the tertiary benzylic bromohydrin is acid-sensitive, so no unique textbook product is specified."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_cyanohydrin_hcn",
+     "alkene_to_ether_hgoacrohorhg",
+     "nitrile_to_carboxylic_acid_ho",
+     "alcohol_to_carbene_chndiazometh",
+     "alkene_to_alcohol_ho",
+     "nitrile_to_carboxylic_acid_ho"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "cyanohydrin",
+     "ether",
+     "carboxylic_acid",
+     "ether",
+     "alcohol",
+     "carboxylic_acid"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Amines",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     41,
+     135,
+     65,
+     465,
+     144,
+     8,
+     9,
+     65,
+     465
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-1-en-2-yl)phenyl]ethan-1-one: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:40:25.896774+00:00",
+     "held": "STE_20261124T084025_33",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alkene_to_ether_hgoacrohorhg",
+       "substrate": "C=C(C)c1ccc(C(C)(O)C#N)cc1",
+       "reagent": "(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄",
+       "engine": "COC(C)(C)c1ccc(C(C)(O)C#N)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The cyanohydrin can undergo retrocyanation, and Hg(II) strongly sequesters cyanide, so these conditions are not reliably selective for alkoxymercuration of the alkene and do not define a single major product."
+      },
+      {
+       "label": "S",
+       "edge": "nitrile_to_carboxylic_acid_ho",
+       "substrate": "COC(C)(C)c1ccc(C(C)(O)C#N)cc1",
+       "reagent": "H₃O⁺, heat",
+       "engine": "COC(C)(C)c1ccc(C(C)(O)C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The conditions do not specify acid strength or duration, and both the cyanohydrin-derived nitrile and the acid-labile tertiary benzylic methyl ether can undergo competing transformations, so no unique major product is established."
+      },
+      {
+       "label": "T",
+       "edge": "alcohol_to_carbene_chndiazometh",
+       "substrate": "C=C(C)c1ccc(C(C)(O)C#N)cc1",
+       "reagent": "CH₂N₂, HBF₄",
+       "engine": "C=C(C)c1ccc(C(C)(C#N)OC)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The substrate is a cyanohydrin rather than a ketone, and HBF₄ can cleave it while also protonating the acid-sensitive isopropenyl alkene, so the textbook ketone homologation does not define a unique major product here."
+      },
+      {
+       "label": "U",
+       "edge": "alkene_to_alcohol_ho",
+       "substrate": "C=C(C)c1ccc(C(C)(O)C#N)cc1",
+       "reagent": "dil. H₂SO₄",
+       "engine": "CC(C)(O)c1ccc(C(C)(O)C#N)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Dilute aqueous H₂SO₄ can hydrate the isopropenyl group while also promoting cyanohydrin cleavage or nitrile hydrolysis, and without specified conditions there is no unique major product."
+      },
+      {
+       "label": "V",
+       "edge": "nitrile_to_carboxylic_acid_ho",
+       "substrate": "CC(C)(O)c1ccc(C(C)(O)C#N)cc1",
+       "reagent": "H₃O⁺, heat",
+       "engine": "CC(C)(O)c1ccc(C(C)(O)C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Aqueous acid and heat can hydrolyze the nitrile to an α-hydroxy acid, but can also dehydrate the tertiary benzylic alcohol (and promote cyanohydrin cleavage), so without conditions specifying selectivity there is no single dependable major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "epoxide_to_vicinal_dihalide_hx",
+     "vicinal_dihalide_to_alkyne_zndeltaexces",
+     "ketone_to_oxime_nhohhcl",
+     "alkene_to_ether_hgoacrohorhg",
+     "alkene_to_epoxide_mcpba",
+     "epoxide_to_alcohol_rnh"
+    ],
+    "nodes": [
+     "ether",
+     "vicinal_dihalide",
+     "alkene",
+     "oxime",
+     "ether",
+     "epoxide",
+     "alcohol"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Alkyl Halides",
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     194,
+     365,
+     40,
+     135,
+     6,
+     69
+    ],
+    "trap_ids": [],
+    "description": "4-(oxiran-2-yl)cyclohexan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:41:02.925594+00:00",
+     "held": null,
+     "steps": []
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-24T08:41:24.662584+00:00",
+     "system": "P = 4-(oxiran-2-yl)cyclohexan-1-one\nP --[HBr (excess)]--> Q\nQ --[Zn dust, CH₃OH, heat]--> R\nR --[NH₂OH·HCl, pyridine]--> S\nS --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> T\nS --[mCPBA]--> U\nU --[CH₃NH₂]--> V",
+     "hidden": {
+      "Q": "4-(1,2-dibromoethyl)cyclohexan-1-one",
+      "R": "4-vinylcyclohexan-1-one",
+      "S": "4-vinylcyclohexan-1-one oxime",
+      "T": "4-(1-methoxyethyl)cyclohexan-1-one oxime",
+      "U": "4-(oxiran-2-yl)cyclohexan-1-one oxime",
+      "V": "4-(1-hydroxy-2-(methylamino)ethyl)cyclohexan-1-one oxime"
+     },
+     "hidden_link": "P undergoes epoxide ring opening with excess HBr to form vicinal dibromide Q. Zn dust eliminates the bromines to yield terminal alkene R. Condensation with hydroxylamine gives oxime S. Alkoxymercuration-demercuration of S produces Markovnikov ether T. Epoxidation of S gives epoxide U, which undergoes SN2 ring opening by methylamine at the less hindered carbon to yield secondary alcohol V.",
+     "route": "1. P + HBr (excess) -> Q (vicinal dibromide). 2. Q + Zn -> R (vinyl group). 3. R + NH2OH -> S (oxime formation). 4. S + Hg(OAc)2/MeOH -> T (Markovnikov methoxyether, secondary, 2 stereocentres). 5. S + mCPBA -> U (epoxide). 6. U + CH3NH2 -> V (attack at less hindered carbon yields a secondary alcohol, Lucas test positive in 5 mins).",
+     "student_must_notice": "In step T, alkoxymercuration follows Markovnikov's rule, creating a chiral centre at the secondary carbon. In step V, aminolysis of the epoxide under basic/neutral conditions occurs at the less hindered primary carbon, producing a secondary alcohol.",
+     "trap": "A common mistake in step T is predicting the anti-Markovnikov product, which would yield only 1 stereocentre. In step V, attacking the more hindered carbon would yield a primary alcohol, which would not give turbidity with Lucas reagent in 5 minutes.",
+     "given": "Reaction scheme with P identified, Q-V as letters.",
+     "asked": "Identify true statements regarding the properties and structures of compounds T, V, R, and Q.",
+     "format": "msq",
+     "question": "Consider the given reaction scheme. Which of the following statements is/are correct?",
+     "options": {
+      "A": "Compound T contains exactly 2 stereocentres.",
+      "B": "Compound V produces turbidity in about 5 minutes when treated with Lucas reagent at room temperature.",
+      "C": "Compound R gives a positive 2,4-DNP test and decolourises bromine water.",
+      "D": "Compound Q is a vicinal dihalide that gives a positive iodoform test."
+     },
+     "answer": [
+      "A",
+      "B",
+      "C"
+     ],
+     "why_hard": "Requires correct prediction of regioselectivity in two distinct steps (alkoxymercuration and basic epoxide opening) to determine the exact number of stereocentres and the class of alcohol formed.",
+     "situation": "P = 4-(oxiran-2-yl)cyclohexan-1-one\nP --[HBr (excess)]--> Q\nQ --[Zn dust, CH₃OH, heat]--> R\nR --[NH₂OH·HCl, pyridine]--> S\nS --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> T\nS --[mCPBA]--> U\nU --[CH₃NH₂]--> V",
+     "insight": "In step T, alkoxymercuration follows Markovnikov's rule, creating a chiral centre at the secondary carbon. In step V, aminolysis of the epoxide under basic/neutral conditions occurs at the less hindered primary carbon, producing a secondary alcohol.",
+     "links": "1. P + HBr (excess) -> Q (vicinal dibromide). 2. Q + Zn -> R (vinyl group). 3. R + NH2OH -> S (oxime formation). 4. S + Hg(OAc)2/MeOH -> T (Markovnikov methoxyether, secondary, 2 stereocentres). 5. S + mCPBA -> U (epoxide). 6. U + CH3NH2 -> V (attack at less hindered carbon yields a secondary alcohol, Lucas test positive in 5 mins)."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T08:41:39.579320+00:00",
+     "attempt": 1,
+     "lead": "An organic reaction sequence starting from 4-(oxiran-2-yl)cyclohexan-1-one (P) is shown below.",
+     "ask": "Which of the following statements is/are correct?",
+     "format": "msq",
+     "claims": [
+      {
+       "text": "Compound T contains 2 stereocentres.",
+       "compound": "T",
+       "property": "stereocentres",
+       "value": 2
+      },
+      {
+       "text": "Compound V exhibits turbidity with Lucas reagent in about 5 minutes at room temperature.",
+       "compound": "V",
+       "property": "lucas_test",
+       "value": "turbidity in about 5 minutes"
+      },
+      {
+       "text": "The total number of sp²-hybridised carbon atoms in compound R is 3.",
+       "compound": "R",
+       "property": "sp2_carbons",
+       "value": 3
+      },
+      {
+       "text": "The degree of unsaturation of compound Q is 3.",
+       "compound": "Q",
+       "property": "degree_of_unsaturation",
+       "value": 3
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T08:41:39.579373+00:00",
+     "stem": "An organic reaction sequence starting from 4-(oxiran-2-yl)cyclohexan-1-one (P) is shown below.\nP = 4-(oxiran-2-yl)cyclohexan-1-one\nP --[HBr (excess)]--> Q\nQ --[Zn dust, CH₃OH, heat]--> R\nR --[NH₂OH·HCl, pyridine]--> S\nS --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> T\nS --[mCPBA]--> U\nU --[CH₃NH₂]--> V\nWhich of the following statements is/are correct?\n(A) Compound T contains 2 stereocentres.\n(B) Compound V exhibits turbidity with Lucas reagent in about 5 minutes at room temperature.\n(C) The total number of sp²-hybridised carbon atoms in compound R is 3.\n(D) The degree of unsaturation of compound Q is 3.\nChoose all the correct options.",
+     "answer": "ABC",
+     "trace": [
+      {
+       "tx": [],
+       "src": "T",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "T",
+        "structure": "COC(C)C1CCC(=NO)CC1",
+        "claimed value": 2
+       },
+       "outputs": {
+        "computed value": 2,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "V",
+       "dst": "lucas_test",
+       "formula": "Lucas test result computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "V",
+        "structure": "CNCC(O)C1CCC(=NO)CC1",
+        "claimed value": "turbidity in about 5 minutes"
+       },
+       "outputs": {
+        "computed value": "turbidity in about 5 minutes",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "sp2_carbons",
+       "formula": "number of sp² carbons computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "R",
+        "structure": "C=CC1CCC(=O)CC1",
+        "claimed value": 3
+       },
+       "outputs": {
+        "computed value": 3,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "Q",
+       "dst": "degree_of_unsaturation",
+       "formula": "degree of unsaturation (DBE) computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "Q",
+        "structure": "O=C1CCC(C(Br)CBr)CC1",
+        "claimed value": 3
+       },
+       "outputs": {
+        "computed value": 2,
+        "claim true": false
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionD",
+       "desc": "chooses option D",
+       "wrong_answer": "D"
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T08:41:40.116820+00:00",
+     "score": 3.33,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T08:41:56.381943+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Step-by-step reasoning omitted due to length constraints; answer derived from typical reaction interpretation.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: D] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "D",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "D"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "D"
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P + excess HBr opens epoxide and replaces OH with Br giving Q = 4-(1,2-dibromoethyl)cyclohexanone; DoU(Q) = ring + C=O = 2, so (D) is false. Zn/CH3OH/heat reductively eliminates the vic-dibromide to R = 4-vinylcyclohexanone, which has 3 sp2 carbons (C=O + 2 vinyl), so (C) is true. R + NH2OH gives oxime S. Oxymercuration-demercuration of the vinyl group gives T = 4-(1-hydroxyethyl)cyclohexanone oxime with 2 stereocentres (ring C4 and the CH(OH)CH3 carbon), so (A) is true. mCPBA epoxidizes the vinyl group of S to U; CH3NH2 opens the epoxide at the less hindered CH2 giving V = 4-[CH(OH)CH2NHCH3]cyclohexanone oxime, a secondary alcohol that gives Lucas turbidity in about 5 minutes, so (B) is true.",
+       "objection": null,
+       "answer_line": "[TYPE: organic-reaction-sequence] [CALC_VALUE: ABC] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "ABC",
+       "unit": "",
+       "answer_type": "organic-reaction-sequence",
+       "calc_value": [
+        "ABC"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "ABC"
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T08:42:04.832341+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "D"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

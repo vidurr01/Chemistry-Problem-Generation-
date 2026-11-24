@@ -1776,12 +1776,42 @@ class QuestionFirstFlow(unittest.TestCase):
 
 
 class OneDraftPerDraw(unittest.TestCase):
-    def test_one_draft_and_unreadable_replies_do_not_count(self):
-        """21 draws: rewrites rescued none, so one draft per draw (2026-11-19); a reply that cannot be read is a
-        technical failure and is asked again without using up the draft."""
+    def test_two_drafts_and_unreadable_replies_do_not_count(self):
+        """At most two drafts per draw (2026-11-22; one from 2026-11-19): drafts cost credits, so never more; a
+        reply that cannot be read is a technical failure and is asked again without using up a draft."""
         from core.pipeline import qf_writer
-        self.assertEqual(qf_writer.WRITE_TRIES, 1)
+        self.assertEqual(qf_writer.WRITE_TRIES, 2)
         self.assertGreaterEqual(qfirst.UNREADABLE_RETRIES, 1)
+
+    def test_a_blank_slip_does_not_spend_the_unreadable_retry(self):
+        """Review 2026-11-24: slips and garbled replies shared one count, so slip then garbled reply ended the
+        draft. Now: slip (free), garbled (free), garbled (the draft) = 3 writer calls."""
+        calls = []
+
+        def write(*a, **k):
+            calls.append(1)
+            if len(calls) == 1:
+                return {"stem": "x is 5 mol", "asks": "x", "unit": ""}
+            raise ValueError("garbled")
+        bb = mock.Mock(current=None)
+        with mock.patch.object(qfirst, "write_question", write), \
+                mock.patch.object(qfirst, "level_problem", lambda q: None), \
+                mock.patch.object(qfirst, "blank_problems", lambda q: ["write 5 as a blank"]), \
+                mock.patch.object(qfirst, "accepted_questions", lambda c: []), \
+                mock.patch.object(qfirst, "design_question", lambda *a, **k: {
+                    "system": "argon", "situation": "argon", "route": "a -> b", "asked": "b",
+                    "twist": "two_state_difference"}), \
+                mock.patch.object(qfirst, "design_problems", lambda d, *a, **k: None), \
+                mock.patch.object(qfirst, "DESIGN_GATES", False), \
+                mock.patch.object(qfirst, "WRITE_TRIES", 1), \
+                mock.patch.object(qfirst, "UNREADABLE_RETRIES", 1), mock.patch("builtins.print"):
+            from core.engine import physical as ph
+            txs = [117, 357]
+            cand = {"edges": [f"e{t}" for t in txs], "txs": txs, "drawn_txs": txs, "chapters": [],
+                    "_steps": [ph.step(t) for t in txs]}
+            qfirst.write_and_solve(SimpleNamespace(config={"display_name": "Physical Chemistry"}), cand, "two_state_difference",
+                                   bb, random.Random(1))
+        self.assertEqual(len(calls), 3)
 
 
 class NoRoundingInPrograms(unittest.TestCase):

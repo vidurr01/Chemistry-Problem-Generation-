@@ -1,0 +1,599 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T091340",
+ "spend": {
+  "total_cost_usd": 0.06341,
+  "by_role": {
+   "start_picker": {
+    "calls": 3,
+    "prompt_tokens": 6022,
+    "completion_tokens": 3998,
+    "cost": 0.019509
+   },
+   "name_checker": {
+    "calls": 2,
+    "prompt_tokens": 209,
+    "completion_tokens": 196,
+    "cost": 0.00011889999999999999
+   },
+   "step_checker": {
+    "calls": 22,
+    "prompt_tokens": 3697,
+    "completion_tokens": 27821,
+    "cost": 0.014280200000000003
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2549,
+    "completion_tokens": 1371,
+    "cost": 0.02155
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2898,
+    "completion_tokens": 1086,
+    "cost": 0.006246
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1376,
+    "completion_tokens": 0,
+    "cost": 5.7792e-05
+   },
+   "council": {
+    "calls": 5,
+    "prompt_tokens": 5253,
+    "completion_tokens": 3610,
+    "cost": 0.001650182
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_geminal_dihalide_pcl5",
+     "alkyne_to_vinyl_halide_hx1equiv",
+     "alkene_to_vicinal_dihalide_x",
+     "alkyne_to_ketone_ho",
+     "alkyne_to_geminal_dihalide_hxexcess2equ"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "geminal_dihalide",
+     "vinyl_halide",
+     "vicinal_dihalide",
+     "ketone",
+     "geminal_dihalide"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     195,
+     185,
+     11,
+     14,
+     186
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)benzaldehyde: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T09:11:16.094516+00:00",
+     "held": "STE_20261124T091116_34",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "alkyne_to_ketone_ho",
+       "substrate": "C#CCc1ccc(C(Cl)Cl)cc1",
+       "reagent": "dil. H₂SO₄, HgSO₄, 333 K",
+       "engine": "CC(=O)Cc1ccc(C(Cl)Cl)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(=O)Cc1ccc(C=O)cc1",
+       "reason": "The terminal alkyne hydrates in Markovnikov fashion to the methyl ketone, while the benzylic gem-dichloride hydrolyzes under the aqueous acidic conditions to an aldehyde."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_alcohol_nabh",
+     "alcohol_to_ether_na",
+     "alkyne_to_ketone_ho",
+     "ketone_to_ketone_x2",
+     "ketone_to_alcohol_nabh",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2"
+    ],
+    "nodes": [
+     "aldehyde",
+     "alcohol",
+     "ether",
+     "ketone",
+     "ketone",
+     "alcohol",
+     "carboxylic_acid"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     32,
+     498,
+     30,
+     132,
+     133,
+     149,
+     14,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     38,
+     499,
+     210
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)benzaldehyde: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T09:11:32.143335+00:00",
+     "held": "STE_20261124T091132_35",
+     "steps": [
+      {
+       "label": "U",
+       "edge": "ketone_to_alcohol_nabh",
+       "substrate": "COCc1ccc(C(Br)C(C)=O)cc1",
+       "reagent": "NaBH₄, C₂H₅OH",
+       "engine": "COCc1ccc(C(Br)C(C)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "COCc1ccc(C2OC2C)cc1",
+       "reason": "NaBH₄ reduces the ketone, and the resulting α-bromohydrin cyclizes by intramolecular displacement of bromide to give the epoxide while the benzyl methyl ether remains unchanged."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_imine_rnh",
+     "alkyne_to_ketone_ho",
+     "ketone_to_alcohol_nabh",
+     "alkyne_to_vinyl_halide_hx1equiv",
+     "ketone_to_ester_mcpbametachl"
+    ],
+    "nodes": [
+     "aldehyde",
+     "imine",
+     "ketone",
+     "alcohol",
+     "vinyl_halide",
+     "ester"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     36,
+     14,
+     38,
+     499,
+     185,
+     653
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)benzaldehyde: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T09:11:52.375139+00:00",
+     "held": "STE_20261124T091152_36",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alkyne_to_ketone_ho",
+       "substrate": "C#CCc1ccc(C=NC)cc1",
+       "reagent": "dil. H₂SO₄, HgSO₄, 333 K",
+       "engine": "CN=Cc1ccc(CC(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(=O)Cc1ccc(C=O)cc1.CN",
+       "reason": "The imine hydrolyzes under the dilute aqueous acid to the aldehyde and methylamine, while HgSO₄-catalyzed hydration of the terminal alkyne gives the methyl ketone."
+      },
+      {
+       "label": "S",
+       "edge": "ketone_to_alcohol_nabh",
+       "substrate": "CN=Cc1ccc(CC(C)=O)cc1",
+       "reagent": "NaBH₄, C₂H₅OH",
+       "engine": "CN=Cc1ccc(CC(C)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "CNCc1ccc(CC(C)O)cc1",
+       "reason": "NaBH₄ in ethanol can reduce both the imine to a secondary amine and the ketone to a secondary alcohol, giving the doubly reduced product without fragmentation."
+      },
+      {
+       "label": "T",
+       "edge": "alkyne_to_vinyl_halide_hx1equiv",
+       "substrate": "C#CCc1ccc(C=NC)cc1",
+       "reagent": "HBr (1 equiv)",
+       "engine": "C=C(Br)Cc1ccc(C=NC)cc1",
+       "verdict": "disagree",
+       "checker_product": "C#CCc1ccc(C=[NH+]C)cc1.[Br-]",
+       "reason": "One equivalent of HBr preferentially protonates the basic imine to its iminium bromide salt, so the usual HBr addition across the terminal alkyne is not the major outcome."
+      },
+      {
+       "label": "U",
+       "edge": "ketone_to_ester_mcpbametachl",
+       "substrate": "CN=Cc1ccc(CC(C)=O)cc1",
+       "reagent": "mCPBA",
+       "engine": "CN=Cc1ccc(COC(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "CN1OC1c1ccc(CC(C)=O)cc1",
+       "reason": "mCPBA preferentially oxygenates the more nucleophilic imine to an oxaziridine under standard selective conditions, leaving the ketone unchanged."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_alcohol_nabh",
+     "alcohol_to_carbene_chndiazometh",
+     "alkene_to_ether_hgoacrohorhg",
+     "alkene_to_halohydrin_br",
+     "alkyl_halide_to_nitrile_nacn",
+     "nitrile_to_amine_h"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "alcohol",
+     "ether",
+     "ether",
+     "halohydrin",
+     "nitrile",
+     "amine"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Alkyl Halides",
+     "Amines"
+    ],
+    "txs": [
+     38,
+     499,
+     144,
+     135,
+     7,
+     20,
+     282,
+     283,
+     66,
+     81
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T09:12:35.642446+00:00",
+     "held": null,
+     "steps": []
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-24T09:12:51.960632+00:00",
+     "system": "P = 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one. \nP reacts with NaBH₄ in C₂H₅OH to give Q. \nQ reacts with CH₂N₂ and HBF₄ to give R. \nR undergoes reaction with (i) Hg(OAc)₂, CH₃OH followed by (ii) NaBH₄ to yield S. \nQ reacts with Br₂ in H₂O to give T. \nT reacts with NaCN in DMSO to give U. \nU reacts with H₂ and Ni to give V.",
+     "hidden": {
+      "Q": "1-[4-(prop-2-en-1-yl)phenyl]ethan-1-ol",
+      "R": "1-(1-methoxyethyl)-4-(prop-2-en-1-yl)benzene",
+      "S": "1-(1-methoxyethyl)-4-(2-methoxypropyl)benzene",
+      "T": "1-bromo-3-[4-(1-hydroxyethyl)phenyl]propan-2-ol",
+      "U": "4-[4-(1-hydroxyethyl)phenyl]-3-hydroxybutanenitrile",
+      "V": "4-amino-1-[4-(1-hydroxyethyl)phenyl]butan-2-ol"
+     },
+     "hidden_link": "Students must deduce the regioselectivity of alkoxymercuration-demercuration on R to form S, the regioselective opening of the bromonium ion to form T, and the nucleophilic substitution mechanism forming a nitrile in U.",
+     "route": "NaBH4 reduces the ketone in P to a secondary benzylic alcohol Q. CH2N2 with HBF4 methylates the alcohol Q to form the methyl ether R. Alkoxymercuration-demercuration of R follows Markovnikov's rule without rearrangement, placing the methoxy group on the more substituted carbon of the alkene to yield S. Reaction of Q with Br2/H2O forms a bromonium ion which is opened by water at the more substituted carbon, yielding the halohydrin T. NaCN in DMSO performs an SN2 reaction on the primary bromide in T to form the nitrile U. Finally, catalytic hydrogenation of U reduces the nitrile to a primary amine V.",
+     "student_must_notice": "The student must recognize that alkoxymercuration-demercuration yields the Markovnikov ether (creating a second stereocentre in S) and that NaCN forms a nitrile, not an isocyanide.",
+     "trap": "A common trap is assuming anti-Markovnikov addition for S (which would yield only 1 stereocentre and 2 stereoisomers) or assuming NaCN forms an isocyanide instead of a nitrile.",
+     "given": "Reaction scheme starting from P.",
+     "asked": "How many of the given statements are correct?",
+     "format": "count",
+     "why_hard": "It requires combining knowledge of specific regioselectivity in electrophilic additions with stereocenter counting and functional group transformations.",
+     "situation": "P = 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one. \nP reacts with NaBH₄ in C₂H₅OH to give Q. \nQ reacts with CH₂N₂ and HBF₄ to give R. \nR undergoes reaction with (i) Hg(OAc)₂, CH₃OH followed by (ii) NaBH₄ to yield S. \nQ reacts with Br₂ in H₂O to give T. \nT reacts with NaCN in DMSO to give U. \nU reacts with H₂ and Ni to give V.",
+     "insight": "The student must recognize that alkoxymercuration-demercuration yields the Markovnikov ether (creating a second stereocentre in S) and that NaCN forms a nitrile, not an isocyanide.",
+     "links": "NaBH4 reduces the ketone in P to a secondary benzylic alcohol Q. CH2N2 with HBF4 methylates the alcohol Q to form the methyl ether R. Alkoxymercuration-demercuration of R follows Markovnikov's rule without rearrangement, placing the methoxy group on the more substituted carbon of the alkene to yield S. Reaction of Q with Br2/H2O forms a bromonium ion which is opened by water at the more substituted carbon, yielding the halohydrin T. NaCN in DMSO performs an SN2 reaction on the primary bromide in T to form the nitrile U. Finally, catalytic hydrogenation of U reduces the nitrile to a primary amine V."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T09:13:01.150665+00:00",
+     "attempt": 1,
+     "lead": "An organic reaction sequence starting from 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one (P) is shown below:",
+     "ask": "How many of the given statements are correct?",
+     "format": "count",
+     "claims": [
+      {
+       "text": "Compound S possesses exactly 2 stereocentres.",
+       "compound": "S",
+       "property": "stereocentres",
+       "value": 2
+      },
+      {
+       "text": "Compound U contains a nitrile functional group.",
+       "compound": "U",
+       "property": "functional_group",
+       "value": "nitrile"
+      },
+      {
+       "text": "Compound Q gives a yellow precipitate in the iodoform test.",
+       "compound": "Q",
+       "property": "iodoform_test",
+       "value": true
+      },
+      {
+       "text": "The degree of unsaturation of compound R is 6.",
+       "compound": "R",
+       "property": "degree_of_unsaturation",
+       "value": 6
+      },
+      {
+       "text": "Compound V gives a positive carbylamine test.",
+       "compound": "V",
+       "property": "carbylamine_test",
+       "value": true
+      },
+      {
+       "text": "The total number of sp³-hybridised carbon atoms in compound T is 3.",
+       "compound": "T",
+       "property": "sp3_carbons",
+       "value": 3
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T09:13:01.150698+00:00",
+     "stem": "An organic reaction sequence starting from 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one (P) is shown below:\nP = 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one\nP --[NaBH₄, C₂H₅OH]--> Q\nQ --[CH₂N₂, HBF₄]--> R\nR --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> S\nQ --[Br₂, H₂O]--> T\nT --[NaCN, DMSO]--> U\nU --[H₂, Ni]--> V\nHow many of the given statements are correct?\n(1) Compound S possesses exactly 2 stereocentres.\n(2) Compound U contains a nitrile functional group.\n(3) Compound Q gives a yellow precipitate in the iodoform test.\n(4) The degree of unsaturation of compound R is 6.\n(5) Compound V gives a positive carbylamine test.\n(6) The total number of sp³-hybridised carbon atoms in compound T is 3.\nGive the answer as an integer.",
+     "answer": 4,
+     "trace": [
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "S",
+        "structure": "COC(C)Cc1ccc(C(C)OC)cc1",
+        "claimed value": 2
+       },
+       "outputs": {
+        "computed value": 2,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "functional_group",
+       "formula": "contains the functional group (graph node name, e.g. ketone) computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "U",
+        "structure": "CC(O)c1ccc(CC(O)CC#N)cc1",
+        "claimed value": "nitrile"
+       },
+       "outputs": {
+        "computed value": [
+         "alcohol",
+         "diol",
+         "nitrile",
+         "substituted_benzene"
+        ],
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "Q",
+       "dst": "iodoform_test",
+       "formula": "positive iodoform test computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "Q",
+        "structure": "C=CCc1ccc(C(C)O)cc1",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "degree_of_unsaturation",
+       "formula": "degree of unsaturation (DBE) computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "R",
+        "structure": "C=CCc1ccc(C(C)OC)cc1",
+        "claimed value": 6
+       },
+       "outputs": {
+        "computed value": 5,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "V",
+       "dst": "carbylamine_test",
+       "formula": "positive carbylamine test computed by code",
+       "inputs": {
+        "claim": 5,
+        "compound": "V",
+        "structure": "CC(O)c1ccc(CC(O)CCN)cc1",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "T",
+       "dst": "sp3_carbons",
+       "formula": "number of sp³ carbons computed by code",
+       "inputs": {
+        "claim": 6,
+        "compound": "T",
+        "structure": "CC(O)c1ccc(CC(O)CBr)cc1",
+        "claimed value": 3
+       },
+       "outputs": {
+        "computed value": 5,
+        "claim true": false
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "item1",
+       "desc": "misjudges statement 1",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item2",
+       "desc": "misjudges statement 2",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item3",
+       "desc": "misjudges statement 3",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item4",
+       "desc": "misjudges statement 4",
+       "wrong_answer": 5
+      },
+      {
+       "id": "item5",
+       "desc": "misjudges statement 5",
+       "wrong_answer": 3
+      },
+      {
+       "id": "item6",
+       "desc": "misjudges statement 6",
+       "wrong_answer": 5
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T09:13:01.678453+00:00",
+     "score": 3.26,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T09:13:29.329894+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Step 1: Identify P = 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one. Structure: phenyl ring with a prop-2-en-1-yl group at para position attached to a ketone (ethan-1-one). So phenyl-CH2-CO-CH3? Actually 1-[4-(prop-2-en-1-yl)phenyl]ethan-1-one means phenyl attached to ethanone via carbon 1? Likely phenyl-CH2-CO-CH3 with para propenyl substituent.\n\nStep 2: NaBH4 in EtOH reduces ketone to alcohol Q = 1-[4-(prop-2-en-1-yl)phenyl]ethanol (secondary alcohol).\n\nStep 3: CH2N2 (diazomethane) with HBF4 likely methylates the alcohol? CH2N2 under acidic conditions can methylate alcohols to give methyl ethers or form diazo intermediates. Probably methylates the phenolic OH? But phenyl has no OH. Likely methylates the alcohol to give methyl ether? However typical use of CH2N2 with HBF4 leads to formation of methyl ketone via homologation? Might convert secondary alcohol to methyl ketone via methylation? Actually CH2N2 can add across C=C? Might perform methylation of carbonyl? Unclear. Assume Q undergoes methylation at the alcohol to give methyl ether? But later steps involve bromination etc. Might be that CH2N2 adds across the double bond of propenyl? Could give cycloaddition? Probably simplest: CH2N2 methylates the alcohol to give methyl ether? However later bromination of Q gives T with bromine at para? Let's assume CH2N2 adds across the C=C of propenyl to form a cyclopropane? Not.\n\nGiven limited time, evaluate statements:\n(1) S has exactly 2 stereocenters? Likely yes after reduction of mercury complex gives chiral centers.\n(2) U contains nitrile: U from NaCN on T (brominated) gives nitrile yes.\n(3) Q gives yellow precipitate in iodoform test: Q is secondary alcohol not methyl ketone, so no.\n(4) R degree unsaturation 6? R likely has double bond plus ring etc maybe 6? uncertain.\n(5) V gives positive carbylamine test: V is alkane after hydrogenation of nitrile? Nitrile reduced to amine then to amine? Carbylamine test detects primary amine; V after hydrogenation of nitrile gives primary amine? Yes.\n(6) T sp3 carbons =3? T after bromination of Q (para bromination) adds Br to aromatic ring, aromatic carbons sp2, not 3.\n\nThus likely correct statements: (2), (5) maybe (1). Count =2? Choose 2.\n",
+       "objection": null,
+       "answer_line": "[TYPE: count] [CALC_VALUE: 2] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "2",
+       "unit": "",
+       "answer_type": "count",
+       "calc_value": [
+        2.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        2.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P = p-allyl acetophenone. NaBH4 reduces the ketone → Q = Ar-CH(OH)CH3 (Ar = 4-allylphenyl). CH2N2/HBF4 methylates the alcohol → R = Ar-CH(OCH3)CH3. Oxymercuration-demercuration of the allyl double bond adds OMe Markovnikov → S = Ar-CH(OCH3)CH3 with side chain Ar-CH2-CH(OCH3)CH3: stereocentres = benzylic CH + CH(OMe) = 2, so (1) correct. Q + Br2/H2O gives bromohydrin on the allyl group: T = Ar-CH(OH)CH3 with side chain Ar-CH2-CH(OH)-CH2Br. NaCN substitutes Br → U contains -CH2CN nitrile, (2) correct. H2/Ni reduces nitrile to primary amine V = -CH2CH2NH2, positive carbylamine test, (5) correct. Q is a methyl secondary alcohol (CH3CH(OH)-Ar), gives iodoform yellow precipitate, (3) correct. R: DoU = benzene ring (4) + C=C (1) = 5, not 6, (4) wrong. T sp3 carbons: CH(OH)CH3 (2) + CH2, CH(OH), CH2Br (3) = 5, not 3, (6) wrong. Correct statements: 1, 2, 3, 5 → 4.",
+       "objection": null,
+       "answer_line": "[TYPE: organic chemistry] [CALC_VALUE: 4] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "4",
+       "unit": "",
+       "answer_type": "organic chemistry",
+       "calc_value": [
+        4.0
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        4.0
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T09:13:40.517126+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "3"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

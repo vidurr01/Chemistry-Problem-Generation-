@@ -65,6 +65,18 @@ GROUPS: dict = {
     "nh2_can_shift":     ("[NX3H2][CX4;!$([CH3]);!$([CH2][CH3]);!$([CH2]c)]",
                           "NH2 whose carbocation could rearrange (not CH3, CH3CH2 or ArCH2)"),
     "enal":              ("[CX3]=[CX3][CX3H1]=O", "α,β-unsaturated CHO"),
+    # an electron-poor C=C / C≡C (Michael acceptor): electrophiles do not add Markovnikov to it, nucleophiles add at
+    # the β-carbon (live run 8, 2026-11-24: acid hydration of a 2-formylcyclohexenone put OH on the α-carbon)
+    "conj_cc":           ("[$([CX3;!a]=[CX3;!a][CX3]=O),$([CX3;!a]=[CX3;!a]C#N),$([CX3;!a]=[CX3;!a][N+](=O)[O-])]",
+                          "C=C conjugated with C=O, C≡N or NO2"),
+    "conj_alkyne":       ("[$([CX2]#[CX2][CX3]=O),$([CX2]#[CX2]C#N)]", "C≡C conjugated with C=O or C≡N"),
+    "vinyl_halide":      ("[CX3]=[CX3][Cl,Br,I]", "vinyl halide (adding OH next to the C–X collapses to a C=O)"),
+    "dialkyl_ether":     ("[CX4][OX2][CX4]", "dialkyl ether"),
+    "alcohol_3":         ("[CX4H0]([#6])([#6])([#6])[OX2H1]", "3° OH"),
+    "acetal":            ("[CX4]([OX2][#6])[OX2][#6]", "acetal / ketal (opened by aqueous acid)"),
+    "oxime":             ("[CX3]=N[OX2H1]", "oxime (Beckmann / hydrolysis in acid)"),
+    "sulfonate_ester":   ("[CX4]OS(=O)(=O)[#6]", "alkyl tosylate / sulfonate ester (a leaving group)"),
+    "methyl_carbinol":   ("[CH3][CX4;H1,H2][OX2H1]", "CH3CH(OH)– (gives the haloform test)"),
 }
 
 
@@ -86,6 +98,27 @@ def has(smiles: str, name: str) -> bool:
     return mol(smiles).HasSubstructMatch(_pat(name))
 
 
+def _all_equivalent(smiles: str, name: str) -> bool:
+    """Every match of the group sits on symmetry-equivalent atoms (one match counts as equivalent)."""
+    from rdkit import Chem
+    m = mol(smiles)
+    matches = m.GetSubstructMatches(_pat(name))
+    if len(matches) <= 1:
+        return True
+    ranks = list(Chem.CanonicalRankAtoms(m, breakTies=False))
+    return len({tuple(sorted(ranks[i] for i in mt)) for mt in matches}) == 1
+
+
+def trusted(edge: dict) -> bool:
+    """The edge has an approved substrate scope (requires_absent or firing_condition, written from
+    tools/apply_rule_scope.py). An edge without one fires on any molecule that has its group: live run 7
+    (2026-11-24) took conc. H2SO4, 383 K on a 2° benzylic alcohol with a C=C to the hydrogen sulfate."""
+    fc = edge.get("firing_condition") or {}
+    if fc.get("left_out"):                         # reviewed and dropped from draws (the reason is in the graph)
+        return False
+    return bool((edge.get("chemoselectivity") or {}).get("requires_absent")) or bool(fc)
+
+
 def check(edge: dict, smiles: str) -> None:
     """EngineError if the molecule is outside the edge's approved scope."""
     eid = edge.get("id", "?")
@@ -99,6 +132,9 @@ def check(edge: dict, smiles: str) -> None:
     for g in fc.get("at_most_one", []):
         if count(smiles, g) > 1:
             raise EngineError(f"{eid}: more than one {GROUPS[g][1]} (scope)")
+    for g in fc.get("equivalent_only", []):           # several are fine only if symmetry-equivalent (live run 12)
+        if not _all_equivalent(smiles, g):
+            raise EngineError(f"{eid}: two different {GROUPS[g][1]} sites: which reacts is not settled (scope)")
     for g in (edge.get("chemoselectivity") or {}).get("requires_absent", []):
         if has(smiles, g):
             raise EngineError(f"{eid}: {GROUPS[g][1]} present: outside the approved scope")

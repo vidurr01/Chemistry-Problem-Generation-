@@ -1,0 +1,453 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T061636",
+ "spend": {
+  "total_cost_usd": 0.06445,
+  "by_role": {
+   "start_picker": {
+    "calls": 6,
+    "prompt_tokens": 11501,
+    "completion_tokens": 6980,
+    "cost": 0.03480075
+   },
+   "name_checker": {
+    "calls": 6,
+    "prompt_tokens": 656,
+    "completion_tokens": 1316,
+    "cost": 0.0007236
+   },
+   "step_checker": {
+    "calls": 33,
+    "prompt_tokens": 5691,
+    "completion_tokens": 56716,
+    "cost": 0.028927100000000008
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "ketone_to_carbene_methylenepho",
+     "alkene_to_alkyl_halide_hx",
+     "alkene_to_alcohol_ho"
+    ],
+    "nodes": [
+     "alkyne",
+     "sulfonate",
+     "alkene",
+     "alkyl_halide",
+     "alcohol"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     247,
+     420,
+     2,
+     3,
+     182,
+     183,
+     184,
+     8,
+     9
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(4-hydroxybut-2-yn-1-yloxy)phenyl]ethan-1-one: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:12:22.541318+00:00",
+     "held": "STE_20261124T061222_7",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "ketone_to_carbene_methylenepho",
+       "substrate": "CC(=O)c1ccc(OCC#CCOS(=O)(=O)c2ccc(C)cc2)cc1",
+       "reagent": "Ph₃P=CH₂",
+       "engine": "C=C(C)c1ccc(OCC#CCOS(=O)(=O)c2ccc(C)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The ylide can methylenate the ketone but can also displace the primary propargylic tosylate (with possible SN2/SN2′ regiochemistry), so without conditions specifying selectivity there is no unique major product."
+      },
+      {
+       "label": "S",
+       "edge": "alkene_to_alkyl_halide_hx",
+       "substrate": "C=C(C)c1ccc(OCC#CCOS(=O)(=O)c2ccc(C)cc2)cc1",
+       "reagent": "HBr",
+       "engine": "Cc1ccc(S(=O)(=O)OCC#CCOc2ccc(C(C)(C)Br)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "HBr can react at the alkene and alkyne, displace the primary propargylic tosylate, or cleave the ether, so without specified conditions there is no single predictable major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "phenol_to_ester_rcoclacylchl",
+     "alkyne_to_alkene_h",
+     "alkene_to_vicinal_dihalide_x",
+     "alkyl_halide_to_alkyl_halide_nai",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alkyl_halide_to_nitrile_nacn"
+    ],
+    "nodes": [
+     "phenol",
+     "ester",
+     "alkene",
+     "vicinal_dihalide",
+     "alkyl_halide",
+     "nitro_compound",
+     "nitrile"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     120,
+     12,
+     13,
+     401,
+     11,
+     23,
+     199,
+     200,
+     202,
+     206,
+     255,
+     294,
+     366,
+     505,
+     285,
+     20,
+     282,
+     283
+    ],
+    "trap_ids": [],
+    "description": "methyl 3-(4-hydroxyphenyl)prop-2-ynoate: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:13:28.920602+00:00",
+     "held": "STE_20261124T061328_8",
+     "steps": [
+      {
+       "label": "U",
+       "edge": "alkyl_halide_to_nitro_compound_agno2silvern",
+       "substrate": "COC(=O)C(Br)C(Br)c1ccc(OC(C)=O)cc1",
+       "reagent": "AgNO₂",
+       "engine": "COC(=O)C(C(c1ccc(OC(C)=O)cc1)[N+](=O)[O-])[N+](=O)[O-]",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The ester and aryl acetate are not normally transformed by AgNO₂, but the substrate has two inequivalent secondary C–Br bonds that can undergo competing substitution and potentially further substitution, so without specified stoichiometry and conditions there is no unique textbook major product."
+      },
+      {
+       "label": "V",
+       "edge": "alkyl_halide_to_nitrile_nacn",
+       "substrate": "COC(=O)C(Br)C(Br)c1ccc(OC(C)=O)cc1",
+       "reagent": "NaCN, DMSO",
+       "engine": "COC(=O)C(C#N)C(C#N)c1ccc(OC(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "COC(=O)C(Br)C(C#N)c1ccc(OC(C)=O)cc1",
+       "reason": "Cyanide preferentially displaces the benzylic bromide by SN2, while the methyl ester and aryl acetate remain intact."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_ether_roh",
+     "phenol_to_substituted_benzene_chndiazometh",
+     "alkene_to_vicinal_dihalide_x",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alkyl_halide_to_nitrile_nacn"
+    ],
+    "nodes": [
+     "alkene",
+     "acetal",
+     "substituted_benzene",
+     "vicinal_dihalide",
+     "nitro_compound",
+     "nitrile"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     42,
+     119,
+     11,
+     285,
+     20,
+     282,
+     283
+    ],
+    "trap_ids": [],
+    "description": "1-(3-allyl-4-hydroxyphenyl)ethan-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:14:03.502714+00:00",
+     "held": "STE_20261124T061403_9",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "ketone_to_ether_roh",
+       "substrate": "C=CCc1cc(C(C)=O)ccc1O",
+       "reagent": "CH₃OH (excess), dry HCl",
+       "engine": "C=CCc1cc(C(C)(OC)OC)ccc1O",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Methanolic HCl can ketalize the acetyl group, but it can also add across the allyl alkene (with possible carbocation rearrangement), and these competing acid-mediated pathways do not specify a single major product."
+      },
+      {
+       "label": "T",
+       "edge": "alkyl_halide_to_nitro_compound_agno2silvern",
+       "substrate": "COc1ccc(C(C)(OC)OC)cc1CC(Br)CBr",
+       "reagent": "AgNO₂",
+       "engine": "COc1ccc(C(C)(OC)OC)cc1CC(C[N+](=O)[O-])[N+](=O)[O-]",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "AgNO₂ can replace the terminal primary and internal secondary bromides with nitro groups at different rates, so without specified equivalents or conversion there is no unique product; the acetal and aryl methoxy groups are not the relevant reaction sites."
+      },
+      {
+       "label": "U",
+       "edge": "alkyl_halide_to_nitrile_nacn",
+       "substrate": "COc1ccc(C(C)(OC)OC)cc1CC(Br)CBr",
+       "reagent": "NaCN, DMSO",
+       "engine": "COc1ccc(C(C)(OC)OC)cc1CC(C#N)CC#N",
+       "verdict": "disagree",
+       "checker_product": "COc1ccc(C(C)(OC)OC)cc1CC(Br)CC#N",
+       "reason": "In DMSO, CN⁻ preferentially displaces the terminal primary bromide by SN2, while the secondary bromide and base-stable acetal and aryl methoxy groups remain intact."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_carbene_chndiazometh",
+     "ketone_to_carbene_methylenepho",
+     "alkene_to_alcohol_ho",
+     "alkyne_to_alkane_o3",
+     "alcohol_to_ester_rcocl",
+     "alcohol_to_alkene_conchso"
+    ],
+    "nodes": [
+     "ketone",
+     "ether",
+     "alkene",
+     "alcohol",
+     "ketone",
+     "ester",
+     "alkene"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives"
+    ],
+    "txs": [
+     144,
+     420,
+     8,
+     9,
+     433,
+     29,
+     143,
+     147,
+     638,
+     27,
+     148,
+     151,
+     152,
+     154,
+     155,
+     640
+    ],
+    "trap_ids": [],
+    "description": "4-(4-hydroxybut-2-yn-1-yl)cyclohexan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:15:07.202670+00:00",
+     "held": "STE_20261124T061507_10",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "alcohol_to_carbene_chndiazometh",
+       "substrate": "O=C1CCC(CC#CCO)CC1",
+       "reagent": "CH₂N₂, HBF₄",
+       "engine": "COCC#CCC1CCC(=O)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The free alcohol can trap acid-activated diazomethane while the ketone can undergo methylene homologation, so without conditions specifying selectivity or reagent stoichiometry there is no unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_oxime_nhohhcl",
+     "carboxylic_acid_to_ester_roh",
+     "alkene_to_halohydrin_br",
+     "alkyl_halide_to_nitrile_nacn",
+     "cycloalkene_to_alkane_o3",
+     "alkene_to_vicinal_dihalide_x"
+    ],
+    "nodes": [
+     "ketone",
+     "oxime",
+     "ester",
+     "halohydrin",
+     "nitrile",
+     "aldehyde",
+     "vicinal_dihalide"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Carboxylic Acids & Derivatives",
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     40,
+     43,
+     641,
+     7,
+     20,
+     282,
+     283,
+     425,
+     426,
+     11
+    ],
+    "trap_ids": [],
+    "description": "4-(2-oxopropyl)cyclohex-3-ene-1-carboxylic acid: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:15:55.890766+00:00",
+     "held": "STE_20261124T061555_11",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "carboxylic_acid_to_ester_roh",
+       "substrate": "CC(CC1=CCC(C(=O)O)CC1)=NO",
+       "reagent": "CH₃OH, conc. H₂SO₄ (cat.), heat",
+       "engine": "COC(=O)C1CC=C(CC(C)=NO)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The carboxylic acid can undergo Fischer esterification, while acid-promoted Beckmann rearrangement of the unsymmetrical oxime can give different amides depending on its unspecified E/Z geometry, so the substrate does not define a single major product."
+      },
+      {
+       "label": "U",
+       "edge": "cycloalkene_to_alkane_o3",
+       "substrate": "COC(=O)C1CC=C(CC(C)=NO)CC1",
+       "reagent": "(i) O₃; (ii) Zn, H₂O",
+       "engine": "COC(=O)C(CC=O)CCC(=O)CC(C)=NO",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Ozone can react with both the ring alkene and the oxime C=N bond, so the standard single-site alkene-ozonolysis product is not uniquely determined for this substrate."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_acetal_roh2",
+     "alkene_to_epoxide_mcpba",
+     "epoxide_to_diol_ho",
+     "alkene_to_ether_hgoacrohorhg",
+     "substituted_benzene_to_carboxylic_acid_1naoh",
+     "alkene_to_ether_hgoacrohorhg"
+    ],
+    "nodes": [
+     "alkene",
+     "acetal",
+     "epoxide",
+     "diol",
+     "ether",
+     "carboxylic_acid",
+     "ether"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Alcohols, Phenols & Ethers",
+     "Aromatic Compounds"
+    ],
+    "txs": [
+     35,
+     6,
+     67,
+     135,
+     378,
+     135
+    ],
+    "trap_ids": [],
+    "description": "2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:16:36.324244+00:00",
+     "held": "STE_20261124T061636_12",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "aldehyde_to_acetal_roh2",
+       "substrate": "C=CCc1ccc(O)c(C=O)c1",
+       "reagent": "CH₃OH (excess), dry HCl",
+       "engine": "C=CCc1ccc(O)c(C(OC)OC)c1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Methanolic HCl can acetalize the aldehyde, but it can also protonate the allyl alkene and lead to competing, potentially rearranged chloride or methoxy addition, so the conditions do not specify a unique major product."
+      },
+      {
+       "label": "U",
+       "edge": "substituted_benzene_to_carboxylic_acid_1naoh",
+       "substrate": "C=CCc1ccc(O)c(C(OC)OC)c1",
+       "reagent": "(i) NaOH; (ii) CO₂, 400 K, 4–7 atm; (iii) H₃O⁺",
+       "engine": "C=CCc1cc(C(=O)O)c(O)c(C(OC)OC)c1",
+       "verdict": "disagree",
+       "checker_product": "C=CCc1cc(C(=O)O)c(O)c(C=O)c1",
+       "reason": "NaOH forms the phenoxide, which undergoes Kolbe–Schmitt carboxylation at the sole vacant ortho position, while the aryl dimethyl acetal survives the basic step and is hydrolyzed to an aldehyde during the acidic workup."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

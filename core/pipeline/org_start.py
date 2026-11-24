@@ -73,6 +73,12 @@ def check_start(adapter, smiles: str, rng=None) -> tuple:
     st = features(smi)
     if not HEAVY_MIN <= st["heavy"] <= HEAVY_MAX:
         return False, f"{st['heavy']} heavy atoms: use {HEAVY_MIN}-{HEAVY_MAX}", st
+    close = close_groups(smi)
+    if close:
+        return False, ("groups that can react with each other: " + "; ".join(close) + f". Keep every OH, NH2 or "
+                       f"COOH at least {CLOSE_BONDS + 1} bonds from any C=O, ester, C–X, epoxide, C=C or C≡N "
+                       f"(meta / para across a benzene ring is fine; an o-hydroxy aryl carbonyl and a 1,4-diacid "
+                       f"are fine)"), st
     try:
         OP.askable(smi)
     except EngineError as e:
@@ -121,6 +127,52 @@ def name_matches(name: str, smiles: str) -> tuple:
     return _same(smiles, theirs), theirs
 
 
+# Groups that react WITH EACH OTHER (the author, 2026-11-24, after runs 12-14: almost every held scheme came from
+# two groups of the start interacting: an o-allyl phenol cyclising under Hg2+, a cyanohydrin reverting, a
+# β-bromoamine closing an aziridine). A nucleophile within CLOSE_BONDS bonds of an electrophile can react with it
+# or close a 3- to 6-membered ring, which the one-group rules cannot model. Allowed: pairs across a benzene ring
+# (meta / para cannot close a ring) and the motifs the engine handles on purpose.
+CLOSE_BONDS = 5
+_NUC = {"OH": "[CX4][OX2H1:1]", "phenol OH": "c[OX2H1:1]", "NH": "[NX3;H2,H1;!$(NC=O);!$(N-[N,O]):1]",
+        "COOH": "[CX3](=O)[OX2H1:1]"}
+_ELEC = {"C=O": "[CX3;$([CX3H1](=O)[#6]),$([CX3]([#6])(=O)[#6]):1]=O", "ester": "[CX3:1](=O)[OX2][#6]",
+         "COCl": "[CX3:1](=O)Cl", "C≡N": "[CX2:1]#N", "C–X": "[CX4:1][Cl,Br,I]", "epoxide": "[C:1]1OC1",
+         "C=C": "[CX3;!a:1]=[CX3;!a]"}           # (C≡C only reacts with an OH under Hg2+: run 10's good start had one)
+_ALLOWED = ["OC(=O)[#6]~[#6]C(=O)O",                     # 1,4-diacid / phthalic acid: the cyclic anhydride edge
+            "[OX2H1]c:c[CX3]=O", "[NX3H2]c:c[CX3]=O",    # o-hydroxy / o-amino aryl carbonyl (salicyl type)
+            "[OX2H1]C(=O)C=C"]                            # α,β-unsaturated acid: its own conjugated system (cinnamic)
+
+
+def _mapped(m, smarts: str) -> set:
+    patt = Chem.MolFromSmarts(smarts)
+    idx = next(a.GetIdx() for a in patt.GetAtoms() if a.GetAtomMapNum() == 1)
+    return {match[idx] for match in m.GetSubstructMatches(patt)}
+
+
+def close_groups(smiles: str) -> list:
+    """['OH and C=C are 4 bonds apart', ...] for every nucleophile-electrophile pair that may react together."""
+    m = Chem.MolFromSmiles(smiles)
+    if m is None:
+        return []
+    allowed = [set(mt) for s in _ALLOWED for mt in m.GetSubstructMatches(Chem.MolFromSmarts(s))]
+    dist = Chem.GetDistanceMatrix(m)
+    out = []
+    for nname, ns in _NUC.items():
+        for ename, es in _ELEC.items():
+            for a in _mapped(m, ns):
+                for b in _mapped(m, es):
+                    d = int(dist[a][b])
+                    if d <= 1 or d > CLOSE_BONDS:  # 1: the same group (a COOH's own C=O)
+                        continue
+                    path = Chem.GetShortestPath(m, a, b)
+                    if sum(m.GetAtomWithIdx(i).GetIsAromatic() for i in path) >= 3:   # meta / para on a ring
+                        continue
+                    if any(a in s and b in s for s in allowed):
+                        continue
+                    out.append(f"{nname} and {ename} are {d} bonds apart")
+    return sorted(set(out))
+
+
 def pick_start(adapter, rng=None, avoid=(), log=None) -> dict | None:
     """{"name", "smiles", "why", "stats", "tries"} for a start the engine accepts, or None after PICK_TRIES."""
     from core.pipeline import org_qfirst as O
@@ -139,6 +191,11 @@ What makes a starting molecule good:
   them (chemoselectivity) and later steps depend on which group reacted;
 - at least one of: a ring, a stereocentre, an unsymmetrical C=C or ketone (regioselectivity), two similar groups
   in different environments (1° vs 2° OH, aryl vs alkyl);
+- the groups must NOT react with EACH OTHER: keep every OH, NH2 or COOH at least {CLOSE_BONDS + 1} bonds from any
+  C=O, ester, C–X, epoxide, C=C or C≡N (e.g. on different arms of a ring, or meta / para on a benzene ring).
+  Closer pairs cyclise or decompose in ways the scheme cannot follow. Fine on purpose: an o-hydroxy aryl
+  aldehyde / ketone (salicylaldehyde type), a 1,4-diacid, an α,β-unsaturated acid, a conjugated diene, an allyl
+  aryl ether;
 - {HEAVY_MIN}-{HEAVY_MAX} heavy atoms; a real, stable, neutral compound with a correct IUPAC name;
 - not a textbook one-group molecule (no propane, ethanol, benzene, acetone) and not copied from any exam question.{avoid_txt}
 {feedback}

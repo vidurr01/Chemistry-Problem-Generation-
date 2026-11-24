@@ -18,6 +18,7 @@ Formats: msq (4 claims, 1-3 true), mcq_correct (exactly one true), count (4-8 cl
 from __future__ import annotations
 
 import json
+import re
 import random
 
 from core import dedup, models
@@ -27,27 +28,46 @@ from core.engine.organic import props as OP
 from core.engine.organic import rules as R
 from core.engine.organic.labels import REAGENT_LABEL
 from core.engine.organic.mol import canon
+from core.pipeline import queues
 from core.llm import CutOffError
 
 MAX_DRAWS = 6
+# Schemes tried per picked starting molecule (the author, 2026-11-24): the picker is ~60 % of a run's cost, a
+# further scheme from the same molecule is free code plus ~Rs 0.2 of step check (runs 12-13 held every scheme).
+SCHEMES_PER_START = 3
 STEPS_MIN, STEPS_MAX = 4, 6       # the author, 2026-11-23 (was 5-8)
 MAX_BRANCHES = 2
 LETTERS = "ABCD"
 LABELS = "PQRSTUVWXYZ"
 FORMATS = ("msq", "mcq_correct", "count", "integer")
 CLAIM_RETRIES = 1
+# Hardness by code (the author, 2026-11-24): live run 6's options were one-step checks that no selectivity step
+# decided. A "hinge" statement is true for the right structure and false for a tempting wrong one (or the reverse):
+# a scheme needs at least MIN_HINGE such facts to be drawn, and a question at least MIN_HINGE such statements.
+MIN_HINGE = 2
+# Blind per-step check (core/pipeline/org_step_check.py, the author 2026-11-24): measured on known-good and
+# known-bad steps before use; a step GPT-6 Luna does not confirm holds the scheme (queue step_disagreement).
+STEP_CHECK = True
+_NOT_HINGE = {"structure", "molar_mass"}          # a SMILES or a mass is not how a JEE statement is decided
 _NUMERIC = {k for k, v in OP.PROPERTIES.items() if v == "number"}
 
 
 # ── draw ─────────────────────────────────────────────────────────────────────
 
+# Only edges with an approved scope are drawn (the author, 2026-11-24): the 62 without one fire on any molecule
+# that has their group. They come back one by one as their scopes are approved (tools/apply_rule_scope.py).
+TRUSTED_ONLY = True
+
+
 def _graph(adapter):
+    """Ruled edges by start node. Used by the draw and by the start picker's check and reaction menu."""
+    from core.engine.organic.scope import trusted
     if not hasattr(adapter, "_g"):
         with open(adapter.config["graph_path"], encoding="utf-8") as f:
             g = json.load(f)
         out = {}
         for e in g["edges"]:
-            if e["id"] in R.RULES:
+            if e["id"] in R.RULES and (trusted(e) or not TRUSTED_ONLY):
                 out.setdefault(e["from"], []).append(e)
         adapter._g = {"out": out, "edges": {e["id"]: e for e in g["edges"]}}
     return adapter._g
@@ -55,6 +75,27 @@ def _graph(adapter):
 
 def _single(smiles: str) -> bool:
     return "." not in smiles
+
+
+def _heavy(smiles: str) -> int:
+    """Heavy atoms of an organic molecule (0 if it has no carbon)."""
+    from rdkit import Chem
+    m = Chem.MolFromSmiles(smiles)
+    if m is None or not any(a.GetAtomicNum() == 6 for a in m.GetAtoms()):
+        return 0
+    return m.GetNumHeavyAtoms()
+
+
+def _main_piece(r) -> bool:
+    """When a step splits the molecule, the lettered compound must be strictly the largest organic piece (live run 9,
+    2026-11-24: an aryl acetate's hydrolysis called acetic acid "S", so a student taking the phenol got the key
+    wrong; HI on anisole likewise gave CH3I as the product). Equal pieces (Cannizzaro) are ambiguous too."""
+    from core.pipeline.org_step_check import SMALL
+    own = _heavy(r.product)
+    for co in r.coproducts or ():
+        if canon(co) not in SMALL and _heavy(co) and _heavy(co) >= own:
+            return False
+    return True
 
 
 def _step(g, node, smiles, seen, rng, avoid=()):
@@ -78,6 +119,10 @@ def _step(g, node, smiles, seen, rng, avoid=()):
         c = canon(r.product)
         if not _single(r.product) or c in seen:
             continue
+        if not _main_piece(r):                    # the molecule splits and the letter is not clearly the main piece
+            continue
+        if _heavy(r.product) * 2 < _heavy(smiles):   # most of the skeleton is gone (live run 10: HI on a methyl
+            continue                              # ether, "T = CH3I"; a rule may not list the other piece)
         try:
             OP.askable(r.product)
         except EngineError:
@@ -161,8 +206,63 @@ def draw(adapter, rng, tried=(), start=None, attempts=800):
                          "only then judge each statement about it."}
         cand["_props"] = {k: OP.askable(comps[k]["smiles"]) for k in order}
         cand["_wrong"] = wrong_structures(cand)
+        cand["_hinge"] = hinge_facts(cand)
+        if len({(h[0], h[1]) for h in cand["_hinge"]}) < MIN_HINGE or len(hinge_sources(cand)) < MIN_HINGE:
+            continue                                  # fewer than two steps where a wrong turn changes a fact: not hard
         return cand
     return None
+
+
+def _wrong_props(cand) -> dict:
+    """label -> [(wrong SMILES, why, its properties)] (cached on the candidate)."""
+    if "_wrong_props" not in cand:
+        out = {}
+        for lab, ws in cand["_wrong"].items():
+            for w, how in ws.items():
+                try:
+                    out.setdefault(lab, []).append((w, how, OP.askable(w)))
+                except EngineError:
+                    continue
+        cand["_wrong_props"] = out
+    return cand["_wrong_props"]
+
+
+def hinge_facts(cand) -> list:
+    """(label, property, right value, wrong value, why) for every property a tempting wrong structure changes."""
+    out = []
+    for lab, rows in _wrong_props(cand).items():
+        right = cand["_props"][lab]
+        for w, how, wp in rows:
+            for prop, v in right.items():
+                if prop in _NOT_HINGE or prop not in wp or wp[prop] == v:
+                    continue
+                out.append((lab, prop, v, wp[prop], how))
+    return out
+
+
+def _source(how: str) -> str:
+    """The step a wrong turn is taken at ("wrong turn at R (...)" -> "R")."""
+    m = re.match(r"wrong turn at (\S+)", how)
+    return m.group(1) if m else how
+
+
+def hinge_sources(cand) -> set:
+    """The steps whose wrong turn changes at least one checkable fact."""
+    return {_source(h[4]) for h in cand.get("_hinge") or []}
+
+
+def claim_sources(cand, lab: str, prop: str, value) -> set:
+    """The steps at which a wrong turn flips this statement's truth (empty: no wrong turn changes it)."""
+    if prop in _NOT_HINGE:
+        return set()
+    right = OP.compare(prop, cand["_props"][lab][prop], value)
+    return {_source(how) for _w, how, wp in _wrong_props(cand).get(lab, [])
+            if prop in wp and OP.compare(prop, wp[prop], value) != right}
+
+
+def claim_hinges(cand, lab: str, prop: str, value) -> bool:
+    """The statement's truth differs between the right structure and some tempting wrong one."""
+    return bool(claim_sources(cand, lab, prop, value))
 
 
 def wrong_structures(cand) -> dict:
@@ -227,6 +327,16 @@ def facts_text(cand) -> str:
         lines.append(f"{lab}: {c['smiles']}{why}\n   {_props_line(cand['_props'][lab])}")
         for w, how in cand["_wrong"].get(lab, {}).items():
             lines.append(f"   tempting wrong structure for {lab}: {w} ({how})")
+    hinge = cand.get("_hinge") or []
+    if hinge:
+        lines.append(f"\nDECISIVE FACTS (a student who took the wrong turn gets these wrong; at least {MIN_HINGE} "
+                     f"statements must test them, from at least {MIN_HINGE} DIFFERENT steps; the code checks this):")
+        seen = set()
+        for lab, prop, right, wrong, how in sorted(hinge, key=lambda h: (_source(h[4]), h[0], h[1])):
+            if (lab, prop, _source(how)) in seen:
+                continue
+            seen.add((lab, prop, _source(how)))
+            lines.append(f"   [step {_source(how)}] {lab}: {prop} is {right} (wrong turn gives {wrong}; {how})")
     return "\n".join(lines)
 
 
@@ -246,6 +356,11 @@ of compounds anywhere in the scheme (start, middle, branches, ends): structure, 
 stereocentres or stereoisomers, π bonds, tests (iodoform, Tollens', Fehling's, NaHCO₃, FeCl₃, Lucas, carbylamine,
 2,4-DNP, bromine water), class of amine, functional group. WHAT MAKES IT HARD: a statement that is decided only if
 the student got a branch or a selectivity step right (the tempting wrong structures above show where students slip).
+At least {MIN_HINGE} statements must be DECISIVE FACTS that depend on at least {MIN_HINGE} DIFFERENT steps (each fact in
+the list names its step), so the student must get two separate decisions right; two statements on the same step
+test one decision twice. An integer must change under wrong turns at {MIN_HINGE} different steps. Code rejects the
+question otherwise. A statement any student gets right without that step (e.g. a C=C every route keeps) does not
+count.
 
 Choose the format: "msq" (4 statements, 1-3 true), "mcq_correct" (4 statements, exactly one true), "count" (4-8
 statements, "how many are correct"), "integer" (one numeric property of one compound).
@@ -367,6 +482,24 @@ def evaluate(cand, q) -> tuple:
             problems.append(f"mcq_correct needs exactly one true claim, the draft has {n_true}")
         if fmt == "count" and n_true in (0, len(rows)):
             problems.append("count: not every claim may be true or false")
+    if not problems:                                  # hardness by code: statements a wrong turn would flip
+        if fmt == "integer":
+            lab, prop = rows[0]["compound"].strip(), rows[0]["property"].strip()
+            right = cand["_props"][lab][prop]
+            steps = {_source(h) for _w, h, wp in _wrong_props(cand).get(lab, []) if prop in wp and wp[prop] != right}
+            if len(steps) < MIN_HINGE:
+                problems.append(f"integer: {lab}'s {prop} changes under a wrong turn at {len(steps)} step(s); it must "
+                                f"depend on at least {MIN_HINGE} different steps (see DECISIVE FACTS)")
+        else:
+            srcs = [claim_sources(cand, str(r["compound"]).strip(), str(r["property"]).strip(), r.get("value"))
+                    for r in rows]
+            n_hinge = sum(bool(s) for s in srcs)
+            steps = set().union(*srcs) if srcs else set()
+            # two hinges on the same step test one decision twice (live run 10: "S has NO2" and "T has NO2")
+            if n_hinge < MIN_HINGE or len(steps) < MIN_HINGE:
+                problems.append(f"{n_hinge} statement(s) depend on a wrong turn, at {len(steps)} different step(s) "
+                                f"({', '.join(sorted(steps)) or 'none'}); at least {MIN_HINGE} statements must test "
+                                f"DECISIVE FACTS from at least {MIN_HINGE} DIFFERENT steps")
     if problems:
         return None, problems
     texts = [str(r.get("text") or "").strip() for r in rows]
@@ -427,23 +560,29 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     cap = adapter.config.get("max_run_spend")
     name = adapter.config["display_name"]
     used_starts = []
+    start, uses = None, 0
     for n_draw in range(1, MAX_DRAWS + 1):
         if over_budget(cap):
             break
-        start = None
         if adapter.config.get("start_picker"):          # a model invents the start, the engine checks it
-            from core.pipeline import org_start
-            pick = org_start.pick_start(adapter, rng, avoid=used_starts, log=log)
-            if pick is None:
-                bb.note("start_refused", tries=org_start.PICK_TRIES)
-                print("  start picker: no acceptable starting molecule this draw")
-                continue
-            used_starts.append(pick["name"])
-            start = (pick["name"], pick["smiles"])
+            if start is None or uses >= SCHEMES_PER_START:
+                from core.pipeline import org_start
+                pick = org_start.pick_start(adapter, rng, avoid=used_starts, log=log)
+                if pick is None:
+                    bb.note("start_refused", tries=org_start.PICK_TRIES)
+                    print("  start picker: no acceptable starting molecule this draw")
+                    start = None
+                    continue
+                used_starts.append(pick["name"])
+                start, uses = (pick["name"], pick["smiles"]), 0
+            else:
+                print(f"  [start] same molecule, scheme {uses + 1} of {SCHEMES_PER_START}: {start[0]}")
         cand = draw(adapter, rng, tried=bb.tried_edges(), start=start)
+        uses += 1
         if cand is None:
             if start is not None:
                 print("  no new scheme from this start")
+                start = None                            # a new molecule next time
                 continue
             print("  no reaction schemes left")
             break
@@ -451,6 +590,23 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
         print("  " + scheme_text(cand).replace("\n", "\n  "))
         print("  " + "\n  ".join(f"{k} = {cand['_comps'][k]['smiles']}" for k in cand["_order"]))
         bb.start_chain(cand)
+        if STEP_CHECK:                                # every step checked blind before anything is paid for
+            from core.pipeline import org_step_check
+            bad = org_step_check.check_scheme(cand)
+            if bad:
+                qid = queues.add("step_disagreement", adapter.subject, {
+                    "chain": cand["edges"], "start": cand["_start"],
+                    "structures": {k: cand["_comps"][k]["smiles"] for k in cand["_order"]}, "steps": bad})
+                bb.note("step_check", held=qid, steps=bad)
+                log({"event": "step_disagreement", "chain": cand["edges"], "queue_id": qid,
+                     "steps": [(b["label"], b["edge"], b["verdict"]) for b in bad]})
+                for b in bad:
+                    print(f"    [step check] {b['label']} ({b['reagent']}): engine {b['engine']}, checker "
+                          f"{b['checker_product'] or 'no single product'} ({str(b['reason'])[:110]})")
+                print(f"  ✗ {len(bad)} step(s) not confirmed: scheme held for review ({qid}); next draw")
+                continue
+            bb.note("step_check", held=None, steps=[])
+            print(f"  [step check] all {len(cand['_order']) - 1} steps confirmed (GPT-6 Luna, blind)")
         try:
             design = design_question(name, cand)
         except ValueError as e:
@@ -513,6 +669,17 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             print("  [dedup] same as an accepted question; next draw")
             continue
         decision = flow.judge(adapter, cand, None, values, result, stem, bb, log)
+        if decision["decision"] == "accept" and decision.get("first_solver") is None:
+            # no ladder model reached the key (2026-11-24): with code-made keys a wrong engine step looks exactly
+            # like a very hard question, so organic holds it for review instead of accepting it
+            qid = queues.add("unconfirmed_key", adapter.subject, {
+                "chain": cand["edges"], "start": cand["_start"], "stem": stem, "engine_answer": result.answer,
+                "structures": {k: cand["_comps"][k]["smiles"] for k in cand["_order"]},
+                "members": [{"name": g["name"], "answer": g["final_answer"]} for g in decision.get("graded", [])]})
+            log({"event": "unconfirmed_key", "chain": cand["edges"], "queue_id": qid, "stem": stem,
+                 "answer": result.answer})
+            print(f"  ✗ no solver reached the key {result.answer}: held for review ({qid}), not accepted; next draw")
+            continue
         log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"], "stem": stem,
              "answer": result.answer, "reason": decision.get("reason")})
         if decision["decision"] == "accept":

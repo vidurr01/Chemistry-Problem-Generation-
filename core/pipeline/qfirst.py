@@ -76,6 +76,8 @@ from core.pipeline.qf_numbers import (  # noqa: F401, E402
 # A garbled writer reply (cannot be read) or a blank-format slip (numbers not written as [[blanks]], found by code
 # with an exact fix) is asked again this many times without counting as a draft: with one draft per draw it would
 # otherwise throw away a design already paid for (~Rs 3.8). Rejections of the question itself end the draw.
+# The two have separate counts (2026-11-24): a slip used to spend the garbled-reply retry, so a later garbled reply
+# used up the second draft.
 UNREADABLE_RETRIES = 2
 
 MAX_DRAWS = 6           # formula draws per run (a draw the writer cannot make one question of is redrawn)
@@ -161,7 +163,7 @@ def write_and_solve(adapter, cand, twist, bb, rng, previous=None, feedback=None,
             bb.current["chain"]["twist"] = twist
         bb.note("twist", twist=twist, by="designer" if (design or {}).get("twist") else "random")
     cand = {**cand, "twist": twist}
-    unreadable = 0
+    unreadable = slips = 0
     attempt = -1
     while attempt + 1 < WRITE_TRIES:
         attempt += 1
@@ -198,8 +200,8 @@ def write_and_solve(adapter, cand, twist, bb, rng, previous=None, feedback=None,
             bb.note("question_rejected", attempt=attempt + 1, problems=probs, at="blanks")
             print(f"    blanks need fixing: {'; '.join(probs)[:220]}")
             previous, feedback, solved = previous_text(q), "Fix these problems: " + "; ".join(probs), None
-            if unreadable < UNREADABLE_RETRIES:  # a format slip (numbers not written as blanks), found by code
-                unreadable += 1                  # with an exact fix: retried without using up the draft
+            if slips < UNREADABLE_RETRIES:       # a format slip (numbers not written as blanks), found by code
+                slips += 1                       # with an exact fix: retried without using up the draft
                 attempt -= 1
             continue
         if blanks:                               # coder 2 writes the program, the number step picks the numbers

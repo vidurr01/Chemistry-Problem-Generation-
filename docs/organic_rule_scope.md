@@ -119,7 +119,7 @@ For each of the 155 ruled edges:
 |---|---|---|---|---|---|
 | phenol_to_aldehyde_naoh | CHCl3, NaOH | entry 385: guaiacol → vanillin (para) | CHO ortho to OH (guaiacol → o-vanillin) | conflict on guaiacol. Options: (a) ortho if free (rule) (b) book's para. Proposal: (a), refuse 2-substituted phenols | DECIDE |
 | substituted_benzene_to_aldehyde_naoh | CHCl3, NaOH | phenol → salicylaldehyde (entry 391 Étard, mislinked) | same rule (needs phenol) | none | OK |
-| phenol_to_aryl_halide_pclslowreact | PCl5 | phenol → PhCl, poor yield | every Ar–OH | none | OK |
+| phenol_to_aryl_halide_pclslowreact | PCl5 | phenol → PhCl, poor yield | every Ar–OH | CHO absent (PCl5 takes CHO → CHCl2 first; added 2026-11-24 after live run 6, the author) | OK |
 | phenol_to_benzene_znreductionl | Zn dust, heat | phenol → benzene | every Ar–OH | none | OK |
 | phenol_to_ester_rcoclacylchl | CH3COCl | phenol O-acylation | every Ar–OH | NH2 and alcohol OH also acylated. Propose: ACYLATABLE absent (except the phenol OH) | GAP |
 | phenol_to_geminal_dihalide_kso | K2S2O8, KOH (Elbs) | entry says "catechol (… quinol)"; mechanism text says para | OH para; refuses if para taken | entry name wrong (catechol); rule is right (hydroquinone). Proposal: keep rule | OK |

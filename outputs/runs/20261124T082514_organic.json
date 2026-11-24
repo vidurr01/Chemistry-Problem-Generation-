@@ -1,0 +1,428 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T082514",
+ "spend": {
+  "total_cost_usd": 0.03194,
+  "by_role": {
+   "start_picker": {
+    "calls": 2,
+    "prompt_tokens": 4010,
+    "completion_tokens": 2061,
+    "cost": 0.01073625
+   },
+   "name_checker": {
+    "calls": 2,
+    "prompt_tokens": 215,
+    "completion_tokens": 278,
+    "cost": 0.0001605
+   },
+   "step_checker": {
+    "calls": 29,
+    "prompt_tokens": 4875,
+    "completion_tokens": 41118,
+    "cost": 0.0210465
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_alcohol_nabh",
+     "alkene_to_ether_hgoacrohorhg",
+     "alcohol_to_alkyl_halide_socl",
+     "alkyl_halide_to_nitrile_nacn"
+    ],
+    "nodes": [
+     "alkene",
+     "alcohol",
+     "ether",
+     "alkyl_halide",
+     "nitrile"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     38,
+     499,
+     135,
+     28,
+     187,
+     190,
+     265,
+     266,
+     269,
+     20,
+     282,
+     283
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(bromomethyl)phenyl]pent-4-en-1-one: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:23:05.653493+00:00",
+     "held": "STE_20261124T082305_24",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alkene_to_ether_hgoacrohorhg",
+       "substrate": "C=CCCC(O)c1ccc(CBr)cc1",
+       "reagent": "(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄",
+       "engine": "COC(C)CCC(O)c1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The substrate’s tethered alcohol can cyclize intramolecularly onto the activated alkene, while its benzylic bromide can undergo methanolysis, so the standard methoxymercuration outcome does not specify a unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_cyanohydrin_hcn",
+     "alcohol_to_alkyl_halide_socl",
+     "alkene_to_alkyl_halide_hx",
+     "alkene_to_alcohol_ho"
+    ],
+    "nodes": [
+     "alkyl_halide",
+     "cyanohydrin",
+     "alkyl_halide",
+     "alkyl_halide",
+     "alcohol"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alkyl Halides",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     41,
+     28,
+     187,
+     190,
+     265,
+     266,
+     269,
+     2,
+     3,
+     182,
+     183,
+     184,
+     8,
+     9
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(bromomethyl)phenyl]pent-4-en-1-one: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:23:34.918755+00:00",
+     "held": "STE_20261124T082334_25",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "ketone_to_cyanohydrin_hcn",
+       "substrate": "C=CCCC(=O)c1ccc(CBr)cc1",
+       "reagent": "HCN, KCN (cat.)",
+       "engine": "C=CCCC(O)(C#N)c1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The benzylic bromide can undergo cyanide SN2 substitution while the ketone can reversibly form a cyanohydrin, so these competing reactions do not define a unique major product under the stated conditions."
+      },
+      {
+       "label": "R",
+       "edge": "alcohol_to_alkyl_halide_socl",
+       "substrate": "C=CCCC(O)(C#N)c1ccc(CBr)cc1",
+       "reagent": "SOCl₂, pyridine",
+       "engine": "C=CCCC(Cl)(C#N)c1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "C=CCC=C(C#N)c1ccc(CBr)cc1",
+       "reason": "The tertiary alcohol cannot undergo the textbook SN2 chlorination, so SOCl₂/pyridine promotes elimination of the sole available β-hydrogen to give the alkene while the nitrile and benzyl bromide remain unchanged."
+      },
+      {
+       "label": "T",
+       "edge": "alkene_to_alcohol_ho",
+       "substrate": "C=CCCC(Cl)(C#N)c1ccc(CBr)cc1",
+       "reagent": "dil. H₂SO₄",
+       "engine": "CC(O)CCC(Cl)(C#N)c1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Aqueous dilute H₂SO₄ can solvolyze the benzylic bromide, hydrate the terminal alkene, and hydrolyze the nitrile under suitable conditions, so without specified temperature and reaction time there is no uniquely defined major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkyl_halide_to_amine_excessnh",
+     "alkene_to_alkyl_halide_hx",
+     "ketone_to_cyanohydrin_hcn",
+     "alkyl_halide_to_alkyl_halide_nai",
+     "alkyl_halide_to_nitro_compound_agno2silvern"
+    ],
+    "nodes": [
+     "ketone",
+     "amine",
+     "alkyl_halide",
+     "cyanohydrin",
+     "alkyl_halide",
+     "nitro_compound"
+    ],
+    "chapters": [
+     "Amines",
+     "Hydrocarbons",
+     "Aldehydes & Ketones",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     21,
+     2,
+     3,
+     182,
+     183,
+     184,
+     41,
+     23,
+     199,
+     200,
+     202,
+     206,
+     255,
+     294,
+     366,
+     505,
+     285
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(bromomethyl)phenyl]pent-4-en-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:24:06.208955+00:00",
+     "held": "STE_20261124T082406_26",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alkene_to_alkyl_halide_hx",
+       "substrate": "C=CCCC(=O)c1ccc(CN)cc1",
+       "reagent": "HBr",
+       "engine": "CC(Br)CCC(=O)c1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "C=CCCC(=O)c1ccc(C[NH3+])cc1.[Br-]",
+       "reason": "HBr protonates the much more basic benzylamine to its ammonium bromide salt, so the usual alkene-addition outcome is not expected under ordinary stoichiometric conditions."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkyne_to_alkene_h",
+     "alkene_to_halohydrin_br",
+     "alkyl_halide_to_nitrile_nacn",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "ketone_to_cyanohydrin_hcn"
+    ],
+    "nodes": [
+     "alkyne",
+     "alkene",
+     "halohydrin",
+     "nitrile",
+     "carboxylic_acid",
+     "cyanohydrin"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Alkyl Halides",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     12,
+     13,
+     401,
+     7,
+     20,
+     282,
+     283,
+     210,
+     41
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-2-yn-1-yl)phenyl]ethan-1-one: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:24:36.849145+00:00",
+     "held": "STE_20261124T082436_27",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+       "substrate": "C=CCc1ccc(C(C)=O)cc1",
+       "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+       "engine": "C=CCc1ccc(C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The methyl ketone can undergo haloform cleavage, but the allyl C=C also reacts with bromine/hypobromite under these conditions, so without conditions specifying its fate the textbook haloform product is not a unique major product."
+      },
+      {
+       "label": "U",
+       "edge": "ketone_to_cyanohydrin_hcn",
+       "substrate": "CC(=O)c1ccc(CC(O)CBr)cc1",
+       "reagent": "HCN, KCN (cat.)",
+       "engine": "CC(O)(C#N)c1ccc(CC(O)CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "HCN/KCN can reversibly form a cyanohydrin at the ketone, while CN⁻ can irreversibly displace the primary bromide by SN2, so the major outcome cannot be assigned without conditions that distinguish these competing reactions."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_alcohol_nabh",
+     "alcohol_to_alkyl_halide_socl",
+     "alkyne_to_alkene_h",
+     "alkyl_halide_to_nitrile_nacn",
+     "alkene_to_ether_hgoacrohorhg",
+     "alkyne_to_ketone_ho"
+    ],
+    "nodes": [
+     "ketone",
+     "alcohol",
+     "alkyl_halide",
+     "alkene",
+     "nitrile",
+     "ether",
+     "ketone"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alkyl Halides",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     38,
+     499,
+     28,
+     187,
+     190,
+     265,
+     266,
+     269,
+     12,
+     13,
+     401,
+     20,
+     282,
+     283,
+     135,
+     14
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-2-yn-1-yl)phenyl]ethan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:24:57.359697+00:00",
+     "held": "STE_20261124T082457_28",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alkyne_to_alkene_h",
+       "substrate": "C#CCc1ccc(C(C)Cl)cc1",
+       "reagent": "H₂, Pd/BaSO₄, quinoline",
+       "engine": "C=CCc1ccc(C(C)Cl)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Lindlar conditions would partially hydrogenate the terminal alkyne to an alkene, but the secondary benzylic chloride can also undergo Pd-catalysed hydrogenolysis, so the outcome depends on conditions and cannot be assigned as a unique major product from the information given."
+      },
+      {
+       "label": "V",
+       "edge": "alkyne_to_ketone_ho",
+       "substrate": "C#CCc1ccc(C(C)Cl)cc1",
+       "reagent": "dil. H₂SO₄, HgSO₄, 333 K",
+       "engine": "CC(=O)Cc1ccc(C(C)Cl)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The terminal alkyne can hydrate to a methyl ketone, while the secondary benzylic chloride can solvolyze to an alcohol in hot aqueous acid, so the product distribution depends on conditions not specified."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_ester_mcpbametachl",
+     "alkyne_to_vinyl_halide_hx1equiv",
+     "alkene_to_vicinal_dihalide_x",
+     "alkyne_to_ketone_ho",
+     "ketone_to_carbene_methylenepho"
+    ],
+    "nodes": [
+     "ketone",
+     "ester",
+     "vinyl_halide",
+     "vicinal_dihalide",
+     "ketone",
+     "alkene"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     653,
+     185,
+     11,
+     14,
+     420
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(prop-2-yn-1-yl)phenyl]ethan-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T08:25:14.734048+00:00",
+     "held": "STE_20261124T082514_29",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "alkyne_to_ketone_ho",
+       "substrate": "C#CCc1ccc(OC(C)=O)cc1",
+       "reagent": "dil. H₂SO₄, HgSO₄, 333 K",
+       "engine": "CC(=O)Cc1ccc(OC(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(=O)Cc1ccc(O)cc1.CC(=O)O",
+       "reason": "Aqueous acid hydrolyzes the aryl acetate to phenol and acetic acid, while HgSO₄-catalyzed Markovnikov hydration of the terminal alkyne gives the methyl ketone."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

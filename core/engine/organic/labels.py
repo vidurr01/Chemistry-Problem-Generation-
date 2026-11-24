@@ -117,7 +117,8 @@ REAGENT_LABEL = {
     "ester_to_carboxylic_acid_h3odiluteaci": "dil. H₂SO₄, heat",
     "ester_to_ester_aqnaoh": "(i) aq. NaOH, heat; (ii) H₃O⁺",
     "ester_to_ether_conchso": "CH₃OH, conc. H₂SO₄",
-    "ester_to_ketone_alcl": "anhyd. AlCl₃, heat",
+    "ester_to_ketone_alcl": "anhyd. AlCl₃, low temperature",   # the rule gives the para (low-T) Fries product;
+                                                                  # "heat" meant ortho (step check, 2026-11-24)
     "ether_to_alkyl_halide_conchxhihbra": "HI (1 equiv)",
     "ether_to_ester_co": "CO, BF₃",
     "ether_to_phenol_thermalnocat": "heat, 473 K",

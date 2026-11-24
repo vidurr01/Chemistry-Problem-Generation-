@@ -2,6 +2,120 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-11-24
+
+### Live organic run 19: good question (final check before commit)
+- `outputs/live_organic_19.log` ($0.0717 ≈ ₹6.31 at ₹88/$). Three schemes from 4-propargylbenzaldehyde were held for real reasons (CHCl2 hydrolysis in aqueous acid, an α-bromohydrin closing to an epoxide, imine reactions). The fourth, from 1-(4-allylphenyl)ethanone, passed: NaBH4; CH2N2/HBF4 (methyl ether), then oxymercuration in MeOH; Br2/H2O (Markovnikov), NaCN, H2/Ni. Accepted GEN_20261124T091357 (count format, key 4: S has 2 stereocentres, U nitrile, Q iodoform, V carbylamine; R's DoU is 5 not 6; T has 5 sp3 C not 3). Checked by hand: correct. Granite failed, GLM solved; Jev 3.26.
+
+### Live organic run 18: wrong key (stereocentre count); question removed, count fixed
+- `outputs/live_organic_18.log` ($0.0825 ≈ ₹7.26 at ₹88/$). Three schemes from a crowded start were held; the fourth (4-(oxiran-2-yl)cyclohexanone: HBr excess, Zn, oxime, oxymercuration / mCPBA, CH3NH2) passed the step check and was accepted as GEN_20261124T084227 (key ABC). Checked by hand: A is wrong. T, COC(C)C1CCC(=NO)CC1, has one chiral carbon; the code counted the ring C para to the oxime (the textbook oxime with no chiral carbon). The true key is BC. Removed from `outputs/generated_questions_organic.json` and `results/generated_questions_organic_final.json`; its counts were taken back out of `outputs/coverage_state_organic.json`.
+- `core/engine/organic/props.py`: `stereocentres` now counts chiral carbons as JEE does (four different groups), using RDKit's legacy CIP-rank test. The newer test also counted ring C in 1,4-disubstituted rings and in 4-substituted cyclohexanone oximes. The 15 saved organic questions were recomputed: no answer changes. Test: `Props.test_stereo`.
+
+### Organic: SOCl2/pyridine refuses a 3° alcohol
+- `tools/apply_rule_scope.py` (graph rebuilt): `alcohol_to_alkyl_halide_socl` now has `alcohol_3` absent; a 3° OH eliminates under SOCl2/pyridine. It held schemes in runs 16 and 17. Test: `Scope.test_refused_outside_scope` (3-methylbutane-1,3-diol, `CC(C)(O)CCO`).
+
+### Live organic runs 16 and 17 (confirmation runs)
+- Run 16 (`outputs/live_organic_16.log`, $0.0319 ≈ ₹2.81 at ₹88/$): no question; all 6 schemes from two crowded starts (CH2Br + ketone + alkene; alkyne + ketone) were held by the step check. Held for chemoselectivity between several groups, an amine protonated by HBr, and SOCl2/pyridine on a 3° alcohol (the checker gives elimination).
+- Run 17 (`outputs/live_organic_17.log`, $0.0546 ≈ ₹4.80): accepted GEN_20261124T082806 (msq, key ABD) on scheme 2. NaBH4, SOCl2/py, AcCl/py (phenol acetylated), then AgNO2 / NaCN / NaI on the 2° chloride; FeCl3 test on Q (free phenol) vs S (aryl acetate). Checked by hand: correct. Granite failed, GLM solved; Jev 2.78. Scheme 1 was held for SOCl2/pyridine on a 3° alcohol, the same as in run 16.
+
+### Live organic run 15: good question on the first scheme (start rule working)
+- `outputs/live_organic_15.log` ($0.0658 ≈ ₹5.79 at ₹88/$). The picker's first molecule (an allylic alcohol) was refused by `close_groups`; the second, 4-(2-oxopropyl)benzonitrile, gave a scheme whose 5 steps were all confirmed. Accepted GEN_20261124T071957 (msq, key ABD): Wittig, CH3MgBr on the nitrile, Markovnikov hydration, OsO4, Markovnikov halohydrin. Checked by hand: every structure and statement correct; four different decisions; Granite failed, GLM solved; Jev 2.93.
+
+### Organic start picker: no groups that react with each other
+- Why: almost every scheme held in runs 12–14 (and run 8's wrong key) came from two groups of the starting molecule reacting together (o-allyl phenol cyclising under Hg2+, cyanohydrin reverting, allylic alcohol, β-bromoamine), which the one-group rules cannot model.
+- `core/pipeline/org_start.py`: `close_groups()` finds every nucleophile (OH, phenol OH, NH, COOH) within `CLOSE_BONDS` (5) bonds of an electrophile (aldehyde/ketone C=O, ester, COCl, C≡N, C–X, epoxide, C=C), i.e. close enough to react or close a 3- to 6-membered ring. Not counted: pairs across a benzene ring (meta / para: ≥ 3 aromatic atoms on the path) and motifs the engine handles on purpose (1,4-diacid → cyclic anhydride, o-hydroxy / o-amino aryl carbonyl, α,β-unsaturated acid). C≡C is not an electrophile here (run 10's good start had an OH near one). `check_start` refuses such a start and tells the picker why; the picker prompt states the rule.
+- Effect on past picks: 11 of the 24 starting molecules picked so far would now be refused, among them run 8's 2-(hydroxymethyl)cyclohexenone and the starts behind runs 12–14's holds; run 10's and run 11's good starts pass.
+- Tests: `StartPicker.test_groups_that_react_together_are_refused`; the picker tests use 1-(4-allylphenyl)ethan-1-one instead of a homoallylic alcohol (now correctly refused).
+
+### Live organic run 14: no question (5 schemes held, 1 too easy); picker cost down 4x
+- `outputs/live_organic_14.log` ($0.0764 ≈ ₹6.72 at ₹88/$): 2 picker calls for 6 schemes ($0.0116, was $0.047 for 6 in run 13). Held, read by hand, all fair: oxymercuration of an o-allyl phenol cyclises (chromane); a cyanohydrin reverts in NaOH / acid; an allylic chloride gives SN2' and NH3 / Br2 side reactions; MeOH/HCl with an aryl acetate. Draw 6 passed the step check but Granite solved it (too easy). Not yet closed (pending the author's choice of approach).
+
+### Organic: up to 3 schemes per picked starting molecule
+- `core/pipeline/org_qfirst.py` (`SCHEMES_PER_START` = 3, the author): the start picker is called again only after 3 schemes from its molecule (or when no new scheme can be built from it). The picker was ~60 % of a run's cost; a further scheme costs only code and ~₹0.2 of step check. Held schemes count as tried, so each scheme from the same molecule is different. `MAX_DRAWS` (6) unchanged. Test: `EndToEnd.test_one_picked_molecule_serves_several_schemes` (6 draws, 2 picks).
+
+### Live organic run 13: no question (all 6 schemes held); more hold patterns closed
+- `outputs/live_organic_13.log` ($0.0771 ≈ ₹6.78 at ₹88/$; the start picker was 61 % of it). Held, read by hand: alcohol nitration on complex alcohols (2 draws), Br2/H2O on a vinyl bromide (the gem-bromohydrin is really an α-bromoketone: an engine error), HBr with an ether, double acetalisation, mCPBA on an α-keto acid, Br2/AcOH next to an acetal.
+- `RUN13` in `tools/apply_rule_scope.py` (new groups `vinyl_halide`, `dialkyl_ether`, `alcohol_3`): alcohol nitration only for simple polyols; OH-adding steps (halohydrin, hydration, oxymercuration, OsO4, mCPBA) refuse a vinyl halide; HBr addition steps refuse an ether; aldehyde acetal refuses a ketone; Baeyer–Villiger refuses a COOH; α-bromination refuses an acetal.
+- `tests/test_org_qfirst.py`: the integer test searches 200 draws (a number decided at two steps is rare).
+
+### Live organic run 12: no question (all 6 schemes held); five hold patterns closed
+- `outputs/live_organic_12.log` ($0.0645 ≈ ₹5.68 at ₹88/$; step checker 33 calls). Every drawn scheme was held, all for real reasons. Closed (`RUN12` in `tools/apply_rule_scope.py`; new groups `acetal`, `oxime`; new scope key `equivalent_only` in `core/engine/organic/scope.py`):
+  - steps with aqueous / protic acid or an H3O+ work-up (picked from the reagent text) refuse an acetal or an oxime; O3 refuses an oxime (also settles run 11's Br2-water caveat);
+  - SN steps on C–X (NaCN, AgNO2, NaI, NH3, NaOH, NaOMe, alc. KOH, Mg) need all C–X symmetry-equivalent and no vicinal dihalide (Br(CH2)6Br + NaCN still gives the dinitrile);
+  - MeOH / dry HCl acetal and ketal steps refuse a C=C; Wittig refuses a tosylate or C–X; HBr steps refuse a tosylate; CH2N2 / HBF4 refuses a C=O.
+- `LEFT_OUT` now also names the four edges dropped in the review, so no later block can re-trust them (a reagent-text match briefly did). 150 edges drawn, 5 left out.
+- Test: `StepCheck.test_run12_holds_closed_by_scope`. Organic audit clean; 13/13 test starts, 30/30 random draws.
+
+### Live organic run 11: correct, two-decision question accepted
+- `outputs/live_organic_11.log` ($0.0510 ≈ ₹4.49 at ₹88/$; step check confirmed all 6 steps on the first draw). Accepted GEN_20261124T061042 (msq, key ABD) on 5-allyl-2-hydroxybenzaldehyde: acetal (MeOH/HCl), O-methylation, oxymercuration (Markovnikov ether), mCPBA, Br2/H2O (Markovnikov halohydrin), acetylation. Checked by hand: every structure and statement correct. Its statements rest on three different steps (acetal → no Tollens'; oxymercuration → one stereocentre; halohydrin → 2° OH, Lucas ~5 min) plus DBE 5 for V. Granite failed, GLM solved; Jev 3.19. Minor caveat: Br2 water is acidic and could also open the acetal, which JEE-level treatment ignores.
+
+### Organic: hard = two different decisions (hinge statements from two different steps)
+- `core/pipeline/org_qfirst.py`: each decisive fact carries the step whose wrong turn changes it (`_source`, `claim_sources`, `hinge_sources`). A question now needs at least 2 hinge statements depending on at least 2 DIFFERENT steps (live run 10: "S has NO2" and "T has NO2" both rested on the AgNO2 step, one decision tested twice); an integer must change under wrong turns at 2 different steps. The draw keeps only schemes with decisive facts at 2+ steps. The designer / writer list shows each fact's step and the rule.
+- Offline: 13/13 test starts and 30/30 random draws still build a scheme (drawing takes longer: more schemes are refused, no cost).
+- Tests: `test_two_statements_on_one_step_count_once`; `hinge_claims` and the integer test now use facts from two steps.
+
+### Live organic run 10: first correct question of the day (accepted); one more draw guard
+- `outputs/live_organic_10.log` ($0.0978 ≈ ₹8.61 at ₹88/$; step checker 22 calls). Accepted GEN_20261124T054815 (msq, key ABC): SOCl2, AgNO2 (nitro), NaBH4 (ketone only), AcCl, NH3, TsCl; checked by hand, correct. Level moderate: (A) and (B) test the same fact; Granite failed, GLM solved; Jev 3.17.
+- The step check held 3 schemes (unsymmetrical alkyne hydration, HBr with a propargyl ether, reductive amination with a gem-dibromide, acid with acetate + alkene, double acetalisation). Two of them had HI 1 equiv on a methyl ether / acetal continuing as "T = CH3I": `org_qfirst._step` now refuses a step whose product keeps less than half of the substrate's heavy atoms. Test: `StepCheck.test_a_step_may_not_lose_most_of_the_skeleton`. 30/30 random draws still build a scheme.
+
+### Live organic run 9: the step check held 3 schemes; accepted question had an ambiguous key, removed
+- `outputs/live_organic_9.log` ($0.0803 ≈ ₹7.07 at ₹88/$; step checker 21 calls). Held, all rightly: Cannizzaro gives two products (which is "Q"?); Kolbe's hot NaOH also opens an epoxide; HI cleaved an aryl ether with two alcohols / tosylates present. Queue: `outputs/queue_step_disagreement_organic.json`.
+- Accepted GEN_20261124T053345 (msq ACD) removed from the accepted files: step R → S hydrolysed an aryl acetate and called acetic acid "S"; a student taking the phenol (the main piece) gets CD. The rest of the chemistry was right.
+- `core/pipeline/org_qfirst.py` `_main_piece`: a step that splits the molecule may continue a scheme only if its product is strictly the largest organic piece (aryl-acetate hydrolysis, HI on an aryl methyl ether, Cannizzaro and the iodoform step no longer continue a scheme). `core/pipeline/org_step_check.py`: when the checker names several pieces, the engine's must be the largest.
+- Scope (`RUN9` in `tools/apply_rule_scope.py`, new group `sulfonate_ester`): Kolbe, Reimer–Tiemann, aq. NaOH ester hydrolysis and aldol refuse an epoxide; HI ether cleavage refuses an OH, C–X or OTs; TsCl at most one OH.
+- Tests: `StepCheck.test_split_steps_need_a_clear_main_piece`, `test_run9_holds_closed_by_scope`. Organic audit clean; 13/13 test starts, 30/30 random draws.
+
+### Organic: blind per-step check by GPT-6 Luna (measured, then used as a gate)
+- Approved by the author as an exception to "no verifier": it checks single reactions, not answers. GPT-6 Luna is not used anywhere else in the organic pipeline (the key comes from the rules), so it is independent.
+- `tools/check_steps.py` (new): shows one step at a time (substrate SMILES + reagent, never the engine's product), compares the named major product with the engine's by canonical SMILES. Measured on hand-checked golden steps and 12 real engine mistakes (live runs 6–8 and earlier rule bugs). First sample with Gemini 3.1 Pro + GPT-6 Luna: 5/5 bad caught, 0/5 false alarms, ₹13.46 (almost all Gemini). GPT-6 Luna alone (author's choice): 11/12 bad caught (missed: SN2 on a neopentyl bromide), 1/30 false alarms (t-butylamine + KMnO4 → nitroalkane called "no reaction"), ₹0.98 for 32 steps (≈ ₹0.03 a step). Files: `outputs/step_check_calibration*.json`.
+- `core/pipeline/org_step_check.py` (new): the check, shared by the tool and the pipeline. `core/pipeline/org_qfirst.py` (`STEP_CHECK`): every drawn scheme is checked before the designer is paid; any step not confirmed (disagree, unreadable or a failed call) holds the scheme in `outputs/queue_step_disagreement_organic.json` and the run draws again. `core/pipeline/queues.py`: the reason name only.
+- Full measurement, GPT-6 Luna on all 150 good steps + 12 bad (`outputs/step_check_calibration_luna_full.json`, this part ₹2.54): bad caught 11/12, good flagged 10/150. Read by hand: about half the flags were the engine's, not the checker's. Fixed: the Fries label said "heat" (ortho) while the rule gives the low-temperature para product → label now "anhyd. AlCl₃, low temperature"; phenol + PCl5 left out of draws (`LEFT_OUT` in `tools/apply_rule_scope.py`, `scope.trusted()` refuses it; 150 edges drawn). Ambiguous in textbooks, held by the gate when drawn: toluene mononitration o/p, alkyne ozonolysis product. Checker wrong (the gate only costs a redraw): t-BuNH2 + KMnO4, propanol + H2SO4 383 K, succinic anhydride, Caro's acid → PhNO, SeO2 on acetone, Zn/NaOH → azobenzene.
+- Tests: `StepCheck` (verdicts; a failed call is never a pass), `EndToEnd.test_step_the_checker_does_not_confirm_holds_the_scheme` (held, designer never called).
+
+### Live organic run 8: wrong key, question removed; conjugated C=C / C≡C refused by addition edges
+- `outputs/live_organic_8.log` ($0.0547 ≈ ₹4.81 at ₹88/$): accepted GEN_20261124T044931 (count, key 4, Jev 3.59, solved by glm-5.3-flash). Wrong: Q → R (dil. H2SO4) hydrated 2-formylcyclohex-2-en-1-one Markovnikov (OH on the α-carbon); on a C=C conjugated with C=O the OH goes to the β-carbon. glm made the same mistake, so the hold for unconfirmed keys did not fire. Removed from the accepted files (restored to the last commit); log and run record kept.
+- `core/engine/organic/scope.py`: groups `conj_cc` (C=C conjugated with C=O, C≡N or NO2) and `conj_alkyne`. `tools/apply_rule_scope.py`: 16 edges refuse them (acid hydration, HBr, halohydrin, oxymercuration, mCPBA, diene + HBr, alkyne + HBr / HgSO4, HCN cyanohydrins, imine formation, amine + epoxide, NH3 + R–X). Br2 addition (e.g. cinnamic acid) and OsO4 are kept.
+- Test: `Scope.test_refused_outside_scope` has the run-8 molecule and three more conjugated cases. Organic tests, `tools/audit_organic.py` clean; 13/13 test starts and 30/30 random draws still build a scheme.
+
+### Organic: hardness checked by code, unconfirmed keys held
+- `core/pipeline/org_qfirst.py`: a "hinge" fact is a property that a tempting wrong structure (a selectivity trap carried down the scheme) changes. The draw keeps a scheme only with at least `MIN_HINGE` (2) distinct ones; the designer and writer see them as DECISIVE FACTS; `evaluate` rejects a question unless at least 2 statements hinge (true for the right structure, false for a wrong one, or the reverse), or, for an integer, the value asked changes under a wrong turn. Live run 6 had none (one-step checks, Main level). Offline: 12/12 test starts and 30/30 random draws still build a scheme.
+- Same file: when the ladder accepts but no model reached the code's key, organic holds the question in `outputs/queue_unconfirmed_key_organic.json` instead of accepting it (a wrong engine step looks exactly like a very hard question). Every-model-agrees-on-another-answer was already held (`ladder_consensus`). `core/pipeline/queues.py`: the new reason name only; `flow.judge` and the physical / inorganic paths are unchanged.
+- Tests (`tests/test_org_qfirst.py`): `test_statements_no_wrong_turn_changes_are_rejected`, `test_integer_must_ask_a_decisive_number`, `test_unconfirmed_key_is_held_not_accepted`; the end-to-end test now writes hinge statements.
+
+### Organic: the 62 unscoped edges reviewed (151 of 155 drawn)
+- Done by Claude at the author's request (the author may veto any line). `REVIEW` in `tools/apply_rule_scope.py`: 41 edges get limits (groups their reagent also attacks; conc. H2SO4 383 K now 1° alcohols only with no ring, C=C or second OH), 17 get a note only (the rule already fixes one textbook substrate, e.g. cumene, BHC, o-xylene; or the step needs nothing more, e.g. OsO4, Claisen, Grignard + HCHO/CO2).
+- Left out of draws: `alcohol_to_amine_al2o3450c` (gives a mixture), `alkyl_halide_to_ketone_dmsodimethyl` (Kornblum needs an activated halide), `ester_to_ether_conchso` (the product drops the skeleton), `ether_to_ester_co` (industrial, not JEE).
+- Second pass on the audit's remaining real flags (11 edges): HBr edges with an alcohol, aq. NaOH with an epoxide, NH3 with an ester, HONO / diazotisation with a phenol, alcohol nitration with a CHO, PCl5 ester with a phenol, Reimer–Tiemann with COCl. Selectivity audit now 15 flags, all comparison artefacts or acceptable chemistry.
+- Third pass: every trusted edge's products read by hand (its textbook molecule and two mixed molecules). Fixed: hot KMnO4 on a terminal alkyne wrote H2CO3 instead of CO2, and ethyne (CO2 only) is refused (`rules.py`); `PASS3` limits for 16 edges (Curtius with C=O, Na/CH3ONa with a halo-alcohol → THF, aldol with NH2, hot KMnO4 with COCl, Friedel–Crafts / Gattermann–Koch with C=C or C≡C, PCl5 / SOCl2 with NH2, PCl5 phenol with an ester, nitrile steps with a benzylic C–X).
+- Answer-key properties (`core/engine/organic/props.py`): bromine water now also counts a CHO; the carbylamine test no longer counts amides; Fehling's counts HCOOH; NaHCO3 counts 2,4-dinitrophenols (picric acid). Test: `Props.test_tests_found_in_review`.
+- `tests/organic_golden.json` (new) + `Golden` test: the checked textbook input → product for all 151 drawn edges; any change in an answer fails the tests.
+- Checks: organic tests pass; `tools/audit_organic.py` clean; selectivity audit 29 → 26 → 15 flags (the rest are comparison artefacts or listed in `docs/organic_selectivity_audit.md`); offline 12/12 test starts and 30/30 random draws still build a scheme.
+
+### Organic: only edges with an approved scope are drawn
+- Live run 7 (`outputs/live_organic_7.log`) stopped by the author, question not saved: step R → U applied conc. H2SO4, 383 K (ethanol's textbook hydrogen sulfate) to a 2° benzylic alcohol with a C=C, which dehydrates instead. That edge had no scope.
+- Why such errors get through: each rule models the textbook substrate; scope is a blacklist (an edge fires unless a known bad group is listed); 62 of 155 edges had none; the start picker asks for multi-group molecules; nothing after the engine checks the chemistry, and a solver that answers by real chemistry counts as "failed", which raises the difficulty.
+- `core/engine/organic/scope.py`: `trusted(edge)` = the edge has an approved scope. `core/pipeline/org_qfirst.py`: `_graph` keeps trusted edges only (`TRUSTED_ONLY`), which the draw, the start check and the picker's reaction menu all use. 93 edges drawn, 62 left out until their scopes are approved. Offline: 12/12 test starts and 30/30 random draws still build a scheme.
+- `tests/test_org_qfirst.py`: `TrustedOnly`. Physical and inorganic code unchanged.
+
+### Organic chemoselectivity audit: two rule bugs, 47 scope gaps closed
+- Run 6's question GEN_20261124T032552 removed from the accepted files (`outputs/generated_questions_organic.json`, `results/generated_questions_organic_final.json`, `outputs/coverage_state_organic.json` restored to before the run); its log and run record are kept.
+- `tools/audit_organic_selectivity.py` (new): runs all 155 ruled edges on 638 one- and two-group molecules and reports an edge that fires while its reagent also attacks another group present (the PCl5 bug class). `tools/audit_engine.py` covers the physical engine only. Findings: `docs/organic_selectivity_audit.md` (new).
+- Rule bugs (`core/engine/organic/rules.py`): carbylamine fired on amides (butanamide → "isocyanide"); HI ether cleavage fired on epoxides and ring ethers (propylene oxide → CH3I). Now amines only and open-chain ethers only.
+- Scope (the author approved group B): `SELECTIVITY` in `tools/apply_rule_scope.py`, 47 edges, written to `knowledge/reaction_graph.json` (93 scoped edges, was 79). New group `methyl_carbinol` in `core/engine/organic/scope.py`. Audit flags 91 → 29; the rest are comparison artefacts or the lower-confidence cases listed in the doc.
+- Tests: `RuleBugs` covers both rule bugs.
+
+### Review fixes: organic level calibration and the writer's free retries
+- `tools/calibrate_level.py`: `complete_text` no longer drops complete questions ("Given below are two statements", any bracket such as "[Nearest integer]", "the above reaction" when the reaction is written inline with →). It now drops "the following …" when no list or options follow, a missing chromatogram, and "the given molecule/structure".
+- Same file: both sets keep reaction chemistry only (`in_scope`). Half the complete Main questions were biomolecules, drugs, polymers or lab analysis, against a fifth of Advanced, so the floor partly separated topics. Main 32 questions, Advanced 127.
+- Result (`outputs/calib_level_organic_scoped.log`, $0.0038 ≈ ₹0.33 at ₹88/$): floor 1.97 (was 1.98); 80 % of Advanced reach it, 16 % of Main (was 13 %). Main median 1.15, Advanced median 2.61. The separation holds on like-for-like questions.
+- `core/pipeline/qfirst.py`: blank-format slips have their own retry count (`slips`). They shared one with unreadable replies, so a slip followed by an unreadable reply used up the second draft.
+- `tests/test_qfirst.py`: `test_a_blank_slip_does_not_spend_the_unreadable_retry` (fails on the old code: 2 writer calls instead of 3).
+
+### Live organic run 6 and a PCl5 scope fix
+- `outputs/live_organic_6.log` ($0.0509 ≈ ₹4.48 at ₹88/$): accepted GEN_20261124T032552 (MSQ, key AC, Jev 3.11, first solved by minimax-m3). The key is right, but step 1 was wrong: PCl5 replaced the phenol OH of 2-hydroxy-5-allylbenzaldehyde, while the CHO reacts first (→ CHCl2). The key held only because aqueous OH⁻ later turns CHCl2 back into CHO. By hand the question is about JEE Main hard: each option is a one-step check.
+- Scope (the author): `phenol_to_aryl_halide_pclslowreact` now requires CHO absent (`tools/apply_rule_scope.py` → `knowledge/reaction_graph.json`, `docs/organic_rule_scope.md`). `aldehyde_to_geminal_dihalide_pcl5` already refuses a phenol OH, so PCl5 is no longer used on hydroxy-aldehydes.
+- `tests/test_engine_organic.py`: Scope refusal case for the run-6 molecule. Organic tests and `tools/audit_engine.py --run` clean.
+
 ## 2026-11-23
 
 ### Organic rule scope, four rule bugs, concept-book fixes, start picker
@@ -17,6 +131,19 @@ This file records every repository change. Newest entries go at the top. Each en
 - Tests: `tests/test_engine_organic.py` (RuleBugs, Scope), `tests/test_org_qfirst.py` (StartPicker). 519 offline tests pass.
 - Live runs: `outputs/live_organic_5.log` (stopped by the author; draw 1 too easy, Granite solved it). Picker test: 1 pick, $0.0196 ≈ ₹1.72 (₹88/$). The first batch was stopped (its extraction was cut off, `outputs/unparseable_replies.jsonl`); spend unknown.
 - Next steps: `docs/next_session_organic.md` (new).
+
+## 2026-11-22
+
+### Organic level check recalibrated on the full papers
+- The old calibration (floor 1.85) used numerical questions only, and 25 of its 49 Advanced questions had no structures ("[Image]"); 1 in 4 real Main questions passed it.
+- `data/jee_advanced_organic_full.json` (new): every organic question of the 28 JEE Advanced papers 2012-2025 (`data/raw_papers/`), written out in full from the page images: structures as names or SMILES, options included. 176 questions; 22 whose drawings could only be described roughly are marked `structures_approximate` and left out. Found on the way: the data's 2025 Paper 2 organic Q12, Q13, Q15, Q16 are copies of Paper 1's, and several 2017/2018 "organic" numbers point to physical questions.
+- `tools/calibrate_level.py --subject organic`: Advanced = the 154 complete transcribed questions, all formats; Main = the 62 real Main organic questions complete as text (`complete_text`). Physical and inorganic unchanged.
+- Result (`outputs/calib_level_organic_full.log`, $0.0051 ≈ ₹0.45 at ₹88/$): floor 1.98 (was 1.85); 80 % of real Advanced reach it, 13 % of real Main (was 25 %). Main median 0.99, Advanced median 2.58. GEN_20261119T220155 (propane → iodoform, Main-level content) still scores 2.45, above the floor. Caveat: the complete Main questions are mostly one-line facts, so topic may help the separation.
+- PyMuPDF installed in `.venv` (not in requirements.txt) to read the papers.
+
+### Physical writer: two drafts per draw (was one)
+- `core/pipeline/qf_writer.py`: `WRITE_TRIES` 1 → 2 (the author; capped at 2 because each draft costs credits). The one-draft rule (2026-11-19) rested on 21 draws counted while `MIN_TRAPS` was 2, then the commonest rejection; it is 1 now. A rejected first draft (level, blanks, coder, number step, code checks, coherence) goes back to the writer with the draft, its values and the exact problems. `DESIGN_TRIES` stays 1.
+- `tests/test_qfirst.py`: `OneDraftPerDraw` expects 2. 508 tests pass.
 
 ## 2026-11-20
 

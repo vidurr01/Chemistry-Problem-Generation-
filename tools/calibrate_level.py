@@ -14,6 +14,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import statistics
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -36,6 +37,69 @@ def real(folder: str, subject: str = "physical") -> list:
             j = json.load(fh)
         for q in (j["questions"] if isinstance(j, dict) else j):
             if str(q.get("topic", "")).startswith(TOPIC[subject]) and q.get("question_type") in NUMERIC:
+                out.append({"id": q["id"], "text": " ".join(str(q["question_text"]).split())})
+    return out
+
+
+# Organic (2026-11-22): the data's question_text lacks most structures ("[Image]", "the given compound") and options,
+# and only numerical questions were scored, while organic questions are mostly MSQ/MCQ. The Advanced set is the
+# full transcription of the papers (data/jee_advanced_organic_full.json), all formats; the Main set keeps only
+# questions complete as text (no reference to a missing figure; options present unless numerical).
+ORGANIC_FULL = os.path.join(ROOT, "data", "jee_advanced_organic_full.json")
+# Review 2026-11-24: the first filter also dropped complete questions: "Given below are two statements", any
+# bracket ("[Nearest integer]", "[CH₃COCH₃]"), and "the above reaction" when the reaction is written inline.
+_FIGURE = re.compile(r"image|figure|diagram|chromatogram|list[- ]?i\b|\b(following|given) (structure|molecule)|"
+                     r"^following\b", re.I)                         # a picture, a structure or a list is missing
+# Points to a reaction or structure; missing only if the text writes no reaction (no arrow) itself.
+_POINTER = re.compile(r"\bshown\b|\babove\b|\bgiven (compound|transformation|reaction|scheme|structure|sequence)",
+                      re.I)
+_FOLLOWING = re.compile(r"\bthe following\b", re.I)   # complete only if the list or options come after it
+_OPTIONS = re.compile(r"\(A\).*\(B\)|\(1\).*\(2\)|\(a\).*\(b\)", re.S)
+
+
+def complete_text(q: dict) -> bool:
+    """A real question that can be read as text alone: nothing points to a missing figure, and an objective
+    question shows its options."""
+    t = str(q.get("question_text", ""))
+    if _FIGURE.search(t) or (_POINTER.search(t) and "→" not in t):
+        return False
+    f = _FOLLOWING.search(t)
+    if f and "→" not in t:
+        rest = t[f.end():]
+        if not (_OPTIONS.search(rest) or rest.count(",") >= 2):
+            return False
+    return q.get("question_type") in NUMERIC or bool(_OPTIONS.search(t))
+
+
+# Review 2026-11-24: half the complete Main questions were biomolecules, drugs, polymers or lab analysis (one-line
+# facts), against a fifth of Advanced, so the floor separated topics rather than levels. Our organic questions are
+# reaction chemistry (a start molecule and its reactions), so both sets keep reaction chemistry only.
+_OFF_SCOPE = re.compile(
+    r"vitamin|drug|antibiotic|antihistamin|antacid|analgesic|sweete?ner|soap|detergent|polymer|polyester|nylon|"
+    r"rubber|sugar|glucose|fructose|sucrose|maltose|lactose|starch|amylo|glycogen|cellulose|polysaccharide|ribose|"
+    r"DNA|RNA|uracil|protein|peptide|amino acid|glycosid|enzyme|chromatograph|Lassaigne|Carius|Kjeldahl|"
+    r"Dumas|sodium fusion|ion-exchange|bithion|adsorption", re.I)
+
+
+def in_scope(text: str) -> bool:
+    """Reaction chemistry, the kind of organic question the pipeline writes."""
+    return not _OFF_SCOPE.search(text)
+
+
+def organic_advanced() -> list:
+    with open(ORGANIC_FULL, encoding="utf-8") as f:
+        qs = json.load(f)["questions"]
+    out = [{"id": q["id"], "text": " ".join(q["text"].split())} for q in qs if not q.get("structures_approximate")]
+    return [it for it in out if in_scope(it["text"])]
+
+
+def organic_main() -> list:
+    out = []
+    for f in sorted(glob.glob(os.path.join(ROOT, "data", "jee_mains", "*.json"))):
+        with open(f, encoding="utf-8") as fh:
+            j = json.load(fh)
+        for q in (j["questions"] if isinstance(j, dict) else j):
+            if str(q.get("topic", "")).startswith("Organic") and complete_text(q) and in_scope(q["question_text"]):
                 out.append({"id": q["id"], "text": " ".join(str(q["question_text"]).split())})
     return out
 
@@ -70,8 +134,12 @@ def main():
     out_path = os.path.join(ROOT, "knowledge", f"level_calibration_{subject}.json")
     if not models.key_is_set():
         sys.exit("✗ OPENROUTER_KEY is not set in .env")
-    mains, adv, own = real("jee_mains", subject), real("jee_advanced", subject), ours(subject)
-    print(f"Scoring {len(mains)} JEE Main and {len(adv)} JEE Advanced {subject} numerical questions, "
+    if subject == "organic":
+        mains, adv, own = organic_main(), organic_advanced(), ours(subject)
+    else:
+        mains, adv, own = real("jee_mains", subject), real("jee_advanced", subject), ours(subject)
+    kind = "complete reaction-chemistry (all formats)" if subject == "organic" else "numerical"
+    print(f"Scoring {len(mains)} JEE Main and {len(adv)} JEE Advanced {subject} {kind} questions, "
           f"and our {len(own)} accepted ones, with Jev ...")
     sm, sa, so = score(mains), score(adv), score(own)
     m = [x for x in sm if x is not None]

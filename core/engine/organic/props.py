@@ -54,10 +54,13 @@ _P = {k: Chem.MolFromSmarts(v) for k, v in {
     "iodo_etoh": "[CH3][CH2][OX2H1]",
     "ald": "[CX3H1](=O)[#6]", "hcho": "[CX3H2]=O", "hcooh": "[CX3H1](=O)[OX2H1]", "ar_ald": "c[CX3H1]=O",
     "cooh": "[CX3](=O)[OX2H1]", "so3h": "S(=O)(=O)[OX2H1]", "phenol": "c[OX2H1]", "enol": "[CX3]=[CX3][OX2H1]",
-    "pri_amine": "[#6][NX3H2]", "carbonyl": "[#6][CX3](=O)[#6]", "cc_mult": "[CX3;!a]=[CX3;!a]",
+    "pri_amine": "[CX4,c][NX3H2]",   # an amine carbon, not an amide C=O (2026-11-24)
+    "carbonyl": "[#6][CX3](=O)[#6]", "cc_mult": "[CX3;!a]=[CX3;!a]",
     "cc_triple": "[CX2]#[CX2]", "aniline": "c[NX3H2]",
     "oh3": "[CX4H0]([#6])([#6])([#6])[OX2H1]", "oh2": "[CX4H1]([#6])([#6])[OX2H1]", "oh1": "[CX4H2]([#6])[OX2H1]",
     "allyl_benzyl_oh": "[CX4;H1,H2]([OX2H1])[$(C=C),$(c)]",
+    # a phenol with two NO2 ortho/para (2,4-dinitro-, picric acid): acidic enough to free CO2 from NaHCO3
+    "acidic_phenol": "[OX2H1]c1c([N+](=O)[O-])cc([N+](=O)[O-])cc1",
     "n_amine": "[NX3;!$(N-C=O);!$(N=*);!$(N-[N,O,S])]",
 }.items()}
 
@@ -78,7 +81,9 @@ def _stereo(m):
         if mirror is not None and Chem.MolToSmiles(mirror) != Chem.MolToSmiles(x):
             chiral = True
             break
-    centres = len(Chem.FindMolChiralCenters(base, includeUnassigned=True, useLegacyImplementation=False))
+    # chiral carbons as JEE counts them (four different groups): the legacy CIP-rank test. The newer
+    # one also counts ring C in 1,4-disubstituted rings and 4-substituted cyclohexanone oximes (run 18).
+    centres = len(Chem.FindMolChiralCenters(Chem.Mol(base), includeUnassigned=True, useLegacyImplementation=True))
     return len(smis), chiral, centres
 
 
@@ -120,13 +125,13 @@ def askable(smiles: str) -> dict:
                                        and not b.IsInRing())
     out["iodoform_test"] = any(_has(m, k) for k in ("iodo_co", "iodo_ald", "iodo_oh", "iodo_etoh"))
     out["tollens_test"] = _has(m, "ald") or _has(m, "hcho") or _has(m, "hcooh")
-    out["fehling_test"] = (_has(m, "ald") or _has(m, "hcho")) and not _has(m, "ar_ald")
-    out["nahco3_effervescence"] = _has(m, "cooh") or _has(m, "so3h")
+    out["fehling_test"] = (_has(m, "ald") or _has(m, "hcho") or _has(m, "hcooh")) and not _has(m, "ar_ald")
+    out["nahco3_effervescence"] = _has(m, "cooh") or _has(m, "so3h") or _has(m, "acidic_phenol")
     out["fecl3_colour"] = _has(m, "phenol") or _has(m, "enol")
     out["carbylamine_test"] = _has(m, "pri_amine")
     out["dnp_test"] = _has(m, "carbonyl") or _has(m, "ald") or _has(m, "hcho")
     out["bromine_water_decolourised"] = _has(m, "cc_mult") or _has(m, "cc_triple") or _has(m, "phenol") \
-        or _has(m, "aniline")
+        or _has(m, "aniline") or _has(m, "ald") or _has(m, "hcho")   # Br2 water also oxidises a CHO (2026-11-24)
     alcohols = [k for k in ("oh3", "oh2", "oh1") if _has(m, k)]
     if len(alcohols) == 1 and len(m.GetSubstructMatches(Chem.MolFromSmarts("[CX4][OX2H1]"))) == 1:
         out["lucas_test"] = ("immediate turbidity" if alcohols[0] == "oh3" or _has(m, "allyl_benzyl_oh")

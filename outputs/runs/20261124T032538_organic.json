@@ -1,0 +1,341 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T032538",
+ "spend": {
+  "total_cost_usd": 0.04488,
+  "by_role": {
+   "start_picker": {
+    "calls": 1,
+    "prompt_tokens": 1892,
+    "completion_tokens": 1125,
+    "cost": 0.00563775
+   },
+   "name_checker": {
+    "calls": 1,
+    "prompt_tokens": 108,
+    "completion_tokens": 212,
+    "cost": 0.0001168
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 1829,
+    "completion_tokens": 1283,
+    "cost": 0.019054
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2225,
+    "completion_tokens": 1002,
+    "cost": 0.00542625
+   },
+   "level_check": {
+    "calls": 1,
+    "prompt_tokens": 619,
+    "completion_tokens": 0,
+    "cost": 2.5998e-05
+   },
+   "council": {
+    "calls": 10,
+    "prompt_tokens": 8636,
+    "completion_tokens": 15156,
+    "cost": 0.014623662
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "phenol_to_aryl_halide_pclslowreact",
+     "alkene_to_epoxide_mcpba",
+     "epoxide_to_diol_ho",
+     "aldehyde_to_alcohol_nabh",
+     "aldehyde_to_cyanohydrin_hcn"
+    ],
+    "nodes": [
+     "alkene",
+     "aryl_halide",
+     "epoxide",
+     "diol",
+     "alcohol",
+     "cyanohydrin"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     129,
+     191,
+     6,
+     67,
+     32,
+     498,
+     34
+    ],
+    "trap_ids": [],
+    "description": "2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "design",
+     "at": "2026-11-24T03:23:53.426980+00:00",
+     "system": "P = 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde. P --[PCl5]--> Q --[mCPBA]--> R --[H2O, OH-]--> S. S --[NaBH4, C2H5OH]--> T. S --[HCN, KCN (cat.)]--> U.",
+     "hidden": {
+      "Q": "2-chloro-5-(prop-2-en-1-yl)benzaldehyde",
+      "R": "2-chloro-5-(oxiran-2-ylmethyl)benzaldehyde",
+      "S": "2-chloro-5-(2,3-dihydroxypropyl)benzaldehyde",
+      "T": "3-(4-chloro-3-(hydroxymethyl)phenyl)propane-1,2-diol",
+      "U": "2-(4-chloro-3-(2,3-dihydroxypropyl)phenyl)-2-hydroxyacetonitrile"
+     },
+     "hidden_link": "PCl5 substitutes the phenolic OH for Cl (while retaining the aldehyde, as per the specified product), mCPBA selectively epoxidizes the isolated alkene, base-catalyzed ring opening forms a 1,2-diol, NaBH4 selectively reduces the aldehyde, and HCN adds to the aldehyde to form a cyanohydrin, introducing a new stereocenter.",
+     "route": "First, map the transformation from P to Q, noting the conversion of phenol to aryl chloride. Next, mCPBA forms an epoxide at the allyl double bond to give R. Hydrolysis of the epoxide yields the diol S, which contains 1 stereocenter. Reduction of S by NaBH4 gives the triol T, which does not react with DNP. Cyanohydrin formation from S yields U, which contains two stereocenters (one from the diol, one from the cyanohydrin).",
+     "student_must_notice": "The formation of a new stereocenter in step S -> U, while the stereocenter from the diol remains unchanged, leading to a total of 4 stereoisomers for U.",
+     "trap": "Assuming PCl5 converts the aldehyde to a gem-dichloride instead of replacing the phenolic OH, or missing the creation of the second stereocenter in U.",
+     "given": "Reaction scheme starting with 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde and specific reagents for each step.",
+     "asked": "Tollens' and bromine water tests for Q, stereoisomer count for S and U, and DNP test for T.",
+     "format": "msq",
+     "why_hard": "It requires tracking functional group tolerance to PCl5 as specified, selective epoxidation, and accurately counting stereocenters across multiple branching reactions.",
+     "situation": "P = 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde. P --[PCl5]--> Q --[mCPBA]--> R --[H2O, OH-]--> S. S --[NaBH4, C2H5OH]--> T. S --[HCN, KCN (cat.)]--> U.",
+     "insight": "The formation of a new stereocenter in step S -> U, while the stereocenter from the diol remains unchanged, leading to a total of 4 stereoisomers for U.",
+     "links": "First, map the transformation from P to Q, noting the conversion of phenol to aryl chloride. Next, mCPBA forms an epoxide at the allyl double bond to give R. Hydrolysis of the epoxide yields the diol S, which contains 1 stereocenter. Reduction of S by NaBH4 gives the triol T, which does not react with DNP. Cyanohydrin formation from S yields U, which contains two stereocenters (one from the diol, one from the cyanohydrin)."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T03:24:01.086309+00:00",
+     "attempt": 1,
+     "lead": "An organic reaction sequence starting from 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde (P) is shown below:",
+     "ask": "Which of the following statements is/are correct?",
+     "format": "msq",
+     "claims": [
+      {
+       "text": "Compound Q decolourises bromine water.",
+       "compound": "Q",
+       "property": "bromine_water_decolourised",
+       "value": true
+      },
+      {
+       "text": "Compound T gives a positive 2,4-DNP test.",
+       "compound": "T",
+       "property": "dnp_test",
+       "value": true
+      },
+      {
+       "text": "The total number of stereoisomers possible for compound U is 4.",
+       "compound": "U",
+       "property": "stereoisomers",
+       "value": 4
+      },
+      {
+       "text": "The number of stereocentres in compound S is 2.",
+       "compound": "S",
+       "property": "stereocentres",
+       "value": 2
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T03:24:01.086336+00:00",
+     "stem": "An organic reaction sequence starting from 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde (P) is shown below:\nP = 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde\nP --[PCl₅]--> Q\nQ --[mCPBA]--> R\nR --[H₂O, OH⁻]--> S\nS --[NaBH₄, C₂H₅OH]--> T\nS --[HCN, KCN (cat.)]--> U\nWhich of the following statements is/are correct?\n(A) Compound Q decolourises bromine water.\n(B) Compound T gives a positive 2,4-DNP test.\n(C) The total number of stereoisomers possible for compound U is 4.\n(D) The number of stereocentres in compound S is 2.\nChoose all the correct options.",
+     "answer": "AC",
+     "trace": [
+      {
+       "tx": [],
+       "src": "Q",
+       "dst": "bromine_water_decolourised",
+       "formula": "decolourises bromine water computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "Q",
+        "structure": "C=CCc1ccc(Cl)c(C=O)c1",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": true,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "T",
+       "dst": "dnp_test",
+       "formula": "orange precipitate with 2,4-DNP computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "T",
+        "structure": "OCc1cc(CC(O)CO)ccc1Cl",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": false,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "stereoisomers",
+       "formula": "total number of stereoisomers (meso counted once) computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "U",
+        "structure": "N#CC(O)c1cc(CC(O)CO)ccc1Cl",
+        "claimed value": 4
+       },
+       "outputs": {
+        "computed value": 4,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "S",
+        "structure": "O=Cc1cc(CC(O)CO)ccc1Cl",
+        "claimed value": 2
+       },
+       "outputs": {
+        "computed value": 1,
+        "claim true": false
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionB",
+       "desc": "chooses option B",
+       "wrong_answer": "B"
+      },
+      {
+       "id": "optionD",
+       "desc": "chooses option D",
+       "wrong_answer": "D"
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T03:24:01.584290+00:00",
+     "score": 3.11,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T03:25:03.251440+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Step 1: Identify P = 2-hydroxy-5-(prop-2-en-1-yl)benzaldehyde. Structure: benzene ring with OH at C2, aldehyde at C1 (since numbering?), and prop-2-en-1-yl (CH2-CH=CH2) at C5. So positions: C1 aldehyde, C2 OH, C5 allyl group.\nStep 2: P --[PCl5]--> Q. PCl5 converts aldehyde to acid chloride? Typically PCl5 converts aldehyde to acid chloride? Actually PCl5 converts aldehyde to acid chloride? Might convert OH to Cl? Likely forms benzoyl chloride? But with adjacent OH, PCl5 could chlorinate OH to OCl? Probably converts aldehyde to acid chloride and OH to Cl? However typical reaction: PCl5 converts alcohols to chlorides and aldehydes to acid chlorides. So P has OH and aldehyde; both may react. Likely aldehyde becomes acid chloride (R-COCl) and OH becomes Cl (R-Cl). So Q is 2-chloro-5-(prop-2-en-1-yl)benzoyl chloride? Might be 2-chloro-5-(prop-2-en-1-yl)benzaldehyde chloride? Hard.\nStep 3: Q --[mCPBA]--> R. mCPBA oxidizes allylic alcohols or epoxidizes double bonds. Likely epoxidizes the propenyl double bond to give an epoxide. So R is epoxide.\nStep 4: R --[H2O, OH-]--> S. Hydrolysis of epoxide under basic conditions gives trans-diol (glycol). So S is trans-diol (vicinal diol) with OH at allylic positions.\nStep 5: S --[NaBH4, EtOH]--> T. NaBH4 reduces aldehyde to alcohol. So T is primary alcohol (reduced aldehyde).\nStep 6: S --[HCN, KCN (cat.)]--> U. Catalytic cyanation of alcohol? Likely converts OH to CN via SN2? Might give cyanohydrin? Unclear.\nGiven limited time, evaluate statements:\n(A) Q decolourises bromine water: Q likely contains a double bond (propenyl) that would react with bromine, causing decolourisation? Actually bromine water decolorises with unsaturated compounds via addition; Q may have double bond still present (epoxidation later), but Q after PCl5 may still have double bond (propenyl). So Q would react with bromine, causing decolorisation? Typically bromine water adds to double bond causing color change (bromine decolorises upon addition). So A likely true.\n(B) T gives positive 2,4-DNP test: 2,4-DNP reacts with aldehydes/ketones. T is alcohol after reduction, no carbonyl, so false.\n(C) Total number of stereoisomers for U is 4: uncertain.\n(D) Number of stereocenters in S is 2: S is trans-diol from epoxide opening, gives two new stereocenters (at the former epoxide carbons). So D true.\nThus correct options A and D.\n",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: AD] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "AD",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "AD"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "AD"
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P (2-hydroxy-5-allylbenzaldehyde) + PCl5: phenolic OH → Cl and aldehyde → gem-dichloride (Ar–CHCl2), giving Q, which still contains the allyl C=C, so Q decolourises bromine water (A correct). mCPBA epoxidises the allyl double bond → R (epoxide). H2O/OH– opens the epoxide (anti addition) to a vicinal diol and hydrolyses the gem-dichloride back to the aldehyde, giving S: an aldehyde bearing a vicinal diol with 2 stereocentres (D correct). NaBH4 reduces the aldehyde to a primary alcohol → T, which has no carbonyl, so no 2,4-DNP test (B wrong). HCN addition to S gives cyanohydrin U: the two diol stereocentres plus a new one at the cyanohydrin carbon give 3 stereocentres → 8 stereoisomers, not 4 (C wrong). Correct options: A and D.",
+       "objection": null,
+       "answer_line": "[TYPE: organic] [CALC_VALUE: AD] [CALC_UNIT: none.] [SUBSTANCE: null]",
+       "final_answer": "AD",
+       "unit": "",
+       "answer_type": "organic",
+       "calc_value": [
+        "AD"
+       ],
+       "calc_unit": [
+        "none."
+       ],
+       "target_unit": "",
+       "final_value": [
+        "AD"
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "minimax-m3",
+       "model": "minimax/minimax-m3",
+       "working": "P = 2-hydroxy-5-(allyl)benzaldehyde. Step 1 (PCl5): converts -OH to -Cl and -CHO to -CHCl2. Q = 2-chloro-5-allyl-1-(dichloromethyl)benzene, which still has the allyl C=C. Step 2 (mCPBA): epoxidizes the allyl C=C to give an epoxide R. Step 3 (H2O, OH-): opens epoxide to 1,2-diol (-CH2-CH(OH)-CH2OH) and hydrolyzes -CHCl2 back to -CHO. S = 2-chloro-5-(2,3-dihydroxypropyl)benzaldehyde. Step 4 (NaBH4/EtOH): reduces -CHO to -CH2OH. T = diol + benzyl alcohol (no carbonyl, no aldehyde). Step 5 (HCN/KCN): forms cyanohydrin at the aldehyde. U = Ar-CH(OH)-CN with diol side chain. Analysis: (A) Q has allyl C=C, decolourises bromine water - CORRECT. (B) T has only alcohols, no carbonyl, 2,4-DNP negative - INCORRECT. (C) U has 2 stereocenters (cyanohydrin C and diol CHOH), giving 2^2 = 4 stereoisomers - CORRECT. (D) S has only 1 stereocenter (the CHOH in side chain); CH2 groups have two H's so not stereocenters - INCORRECT.",
+       "objection": null,
+       "answer_line": "[TYPE: organic] [CALC_VALUE: AC] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "AC",
+       "unit": "",
+       "answer_type": "organic",
+       "calc_value": [
+        "AC"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "AC"
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [],
+     "first_solver": "minimax-m3"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T03:25:38.159408+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "ACD"
+      },
+      {
+       "member": "glm-5.3-flash",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": true,
+       "answer": "AC"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

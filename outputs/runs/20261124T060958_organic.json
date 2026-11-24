@@ -1,0 +1,337 @@
+{
+ "subject": "organic",
+ "saved_at": "20261124T060958",
+ "spend": {
+  "total_cost_usd": 0.03619,
+  "by_role": {
+   "start_picker": {
+    "calls": 1,
+    "prompt_tokens": 1855,
+    "completion_tokens": 983,
+    "cost": 0.0050775
+   },
+   "name_checker": {
+    "calls": 1,
+    "prompt_tokens": 98,
+    "completion_tokens": 203,
+    "cost": 0.0001113
+   },
+   "step_checker": {
+    "calls": 6,
+    "prompt_tokens": 1023,
+    "completion_tokens": 9039,
+    "cost": 0.0046218
+   },
+   "designer": {
+    "calls": 1,
+    "prompt_tokens": 2490,
+    "completion_tokens": 1100,
+    "cost": 0.01818
+   },
+   "generator": {
+    "calls": 1,
+    "prompt_tokens": 2900,
+    "completion_tokens": 1277,
+    "cost": 0.00696375
+   },
+   "level_check": {
+    "calls": 2,
+    "prompt_tokens": 1292,
+    "completion_tokens": 0,
+    "cost": 5.4264e-05
+   },
+   "council": {
+    "calls": 5,
+    "prompt_tokens": 3886,
+    "completion_tokens": 3027,
+    "cost": 0.0011766300000000001
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_acetal_roh2",
+     "phenol_to_substituted_benzene_chndiazometh",
+     "alkene_to_ether_hgoacrohorhg",
+     "alkene_to_epoxide_mcpba",
+     "alkene_to_halohydrin_br",
+     "alcohol_to_ester_rcocl"
+    ],
+    "nodes": [
+     "aldehyde",
+     "acetal",
+     "substituted_benzene",
+     "ether",
+     "epoxide",
+     "halohydrin",
+     "ester"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives"
+    ],
+    "txs": [
+     35,
+     119,
+     135,
+     6,
+     7,
+     29,
+     143,
+     147,
+     638
+    ],
+    "trap_ids": [],
+    "description": "5-allyl-2-hydroxybenzaldehyde: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-24T06:09:04.399189+00:00",
+     "held": null,
+     "steps": []
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-24T06:09:16.732418+00:00",
+     "system": "P = 5-allyl-2-hydroxybenzaldehyde. P --[CH₃OH (excess), dry HCl]--> Q. Q --[(CH₃)₂SO₄, NaOH]--> R. R --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> S. Q --[mCPBA]--> T. R --[Br₂, H₂O]--> U. U --[CH₃COCl, pyridine]--> V.",
+     "hidden": {
+      "P": "5-allyl-2-hydroxybenzaldehyde",
+      "Q": "4-allyl-2-(dimethoxymethyl)phenol",
+      "R": "4-allyl-1-methoxy-2-(dimethoxymethyl)benzene",
+      "S": "1-methoxy-2-(dimethoxymethyl)-4-(2-methoxypropyl)benzene",
+      "T": "2-(dimethoxymethyl)-4-(oxiran-2-ylmethyl)phenol",
+      "U": "1-(4-methoxy-3-(dimethoxymethyl)phenyl)-3-bromopropan-2-ol",
+      "V": "1-(4-methoxy-3-(dimethoxymethyl)phenyl)-3-bromopropan-2-yl acetate"
+     },
+     "hidden_link": "P has an aldehyde, a phenol, and an alkene. Dry HCl/MeOH forms an acetal at the aldehyde but leaves the alkene intact (Q). Me2SO4/NaOH methylates the phenol to an anisole derivative (R). R undergoes alkoxymercuration-demercuration with MeOH, adding OMe to the more substituted Markovnikov position (S). mCPBA epoxidizes the alkene of Q to T. R with Br2/H2O forms a bromohydrin, where OH attacks the more substituted carbon of the bromonium ion (U). Acetylation of U yields V.",
+     "route": "Step 1: Identify P. Step 2: Q is an acetal formed from P. Step 3: R is the methyl ether of Q. Step 4: S is the Markovnikov methoxymercuration product of R, which has 1 stereocentre. Step 5: T is an epoxide. Step 6: U is the Markovnikov bromohydrin of R, which is a secondary alcohol (gives Lucas test turbidity in ~5 mins). Step 7: V is the acetate ester of U.",
+     "student_must_notice": "The regioselectivity of alkoxymercuration (S) and bromohydrin formation (U). Both add the nucleophile (MeOH or H2O) to the more substituted internal carbon of the allyl group.",
+     "trap": "Students might predict anti-Markovnikov addition for S leading to a primary ether (0 stereocentres), or regio-reversed bromohydrin U leading to a primary alcohol (no Lucas test turbidity at RT).",
+     "given": "Reaction scheme with reagents.",
+     "asked": "Four statements testing the regiochemistry of S and U, and functional groups in T.",
+     "format": "msq",
+     "why_hard": "Tests Markovnikov selectivity in two different electrophilic addition reactions (alkoxymercuration and bromohydrin formation) which determine stereocentre count and Lucas test results.",
+     "question": {
+      "text": "Consider the following reaction scheme starting with $P$ (5-allyl-2-hydroxybenzaldehyde):\n$P \\xrightarrow{\\text{CH}_3\\text{OH (excess), dry HCl}} Q$\n$Q \\xrightarrow{\\text{(CH}_3\\text{)}_2\\text{SO}_4\\text{, NaOH}} R$\n$R \\xrightarrow{\\text{(i) Hg(OAc)}_2\\text{, CH}_3\\text{OH (ii) NaBH}_4} S$\n$Q \\xrightarrow{\\text{mCPBA}} T$\n$R \\xrightarrow{\\text{Br}_2\\text{, H}_2\\text{O}} U$\n$U \\xrightarrow{\\text{CH}_3\\text{COCl, pyridine}} V$\n\nWhich of the following statements is/are correct?",
+      "options": [
+       "Compound $S$ has exactly 1 stereocentre.",
+       "Compound $U$ produces turbidity with Lucas reagent in about 5 minutes.",
+       "Compound $S$ has exactly 2 stereoisomers.",
+       "Compound $T$ gives a positive Fehling's test."
+      ],
+      "correct_options": [
+       "Compound $S$ has exactly 1 stereocentre.",
+       "Compound $U$ produces turbidity with Lucas reagent in about 5 minutes.",
+       "Compound $S$ has exactly 2 stereoisomers."
+      ]
+     },
+     "situation": "P = 5-allyl-2-hydroxybenzaldehyde. P --[CH₃OH (excess), dry HCl]--> Q. Q --[(CH₃)₂SO₄, NaOH]--> R. R --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> S. Q --[mCPBA]--> T. R --[Br₂, H₂O]--> U. U --[CH₃COCl, pyridine]--> V.",
+     "insight": "The regioselectivity of alkoxymercuration (S) and bromohydrin formation (U). Both add the nucleophile (MeOH or H2O) to the more substituted internal carbon of the allyl group.",
+     "links": "Step 1: Identify P. Step 2: Q is an acetal formed from P. Step 3: R is the methyl ether of Q. Step 4: S is the Markovnikov methoxymercuration product of R, which has 1 stereocentre. Step 5: T is an epoxide. Step 6: U is the Markovnikov bromohydrin of R, which is a secondary alcohol (gives Lucas test turbidity in ~5 mins). Step 7: V is the acetate ester of U."
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-24T06:09:23.804377+00:00",
+     "attempt": 1,
+     "lead": "An organic compound P (5-allyl-2-hydroxybenzaldehyde) undergoes a sequence of transformations as shown below.",
+     "ask": "Which of the following statements is/are correct?",
+     "format": "msq",
+     "claims": [
+      {
+       "text": "Compound S possesses exactly one stereocentre.",
+       "compound": "S",
+       "property": "stereocentres",
+       "value": 1
+      },
+      {
+       "text": "Compound U gives turbidity in about 5 minutes with Lucas reagent at room temperature.",
+       "compound": "U",
+       "property": "lucas_test",
+       "value": "turbidity in about 5 minutes"
+      },
+      {
+       "text": "Compound Q reduces Tollens' reagent to form a silver mirror.",
+       "compound": "Q",
+       "property": "tollens_test",
+       "value": true
+      },
+      {
+       "text": "The degree of unsaturation of compound V is 5.",
+       "compound": "V",
+       "property": "degree_of_unsaturation",
+       "value": 5
+      }
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-24T06:09:23.804412+00:00",
+     "stem": "An organic compound P (5-allyl-2-hydroxybenzaldehyde) undergoes a sequence of transformations as shown below.\nP = 5-allyl-2-hydroxybenzaldehyde\nP --[CH₃OH (excess), dry HCl]--> Q\nQ --[(CH₃)₂SO₄, NaOH]--> R\nR --[(i) Hg(OAc)₂, CH₃OH; (ii) NaBH₄]--> S\nQ --[mCPBA]--> T\nR --[Br₂, H₂O]--> U\nU --[CH₃COCl, pyridine]--> V\nWhich of the following statements is/are correct?\n(A) Compound S possesses exactly one stereocentre.\n(B) Compound U gives turbidity in about 5 minutes with Lucas reagent at room temperature.\n(C) Compound Q reduces Tollens' reagent to form a silver mirror.\n(D) The degree of unsaturation of compound V is 5.\nChoose all the correct options.",
+     "answer": "ABD",
+     "trace": [
+      {
+       "tx": [],
+       "src": "S",
+       "dst": "stereocentres",
+       "formula": "number of stereocentres (chiral carbons) computed by code",
+       "inputs": {
+        "claim": 1,
+        "compound": "S",
+        "structure": "COc1ccc(CC(C)OC)cc1C(OC)OC",
+        "claimed value": 1
+       },
+       "outputs": {
+        "computed value": 1,
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "U",
+       "dst": "lucas_test",
+       "formula": "Lucas test result computed by code",
+       "inputs": {
+        "claim": 2,
+        "compound": "U",
+        "structure": "COc1ccc(CC(O)CBr)cc1C(OC)OC",
+        "claimed value": "turbidity in about 5 minutes"
+       },
+       "outputs": {
+        "computed value": "turbidity in about 5 minutes",
+        "claim true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "Q",
+       "dst": "tollens_test",
+       "formula": "positive Tollens' test computed by code",
+       "inputs": {
+        "claim": 3,
+        "compound": "Q",
+        "structure": "C=CCc1ccc(O)c(C(OC)OC)c1",
+        "claimed value": true
+       },
+       "outputs": {
+        "computed value": false,
+        "claim true": false
+       }
+      },
+      {
+       "tx": [],
+       "src": "V",
+       "dst": "degree_of_unsaturation",
+       "formula": "degree of unsaturation (DBE) computed by code",
+       "inputs": {
+        "claim": 4,
+        "compound": "V",
+        "structure": "COc1ccc(CC(CBr)OC(C)=O)cc1C(OC)OC",
+        "claimed value": 5
+       },
+       "outputs": {
+        "computed value": 5,
+        "claim true": true
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionC",
+       "desc": "chooses option C",
+       "wrong_answer": "C"
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-24T06:09:24.320986+00:00",
+     "score": 3.19,
+     "floor": 1.968
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-24T06:09:46.251815+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "1. P = 5-allyl-2-hydroxybenzaldehyde: benzene ring with aldehyde at C1 (position 1), hydroxyl at C2, allyl at C5. 2. Q: CH3OH excess, dry HCl -> methylation of phenol OH to OCH3 (methyl ether). So Q = 5-allyl-2-methoxybenzaldehyde. 3. R: (CH3)2SO4, NaOH -> sulfonation then hydrolysis? Likely demethylation? Actually (CH3)2SO4 is methylating agent? In presence of NaOH, likely cleavage of methoxy to phenol? Might give benzoic acid? But with aldehyde present, likely conversion of methoxy to phenol? Probably R = 5-allyl-2-hydroxybenzaldehyde again? However step likely demethylation of methoxy to phenol (reverse of step1). So R = P again? But then later transformations differentiate. Assume R = P (hydroxy). 4. S: from R via Hg(OAc)2, CH3OH (Pauson–Khand type cycloaddition?) then NaBH4 reduces aldehyde to alcohol. So S = 5-allyl-2-hydroxybenzyl alcohol (aldehyde reduced). Stereocentre? The cycloaddition creates new stereocentre at bridgehead? Likely one stereocentre from addition of allyl to aldehyde? Might give single stereocentre. So (A) plausible. 5. T: Q + mCPBA oxidizes allyl to epoxide? mCPBA oxidizes allylic alcohol? Q has methoxy, no allylic OH. Might epoxidize allyl? mCPBA can epoxidize double bond of allyl group giving cycloalkene? Actually mCPBA epoxidizes double bond of allyl attached to aromatic ring -> trans-epoxide? So T = 5-allyl-2-methoxybenzaldehyde with epoxide? Not needed. 6. U: R + Br2, H2O -> bromination at ortho/para to OH? With aldehyde present, bromination likely at position 6 (para to OH) giving bromo-substituted. Gives bromo-aldehyde. Turbidity with Lucas reagent (ZnCl2/HCl) indicates tertiary alcohol formation? U likely has bromide not alcohol. So (B) false. 7. Q reduces Tollens' reagent? Q has aldehyde (still aldehyde) so yes reduces Tollens' to silver mirror. So (C) true. 8. V: U + CH3COCl, pyridine -> acetylation of OH (if OH present) giving acetate. Degree of unsaturation of V: benzene (4) + aldehyde (1) + maybe double bond from allyl (1) + acetyl (no unsat) =6? But after bromination maybe double bond lost? Likely unsaturation =5? So (D) maybe true. Need pick correct options: likely A and C? But A uncertain. Choose A and C? However typical exam answer maybe A and D? Hard. Choose A and C.",
+       "objection": null,
+       "answer_line": "[TYPE: chemistry] [CALC_VALUE: AC] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "AC",
+       "unit": "",
+       "answer_type": "chemistry",
+       "calc_value": [
+        "AC"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "AC"
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "P = 5-allyl-2-hydroxybenzaldehyde (o-vanillin with allyl). (1) P + excess MeOH/dry HCl → acetal formation: Q is the dimethyl acetal of the aldehyde (phenolic OH free). (2) Q + (Me)2SO4/NaOH → R: phenol methylated, so R = 2-OMe-5-allyl benzaldehyde dimethyl acetal. (3) R + Hg(OAc)2/MeOH then NaBH4 → Markovnikov methoxymercuration of the allyl double bond: S = Ar–CH2–CH(OCH3)–CH3 (an acetal ether). S has one stereocentre (the CH bearing OMe/H/CH3/CH2Ar) → (A) correct. (4) Q + mCPBA → T: Baeyer–Villiger? No, mCPBA epoxidizes the allyl C=C (T = epoxide). (5) R + Br2/H2O → U: bromohydrin formation across the allyl double bond: U = Ar–CH2–CH(OH)–CH2Br. U is a secondary benzylic-adjacent alcohol; with Lucas reagent (ZnCl2/HCl) a secondary alcohol gives turbidity slowly (~5 min) → (B) correct. (6) Q still contains the free aldehyde? No — Q is the acetal, so it does NOT reduce Tollens' reagent; acetals are protected aldehydes → (C) incorrect. (7) U + CH3COCl/pyridine → V: acetylation of the OH (and the phenol? U has no phenol—R was methylated; U's OH is the bromohydrin OH). V = acetate ester. Degree of unsaturation of V: aromatic ring = 4 (3 C=C + 1 ring), plus C=O of acetate = 1, total 5 → (D) correct. So correct options: A, B, D.",
+       "objection": null,
+       "answer_line": "[TYPE: organic-reactions] [CALC_VALUE: ABD] [CALC_UNIT: none] [SUBSTANCE: null]",
+       "final_answer": "ABD",
+       "unit": "",
+       "answer_type": "organic-reactions",
+       "calc_value": [
+        "ABD"
+       ],
+       "calc_unit": [
+        "none"
+       ],
+       "target_unit": "",
+       "final_value": [
+        "ABD"
+       ],
+       "substance": [],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-24T06:09:58.895776+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Work out every lettered compound in order, deciding at each step which product is major; only then judge each statement about it.",
+       "solved": false,
+       "answer": "BCD"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

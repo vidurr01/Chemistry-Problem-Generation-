@@ -256,8 +256,11 @@ def _lindlar(s):
 def _alkyne_cleave(s):
     _need(s, "[CX2]#[CX2]", "C≡C")
     p = _oxidative_cleavage(s, "[C:1]#[C:2]>>([C:1](=O)O.[C:2](=O)O)")
-    p = canon(".".join("O=C=O" if x == "O=CO" else x for x in p.split(".")))
-    return Result(p, why="hot KMnO4 cleaves C≡C to two acids (≡CH → CO2)")
+    # a terminal ≡CH comes out as HCOOH or H2CO3 text: both are CO2 here (2026-11-24: "C#CC -> O=C(O)O")
+    parts = ["O=C=O" if canon(x) in (canon("O=CO"), canon("O=C(O)O")) else x for x in p.split(".")]
+    if all(x == "O=C=O" for x in parts):
+        raise EngineError(f"{s}: ethyne gives only CO2 here, no carboxylic acid")
+    return Result(canon(".".join(parts)), why="hot KMnO4 cleaves C≡C to two acids (≡CH → CO2)")
 
 
 @rule("alkyne_to_geminal_dihalide_hxexcess2equ", "HBr (2 equiv)")
@@ -557,12 +560,14 @@ def _epoxide_2hx(s):
 
 @rule("ether_to_alkyl_halide_conchxhihbra", "HI (1 equiv)")
 def _ether_hi(s):
-    _need(s, "[#6;!$(C=O)][OX2][#6;!$(C=O)]", "ether")
-    if _has(s, "c[OX2][CX4]"):
-        return Result(smi(run("[c:3][OX2:1][CX4:2]>>[C:2]I", s)[0]),
-                      coproducts=[smi(run("[c:3][OX2:1][CX4:2]>>[c:3][O:1]", s)[0])],
+    # open-chain ethers only (2026-11-24): an epoxide or other ring O gave "CH3I" from a molecule with no CH3;
+    # HI opens a ring to one molecule (I...OH), which this two-fragment template cannot write
+    _need(s, "[#6;!$(C=O)][OX2;!R][#6;!$(C=O)]", "open-chain ether")
+    if _has(s, "c[OX2;!R][CX4]"):
+        return Result(smi(run("[c:3][OX2;!R:1][CX4:2]>>[C:2]I", s)[0]),
+                      coproducts=[smi(run("[c:3][OX2;!R:1][CX4:2]>>[c:3][O:1]", s)[0])],
                       why="aryl alkyl ether: I attacks the alkyl carbon; the phenol stays")
-    prods = run("[CX4:1][OX2][CX4:2]>>[C:1]I.[C:2]O", s)
+    prods = run("[CX4:1][OX2;!R][CX4:2]>>[C:1]I.[C:2]O", s)
     tert = [p for p in prods if carbon_degree(atom_by_map(p, 1)) >= 3]
     key = (lambda p: carbon_degree(atom_by_map(p, 1))) if tert else (lambda p: -carbon_degree(atom_by_map(p, 1)))
     return pick(prods, key, "HI cleaves the ether: SN1 at a tertiary carbon, else SN2 at the less hindered one",
@@ -1184,8 +1189,9 @@ def _tert_amine_oxidation(s):
 
 @rule("amine_to_isocyanide_carbylaminetest")
 def _carbylamine(s):
-    _need(s, "[#6][NX3H2]", "primary NH2")
-    return one("[#6:1][NX3H2]>>[#6:1][N+]#[C-]", s, why="carbylamine reaction: 1° amines only")
+    # [CX4,c]: an amine carbon, never the C=O of an amide (2026-11-24: butanamide gave an "isocyanide")
+    _need(s, "[CX4,c][NX3H2]", "primary amine NH2")
+    return one("[CX4,c:1][NX3H2]>>[*:1][N+]#[C-]", s, why="carbylamine reaction: 1° amines only")
 
 
 @rule("isocyanide_to_amine_hydrolysis")

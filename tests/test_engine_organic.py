@@ -135,6 +135,20 @@ class Selectivity(unittest.TestCase):
             run("aldehyde_to_alkane_znhg", "O=Cc1ccccc1")          # toluene is not an alkane node member
 
 
+class Golden(unittest.TestCase):
+    def test_every_trusted_edge_gives_its_checked_textbook_product(self):
+        """tests/organic_golden.json: one hand-checked input -> product per edge drawn in live runs (2026-11-24)."""
+        import json
+        from core.engine.organic.scope import trusted
+        with open(os.path.join(ROOT, "tests", "organic_golden.json"), encoding="utf-8") as f:
+            cases = json.load(f)["cases"]
+        drawn = {e["id"] for e in GRAPH["edges"] if e["id"] in rules.RULES and trusted(e)}
+        self.assertEqual(set(cases), drawn, "every drawn edge needs a checked case (and no stale ones)")
+        for eid, (smiles, product) in cases.items():
+            with self.subTest(eid):
+                self.assertTrue(same(run(eid, smiles).product, product), f"{eid}: {smiles}")
+
+
 class RuleBugs(unittest.TestCase):
     """Found while writing docs/organic_rule_scope.md (2026-11-22)."""
 
@@ -144,6 +158,21 @@ class RuleBugs(unittest.TestCase):
         self.assertTrue(same(run("ketone_to_alcohol_nabh", "CCC(C)=O").product, "CCC(C)O"))
         self.assertTrue(same(run("ketone_to_alkane_nhnh", "CCC(=O)CCC").product, "CCCCCC"))
         self.assertTrue(same(rules.RULES["ketone_to_alkane_nhnh"]("O=C1CCCCC1").product, "C1CCCCC1"))
+
+    def test_carbylamine_needs_an_amine_not_an_amide(self):
+        # selectivity audit 2026-11-24: butanamide gave an "isocyanide"
+        for amide in ("CCCC(N)=O", "NC(=O)c1ccccc1"):
+            with self.assertRaises(EngineError):
+                run("amine_to_isocyanide_carbylaminetest", amide)
+        self.assertTrue(same(run("amine_to_isocyanide_carbylaminetest", "CCCN").product, "CCC[N+]#[C-]"))
+        self.assertTrue(same(run("amine_to_isocyanide_carbylaminetest", "Nc1ccccc1").product, "[C-]#[N+]c1ccccc1"))
+
+    def test_hi_cleaves_open_chain_ethers_only(self):
+        # selectivity audit 2026-11-24: propylene oxide and ethylene oxide gave CH3I
+        for ring in ("CC1CO1", "C1CO1", "C1CCOC1"):
+            with self.assertRaises(EngineError):
+                run("ether_to_alkyl_halide_conchxhihbra", ring)
+        self.assertTrue(same(run("ether_to_alkyl_halide_conchxhihbra", "COc1ccccc1").product, "CI"))
 
     def test_isocyanide_hydrolysis_gives_primary_amine(self):
         r = run("isocyanide_to_amine_hydrolysis", "CC[N+]#[C-]")
@@ -182,7 +211,13 @@ class Scope(unittest.TestCase):
                          ("aryl_halide_to_phenol_naoh", "Cc1ccc(Cl)cc1"),      # benzyne: isomer mixture
                          ("epoxide_to_halohydrin_hx", "CC1CO1"),               # HX site not agreed
                          ("amine_to_alcohol_nano", "CCCN"),                    # cation rearranges
-                         ("alkyl_halide_to_cycloalkane_mgmagnesiumm", "BrCCCCBr")]:
+                         ("alkyl_halide_to_cycloalkane_mgmagnesiumm", "BrCCCCBr"),
+                         ("phenol_to_aryl_halide_pclslowreact", "C=CCc1ccc(O)c(C=O)c1"),  # PCl5 takes CHO (run 6)
+                         ("alkene_to_alcohol_ho", "O=CC1=CCCCC1=O"),          # enone: no Markovnikov (run 8)
+                         ("alkene_to_alkyl_halide_hx", "C=CC(C)=O"),
+                         ("aldehyde_to_cyanohydrin_hcn", "C=CC=O"),            # CN- adds 1,4
+                         ("alcohol_to_alkyl_halide_socl", "CC(C)(O)CCO"),     # 3° OH eliminates (runs 16, 17)
+                         ("alkyne_to_ketone_ho", "C#CC(C)=O")]:
             with self.assertRaises(EngineError, msg=eid):
                 run(eid, smi)
 
