@@ -1,5 +1,44 @@
 # Live review log (started 2026-11-26)
 
+## Remaining work and decisions (reviewer, 2026-11-26, after commit 1700a59)
+
+**To do (agreed):**
+1. **Physical: stated values computed from free choices** (spec §4c). The picker draws what is physically free
+   (current, time, copper's share of the charge) and computes the stated values from them with engine steps, so
+   impossible data cannot be drawn at all; the value checks (§4a) stay as the safety net.
+2. **Inorganic graph audit** (spec §5): list every reaction whose product depends on an unstated condition (SO₂ vs
+   H₂SO₃, NO₂ vs HNO₂, H₂O vs O₂, P₄ + NaOH) and pin the condition or split it into condition variants. The list is
+   approved by the author before any graph file changes.
+3. **Organic hidden-intermediate questions**: an intermediate whose identity the student must deduce (from a
+   molecular formula, a test result or a stereo outcome) instead of every reagent being handed over; the likely route
+   from Advanced-easy to medium.
+4. **Organic two starting systems that react with each other** (spec §6), with a cap on total steps; first check that
+   the engine rules can couple two scheme products.
+5. **Physical P1–P3**: P1 the hidden step must not be announced by its data (Cp values plus "assume heat capacities
+   constant"); P2 "given f, find a whole n" questions pick n first and compute f (same idea as item 1); P3 prefer
+   formula draws where one formula's result feeds the next over draws that only share a quantity.
+
+**Decided — not to do:**
+- **Every organic branch need not be asked about.** A branch no statement uses is acceptable (reviewer; supersedes
+  the redesign plan's "every step is asked about").
+- **Difficulty labels stay as they are.** They come from the ladder calibrated on real JEE Advanced and Mains data;
+  there is no data showing they should be lowered. Hand grades in this log are one reviewer's view, not a measurement.
+- **Physical prompts stay as they are** (real JEE level examples per twist). Organic and inorganic are not to be
+  styled after physical, nor physical after them. Noted idea for later: physical combined with organic or inorganic
+  in one question (a cross-subject question) could make tougher questions.
+
+**Later (spec §8–§9), explained:**
+- **Fact probe** (§8): when Granite fails an inorganic question, ask it each fact the question uses as a bare open
+  question ("what forms when Cu²⁺ meets excess I⁻?"), graded by code against the engine. Knows every fact but still
+  fails → the difficulty is in combining them (a real signal); misses a fact → the failure only shows a knowledge gap.
+  It never labels a question Advanced by itself. Undecided whether to build it.
+- **Plug-and-play structure** (§9, from the reviewer's 25 Nov list): one shared pipeline skeleton (pick the hard step →
+  engine → writer → code checks → ladder + trace checker) with each subject plugging in only its question kinds, its
+  engine builder and its extra checks, instead of three separate pipelines patched one by one. After the kinds above
+  are proven.
+
+---
+
 One question per subject, graded by hand, after the changes of `docs/implementation_spec_2026-11-25.md`. Each round
 records what came out, what went wrong, what was fixed at once, and what is proposed (to discuss before building).
 Nothing is committed until a round shows the changes work. Spend at ₹88/$.
