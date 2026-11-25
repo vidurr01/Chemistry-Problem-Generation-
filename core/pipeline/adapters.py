@@ -30,6 +30,7 @@ CONDITION_SHARE = 0.10
 # with one (docs/implementation_spec_2026-11-25.md §4)
 FORMULAS_MIN, FORMULAS_MAX = 3, 5
 CHAIN_PREFER = 0.7                  # share of next-formula picks taken from chain links when there are any (P3)
+MAX_FORMULA_USES = 2                # a formula already in this many accepted physical questions is not drawn (option A)
 CHAIN_MIN, CHAIN_MAX = 3, 5         # all_chains / random_chain: 3 to 5 linked steps
 SHAPE_TRIES = 40              # random attempts per shaped idea before giving up on it
 BRANCH_MAX = 2                # steps in one branch of a tree or condition
@@ -356,6 +357,30 @@ class PhysicalAdapter:
 
     # ── question-first: FORMULAS_MIN-FORMULAS_MAX formulas drawn at random ───────
 
+    def overused_formulas(self) -> set:
+        """Formula txs already in MAX_FORMULA_USES accepted physical questions (option A, reviewer 2026-11-26: Jev's
+        fit kept choosing the same kinds of set; the log K intercept / ΔCp entropy trio was in 3 of 24 accepted)."""
+        if not hasattr(self, "_overused"):
+            import ast
+            import collections
+            import json
+            c = collections.Counter()
+            try:
+                with open(self.config.get("output_file", ""), encoding="utf-8") as f:
+                    recs = json.load(f)
+            except (OSError, ValueError, TypeError):
+                recs = []
+            for r in recs if isinstance(recs, list) else []:
+                t = (r.get("engine") or {}).get("txs") if isinstance(r, dict) and not r.get("rejected") else None
+                if isinstance(t, str):
+                    try:
+                        t = ast.literal_eval(t)
+                    except (ValueError, SyntaxError):
+                        t = None
+                c.update(set(t or ()))
+            self._overused = {t for t, n in c.items() if n >= MAX_FORMULA_USES}
+        return self._overused
+
     def random_formulas(self, chapter=None, exclude=()):
         """FORMULAS_MIN..FORMULAS_MAX distinct engine steps drawn at random, CONNECTED: the first
         uniformly from all of the subject's steps (from one chapter with `chapter`), each next one
@@ -365,8 +390,9 @@ class PhysicalAdapter:
         is excluded. Its "_plan" holds only the steps (they do not form a chain: no wiring)."""
         from types import SimpleNamespace
         ph = self.engine
+        over = self.overused_formulas()
         pool = sorted(t for t, e in self.edge_of_tx.items()
-                      if not chapter or chapter.lower() in e.get("chapter", "").lower())
+                      if (not chapter or chapter.lower() in e.get("chapter", "").lower()) and t not in over)
         if len(pool) < FORMULAS_MIN:
             return None
         def quantities(t):

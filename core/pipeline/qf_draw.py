@@ -118,6 +118,15 @@ def best_draw(adapter, chapter, bb, log):
     with none: another batch (at most FIT_BATCHES), then the best set seen. With no floor, or Jev
     down: the best of one batch. Returns the candidate with "_fit"."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
+    if os.environ.get("PHYS_FIT", "on").lower() in ("off", "0", "no"):
+        # reviewer, 2026-11-26: Jev's fit score (calibrated on real Advanced sets) kept choosing the same kinds of
+        # set (the log K intercept / ΔCp entropy trio is in 3 of 24 accepted questions). PHYS_FIT=off: the first
+        # connected random set (adapters.random_formulas, chain links preferred), no Jev call.
+        c = adapter.random_formulas(chapter, exclude=bb.tried_edges())
+        if c is not None:
+            print("\n  [fit] Jev fit off (PHYS_FIT=off): writing the first connected random set")
+            log({"event": "formula_fit", "floor": None, "scores": [{"txs": c["txs"], "p": None}], "fit": "off"})
+        return None if c is None else {**c, "_fit": None}
     floor = _fit_floor(getattr(adapter, "subject", "physical"))
     best, best_p, seen = None, None, set()
     for batch in range(FIT_BATCHES):
