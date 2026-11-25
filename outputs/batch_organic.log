@@ -1,0 +1,291 @@
+
+
+==============================================================================
+RUN 2026-11-25T07:41:30  ::  --organic 20 --max-spend 3.00 --max-consecutive-failures 8 --log outputs/batch_organic.log
+==============================================================================
+[07:41:30] ORGANIC: requesting 20 question(s)
+[07:41:30] --- organic | attempt 1 | accepted 0/20 ---
+[07:41:30] organic: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Organic Chemistry: 11 accepted so far.
+  [start] try 1: 4-(prop-2-yn-1-yl)cyclohexan-1-one (O=C1CCC(CC#C)CC1) → accepted
+
+╔═══ DRAW 1: 4-(prop-2-yn-1-yl)cyclohexan-1-one: 5 steps, 1 branch point(s) (Aldehydes & Ketones, Hydrocarbons) ═══╗
+  P = 4-(prop-2-yn-1-yl)cyclohexan-1-one
+  P --[CH₂N₂, BF₃·Et₂O]--> Q
+  Q --[HBr (1 equiv)]--> R
+  R --[Ph₃P=CH₂]--> S
+  S --[Br₂, CCl₄]--> T
+  R --[HBr]--> U
+  P = C#CCC1CCC(=O)CC1
+  Q = C#CCC1CCCC(=O)CC1
+  R = C=C(Br)CC1CCCC(=O)CC1
+  S = C=C(Br)CC1CCCC(=C)CC1
+  T = BrCC(Br)(Br)CC1CCCC(Br)(CBr)CC1
+  U = CC(Br)(Br)CC1CCCC(=O)CC1
+    [step check] T (Br₂, CCl₄): engine BrCC(Br)(Br)CC1CCCC(Br)(CBr)CC1, checker C=C(Br)CC1CCCC(CBr)(Br)CC1 (Br₂ preferentially adds anti across the more reactive exocyclic methylene to give the vicinal dibromide, while)
+  ✗ 1 step(s) not confirmed: scheme held for review (STE_20261125T021205_39); next draw
+  [start] same molecule, scheme 2 of 3: 4-(prop-2-yn-1-yl)cyclohexan-1-one
+
+╔═══ DRAW 2: 4-(prop-2-yn-1-yl)cyclohexan-1-one: 4 steps, 1 branch point(s) (Aldehydes & Ketones, Carboxylic Acids & Derivatives, Hydrocarbons) ═══╗
+  P = 4-(prop-2-yn-1-yl)cyclohexan-1-one
+  P --[NaBH₄, C₂H₅OH]--> Q
+  Q --[CH₃COCl, pyridine]--> R
+  R --[dil. H₂SO₄, HgSO₄, 333 K]--> S
+  Q --[dil. H₂SO₄, HgSO₄, 333 K]--> T
+  P = C#CCC1CCC(=O)CC1
+  Q = C#CCC1CCC(O)CC1
+  R = C#CCC1CCC(OC(C)=O)CC1
+  S = CC(=O)CC1CCC(OC(C)=O)CC1
+  T = CC(=O)CC1CCC(O)CC1
+    [step check] S (dil. H₂SO₄, HgSO₄, 333 K): engine CC(=O)CC1CCC(OC(C)=O)CC1, checker CC(=O)CC1CCC(O)CC1.CC(=O)O (Aqueous dilute acid hydrolyzes the acetate to the cyclohexanol and acetic acid, while HgSO₄-catalyzed Markovni)
+  ✗ 1 step(s) not confirmed: scheme held for review (STE_20261125T021219_40); next draw
+  [start] same molecule, scheme 3 of 3: 4-(prop-2-yn-1-yl)cyclohexan-1-one
+
+╔═══ DRAW 3: 4-(prop-2-yn-1-yl)cyclohexan-1-one: 5 steps, 1 branch point(s) (Hydrocarbons, Alkyl Halides, Amines, Aldehydes & Ketones) ═══╗
+  P = 4-(prop-2-yn-1-yl)cyclohexan-1-one
+  P --[H₂, Pd/BaSO₄, quinoline]--> Q
+  Q --[Br₂, H₂O]--> R
+  R --[NaCN, DMSO]--> S
+  S --[H₃O⁺, heat]--> T
+  Q --[HCN, KCN (cat.)]--> U
+  P = C#CCC1CCC(=O)CC1
+  Q = C=CCC1CCC(=O)CC1
+  R = O=C1CCC(CC(O)CBr)CC1
+  S = N#CCC(O)CC1CCC(=O)CC1
+  T = O=C(O)CC(O)CC1CCC(=O)CC1
+  U = C=CCC1CCC(O)(C#N)CC1
+
+
+==============================================================================
+RUN 2026-11-25T07:42:34  ::  --organic 20 --max-spend 3.00 --max-consecutive-failures 8 --log outputs/batch_organic.log
+==============================================================================
+[07:42:34] ORGANIC: requesting 20 question(s)
+[07:42:34] --- organic | attempt 1 | accepted 0/20 ---
+[07:42:34] organic: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Organic Chemistry: 11 accepted so far.
+Traceback (most recent call last):
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 501, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 447, in main
+    outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\flow.py", line 628, in run
+    return org_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_qfirst.py", line 570, in run
+    pick = org_start.pick_start(adapter, rng, avoid=used_starts, log=log)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_start.py", line 204, in pick_start
+    d = models.ask_json("start_picker", models.START_PICKER, "You are an organic chemist. Output JSON only.",
+                        prompt, temperature=1.0, max_tokens=1500)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\models.py", line 548, in ask_json
+    out = with_tools() if tools else call_json(create, parse_json, label=role, retry_cut_off=retry_cut_off)
+                                     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\llm.py", line 262, in call_json
+    resp = call_with_retry(create, retries=retries, base_wait=base_wait, label=label)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\llm.py", line 216, in call_with_retry
+    return fn()
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\models.py", line 531, in create
+    resp = _client(where).chat.completions.create(
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\functools.py", line 1126, in __get__
+    val = self.func(instance)
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\_client.py", line 187, in chat
+    from .resources.chat import Chat
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\__init__.py", line 3, in <module>
+    from .beta import (
+    ...<6 lines>...
+    )
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\beta\__init__.py", line 3, in <module>
+    from .beta import (
+    ...<6 lines>...
+    )
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\beta\beta.py", line 32, in <module>
+    from .realtime.realtime import (
+    ...<2 lines>...
+    )
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\beta\realtime\__init__.py", line 3, in <module>
+    from .realtime import (
+    ...<6 lines>...
+    )
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\beta\realtime\realtime.py", line 14, in <module>
+    from .sessions import (
+    ...<6 lines>...
+    )
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\resources\beta\realtime\sessions.py", line 17, in <module>
+    from ....types.beta.realtime import session_create_params
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\types\beta\realtime\__init__.py", line 12, in <module>
+    from .realtime_server_event import RealtimeServerEvent as RealtimeServerEvent
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\openai\types\beta\realtime\realtime_server_event.py", line 21, in <module>
+    from .conversation_item_deleted_event import ConversationItemDeletedEvent
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 755, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 851, in get_code
+  File "<frozen importlib._bootstrap_external>", line 950, in get_data
+KeyboardInterrupt
+    [step check] T (H₃O⁺, heat): engine O=C(O)CC(O)CC1CCC(=O)CC1, checker O=C(O)/C=C/CC1CCC(=O)CC1 (Acidic hydrolysis converts the terminal nitrile to a carboxylic acid, and heating dehydrates the resulting β-h)
+  ✗ 1 step(s) not confirmed: scheme held for review (STE_20261125T021242_41); next draw
+    [start_picker] unusable reply (Could not parse JSON from model output: '{\n  "name": "4-(4-cyanophenyl)butan-2-) — asking again (1/2)
+  [start] try 1: 4-(but-3-en-1-yl)benzaldehyde (C=CCCC1=CC=C(C=O)C=C1) → accepted
+
+╔═══ DRAW 4: 4-(but-3-en-1-yl)benzaldehyde: 5 steps, 2 branch point(s) (Hydrocarbons, Alkyl Halides, Aldehydes & Ketones) ═══╗
+  P = 4-(but-3-en-1-yl)benzaldehyde
+  P --[HBr]--> Q
+  Q --[alc. KOH, heat]--> R
+  R --[Tollens' reagent, then H₃O⁺]--> S
+  R --[CH₃NH₂, H⁺ (cat.), −H₂O]--> T
+  Q --[NH₃, H₂/Pt]--> U
+  P = C=CCCc1ccc(C=O)cc1
+  Q = CC(Br)CCc1ccc(C=O)cc1
+  R = CC=CCc1ccc(C=O)cc1
+  S = CC=CCc1ccc(C(=O)O)cc1
+  T = CC=CCc1ccc(C=NC)cc1
+  U = CC(Br)CCc1ccc(CN)cc1
+    [step check] U (NH₃, H₂/Pt): engine CC(Br)CCc1ccc(CN)cc1, checker no single product (NH₃/H₂/Pt can reductively aminate the aldehyde, but the secondary alkyl bromide can also undergo hydrogenolysi)
+  ✗ 1 step(s) not confirmed: scheme held for review (STE_20261125T021319_42); next draw
+  [start] same molecule, scheme 2 of 3: 4-(but-3-en-1-yl)benzaldehyde
+
+╔═══ DRAW 5: 4-(but-3-en-1-yl)benzaldehyde: 5 steps, 1 branch point(s) (Aldehydes & Ketones, Hydrocarbons, Alcohols, Phenols & Ethers) ═══╗
+  P = 4-(but-3-en-1-yl)benzaldehyde
+  P --[PCl₅]--> Q
+  Q --[dil. H₂SO₄]--> R
+  R --[CH₂N₂, HBF₄]--> S
+  Q --[Br₂, H₂O]--> T
+  T --[TsCl, pyridine]--> U
+  P = C=CCCc1ccc(C=O)cc1
+  Q = C=CCCc1ccc(C(Cl)Cl)cc1
+  R = CC(O)CCc1ccc(C(Cl)Cl)cc1
+  S = COC(C)CCc1ccc(C(Cl)Cl)cc1
+  T = OC(CBr)CCc1ccc(C(Cl)Cl)cc1
+  U = Cc1ccc(S(=O)(=O)OC(CBr)CCc2ccc(C(Cl)Cl)cc2)cc1
+    [step check] R (dil. H₂SO₄): engine CC(O)CCc1ccc(C(Cl)Cl)cc1, checker no single product (Aqueous dilute H₂SO₄ can hydrolyze the benzylic gem-dichloride to an aldehyde and can also hydrate the termina)
+  ✗ 1 step(s) not confirmed: scheme held for review (STE_20261125T021354_43); next draw
+  [start] same molecule, scheme 3 of 3: 4-(but-3-en-1-yl)benzaldehyde
+
+╔═══ DRAW 6: 4-(but-3-en-1-yl)benzaldehyde: 5 steps, 2 branch point(s) (Aldehydes & Ketones, Hydrocarbons, Alcohols, Phenols & Ethers) ═══╗
+  P = 4-(but-3-en-1-yl)benzaldehyde
+  P --[PCl₅]--> Q
+  Q --[OsO₄, NMO]--> R
+  R --[CH₂N₂, HBF₄]--> S
+  Q --[dil. H₂SO₄]--> T
+  Q --[HBr]--> U
+  P = C=CCCc1ccc(C=O)cc1
+  Q = C=CCCc1ccc(C(Cl)Cl)cc1
+  R = OCC(O)CCc1ccc(C(Cl)Cl)cc1
+  S = COCC(CCc1ccc(C(Cl)Cl)cc1)OC
+  T = CC(O)CCc1ccc(C(Cl)Cl)cc1
+  U = CC(Br)CCc1ccc(C(Cl)Cl)cc1
+    [step check] S (CH₂N₂, HBF₄): engine COCC(CCc1ccc(C(Cl)Cl)cc1)OC, checker no single product (The standard CH₂N₂/HBF₄ carbonyl-homologation reaction requires a carbonyl, which this diol/gem-dichloride sub)
+    [step check] T (dil. H₂SO₄): engine CC(O)CCc1ccc(C(Cl)Cl)cc1, checker no single product (Aqueous dilute H₂SO₄ can both hydrate the terminal alkene and hydrolyze the Ar–CHCl₂ group to an aldehyde, so )
+  ✗ 2 step(s) not confirmed: scheme held for review (STE_20261125T021419_44); next draw
+
+✗ No question accepted this run.
+
+Spend this run: $0.0399  {"total_cost_usd": 0.03993, "by_role": {"start_picker": {"calls": 3, "prompt_tokens": 6030, "completion_tokens": 3793, "cost": 0.01875}, "name_checker": {"calls": 2, "prompt_tokens": 203, "completion_tokens": 218, "cost": 0.0001293}, "step_checker": {"calls": 29, "prompt_tokens": 4801, "completion_tokens": 41139, "cost": 0.02105}}}
+[07:44:19] organic: run finished in 170s (exit=0, question saved: no)
+[07:44:19] spend so far: $0.0399 of $3.00
+[07:44:19] [no accept] organic: 1 consecutive failure(s).
+[07:44:21] --- organic | attempt 2 | accepted 0/20 ---
+[07:44:21] organic: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Organic Chemistry: 11 accepted so far.
+  [start] try 1: 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile (C=C(CCC#N)c1ccc(CO)cc1) → accepted
+
+╔═══ DRAW 1: 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile: 6 steps, 1 branch point(s) (Hydrocarbons, Carboxylic Acids & Derivatives, Alcohols, Phenols & Ethers) ═══╗
+  P = 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile
+  P --[mCPBA]--> Q
+  Q --[KMnO₄, H⁺, heat]--> R
+  R --[HBr (1 equiv)]--> S
+  S --[CH₃COCl, pyridine]--> T
+  T --[CH₃OH, conc. H₂SO₄ (cat.), heat]--> U
+  R --[CH₃NH₂]--> V
+  P = C=C(CCC#N)c1ccc(CO)cc1
+  Q = N#CCCC1(c2ccc(CO)cc2)CO1
+  R = N#CCCC1(c2ccc(C(=O)O)cc2)CO1
+  S = N#CCCC(Br)(CO)c1ccc(C(=O)O)cc1
+  T = CC(=O)OCC(Br)(CCC#N)c1ccc(C(=O)O)cc1
+  U = COC(=O)c1ccc(C(Br)(CCC#N)COC(C)=O)cc1
+  V = CNCC(O)(CCC#N)c1ccc(C(=O)O)cc1
+    [step check] R (KMnO₄, H⁺, heat): engine N#CCCC1(c2ccc(C(=O)O)cc2)CO1, checker no single product (Hot acidic KMnO₄ oxidizes the benzylic alcohol, but it can also open the acid-sensitive epoxide and further ox)
+    [step check] S (HBr (1 equiv)): engine N#CCCC(Br)(CO)c1ccc(C(=O)O)cc1, checker N#CCC(Br)(c1ccc(C(=O)O)cc1)CO (HBr opens the protonated epoxide at its more substituted benzylic carbon, leaving OH on the terminal carbon wh)
+    [step check] T (CH₃COCl, pyridine): engine CC(=O)OCC(Br)(CCC#N)c1ccc(C(=O)O)cc1, checker no single product (Acetyl chloride/pyridine is not selective for this substrate: the alcohol can form an acetate, the carboxylate)
+    [step check] U (CH₃OH, conc. H₂SO₄ (cat.), heat): engine COC(=O)c1ccc(C(Br)(CCC#N)COC(C)=O)cc1, checker no single product (Methanolic sulfuric acid can esterify the aromatic carboxylic acid, transesterify the acetate, and solvolyze t)
+    [step check] V (CH₃NH₂): engine CNCC(O)(CCC#N)c1ccc(C(=O)O)cc1, checker N#CCCC1(c2ccc(C(=O)[O-])cc2)CO1.C[NH3+] (Methylamine is protonated by the carboxylic acid to form the methylammonium carboxylate salt, leaving the epox)
+  ✗ 5 step(s) not confirmed: scheme held for review (STE_20261125T021513_45); next draw
+  [start] same molecule, scheme 2 of 3: 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile
+
+╔═══ DRAW 2: 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile: 5 steps, 1 branch point(s) (Alcohols, Phenols & Ethers, Hydrocarbons, Alkyl Halides) ═══╗
+  P = 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile
+  P --[CH₂N₂, HBF₄]--> Q
+  Q --[Br₂, H₂O]--> R
+  R --[TsCl, pyridine]--> S
+  S --[AgNO₂]--> T
+  S --[CH₃ONa]--> U
+  P = C=C(CCC#N)c1ccc(CO)cc1
+  Q = C=C(CCC#N)c1ccc(COC)cc1
+  R = COCc1ccc(C(O)(CBr)CCC#N)cc1
+  S = COCc1ccc(C(CBr)(CCC#N)OS(=O)(=O)c2ccc(C)cc2)cc1
+  T = COCc1ccc(C(CCC#N)(C[N+](=O)[O-])OS(=O)(=O)c2ccc(C)cc2)cc1
+  U = COCc1ccc(C(CCC#N)(COC)OS(=O)(=O)c2ccc(C)cc2)cc1
+    [step check] T (AgNO₂): engine COCc1ccc(C(CCC#N)(C[N+](=O)[O-])OS(=O)(=O)c2ccc(C)cc2)cc1, checker no single product (AgNO₂ can substitute the primary bromomethyl group by SN2 while the highly stabilized tertiary benzylic tosyla)
+    [step check] U (CH₃ONa): engine COCc1ccc(C(CCC#N)(COC)OS(=O)(=O)c2ccc(C)cc2)cc1, checker no single product (Methoxide can displace the primary bromide by SN2, while the tertiary benzylic tosylate can undergo E2 at diff)
+  ✗ 2 step(s) not confirmed: scheme held for review (STE_20261125T021548_46); next draw
+  [start] same molecule, scheme 3 of 3: 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile
+
+╔═══ DRAW 3: 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile: 4 steps, 1 branch point(s) (Hydrocarbons, Carboxylic Acids & Derivatives, Alcohols, Phenols & Ethers) ═══╗
+  P = 4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile
+  P --[mCPBA]--> Q
+  Q --[KMnO₄, H⁺, heat]--> R
+  R --[H₂O, OH⁻]--> S
+  R --[CH₃NH₂]--> T
+  P = C=C(CCC#N)c1ccc(CO)cc1
+  Q = N#CCCC1(c2ccc(CO)cc2)CO1
+  R = N#CCCC1(c2ccc(C(=O)O)cc2)CO1
+  S = N#CCCC(O)(CO)c1ccc(C(=O)O)cc1
+  T = CNCC(O)(CCC#N)c1ccc(C(=O)O)cc1
+Traceback (most recent call last):
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_step_check.py", line 89, in check_scheme
+    rows = list(ex.map(one, steps))
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\concurrent\futures\_base.py", line 639, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\concurrent\futures\_base.py", line 311, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\concurrent\futures\_base.py", line 445, in result
+    self._condition.wait(timeout)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 369, in wait
+    waiter.acquire()
+    ~~~~~~~~~~~~~~^^
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 501, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 447, in main
+    outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\flow.py", line 628, in run
+    return org_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_qfirst.py", line 595, in run
+    bad = org_step_check.check_scheme(cand)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_step_check.py", line 88, in check_scheme
+    with ThreadPoolExecutor(max_workers=6) as ex:
+         ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\concurrent\futures\_base.py", line 667, in __exit__
+    self.shutdown(wait=True)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\concurrent\futures\thread.py", line 273, in shutdown
+    t.join()
+    ~~~~~~^^
+  File "C:\Users\Vidur\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1133, in join
+    self._os_thread_handle.join(timeout)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+KeyboardInterrupt

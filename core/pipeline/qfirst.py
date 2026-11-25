@@ -44,6 +44,7 @@ import random
 
 from core import dedup, models
 from core.engine import sandbox
+from core.pipeline.qf_shortcut import shortcut_problem  # noqa: E402
 from core.engine.base import ChainResult
 # Every stage's names, reachable as qfirst.<name> as before the split (this file, tools and tests use them).
 from core.pipeline.qf_text import (  # noqa: F401, E402
@@ -61,7 +62,7 @@ from core.pipeline.qf_writer import (  # noqa: F401, E402
     WRITE_TRIES, BLANK_RULES, write_question, STANDARD_CONSTANTS, _RESERVED, _num, parse_values,
     blank_problems, constant_names, _typical, preview_text, previous_text, blank_names, blank_spec)
 from core.pipeline.qf_checks import (  # noqa: F401, E402
-    COHERENCE_REJECT_AT, MIN_TRAPS, _squash, unneeded, question_problems, COHERENCE_QUESTIONS,
+    COHERENCE_REJECT_AT, MIN_TRAPS, _squash, unneeded, question_problems, trace_problems, COHERENCE_QUESTIONS,
     COHERENCE_PERCENTILE, LOOSER_PERCENTILE, _pct, _coherence_cuts, coherence_scores, coherence_problems,
     LEVELS, LEVEL_INSTRUCTIONS, _level_floor, jev_level, level_problem, _IMPOSSIBLE_VALUE, explain,
     _unused_by_name)
@@ -230,8 +231,13 @@ def write_and_solve(adapter, cand, twist, bb, rng, previous=None, feedback=None,
             left = [t for t in run.get("unused_steps") or () if t in kept]
             if left:                             # a drawn formula the program never called and that cannot go
                 probs.append(f"the program never calls {', '.join(f'step_{t}' for t in left)}")
+            probs += trace_problems(run, asks)   # K_c used as K_p, data that contradict, an unreal element
         if not probs:
             probs = coherence_problems(stem)     # only drafts that pass every code check are sent to Jev
+        if not probs:                            # does the hidden step change the answer? (one coder call)
+            sp = shortcut_problem(design, stem, code, run,
+                                  {g["quote"]: g["value"] for g in run["givens"]} if blanks else None, bb)
+            probs = [sp] if sp else []
         if probs:
             bb.note("question_rejected", attempt=attempt + 1, problems=probs)
             print(f"    question rejected ({attempt + 1}/{WRITE_TRIES}): {'; '.join(probs)[:220]}")
@@ -266,8 +272,9 @@ def refine_round(cand, twist, stem, graded, used, rng, bb):
     from core.pipeline import refine
     drawn = list(cand.get("drawn_txs") or cand["txs"])
     unavailable = set(used)
-    if len(drawn) >= 5:
-        unavailable.add("too_few_steps")         # already the most formulas a draw may have
+    # never one more formula: it made questions longer, not harder (a back-titration bolted onto a photoelectric
+    # question, 2026-11-25; real hard questions are short, with one hidden step)
+    unavailable.add("too_few_steps")
     working = next((str(g.get("working") or "") for g in graded if g.get("counts_as_solved")), "")
     try:
         probs = refine.classify(stem, formulas_text([ph.step(t) for t in drawn]), working, unavailable)

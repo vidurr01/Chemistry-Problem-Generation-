@@ -1,0 +1,229 @@
+{
+ "subject": "organic",
+ "saved_at": "20261125T021607",
+ "spend": {
+  "total_cost_usd": 0.0194,
+  "by_role": {
+   "start_picker": {
+    "calls": 1,
+    "prompt_tokens": 1990,
+    "completion_tokens": 1050,
+    "cost": 0.00543
+   },
+   "name_checker": {
+    "calls": 1,
+    "prompt_tokens": 108,
+    "completion_tokens": 146,
+    "cost": 8.38e-05
+   },
+   "step_checker": {
+    "calls": 14,
+    "prompt_tokens": 2389,
+    "completion_tokens": 27289,
+    "cost": 0.013883399999999999
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_epoxide_mcpba",
+     "alcohol_to_carboxylic_acid_kmno",
+     "epoxide_to_halohydrin_hx",
+     "alcohol_to_ester_rcocl",
+     "carboxylic_acid_to_ester_roh",
+     "epoxide_to_alcohol_rnh"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "epoxide",
+     "carboxylic_acid",
+     "halohydrin",
+     "ester",
+     "ester",
+     "alcohol"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     6,
+     26,
+     271,
+     490,
+     68,
+     29,
+     143,
+     147,
+     638,
+     43,
+     641,
+     69
+    ],
+    "trap_ids": [],
+    "description": "4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:15:13.181020+00:00",
+     "held": "STE_20261125T021513_45",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alcohol_to_carboxylic_acid_kmno",
+       "substrate": "N#CCCC1(c2ccc(CO)cc2)CO1",
+       "reagent": "KMnO₄, H⁺, heat",
+       "engine": "N#CCCC1(c2ccc(C(=O)O)cc2)CO1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Hot acidic KMnO₄ oxidizes the benzylic alcohol, but it can also open the acid-sensitive epoxide and further oxidize the resulting products, so the stated textbook alcohol oxidation does not define a single major product for this substrate."
+      },
+      {
+       "label": "S",
+       "edge": "epoxide_to_halohydrin_hx",
+       "substrate": "N#CCCC1(c2ccc(C(=O)O)cc2)CO1",
+       "reagent": "HBr (1 equiv)",
+       "engine": "N#CCCC(Br)(CO)c1ccc(C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "N#CCC(Br)(c1ccc(C(=O)O)cc1)CO",
+       "reason": "HBr opens the protonated epoxide at its more substituted benzylic carbon, leaving OH on the terminal carbon while the nitrile and carboxylic acid remain unchanged."
+      },
+      {
+       "label": "T",
+       "edge": "alcohol_to_ester_rcocl",
+       "substrate": "N#CCCC(Br)(CO)c1ccc(C(=O)O)cc1",
+       "reagent": "CH₃COCl, pyridine",
+       "engine": "CC(=O)OCC(Br)(CCC#N)c1ccc(C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Acetyl chloride/pyridine is not selective for this substrate: the alcohol can form an acetate, the carboxylate can form a mixed anhydride, and the tertiary benzylic bromide is also labile, so the unspecified stoichiometry and conditions do not define one major product."
+      },
+      {
+       "label": "U",
+       "edge": "carboxylic_acid_to_ester_roh",
+       "substrate": "CC(=O)OCC(Br)(CCC#N)c1ccc(C(=O)O)cc1",
+       "reagent": "CH₃OH, conc. H₂SO₄ (cat.), heat",
+       "engine": "COC(=O)c1ccc(C(Br)(CCC#N)COC(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Methanolic sulfuric acid can esterify the aromatic carboxylic acid, transesterify the acetate, and solvolyze the tertiary benzylic bromide, so the textbook Fischer-esterification outcome is not uniquely predictable for this substrate."
+      },
+      {
+       "label": "V",
+       "edge": "epoxide_to_alcohol_rnh",
+       "substrate": "N#CCCC1(c2ccc(C(=O)O)cc2)CO1",
+       "reagent": "CH₃NH₂",
+       "engine": "CNCC(O)(CCC#N)c1ccc(C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "N#CCCC1(c2ccc(C(=O)[O-])cc2)CO1.C[NH3+]",
+       "reason": "Methylamine is protonated by the carboxylic acid to form the methylammonium carboxylate salt, leaving the epoxide intact rather than opening it."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_carbene_chndiazometh",
+     "alkene_to_halohydrin_br",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alkyl_halide_to_ether_rona"
+    ],
+    "nodes": [
+     "alkene",
+     "ether",
+     "halohydrin",
+     "sulfonate",
+     "nitro_compound",
+     "ether"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Hydrocarbons",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     144,
+     7,
+     247,
+     285,
+     22,
+     131
+    ],
+    "trap_ids": [],
+    "description": "4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:15:48.369234+00:00",
+     "held": "STE_20261125T021548_46",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "alkyl_halide_to_nitro_compound_agno2silvern",
+       "substrate": "COCc1ccc(C(CBr)(CCC#N)OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "reagent": "AgNO₂",
+       "engine": "COCc1ccc(C(CCC#N)(C[N+](=O)[O-])OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "AgNO₂ can substitute the primary bromomethyl group by SN2 while the highly stabilized tertiary benzylic tosylate can ionize and undergo competing substitution or elimination, so without specified conditions there is no unique textbook product."
+      },
+      {
+       "label": "U",
+       "edge": "alkyl_halide_to_ether_rona",
+       "substrate": "COCc1ccc(C(CBr)(CCC#N)OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "reagent": "CH₃ONa",
+       "engine": "COCc1ccc(C(CCC#N)(COC)OS(=O)(=O)c2ccc(C)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Methoxide can displace the primary bromide by SN2, while the tertiary benzylic tosylate can undergo E2 at different β-sites or ionization and capture, so the stated conditions do not establish a unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_epoxide_mcpba",
+     "alcohol_to_carboxylic_acid_kmno",
+     "epoxide_to_diol_ho",
+     "epoxide_to_alcohol_rnh"
+    ],
+    "nodes": [
+     "nitrile",
+     "epoxide",
+     "carboxylic_acid",
+     "diol",
+     "alcohol"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     6,
+     26,
+     271,
+     490,
+     67,
+     69
+    ],
+    "trap_ids": [],
+    "description": "4-[4-(hydroxymethyl)phenyl]pent-4-enenitrile: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": []
+  }
+ ]
+}

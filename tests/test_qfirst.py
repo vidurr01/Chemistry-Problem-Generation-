@@ -266,12 +266,12 @@ class RandomChains(unittest.TestCase):
 
 
 class RandomFormulas(unittest.TestCase):
-    def test_3_to_5_connected_steps(self):
+    def test_2_to_3_connected_steps(self):
         a = adapters.PhysicalAdapter(entry.get_subject_config("physical"), random.Random(5))
         seen, linked = set(), 0
         for _ in range(300):
             c = a.random_formulas()
-            self.assertTrue(3 <= len(c["txs"]) <= 5 and len(set(c["txs"])) == len(c["txs"]))
+            self.assertTrue(2 <= len(c["txs"]) <= 3 and len(set(c["txs"])) == len(c["txs"]))
             self.assertEqual([s.tx for s in c["_plan"].steps], c["txs"])
             seen |= set(c["txs"])
             st = c["_steps"]
@@ -280,7 +280,8 @@ class RandomFormulas(unittest.TestCase):
             for i, t in enumerate(c["txs"][1:], 1):            # each shares a quantity with an earlier one
                 self.assertTrue(q(t) & set().union(*(q(x) for x in c["txs"][:i])), c["txs"])
         self.assertGreater(len(seen), 200)                 # of 311: the first formula comes from anywhere
-        self.assertLess(linked, 30)                        # no chain condition
+        self.assertLess(linked, 100)                       # no chain condition (two formulas sharing a quantity
+                                                           # often line up by chance: 52 of 300)
         c = a.random_formulas(chapter="Solid State")
         self.assertTrue(all(ph._domain(t) == "Solid State" for t in c["txs"]))
         self.assertIsNone(a.random_formulas(chapter="no such chapter"))
@@ -333,22 +334,21 @@ class Refinement(unittest.TestCase):
         self.assertIn(qfirst.TWISTS[twist], fb)
         self.assertTrue(fb.startswith("Your earlier question was solved easily"))
 
-    def test_too_few_steps_draws_one_more_formula(self):
-        with mock.patch("core.pipeline.refine.jev_choose", _choose(lambda q: 0.95 if q == "too_few_steps" else 0.0)):
-            cand, _, fb = qfirst.refine_round(self._cand(), "inverse", STEM, [], set(), random.Random(1), self._bb())
-        self.assertEqual(len(cand["drawn_txs"]), 4)
-        self.assertIn("One more formula has been added", fb)
-        five = self._cand([117, 357, 130, 1, 2])                        # already 5: never offered
-        with mock.patch("core.pipeline.refine.jev_choose", _choose(lambda q: 0.9)) as _:
+    def test_never_draws_one_more_formula(self):
+        """2026-11-25: an added formula made questions longer, not harder; too_few_steps is never offered."""
+        before = self._cand()
+        with mock.patch("core.pipeline.refine.jev_choose", _choose(lambda q: 0.95 if q == "too_few_steps" else 0.1)):
             used = set()
-            qfirst.refine_round(five, "inverse", STEM, [], used, random.Random(1), self._bb())
+            cand, _, fb = qfirst.refine_round(before, "inverse", STEM, [], used, random.Random(1), self._bb())
         self.assertNotIn("too_few_steps", used)
+        self.assertEqual(cand.get("drawn_txs") or cand["txs"], before.get("drawn_txs") or before["txs"])
+        self.assertNotIn("One more formula has been added", fb)
 
     def test_a_new_twist_or_formula_drops_the_old_design(self):
         """The design is planned for one twist and one formula set: a refinement that changes either must not
         hand the writer the old plan; one that only changes the wording keeps it."""
         designed = {**self._cand(), "_design": {"situation": "argon expanding at 300 K"}}
-        for case, keeps in (("cue_word", True), ("plugin_order", False), ("too_few_steps", False)):
+        for case, keeps in (("cue_word", True), ("plugin_order", False)):
             with mock.patch("core.pipeline.refine.jev_choose", _choose(lambda q, c=case: 0.95 if q == c else 0.0)):
                 cand, _, _ = qfirst.refine_round(designed, "two_state_ratio", STEM, [], set(), random.Random(1),
                                                  self._bb())
@@ -1755,7 +1755,7 @@ class QuestionFirstFlow(unittest.TestCase):
             self.assertEqual(self._run(fake), 0)
         rewrites = [u for r, u in fake.prompts if r == "generator" and "REWRITE your earlier question" in u]
         self.assertTrue(any("Remove every word that names a law" in u for u in rewrites))
-        self.assertTrue(any("Keep the formulas but move the problem" in u for u in rewrites))
+        self.assertTrue(any("Do not dress it up in a new setting" in u for u in rewrites))
         self.assertEqual(self._records(), [])
         # every draw: the first question and one rewrite per refinement round, all by the writer
         self.assertEqual(fake.calls.count("generator"), qfirst.MAX_DRAWS * 4)

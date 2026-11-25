@@ -27,15 +27,28 @@ from core.engine.base import ChainResult, EngineError
 from core.engine.inorganic import species as S
 from core.llm import CutOffError
 
-MAX_DRAWS = 6
+MAX_DRAWS = 10           # inorganic only; medium-hard rejects more draws (spend cap still applies)
 CHAIN_MIN, CHAIN_MAX = 2, 4
 LETTERS = "ABCD"
 FORMATS = ("msq", "mcq_correct", "mcq_incorrect", "count", "identify")
 CLAIM_RETRIES = 1        # a draft whose claims code cannot read is sent back once with the exact problems
-PRODUCTS_SHARE = 0.5     # share of draws that are "hidden products" counts (inorg_products.py): reactions whose
-                         # products the student works out, then judges one by one (identity + enumeration + trap)
-LIST_SHARE = 0.3         # share that are "how many species in this list" questions (inorg_list.py); about nine
-                         # in ten real Advanced inorganic questions make the student judge every item of a list
+SYSTEM_SHARE = 0.7       # "one reaction system, products as letters" (inorg_system.py): the commonest real
+                         # Advanced inorganic shape (2019-2025 papers read on 2026-11-25)
+PRODUCTS_SHARE = 0.0     # "hidden products" counts (inorg_products.py): retired 2026-11-25, not a real JEE format
+LIST_SHARE = 0.3         # "how many species in this list" (inorg_list.py): a real Advanced format (2023, 2024)
+# Inorganic only. A model listed here solving a question makes it "too easy". GLM was listed on 2026-11-25 and
+# removed the same day: on 17 real Advanced inorganic questions with student results, altered so nothing could be
+# recalled (calibration/ladder_vs_students_inorganic.py), GLM solved 4 of 6 hard and 4 of 6 medium ones, while
+# Granite solved 1 of 6 hard, 2 of 6 medium, 4 of 5 easier. "Granite fails" is the medium-hard bar; GLM only labels.
+TOO_EASY_SOLVERS = ()
+# Granite answers up to BOTTOM_TRIES times and FAILS only if right at most BOTTOM_MAX_RIGHT times; asking stops once
+# decided (a 2nd right answer: solved; BOTTOM_TRIES - BOTTOM_MAX_RIGHT wrong: failed). Measured 2026-11-25
+# (calibration/granite_tries_stability.py, Granite 7-10 tries on 44 real question versions): real questions are
+# nearly all-or-nothing for Granite, so "3 tries, >= 2" flipped only 6%; the flips came from our borderline drafts
+# (Granite right ~half the time), which "3, >= 2" accepted 50% of the time, this rule 19%. Real accepted: hard 83 ->
+# 81%, medium 80 -> 69%, easier 23 -> 20%, Mains 30 -> 25%.
+BOTTOM_TRIES, BOTTOM_MAX_RIGHT = 5, 1
+REASKS = 2                             # an unreadable answer is asked again up to twice; never a failure
 
 
 # ── draw ─────────────────────────────────────────────────────────────────────
@@ -343,10 +356,22 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     rng = rng or random.Random()
     cap = adapter.config.get("max_run_spend")
     name = adapter.config["display_name"]
+    only = os.environ.get("INORG_ONLY")            # "products" / "list" / "system": one kind only (pilots)
     for n_draw in range(1, MAX_DRAWS + 1):
         if over_budget(cap):
             break
-        r = rng.random()
+        if only in ("products", "list"):
+            made = _list_question(adapter, rng, bb, log, n_draw, kind=only)
+            if made is not None:
+                return made
+            continue
+        r = 0.0 if only == "system" else rng.random()
+        if r < SYSTEM_SHARE:
+            made = _system_question(adapter, rng, bb, log, n_draw)
+            if made is not None:
+                return made
+            continue
+        r -= SYSTEM_SHARE
         if r < PRODUCTS_SHARE + LIST_SHARE:
             made = _list_question(adapter, rng, bb, log, n_draw,
                                   kind="products" if r < PRODUCTS_SHARE else "list")
@@ -430,10 +455,10 @@ def _list_question(adapter, rng, bb, log, n_draw, kind="list"):
     if kind == "products":
         if not hasattr(adapter, "_bad_products"):
             adapter._bad_products = set()          # reactions the blind check did not confirm in this run
-        cand = inorg_products.draw(list(_graph(adapter)["edges"].values()), rng, tried=bb.tried_edges(),
-                                   bad=adapter._bad_products)
+        edges = inorg_products.with_naive(list(_graph(adapter)["edges"].values())) + inorg_products.variant_edges()
+        cand = inorg_products.draw(edges, rng, tried=bb.tried_edges(), bad=adapter._bad_products)
     else:
-        cand = inorg_list.draw(rng, tried=bb.tried_edges())
+        cand = inorg_list.draw(rng, tried=bb.tried_edges(), used=used_list_conditions(adapter))
     if cand is None:
         print(f"  no {'reaction list' if kind == 'products' else 'species list'} left")
         return None
@@ -457,6 +482,12 @@ def _list_question(adapter, rng, bb, log, n_draw, kind="list"):
     bb.note("qfirst", stem=stem, answer=result.answer, trace=result.trace, traps=result.traps)
     print(f"  [question] {stem.splitlines()[0]}")
     print(f"  [key] {result.answer} (computed by code)")
+    # hidden products (retired) keep their old signature so earlier accepted ones still match
+    sig = (_signature(adapter, cand, "species_list") if kind == "list"
+           else dedup.signature(adapter.subject, cand["edges"], values))
+    if dedup.duplicate_of(sig):                    # before the level check is paid for
+        print("  [dedup] same as an accepted question; next draw")
+        return None
     from core.pipeline import qf_checks            # Jev's level check, calibrated on real inorganic papers
     floor = qf_checks._level_floor(adapter.subject)
     if floor is not None:                          # live run of 2026-11-24: a Main-level list (1.33) was accepted
@@ -468,17 +499,243 @@ def _list_question(adapter, rng, bb, log, n_draw, kind="list"):
                 log({"event": "too_easy", "chain": cand["edges"], "reason": f"level {lvl:.2f} < {floor:.2f}"})
                 print("  ✗ below JEE Advanced level (before the ladder is paid for); next draw")
                 return None
-    sig = dedup.signature(adapter.subject, cand["edges"], values)
-    if dedup.duplicate_of(sig):
-        print("  [dedup] same as an accepted question; next draw")
-        return None
-    decision = flow.judge(adapter, cand, None, values, result, stem, bb, log)
+    decision = _judge_medium_hard(adapter, cand, values, result, stem, bb, log)
     log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"], "stem": stem,
          "answer": result.answer, "reason": decision.get("reason")})
     if decision["decision"] == "accept":
         return {"status": "accepted", "payload": {
             "cand": cand, "plan": None, "values": values, "scenario": ("inorganic hidden products (count)" if kind == "products"
                                                      else "inorganic species list (count)"),
+            "result": result, "stem": stem, "decision": decision, "sig": sig, "solver_code": None}}
+    print(f"  ✗ {decision['decision']}" + (f" ({decision.get('reason')})" if decision.get("reason") else "")
+          + "; next draw")
+    return None
+
+
+def _accepted_engines(adapter) -> list:
+    """The engine records of accepted inorganic questions (rejected-on-review ones left out), [] if none."""
+    path = adapter.config.get("output_file")
+    try:
+        with open(path, encoding="utf-8") as f:
+            recs = json.load(f)
+    except (OSError, ValueError, TypeError):
+        return []
+    return [r.get("engine") or {} for r in recs if isinstance(r, dict) and not r.get("rejected")]
+
+
+def asked_species_sets(adapter) -> list:
+    """For each accepted reaction-system question, the set of lettered species it asks about. A new system that
+    asks about two of the same species is the same question to a student whatever reaction leads in (batch
+    2026-11-25: NaNO₂ + NH₄Cl → N₂ → NH₃ accepted after NH₄NO₂ → N₂ → NH₃ and NaNO₃ → ... → N₂ → NH₃)."""
+    out = []
+    for e in _accepted_engines(adapter):
+        labels = (e.get("givens") or {}).get("labels") or {}
+        if str(e.get("form", "")).startswith("inorganic_system") and labels:
+            out.append(frozenset(labels))
+    return out
+
+
+def asked_fact_pairs(adapter) -> set:
+    """(species, fact key) pairs accepted reaction-system questions already state, e.g. ("NO", "bond_order")."""
+    out = set()
+    for e in _accepted_engines(adapter):
+        if not str(e.get("form", "")).startswith("inorganic_system"):
+            continue
+        for t in e.get("trace") or []:
+            m = re.search(r"\(species (.+)\)\s*$", str(t.get("formula", "")))
+            if m:
+                out.add((m.group(1), t.get("dst")))
+    return out
+
+
+def used_list_conditions(adapter) -> dict:
+    """How many accepted species-list questions use each condition pair, e.g. {"magnetism=paramagnetic&
+    hybridisation=d2sp3": 3}; the list draw favours the less used (batch 2026-11-25: 3 of the first 4 were that one)."""
+    out = {}
+    for e in _accepted_engines(adapter):
+        for key in e.get("graph_edges") or []:
+            if str(key).startswith("list:"):
+                cond = str(key).split(":")[1]
+                out[cond] = out.get(cond, 0) + 1
+    return out
+
+
+def _signature(adapter, cand, mode) -> str:
+    """The duplicate-store signature of a code-built question: what the student works on, never its random
+    dressing. cand["edges"] is already order-free (a system's sorted reaction ids; a list's conditions and sorted
+    species). Before 2026-11-25 the signature also held the random letters and the shuffled options, so the same
+    system or list could be accepted again with other letters or in another order (review item #13). For a system
+    this means one accepted question per reaction system, whatever its form or statements."""
+    return dedup.signature(adapter.subject, cand["edges"], {"mode": mode})
+
+
+class _SolvedTooLow(Exception):
+    """Raised inside flow.judge once the ladder's result is noted and a TOO_EASY_SOLVERS model solved first."""
+
+    def __init__(self, council: dict):
+        super().__init__(council.get("first_solver"))
+        self.council = council
+
+
+class _StopAtLadder:
+    """The blackboard as flow.judge sees it, for inorganic only: every call goes to the real one, but the moment
+    the ladder's result is noted with GLM first, the judgement stops. Without it flow.judge went on to a second
+    Jev level call and an insight-hint re-solve for every failed model, then _medium_hard threw the result away
+    (review item #7, 2026-11-25; run 11 draw 3 paid for both). flow.judge itself is unchanged."""
+
+    def __init__(self, bb):
+        self._bb = bb
+
+    def __getattr__(self, name):
+        return getattr(self._bb, name)
+
+    def note(self, stage, **data):
+        out = self._bb.note(stage, **data)
+        if stage == "council" and data.get("first_solver") in TOO_EASY_SOLVERS:
+            raise _SolvedTooLow(data)
+        return out
+
+
+def _readable(result, m) -> bool:
+    """The member gave an answer code can read: a parsed answer line, or an option-letter / number answer.
+    A garbled line ("[TYPE: chemistry] [CALC_VALUE:] ...", live run 12) is NOT a wrong answer: it says nothing
+    about the question, only about the model's formatting."""
+    from core.pipeline import flow
+    if m.get("final_value") is not None:
+        return True
+    v = m.get("final_answer")
+    if v is None:
+        return False
+    if result.kind == "letters":
+        return bool(re.fullmatch(r"\s*\(?[A-D]\)?(?:\s*(?:,|and|&)?\s*\(?[A-D]\)?)*\s*\.?\s*", str(v)))
+    return flow._code_match(result, m) is not None
+
+
+def _measured_solver(result, solve):
+    """stages.council_solve as the inorganic ladder uses it (the author, 2026-11-25, after the real-question
+    measurement in calibration/ladder_vs_students_inorganic.py):
+      - an unreadable answer is asked again, up to REASKS times; it never counts as a failure. Still unreadable:
+        CouncilMemberFailed, so flow.judge parks the question (held, judged again next run), never a verdict;
+      - the bottom step (Granite) answers up to BOTTOM_TRIES times and counts as solved once it is right more
+        than BOTTOM_MAX_RIGHT times; it fails after BOTTOM_TRIES - BOTTOM_MAX_RIGHT wrong answers. A question
+        Granite gets right about half the time is borderline, not medium-hard: it is not accepted."""
+    from core.pipeline import flow
+    from core.pipeline.stages import CouncilMemberFailed
+    bottom = models.LADDER[0][0]
+
+    def one(stem, name, spec):
+        for k in range(1 + REASKS):
+            m = solve(stem, [name], spec)[0]
+            if _readable(result, m):
+                return m
+            print(f"    [{name}] unreadable answer ({str(m.get('final_answer'))[:50]!r}); asking again")
+        raise CouncilMemberFailed(f"{name}: no readable answer in {1 + REASKS} tries")
+
+    def measured(stem, names=None, spec=None):
+        out = []
+        for name in names or [n for n, _ in models.COUNCIL]:
+            if name != bottom:
+                out.append(one(stem, name, spec))
+                continue
+            tries, ok = [], []
+            while (sum(ok) <= BOTTOM_MAX_RIGHT and len(ok) - sum(ok) < BOTTOM_TRIES - BOTTOM_MAX_RIGHT):
+                tries.append(one(stem, name, spec))
+                ok.append(flow._grade(result, tries[-1])["counts_as_solved"])
+            n = sum(ok)
+            solved = n > BOTTOM_MAX_RIGHT
+            print(f"    [{name}] {n}/{len(tries)} tries right → {'solved' if solved else 'failed'} "
+                  f"({', '.join(str(m.get('final_answer'))[:12] for m in tries)})")
+            pick = next(m for m, s in zip(tries, ok) if s == solved)
+            out.append({**pick, "bottom_tries": f"{n}/{len(tries)}",
+                        "bottom_answers": [m.get("final_answer") for m in tries]})
+        return out
+    return measured
+
+
+def _judge_medium_hard(adapter, cand, values, result, stem, bb, log) -> dict:
+    """flow.judge for inorganic, with the measured solver (_measured_solver) in place of stages.council_solve
+    for this judgement only; flow.judge's own code is unchanged, and so are organic and physical."""
+    from unittest import mock
+    from core.pipeline import flow, stages
+    try:
+        with mock.patch.object(stages, "council_solve", _measured_solver(result, stages.council_solve)):
+            return _medium_hard(flow.judge(adapter, cand, None, values, result, stem, _StopAtLadder(bb), log))
+    except _SolvedTooLow as e:
+        for g in e.council.get("members") or []:
+            print(f"    [{g['name']}] {g.get('final_answer')} → {'solved' if g.get('counts_as_solved') else 'failed'}")
+        solver = e.council["first_solver"]
+        print(f"    inorganic: {solver} solved it → below medium Advanced (no level check or hints paid)")
+        return {"decision": "too_easy", "reason": f"{solver} solved it (inorganic: medium-hard only)",
+                "first_solver": solver, "graded": e.council.get("members") or []}
+
+
+def _medium_hard(decision: dict) -> dict:
+    """Inorganic only: an accepted question that GLM solves is lower-tier Advanced; the author wants medium to
+    hard (2026-11-25), so it counts as too easy here. flow.judge itself is unchanged for every subject."""
+    if decision.get("decision") == "accept" and decision.get("first_solver") in TOO_EASY_SOLVERS:
+        print(f"    inorganic: {decision['first_solver']} solved it → below medium Advanced")
+        return {**decision, "decision": "too_easy", "reason": f"{decision['first_solver']} solved it (inorganic: "
+                                                                "medium-hard only)"}
+    return decision
+
+
+def _system_question(adapter, rng, bb, log, n_draw):
+    """One "reaction system, products as letters" question (inorg_system.py): built and keyed by code, worded
+    like a real paper, every letter confirmed blind, then the level gate and the ladder (medium-hard only).
+    The accepted result, or None."""
+    from core.pipeline import flow, inorg_system as SY, qf_checks
+    if not hasattr(adapter, "_bad_system"):
+        adapter._bad_system = set()                # edges whose product the blind check did not confirm
+    memory = SY.load_memory()                      # what earlier runs learned (review item #6, 2026-11-25)
+    cand = SY.draw(_graph(adapter), rng, tried=bb.tried_edges() | {(k,) for k in memory["bottom_solved"]},
+                   bad=adapter._bad_system | set(memory["unconfirmed_edges"]), asked=asked_species_sets(adapter))
+    if cand is None:
+        print("  no reaction system left")
+        return None
+    cand["_system"]["asked_facts"] = asked_fact_pairs(adapter)   # the statements avoid what was asked before
+    print(f"\n╔═══ DRAW {n_draw}: {cand['description']} ({', '.join(cand['chapters'])}) ═══╗")
+    bb.start_chain(cand)
+    sig = _signature(adapter, cand, "inorganic_system")
+    if dedup.duplicate_of(sig):                    # checked before anything is paid for
+        print("  [dedup] a question on this reaction system was already accepted; next draw")
+        return None
+    made = SY.question(cand, rng)
+    if made is None:
+        print("  ✗ no four mixed statements on this system; next draw")
+        return None
+    stem, result, form, prose = made
+    print(f"  [question] {form}, {'prose' if prose else 'scheme'} opening; key {result.answer} (code)")
+    bad = SY.check_letters(cand, result.opening)   # identity of every letter, blind (reactions only, no options)
+    bb.note("letter_check", disagree=bad)
+    if bad:
+        for e, _b in SY.blamed_steps(cand, bad):  # not the correct steps after a misread one
+            adapter._bad_system.add(e["id"])
+        SY.remember_unconfirmed(cand, bad)         # later runs skip it too (a failed call is not kept)
+        log({"event": "letter_disagreement", "chain": cand["edges"], "letters": bad})
+        print(f"  ✗ letter check (GPT-6 Luna, blind) differs on {len(bad)}: "
+              + "; ".join(f"{b['letter']} {b['graph']} vs {b['checker']}" for b in bad)[:240] + "; next draw")
+        return None
+    print(f"  [letter check] all {len(cand['_system']['labels'])} letters confirmed (GPT-6 Luna, blind)")
+    values = {"options": result.options, "mode": f"system_{form}", "labels": dict(cand["_system"]["labels"])}
+    bb.note("qfirst", stem=stem, answer=result.answer, trace=result.trace, traps=result.traps)
+    floor = qf_checks._level_floor(adapter.subject)
+    if floor is not None:
+        lvl = qf_checks.jev_level(stem)
+        if lvl is not None:
+            print(f"    [level] Jev: {lvl:.2f}; floor {floor:.2f}")
+            bb.note("level", score=lvl, floor=floor)
+            if lvl < floor:
+                log({"event": "too_easy", "chain": cand["edges"], "reason": f"level {lvl:.2f} < {floor:.2f}"})
+                print("  ✗ below JEE Advanced level (before the ladder is paid for); next draw")
+                return None
+    decision = _judge_medium_hard(adapter, cand, values, result, stem, bb, log)
+    log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"], "stem": stem,
+         "answer": result.answer, "reason": decision.get("reason")})
+    if decision["decision"] == "too_easy" and decision.get("first_solver") == models.LADDER[0][0]:
+        SY.remember_bottom_solved(cand, decision["first_solver"], stem)    # easy whatever the statements
+    if decision["decision"] == "accept":
+        return {"status": "accepted", "payload": {
+            "cand": cand, "plan": None, "values": values, "scenario": f"inorganic reaction system ({form})",
             "result": result, "stem": stem, "decision": decision, "sig": sig, "solver_code": None}}
     print(f"  ✗ {decision['decision']}" + (f" ({decision.get('reason')})" if decision.get("reason") else "")
           + "; next draw")

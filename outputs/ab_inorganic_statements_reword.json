@@ -1,0 +1,1049 @@
+{
+  "arms": [
+    "reword"
+  ],
+  "records": [
+    {
+      "system": "system:H2S_to_SO2_hs,SO2_to_SO3_so,SO32-_to_H2S_dilhso",
+      "description": "one system (chain, 3 reactions): SO32- → H2S, SO2, SO3",
+      "labels": {
+        "W": "H2S",
+        "X": "SO2",
+        "Y": "SO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nSO₃²⁻ + dil. H₂SO₄, Zn powder, warming → <W>\n<W> + O₂, burning, blue flame → <X>\n<X> + O₂, V₂O₅ catalyst, 400-500°C → <Y>\nChoose the correct option(s).\n(A) <W> is a non-polar molecule\n(B) The geometry around S in <W> is the same as that around S in <X>\n(C) The geometry around S in <Y> is trigonal planar\n(D) S in <X> and S in <Y> have the same hybridisation",
+          "key": "BCD",
+          "statements": [
+            {
+              "text": "<W> is a non-polar molecule",
+              "true": false,
+              "arm": "reword",
+              "about": "W:polarity=polar",
+              "code_text": "<W> is a non-polar molecule",
+              "model_wording": "<W> is a non-polar molecule",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <W> is the same as that around S in <X>",
+              "true": true,
+              "arm": "reword",
+              "about": "W,X:geometry",
+              "code_text": "The geometry around S in <W> is the same as that around S in <X>",
+              "model_wording": "The geometry around S in <W> is the same as that around S in <X>",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <Y> is trigonal planar",
+              "true": true,
+              "arm": "reword",
+              "about": "Y:central_shape=trigonal planar",
+              "code_text": "The geometry around S in <Y> is trigonal planar",
+              "model_wording": "The geometry around S in <Y> is trigonal planar",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "S in <X> and S in <Y> have the same hybridisation",
+              "true": true,
+              "arm": "reword",
+              "about": "X,Y:hybrid",
+              "code_text": "S in <X> and S in <Y> have the same hybridisation",
+              "model_wording": "S in <X> and S in <Y> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Identifies <W>=H₂S (bent, polar), <X>=SO₂ (bent, sp²), and <Y>=SO₃ (trigonal planar, sp²), verifying structural and hybridisation relationships across species.",
+          "fallbacks": 0,
+          "jev": 1.95,
+          "error": "granite-4.2-8b: no readable answer in 3 tries"
+        }
+      }
+    },
+    {
+      "system": "system:NH3_to_NO_nh,NH4+_to_NH3_naoh,NO_to_NO2_no",
+      "description": "one system (chain, 3 reactions): NH4+ → NH3, NO, NO2",
+      "labels": {
+        "G": "NH3",
+        "R": "NO",
+        "T": "NO2"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nNH₄⁺ + NaOH, warm → <G>\n<G> + O₂, Pt catalyst, high temperature → <R>\n<R> + O₂, room temperature → <T>\nChoose the correct option(s).\n(A) The geometry around N in <T> is bent\n(B) N in <G> and N in <T> have different hybridisations\n(C) <G> has a trigonal pyramidal shape\n(D) The bond order of <R> is 3",
+          "key": "ABC",
+          "statements": [
+            {
+              "text": "The geometry around N in <T> is bent",
+              "true": true,
+              "arm": "reword",
+              "about": "T:central_shape=bent",
+              "code_text": "The geometry around N in <T> is bent",
+              "model_wording": "The geometry around N in <T> is bent",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "N in <G> and N in <T> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "G,T:hybrid",
+              "code_text": "N in <G> and N in <T> have different hybridisations",
+              "model_wording": "N in <G> and N in <T> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "<G> has a trigonal pyramidal shape",
+              "true": true,
+              "arm": "reword",
+              "about": "G:shape=trigonal pyramidal",
+              "code_text": "<G> has a trigonal pyramidal shape",
+              "model_wording": "<G> has a trigonal pyramidal shape",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The bond order of <R> is 3",
+              "true": false,
+              "arm": "reword",
+              "about": "R:bond_order=2.5",
+              "code_text": "The bond order of <R> is 3",
+              "model_wording": "The bond order of <R> is 3",
+              "drift": [],
+              "rival": true
+            }
+          ],
+          "why": "Option 4 uses a rival-product trap (bond order 3 corresponds to mistaking <R> for N₂), and the set covers <G>, <R>, and <T> with exactly 3 true statements.",
+          "fallbacks": 0,
+          "jev": 1.78,
+          "granite": {
+            "tries": "3/3",
+            "answers": [
+              "ABC",
+              "ABC",
+              "ABC"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "ABC",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:NH3_to_NO_nh,NO2_to_HNO3_no,NO_to_NO2_no",
+      "description": "one system (chain, 3 reactions): NH3 → NO, NO2, HNO3",
+      "labels": {
+        "G": "NO",
+        "R": "NO2",
+        "T": "HNO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nNH₃ + O₂, Pt catalyst, high temperature → <G>\n<G> + O₂, room temperature → <R>\n<R> + H₂O, room temperature → <T>\nChoose the correct option(s).\n(A) N in <R> and N in <T> have the same hybridisation\n(B) The geometry around N in <R> is bent\n(C) The bond order of <G> is 3\n(D) <T> is a monobasic acid",
+          "key": "ABD",
+          "statements": [
+            {
+              "text": "N in <R> and N in <T> have the same hybridisation",
+              "true": true,
+              "arm": "reword",
+              "about": "R,T:hybrid",
+              "code_text": "N in <R> and N in <T> have the same hybridisation",
+              "model_wording": "N in <R> and N in <T> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around N in <R> is bent",
+              "true": true,
+              "arm": "reword",
+              "about": "R:central_shape=bent",
+              "code_text": "The geometry around N in <R> is bent",
+              "model_wording": "The geometry around N in <R> is bent",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The bond order of <G> is 3",
+              "true": false,
+              "arm": "reword",
+              "about": "G:bond_order=2.5",
+              "code_text": "The bond order of <G> is 3",
+              "model_wording": "The bond order of <G> is 3",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "<T> is a monobasic acid",
+              "true": true,
+              "arm": "reword",
+              "about": "T:basicity=1",
+              "code_text": "<T> is a monobasic acid",
+              "model_wording": "<T> is a monobasic acid",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Statement 1 sets a classic rival-product trap (bond order 3 holds if <G> is mistaken for N₂ rather than NO), while statements 4, 8, and 9 correctly evaluate the geometry, basicity, and shared sp² hybridisation of NO₂ and HNO₃.",
+          "fallbacks": 0,
+          "jev": 1.97,
+          "granite": {
+            "tries": "0/3",
+            "answers": [
+              "B",
+              "BD",
+              "BD"
+            ],
+            "solved": false
+          },
+          "glm": {
+            "answer": "ABD",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:SO2_to_SO3_so,SO3_to_H2SO4_so,S_to_SO2_s",
+      "description": "one system (chain, 3 reactions): S → SO2, SO3, H2SO4",
+      "labels": {
+        "W": "SO2",
+        "X": "SO3",
+        "Y": "H2SO4"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nS + O₂, burning → <W>\n<W> + O₂, V₂O₅ catalyst, 400-500°C → <X>\n<X> + H₂O → <Y>\nChoose the correct option(s).\n(A) S in <X> and S in <Y> have the same hybridisation\n(B) <Y> is a dibasic acid\n(C) The geometry around S in <X> is trigonal pyramidal\n(D) S in <W> and S in <X> have the same hybridisation",
+          "key": "BD",
+          "statements": [
+            {
+              "text": "S in <X> and S in <Y> have the same hybridisation",
+              "true": false,
+              "arm": "reword",
+              "about": "X,Y:hybrid",
+              "code_text": "S in <X> and S in <Y> have the same hybridisation",
+              "model_wording": "S in <X> and S in <Y> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "<Y> is a dibasic acid",
+              "true": true,
+              "arm": "reword",
+              "about": "Y:basicity=2",
+              "code_text": "<Y> is a dibasic acid",
+              "model_wording": "<Y> is a dibasic acid",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <X> is trigonal pyramidal",
+              "true": false,
+              "arm": "reword",
+              "about": "X:central_shape=trigonal planar",
+              "code_text": "The geometry around S in <X> is trigonal pyramidal",
+              "model_wording": "The geometry around S in <X> is trigonal pyramidal",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "S in <W> and S in <X> have the same hybridisation",
+              "true": true,
+              "arm": "reword",
+              "about": "W,X:hybrid",
+              "code_text": "S in <W> and S in <X> have the same hybridisation",
+              "model_wording": "S in <W> and S in <X> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Tests contact process intermediates (SO₂, SO₃, H₂SO₄) with a rival-product geometry trap and cross-species hybridisation comparisons across all three lettered products.",
+          "fallbacks": 0,
+          "jev": 1.72,
+          "granite": {
+            "tries": "2/3",
+            "answers": [
+              "B",
+              "BD",
+              "BD"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "BD",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:NH3_to_NO_nh,NH4Cl_to_NH3_nhcl,NO_to_NO2_no",
+      "description": "one system (chain, 3 reactions): NH4Cl → NH3, NO, NO2",
+      "labels": {
+        "X": "NH3",
+        "Y": "NO",
+        "Z": "NO2"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nNH₄Cl + NaOH, warm → <X>\n<X> + O₂, Pt catalyst, high temperature → <Y>\n<Y> + O₂, room temperature → <Z>\nChoose the correct option(s).\n(A) N in <Z> is sp² hybridised\n(B) The geometry around N in <X> differs from that around N in <Z>\n(C) N in <X> is sp² hybridised\n(D) The bond order of <Y> is 3",
+          "key": "AB",
+          "statements": [
+            {
+              "text": "N in <Z> is sp² hybridised",
+              "true": true,
+              "arm": "reword",
+              "about": "Z:central_hybridisation=sp2",
+              "code_text": "N in <Z> is sp² hybridised",
+              "model_wording": "N in <Z> is sp² hybridised",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around N in <X> differs from that around N in <Z>",
+              "true": true,
+              "arm": "reword",
+              "about": "X,Z:geometry",
+              "code_text": "The geometry around N in <X> differs from that around N in <Z>",
+              "model_wording": "The geometry around N in <X> differs from that around N in <Z>",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "N in <X> is sp² hybridised",
+              "true": false,
+              "arm": "reword",
+              "about": "X:hybridisation=sp3",
+              "code_text": "N in <X> is sp² hybridised",
+              "model_wording": "N in <X> is sp² hybridised",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The bond order of <Y> is 3",
+              "true": false,
+              "arm": "reword",
+              "about": "Y:bond_order=2.5",
+              "code_text": "The bond order of <Y> is 3",
+              "model_wording": "The bond order of <Y> is 3",
+              "drift": [],
+              "rival": true
+            }
+          ],
+          "why": "Tests the Ostwald process sequence with a rival-product trap (N₂ vs NO for <Y>) alongside hybridisation and geometry comparisons across <X>, <Y>, and <Z>.",
+          "fallbacks": 0,
+          "jev": 1.83,
+          "granite": {
+            "tries": "3/3",
+            "answers": [
+              "AB",
+              "AB",
+              "AB"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "AB",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:H2S_to_SO2_hs,SO2_to_SO3_so,SO3_to_H2SO4_so",
+      "description": "one system (chain, 3 reactions): H2S → SO2, SO3, H2SO4",
+      "labels": {
+        "W": "SO2",
+        "X": "SO3",
+        "Y": "H2SO4"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nH₂S + O₂, burning, blue flame → <W>\n<W> + O₂, V₂O₅ catalyst, 400-500°C → <X>\n<X> + H₂O → <Y>\nChoose the correct option(s).\n(A) S in <W> and S in <Y> have the same hybridisation\n(B) The geometry around S in <Y> is tetrahedral\n(C) S in <W> and S in <X> have the same hybridisation\n(D) The geometry around S in <X> is trigonal pyramidal",
+          "key": "BC",
+          "statements": [
+            {
+              "text": "S in <W> and S in <Y> have the same hybridisation",
+              "true": false,
+              "arm": "reword",
+              "about": "W,Y:hybrid",
+              "code_text": "S in <W> and S in <Y> have the same hybridisation",
+              "model_wording": "S in <W> and S in <Y> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <Y> is tetrahedral",
+              "true": true,
+              "arm": "reword",
+              "about": "Y:central_shape=tetrahedral",
+              "code_text": "The geometry around S in <Y> is tetrahedral",
+              "model_wording": "The geometry around S in <Y> is tetrahedral",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "S in <W> and S in <X> have the same hybridisation",
+              "true": true,
+              "arm": "reword",
+              "about": "W,X:hybrid",
+              "code_text": "S in <W> and S in <X> have the same hybridisation",
+              "model_wording": "S in <W> and S in <X> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <X> is trigonal pyramidal",
+              "true": false,
+              "arm": "reword",
+              "about": "X:central_shape=trigonal planar",
+              "code_text": "The geometry around S in <X> is trigonal pyramidal",
+              "model_wording": "The geometry around S in <X> is trigonal pyramidal",
+              "drift": [],
+              "rival": true
+            }
+          ],
+          "why": "Tests comparative hybridisation and VSEPR geometry of SO₂, SO₃, and H₂SO₄ with rival pyramidal/sp³ traps.",
+          "fallbacks": 0,
+          "jev": 1.68,
+          "granite": {
+            "tries": "2/3",
+            "answers": [
+              "BC",
+              "B",
+              "BC"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "BC",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:XeF6_to_XeO3_xef,XeF6_to_XeOF4_xef",
+      "description": "one system (fork, 2 reactions): XeF6 → XeOF4, XeO3",
+      "labels": {
+        "L": "XeOF4",
+        "M": "XeO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nXeF₆ + H₂O, limited water → <L>\nXeF₆ + H₂O, hydrolysis → <M>\nChoose the correct option(s).\n(A) Xe in <L> and Xe in <M> have the same hybridisation\n(B) <L> has a square pyramidal shape\n(C) Xe in <M> is sp³d² hybridised\n(D) <M> has a square pyramidal shape",
+          "key": "B",
+          "statements": [
+            {
+              "text": "Xe in <L> and Xe in <M> have the same hybridisation",
+              "true": false,
+              "arm": "reword",
+              "about": "L,M:hybrid",
+              "code_text": "Xe in <L> and Xe in <M> have the same hybridisation",
+              "model_wording": "Xe in <L> and Xe in <M> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "<L> has a square pyramidal shape",
+              "true": true,
+              "arm": "reword",
+              "about": "L:shape=square pyramidal",
+              "code_text": "<L> has a square pyramidal shape",
+              "model_wording": "<L> has a square pyramidal shape",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "Xe in <M> is sp³d² hybridised",
+              "true": false,
+              "arm": "reword",
+              "about": "M:hybridisation=sp3",
+              "code_text": "Xe in <M> is sp³d² hybridised",
+              "model_wording": "Xe in <M> is sp³d² hybridised",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "<M> has a square pyramidal shape",
+              "true": false,
+              "arm": "reword",
+              "about": "M:shape=trigonal pyramidal",
+              "code_text": "<M> has a square pyramidal shape",
+              "model_wording": "<M> has a square pyramidal shape",
+              "drift": [],
+              "rival": true
+            }
+          ],
+          "why": "Statement 1 correctly identifies XeOF₄ as square pyramidal, while the false statements set rival-product traps swapping shapes and hybridisations between XeOF₄ (sp³d²) and XeO₃ (sp³).",
+          "fallbacks": 0,
+          "jev": 1.92,
+          "granite": {
+            "tries": "3/3",
+            "answers": [
+              "B",
+              "B",
+              "B"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "B",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:SO2_to_H2SO4_so,S_to_SO2_s",
+      "description": "one system (chain, 2 reactions): S → SO2, H2SO4",
+      "labels": {
+        "L": "SO2",
+        "M": "H2SO4"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nS + O₂, burning → <L>\n<L> + H₂O₂, aqueous → <M>\nChoose the correct option(s).\n(A) S in <M> is sp² hybridised\n(B) S in <L> and S in <M> have different hybridisations\n(C) The geometry around S in <M> is trigonal pyramidal\n(D) The geometry around S in <L> is bent",
+          "key": "BD",
+          "statements": [
+            {
+              "text": "S in <M> is sp² hybridised",
+              "true": false,
+              "arm": "reword",
+              "about": "M:central_hybridisation=sp3",
+              "code_text": "S in <M> is sp² hybridised",
+              "model_wording": "S in <M> is sp² hybridised",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "S in <L> and S in <M> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "L,M:hybrid",
+              "code_text": "S in <L> and S in <M> have different hybridisations",
+              "model_wording": "S in <L> and S in <M> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <M> is trigonal pyramidal",
+              "true": false,
+              "arm": "reword",
+              "about": "M:central_shape=tetrahedral",
+              "code_text": "The geometry around S in <M> is trigonal pyramidal",
+              "model_wording": "The geometry around S in <M> is trigonal pyramidal",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "The geometry around S in <L> is bent",
+              "true": true,
+              "arm": "reword",
+              "about": "L:central_shape=bent",
+              "code_text": "The geometry around S in <L> is bent",
+              "model_wording": "The geometry around S in <L> is bent",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "<L> is SO₂ (sp², bent) and <M> is H₂SO₄ (sp³, tetrahedral), setting a rival-product trap of H₂SO₃ for <M>.",
+          "fallbacks": 0,
+          "jev": 2.11,
+          "granite": {
+            "tries": "1/3",
+            "answers": [
+              "BD",
+              "BCD",
+              "D"
+            ],
+            "solved": false
+          },
+          "glm": {
+            "answer": "BD",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:SO2_to_H2SO3_so,S_to_SO2_s",
+      "description": "one system (chain, 2 reactions): S → SO2, H2SO3",
+      "labels": {
+        "G": "SO2",
+        "R": "H2SO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nS + O₂, burning → <G>\n<G> + H₂O → <R>\nChoose the correct option(s).\n(A) The geometry around S in <G> is bent\n(B) S in <G> is sp³ hybridised\n(C) S in <G> and S in <R> have different hybridisations\n(D) The geometry around S in <R> is tetrahedral",
+          "key": "AC",
+          "statements": [
+            {
+              "text": "The geometry around S in <G> is bent",
+              "true": true,
+              "arm": "reword",
+              "about": "G:central_shape=bent",
+              "code_text": "The geometry around S in <G> is bent",
+              "model_wording": "The geometry around S in <G> is bent",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "S in <G> is sp³ hybridised",
+              "true": false,
+              "arm": "reword",
+              "about": "G:central_hybridisation=sp2",
+              "code_text": "S in <G> is sp³ hybridised",
+              "model_wording": "S in <G> is sp³ hybridised",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "S in <G> and S in <R> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "G,R:hybrid",
+              "code_text": "S in <G> and S in <R> have different hybridisations",
+              "model_wording": "S in <G> and S in <R> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <R> is tetrahedral",
+              "true": false,
+              "arm": "reword",
+              "about": "R:central_shape=trigonal pyramidal",
+              "code_text": "The geometry around S in <R> is tetrahedral",
+              "model_wording": "The geometry around S in <R> is tetrahedral",
+              "drift": [],
+              "rival": true
+            }
+          ],
+          "why": "Identifies SO₂ and H₂SO₃, punishing confusion with SO₃/H₂SO₄ via the tetrahedral geometry trap while linking hybridisation and geometry across both species.",
+          "fallbacks": 0,
+          "jev": 1.35,
+          "granite": {
+            "tries": "1/3",
+            "answers": [
+              "ABD",
+              "ACD",
+              "AC"
+            ],
+            "solved": false
+          },
+          "glm": {
+            "answer": "ACD",
+            "solved": false
+          }
+        }
+      }
+    },
+    {
+      "system": "system:H2S_to_SO2_hs,SO2_to_H2SO3_so",
+      "description": "one system (chain, 2 reactions): H2S → SO2, H2SO3",
+      "labels": {
+        "P": "SO2",
+        "Q": "H2SO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nH₂S + O₂, burning, blue flame → <P>\n<P> + H₂O → <Q>\nChoose the correct option(s).\n(A) S in <Q> is sp² hybridised\n(B) S in <P> and S in <Q> have different hybridisations\n(C) The geometry around S in <Q> is tetrahedral\n(D) The geometry around S in <P> is bent",
+          "key": "BD",
+          "statements": [
+            {
+              "text": "S in <Q> is sp² hybridised",
+              "true": false,
+              "arm": "reword",
+              "about": "Q:central_hybridisation=sp3",
+              "code_text": "S in <Q> is sp² hybridised",
+              "model_wording": "S in <Q> is sp² hybridised",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "S in <P> and S in <Q> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "P,Q:hybrid",
+              "code_text": "S in <P> and S in <Q> have different hybridisations",
+              "model_wording": "S in <P> and S in <Q> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <Q> is tetrahedral",
+              "true": false,
+              "arm": "reword",
+              "about": "Q:central_shape=trigonal pyramidal",
+              "code_text": "The geometry around S in <Q> is tetrahedral",
+              "model_wording": "The geometry around S in <Q> is tetrahedral",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "The geometry around S in <P> is bent",
+              "true": true,
+              "arm": "reword",
+              "about": "P:central_shape=bent",
+              "code_text": "The geometry around S in <P> is bent",
+              "model_wording": "The geometry around S in <P> is bent",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Identifies <P> as SO₂ (bent, sp²) and <Q> as H₂SO₃ (trigonal pyramidal, sp³), laying a tetrahedral rival-product trap for students assuming complete oxidation to H₂SO₄.",
+          "fallbacks": 0,
+          "jev": 1.79,
+          "granite": {
+            "tries": "2/3",
+            "answers": [
+              "BD",
+              "BD",
+              "BCD"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "BD",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:SO2_to_H2SO3_so,SO2_to_SO3_so",
+      "description": "one system (fork, 2 reactions): SO2 → SO3, H2SO3",
+      "labels": {
+        "P": "SO3",
+        "Q": "H2SO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nSO₂ + O₂, V₂O₅ catalyst, 400-500°C → <P>\nSO₂ + H₂O → <Q>\nChoose the correct option(s).\n(A) <Q> is a dibasic acid\n(B) S in <P> and S in <Q> have different hybridisations\n(C) The geometry around S in <Q> is trigonal planar\n(D) The geometry around S in <P> is trigonal planar",
+          "key": "ABD",
+          "statements": [
+            {
+              "text": "<Q> is a dibasic acid",
+              "true": true,
+              "arm": "reword",
+              "about": "Q:basicity=2",
+              "code_text": "<Q> is a dibasic acid",
+              "model_wording": "<Q> is a dibasic acid",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "S in <P> and S in <Q> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "P,Q:hybrid",
+              "code_text": "S in <P> and S in <Q> have different hybridisations",
+              "model_wording": "S in <P> and S in <Q> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <Q> is trigonal planar",
+              "true": false,
+              "arm": "reword",
+              "about": "Q:central_shape=trigonal pyramidal",
+              "code_text": "The geometry around S in <Q> is trigonal planar",
+              "model_wording": "The geometry around S in <Q> is trigonal planar",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "The geometry around S in <P> is trigonal planar",
+              "true": true,
+              "arm": "reword",
+              "about": "P:central_shape=trigonal planar",
+              "code_text": "The geometry around S in <P> is trigonal planar",
+              "model_wording": "The geometry around S in <P> is trigonal planar",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Tests structure, basicity, and hybridisation of SO₃ and H₂SO₃ with a trap attributing trigonal planar geometry to H₂SO₃.",
+          "fallbacks": 0,
+          "jev": 1.45,
+          "granite": {
+            "tries": "1/3",
+            "answers": [
+              "AD",
+              "D",
+              "ABD"
+            ],
+            "solved": false
+          },
+          "glm": {
+            "answer": "ABD",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:XeF6_to_XeO3_xef,XeF6_to_XeOF4_xef,XeO3_to_Na[HXeO4]_xeo",
+      "description": "one system (fork, 3 reactions): XeF6 → XeO3, XeOF4, Na[HXeO4]",
+      "labels": {
+        "L": "XeO3",
+        "M": "XeOF4",
+        "N": "Na[HXeO4]"
+      },
+      "arms": {
+        "reword": {
+          "skipped": true
+        }
+      }
+    },
+    {
+      "system": "system:N2_to_NH3_n_2,NH3_to_NO_nh,NO_to_NO2_no",
+      "description": "one system (chain, 3 reactions): N2 → NH3, NO, NO2",
+      "labels": {
+        "X": "NH3",
+        "Y": "NO",
+        "Z": "NO2"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nN₂ + H₂, Fe catalyst, 200 atm, 400-450°C → <X>\n<X> + O₂, Pt catalyst, high temperature → <Y>\n<Y> + O₂, room temperature → <Z>\nChoose the correct option(s).\n(A) N in <Z> is sp² hybridised\n(B) N in <X> and N in <Z> have the same hybridisation\n(C) <X> has a trigonal planar shape\n(D) The bond order of <Y> is 2.5",
+          "key": "AD",
+          "statements": [
+            {
+              "text": "N in <Z> is sp² hybridised",
+              "true": true,
+              "arm": "reword",
+              "about": "Z:central_hybridisation=sp2",
+              "code_text": "N in <Z> is sp² hybridised",
+              "model_wording": "N in <Z> is sp² hybridised",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "N in <X> and N in <Z> have the same hybridisation",
+              "true": false,
+              "arm": "reword",
+              "about": "X,Z:hybrid",
+              "code_text": "N in <X> and N in <Z> have the same hybridisation",
+              "model_wording": "N in <X> and N in <Z> have the same hybridisation",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "<X> has a trigonal planar shape",
+              "true": false,
+              "arm": "reword",
+              "about": "X:shape=trigonal pyramidal",
+              "code_text": "<X> has a trigonal planar shape",
+              "model_wording": "<X> has a trigonal planar shape",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The bond order of <Y> is 2.5",
+              "true": true,
+              "arm": "reword",
+              "about": "Y:bond_order=2.5",
+              "code_text": "The bond order of <Y> is 2.5",
+              "model_wording": "The bond order of <Y> is 2.5",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Tests Ostwald process intermediates with a bond-order trap on NO, odd-electron hybridisation of NO₂, and comparative hybridisation between NH₃ and NO₂.",
+          "fallbacks": 0,
+          "jev": 1.89,
+          "granite": {
+            "tries": "2/3",
+            "answers": [
+              "D",
+              "AD",
+              "AD"
+            ],
+            "solved": true
+          },
+          "glm": {
+            "answer": "D",
+            "solved": false
+          }
+        }
+      }
+    },
+    {
+      "system": "system:NCl3_to_NH3_ncl,NH3_to_NO_nh,NO_to_NO2_no",
+      "description": "one system (chain, 3 reactions): NCl3 → NH3, NO, NO2",
+      "labels": {
+        "W": "NH3",
+        "X": "NO",
+        "Y": "NO2"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nNCl₃ + H₂O, room temperature → <W>\n<W> + O₂, Pt catalyst, high temperature → <X>\n<X> + O₂, room temperature → <Y>\nChoose the correct option(s).\n(A) N in <W> and N in <Y> have different hybridisations\n(B) The geometry around N in <Y> is linear\n(C) <X> is paramagnetic\n(D) The bond order of <X> is 3",
+          "key": "AC",
+          "statements": [
+            {
+              "text": "N in <W> and N in <Y> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "W,Y:hybrid",
+              "code_text": "N in <W> and N in <Y> have different hybridisations",
+              "model_wording": "N in <W> and N in <Y> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around N in <Y> is linear",
+              "true": false,
+              "arm": "reword",
+              "about": "Y:central_shape=bent",
+              "code_text": "The geometry around N in <Y> is linear",
+              "model_wording": "The geometry around N in <Y> is linear",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "<X> is paramagnetic",
+              "true": true,
+              "arm": "reword",
+              "about": "X:mo_magnetism=paramagnetic",
+              "code_text": "<X> is paramagnetic",
+              "model_wording": "<X> is paramagnetic",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The bond order of <X> is 3",
+              "true": false,
+              "arm": "reword",
+              "about": "X:bond_order=2.5",
+              "code_text": "The bond order of <X> is 3",
+              "model_wording": "The bond order of <X> is 3",
+              "drift": [],
+              "rival": true
+            }
+          ],
+          "why": "Tests Ostwald process intermediates (<W> = NH₃, <X> = NO, <Y> = NO₂) with traps on bond order/geometry and a comparative hybridisation statement.",
+          "fallbacks": 0,
+          "jev": 2.7,
+          "granite": {
+            "tries": "1/3",
+            "answers": [
+              "AC",
+              "C",
+              "C"
+            ],
+            "solved": false
+          },
+          "glm": {
+            "answer": "AC",
+            "solved": true
+          }
+        }
+      }
+    },
+    {
+      "system": "system:H2S_to_SO2_hs,SO2_to_H2SO3_so,SO32-_to_H2S_dilhso",
+      "description": "one system (chain, 3 reactions): SO32- → H2S, SO2, H2SO3",
+      "labels": {
+        "G": "H2S",
+        "R": "SO2",
+        "T": "H2SO3"
+      },
+      "arms": {
+        "reword": {
+          "stem": "Consider the following reactions (unbalanced):\nSO₃²⁻ + dil. H₂SO₄, Zn powder, warming → <G>\n<G> + O₂, burning, blue flame → <R>\n<R> + H₂O → <T>\nChoose the correct option(s).\n(A) S in <R> and S in <T> have different hybridisations\n(B) <G> is a polar molecule\n(C) The geometry around S in <T> is tetrahedral\n(D) The geometry around S in <G> is the same as that around S in <R>",
+          "key": "ABD",
+          "statements": [
+            {
+              "text": "S in <R> and S in <T> have different hybridisations",
+              "true": true,
+              "arm": "reword",
+              "about": "R,T:hybrid",
+              "code_text": "S in <R> and S in <T> have different hybridisations",
+              "model_wording": "S in <R> and S in <T> have different hybridisations",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "<G> is a polar molecule",
+              "true": true,
+              "arm": "reword",
+              "about": "G:polarity=polar",
+              "code_text": "<G> is a polar molecule",
+              "model_wording": "<G> is a polar molecule",
+              "drift": [],
+              "rival": false
+            },
+            {
+              "text": "The geometry around S in <T> is tetrahedral",
+              "true": false,
+              "arm": "reword",
+              "about": "T:central_shape=trigonal pyramidal",
+              "code_text": "The geometry around S in <T> is tetrahedral",
+              "model_wording": "The geometry around S in <T> is tetrahedral",
+              "drift": [],
+              "rival": true
+            },
+            {
+              "text": "The geometry around S in <G> is the same as that around S in <R>",
+              "true": true,
+              "arm": "reword",
+              "about": "G,R:geometry",
+              "code_text": "The geometry around S in <G> is the same as that around S in <R>",
+              "model_wording": "The geometry around S in <G> is the same as that around S in <R>",
+              "drift": [],
+              "rival": false
+            }
+          ],
+          "why": "Identifies <G> as H₂S, <R> as SO₂, and <T> as H₂SO₃, trapping students who mistake <T> for H₂SO₄ (tetrahedral) while testing geometries and hybridisations across all three species.",
+          "fallbacks": 0,
+          "jev": 2.17,
+          "granite": {
+            "tries": "0/3",
+            "answers": [
+              "AC",
+              "A",
+              "BC"
+            ],
+            "solved": false
+          },
+          "glm": {
+            "answer": "ABC",
+            "solved": false
+          }
+        }
+      }
+    }
+  ],
+  "spend": {
+    "total_cost_usd": 0.09846,
+    "by_role": {
+      "generator": {
+        "calls": 16,
+        "prompt_tokens": 12090,
+        "completion_tokens": 18036,
+        "cost": 0.07670249999999999
+      },
+      "level_check": {
+        "calls": 14,
+        "prompt_tokens": 7504,
+        "completion_tokens": 0,
+        "cost": 0.00031516799999999995
+      },
+      "council": {
+        "calls": 88,
+        "prompt_tokens": 94234,
+        "completion_tokens": 67935,
+        "cost": 0.021442010400000003
+      }
+    }
+  }
+}

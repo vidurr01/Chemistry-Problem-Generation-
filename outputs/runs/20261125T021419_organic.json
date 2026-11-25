@@ -1,0 +1,389 @@
+{
+ "subject": "organic",
+ "saved_at": "20261125T021419",
+ "spend": {
+  "total_cost_usd": 0.03993,
+  "by_role": {
+   "start_picker": {
+    "calls": 3,
+    "prompt_tokens": 6030,
+    "completion_tokens": 3793,
+    "cost": 0.01874625
+   },
+   "name_checker": {
+    "calls": 2,
+    "prompt_tokens": 203,
+    "completion_tokens": 218,
+    "cost": 0.0001293
+   },
+   "step_checker": {
+    "calls": 29,
+    "prompt_tokens": 4801,
+    "completion_tokens": 41139,
+    "cost": 0.0210496
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_lactone_diazomethane",
+     "alkyne_to_vinyl_halide_hx1equiv",
+     "ketone_to_carbene_methylenepho",
+     "alkene_to_vicinal_dihalide_x",
+     "alkene_to_alkyl_halide_hx"
+    ],
+    "nodes": [
+     "alkyne",
+     "ketone",
+     "vinyl_halide",
+     "alkene",
+     "vicinal_dihalide",
+     "alkyl_halide"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     656,
+     185,
+     420,
+     11,
+     2,
+     3,
+     182,
+     183,
+     184
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)cyclohexan-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:12:05.107037+00:00",
+     "held": "STE_20261125T021205_39",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "alkene_to_vicinal_dihalide_x",
+       "substrate": "C=C(Br)CC1CCCC(=C)CC1",
+       "reagent": "Br₂, CCl₄",
+       "engine": "BrCC(Br)(Br)CC1CCCC(Br)(CBr)CC1",
+       "verdict": "disagree",
+       "checker_product": "C=C(Br)CC1CCCC(CBr)(Br)CC1",
+       "reason": "Br₂ preferentially adds anti across the more reactive exocyclic methylene to give the vicinal dibromide, while the deactivated vinyl bromide remains unchanged and no rearrangement occurs."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_alcohol_nabh",
+     "alcohol_to_ester_rcocl",
+     "alkyne_to_ketone_ho",
+     "alkyne_to_ketone_ho"
+    ],
+    "nodes": [
+     "alkyne",
+     "alcohol",
+     "ester",
+     "ketone",
+     "ketone"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Carboxylic Acids & Derivatives",
+     "Hydrocarbons"
+    ],
+    "txs": [
+     38,
+     499,
+     29,
+     143,
+     147,
+     638,
+     14,
+     14
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)cyclohexan-1-one: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:12:19.244262+00:00",
+     "held": "STE_20261125T021219_40",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alkyne_to_ketone_ho",
+       "substrate": "C#CCC1CCC(OC(C)=O)CC1",
+       "reagent": "dil. H₂SO₄, HgSO₄, 333 K",
+       "engine": "CC(=O)CC1CCC(OC(C)=O)CC1",
+       "verdict": "disagree",
+       "checker_product": "CC(=O)CC1CCC(O)CC1.CC(=O)O",
+       "reason": "Aqueous dilute acid hydrolyzes the acetate to the cyclohexanol and acetic acid, while HgSO₄-catalyzed Markovnikov hydration of the terminal alkyne gives the methyl ketone, with no rearrangement."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkyne_to_alkene_h",
+     "alkene_to_halohydrin_br",
+     "alkyl_halide_to_nitrile_nacn",
+     "nitrile_to_carboxylic_acid_ho",
+     "ketone_to_cyanohydrin_hcn"
+    ],
+    "nodes": [
+     "ketone",
+     "alkene",
+     "halohydrin",
+     "nitrile",
+     "carboxylic_acid",
+     "cyanohydrin"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Alkyl Halides",
+     "Amines",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     12,
+     13,
+     401,
+     7,
+     20,
+     282,
+     283,
+     65,
+     465,
+     41
+    ],
+    "trap_ids": [],
+    "description": "4-(prop-2-yn-1-yl)cyclohexan-1-one: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:12:42.155725+00:00",
+     "held": "STE_20261125T021242_41",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "nitrile_to_carboxylic_acid_ho",
+       "substrate": "N#CCC(O)CC1CCC(=O)CC1",
+       "reagent": "H₃O⁺, heat",
+       "engine": "O=C(O)CC(O)CC1CCC(=O)CC1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)/C=C/CC1CCC(=O)CC1",
+       "reason": "Acidic hydrolysis converts the terminal nitrile to a carboxylic acid, and heating dehydrates the resulting β-hydroxy acid to the thermodynamically favored E α,β-unsaturated acid while leaving the ring ketone unchanged."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkene_to_alkyl_halide_hx",
+     "alkyl_halide_to_alkene_alckoh",
+     "aldehyde_to_carboxylic_acid_kmnoortollen",
+     "aldehyde_to_imine_rnh",
+     "aldehyde_to_amine_h2ptornabh3c"
+    ],
+    "nodes": [
+     "aldehyde",
+     "alkyl_halide",
+     "alkene",
+     "carboxylic_acid",
+     "imine",
+     "amine"
+    ],
+    "chapters": [
+     "Hydrocarbons",
+     "Alkyl Halides",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     2,
+     3,
+     182,
+     183,
+     184,
+     17,
+     320,
+     330,
+     337,
+     345,
+     31,
+     492,
+     36,
+     83,
+     84,
+     85
+    ],
+    "trap_ids": [],
+    "description": "4-(but-3-en-1-yl)benzaldehyde: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:13:19.522317+00:00",
+     "held": "STE_20261125T021319_42",
+     "steps": [
+      {
+       "label": "U",
+       "edge": "aldehyde_to_amine_h2ptornabh3c",
+       "substrate": "CC(Br)CCc1ccc(C=O)cc1",
+       "reagent": "NH₃, H₂/Pt",
+       "engine": "CC(Br)CCc1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "NH₃/H₂/Pt can reductively aminate the aldehyde, but the secondary alkyl bromide can also undergo hydrogenolysis or ammonolysis, so without conditions specifying selectivity no unique major product is established."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_geminal_dihalide_pcl5",
+     "alkene_to_alcohol_ho",
+     "alcohol_to_carbene_chndiazometh",
+     "alkene_to_halohydrin_br",
+     "alcohol_to_substituted_benzene_4methylbenze"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "geminal_dihalide",
+     "alcohol",
+     "ether",
+     "halohydrin",
+     "sulfonate"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     195,
+     8,
+     9,
+     144,
+     7,
+     247
+    ],
+    "trap_ids": [],
+    "description": "4-(but-3-en-1-yl)benzaldehyde: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:13:54.218962+00:00",
+     "held": "STE_20261125T021354_43",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alkene_to_alcohol_ho",
+       "substrate": "C=CCCc1ccc(C(Cl)Cl)cc1",
+       "reagent": "dil. H₂SO₄",
+       "engine": "CC(O)CCc1ccc(C(Cl)Cl)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Aqueous dilute H₂SO₄ can hydrolyze the benzylic gem-dichloride to an aldehyde and can also hydrate the terminal alkene, but without concentration, temperature, or reaction-time details the extent and major product of these competing transformations cannot be specified uniquely."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_geminal_dihalide_pcl5",
+     "alkene_to_diol_oso",
+     "alcohol_to_carbene_chndiazometh",
+     "alkene_to_alcohol_ho",
+     "alkene_to_alkyl_halide_hx"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "geminal_dihalide",
+     "diol",
+     "ether",
+     "alcohol",
+     "alkyl_halide"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     195,
+     4,
+     5,
+     161,
+     162,
+     163,
+     164,
+     144,
+     8,
+     9,
+     2,
+     3,
+     182,
+     183,
+     184
+    ],
+    "trap_ids": [],
+    "description": "4-(but-3-en-1-yl)benzaldehyde: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T02:14:19.537209+00:00",
+     "held": "STE_20261125T021419_44",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alcohol_to_carbene_chndiazometh",
+       "substrate": "OCC(O)CCc1ccc(C(Cl)Cl)cc1",
+       "reagent": "CH₂N₂, HBF₄",
+       "engine": "COCC(CCc1ccc(C(Cl)Cl)cc1)OC",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The standard CH₂N₂/HBF₄ carbonyl-homologation reaction requires a carbonyl, which this diol/gem-dichloride substrate lacks, and the acidic conditions do not specify a single textbook product for its other functional groups."
+      },
+      {
+       "label": "T",
+       "edge": "alkene_to_alcohol_ho",
+       "substrate": "C=CCCc1ccc(C(Cl)Cl)cc1",
+       "reagent": "dil. H₂SO₄",
+       "engine": "CC(O)CCc1ccc(C(Cl)Cl)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Aqueous dilute H₂SO₄ can both hydrate the terminal alkene and hydrolyze the Ar–CHCl₂ group to an aldehyde, so without conditions specifying their competition there is no uniquely determined major product."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

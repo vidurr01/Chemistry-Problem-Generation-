@@ -116,13 +116,15 @@ class EndToEnd(unittest.TestCase):
                   mock.patch.object(models, "key_is_set", lambda *a: True),
                   mock.patch.object(dedup, "STORE", __import__("pathlib").Path(self.tmp, "seen.json")),
                   mock.patch.object(queues, "_OUT", self.tmp),
+                  mock.patch("core.pipeline.inorg_system.MEMORY_PATH", os.path.join(self.tmp, "sysmem.json")),
                   mock.patch("tools.results.promote", lambda *a, **k: 0),
                   mock.patch.object(entry, "compute_meta_tags_for_subject", lambda *a, **k: {"stub": True}),
                   mock.patch("core.pipeline.qf_design.design_problems", lambda d, *a, **k: None),
                   mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: None),
                   mock.patch.object(IQ, "draw", lambda *a, **k: dict(self.cand)),
                   mock.patch.object(IQ, "LIST_SHARE", 0),                  # the reaction-chain path
-                  mock.patch.object(IQ, "PRODUCTS_SHARE", 0)]
+                  mock.patch.object(IQ, "PRODUCTS_SHARE", 0),
+                  mock.patch.object(IQ, "SYSTEM_SHARE", 0)]
         for x in self.p:
             x.start()
         # the store's path was bound as a default argument at import: point it at the temporary store only
@@ -184,7 +186,7 @@ class EndToEnd(unittest.TestCase):
             if role in ("designer", "generator") and "Write ONE" in user:
                 raise AssertionError("a list question needs no designer or writer")
             if role == "council":
-                a = str(want + 1) if model == bottom else str(want)
+                a = str(want + 1) if model in (bottom, models.LADDER[1][1]) else str(want)   # medium-hard
                 return {"working": "w", "answer": a, "final_answer": a}
             return self.fake(role, model, system, user, **kw)
         with mock.patch.object(IQ, "LIST_SHARE", 1), mock.patch.object(IL, "draw", lambda *a, **k: dict(cand)),                 mock.patch.object(models, "ask_json", fake),                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
@@ -193,6 +195,162 @@ class EndToEnd(unittest.TestCase):
             r = json.load(f)[0]
         self.assertEqual(int(r["answer"]), want)
         self.assertIn("the total number of", r["question"])
+
+    def _system_run(self, glm_solves, bottom_solves=False):
+        from core.pipeline import inorg_system as SY
+        rng = random.Random(4)
+        while True:
+            cand = SY.draw(IQ._graph(_adapter()), rng)
+            if SY.build(cand, random.Random(1)) is not None:
+                break
+        want = SY.build(cand, random.Random(1))[1].answer
+        bottom, glm = models.LADDER[0][1], models.LADDER[1][1]
+
+        def fake(role, model, system, user, **kw):
+            if role == "generator" and "Rewrite these inorganic reactions" in user:
+                return {"stem": "no letters here"}                      # refused: the scheme is used
+            if role == "step_checker":
+                self.checker_prompts.append(user)
+                return {"species": [{"letter": L, "formula": s, "charge": 0}
+                                    for s, L in cand["_system"]["labels"].items()]}
+            if role == "council":
+                # a readable wrong answer (an unreadable one is asked again, never a failure)
+                wrong = ("A" if want != "A" else "B") if isinstance(want, str) else str(int(want) + 3)
+                a = wrong if (model == bottom and not bottom_solves) or (model == glm and not glm_solves) \
+                    else str(want)
+                return {"working": "w", "answer": a, "final_answer": a}
+            return self.fake(role, model, system, user, **kw)
+        draws = iter([dict(cand)] + [None] * 20)
+        self.system_cand, self.checker_prompts = cand, []
+        with mock.patch.object(IQ, "SYSTEM_SHARE", 1), mock.patch.object(SY, "draw", lambda *a, **k: next(draws)), \
+                mock.patch.object(SY, "build", lambda c, r, form=None, _b=SY.build: _b(c, random.Random(1), form)), \
+                mock.patch.object(models, "ask_json", fake), \
+                mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
+            self.entry.main()
+        return want
+
+    def test_reaction_system_question_end_to_end(self):
+        """Letters confirmed blind, key by code, GLM fails, the top step solves: saved, worded like the paper."""
+        want = self._system_run(glm_solves=False)
+        with open(self.cfg["output_file"], encoding="utf-8") as f:
+            r = json.load(f)[0]
+        self.assertEqual(str(r["answer"]), str(want))
+        self.assertIn("Consider the following reactions (unbalanced):", r["question"])
+        self.assertNotIn("product containing", r["question"])
+
+    def test_glm_solving_a_system_question_is_accepted(self):
+        """Since the real-question measurement (2026-11-25) GLM only labels: Granite failing is the bar."""
+        self._system_run(glm_solves=True)
+        with open(self.cfg["output_file"], encoding="utf-8") as f:
+            self.assertEqual(len(json.load(f)), 1)
+        from core.pipeline import inorg_system as SY        # Granite did not solve it: not remembered as easy
+        self.assertEqual(SY.load_memory()["bottom_solved"], {})
+
+    def test_an_unreadable_answer_is_held_not_failed(self):
+        """Granite answering garbage every time: the question is held for the next run, never 'Granite failed'."""
+        from core.pipeline import inorg_system as SY
+        rng = random.Random(4)
+        cand = SY.draw(IQ._graph(_adapter()), rng)
+        bottom = models.LADDER[0][1]
+        calls = []
+
+        def fake(role, model, system, user, **kw):
+            if role == "generator" and "Rewrite these inorganic reactions" in user:
+                return {"stem": "no letters here"}
+            if role == "step_checker":
+                return {"species": [{"letter": L, "formula": s, "charge": 0}
+                                    for s, L in cand["_system"]["labels"].items()]}
+            if role == "council":
+                calls.append(model)
+                if model == bottom:
+                    return {"working": "w", "answer": "[TYPE: chemistry] [CALC_VALUE:]",
+                            "final_answer": "[TYPE: chemistry] [CALC_VALUE:]"}
+                return {"working": "w", "answer": "A", "final_answer": "A"}
+            return self.fake(role, model, system, user, **kw)
+        draws = iter([dict(cand)] + [None] * 20)
+        with mock.patch.object(IQ, "SYSTEM_SHARE", 1), mock.patch.object(SY, "draw", lambda *a, **k: next(draws)), \
+                mock.patch.object(models, "ask_json", fake), \
+                mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
+            self.entry.main()
+        n = calls.count(bottom)                                             # asked again, then held (and the
+        self.assertTrue(n >= 1 + IQ.REASKS and n % (1 + IQ.REASKS) == 0, n)  # pipeline's own recheck repeats it)
+        self.assertNotIn(models.LADDER[1][1], calls)                       # never treated as "Granite failed"
+        self.assertFalse(os.path.exists(self.cfg["output_file"])
+                         and json.load(open(self.cfg["output_file"], encoding="utf-8")))
+
+    def test_an_accepted_system_is_not_accepted_again(self):
+        """Review #13: the signature held the random letters and statements, so the same system could be saved
+        twice. Now the second draw of it stops before anything is paid (no rewrite, no letter check)."""
+        self._system_run(glm_solves=False)
+        with open(self.cfg["output_file"], encoding="utf-8") as f:
+            self.assertEqual(len(json.load(f)), 1)
+        self._system_run(glm_solves=False)                  # the same system again, new letters and statements
+        self.assertEqual(self.checker_prompts, [])
+        with open(self.cfg["output_file"], encoding="utf-8") as f:
+            self.assertEqual(len(json.load(f)), 1)
+
+    def test_list_signature_ignores_letters_and_order(self):
+        from core.pipeline import inorg_list as IL
+        c = IL.draw(random.Random(4))
+        again = dict(c, _list=dict(c["_list"], species=list(reversed(c["_list"]["species"]))))
+        a = _adapter()
+        self.assertEqual(IQ._signature(a, c, "species_list"), IQ._signature(a, again, "species_list"))
+        self.assertNotEqual(IQ._signature(a, c, "species_list"),
+                            IQ._signature(a, IL.draw(random.Random(5)), "species_list"))
+
+    def test_letter_check_never_sees_the_options(self):
+        """Review #9: a true option ("the oxidation state of Cr in Q is +3") would tell the checker the answer."""
+        self._system_run(glm_solves=False)
+        self.assertEqual(len(self.checker_prompts), 1)
+        p = self.checker_prompts[0]
+        self.assertIn("Consider the following reactions (unbalanced):", p)
+        for leak in ("(A)", "(B)", "Choose the correct", "Give the answer"):
+            self.assertNotIn(leak, p)
+
+    def test_glm_solving_stops_before_level_check_and_hints(self):
+        """Review #7: flow.judge used to go on to a 2nd Jev call and hint re-solves, then the result was dropped."""
+        from core.pipeline import qf_checks, stages
+        jev, hints = [], []
+        with mock.patch.object(IQ, "TOO_EASY_SOLVERS", ("glm-5.3-flash",)), \
+                mock.patch.object(qf_checks, "_level_floor", lambda *a, **k: 1.0), \
+                mock.patch.object(qf_checks, "jev_level", lambda text: jev.append(text) or 2.0), \
+                mock.patch.object(stages, "solve_with_hint", lambda *a, **k: hints.append(a) or {}):
+            self._system_run(glm_solves=True)
+        self.assertEqual(len(jev), 1)                       # the gate before the ladder only
+        self.assertEqual(hints, [])
+        self.assertFalse(os.path.exists(self.cfg["output_file"])
+                         and json.load(open(self.cfg["output_file"], encoding="utf-8")))
+
+    def test_flow_judge_unchanged_for_other_subjects(self):
+        """The stop is an inorganic wrapper around the blackboard; flow.judge's own code is not touched."""
+        import inspect
+        from core.pipeline import flow
+        src = inspect.getsource(flow._judge)
+        self.assertNotIn("TOO_EASY", src)
+        self.assertIn("solve_with_hint", src)
+
+    def test_granite_solved_system_is_remembered(self):
+        from core.pipeline import inorg_system as SY
+        self._system_run(glm_solves=True, bottom_solves=True)
+        mem = SY.load_memory()["bottom_solved"]
+        self.assertEqual(list(mem), self.system_cand["edges"])
+        self.assertEqual(mem[self.system_cand["edges"][0]]["solver"], models.LADDER[0][0])
+
+    def test_memory_feeds_the_next_draw(self):
+        """A later run: the remembered system is 'tried' and the unconfirmed reaction 'bad' before drawing."""
+        from core.blackboard import Blackboard
+        from core.pipeline import inorg_system as SY
+        SY._remember("bottom_solved", "system:a,b", {"solver": "granite-4.2-8b"})
+        SY._remember("unconfirmed_edges", "e1", {"graph": "X", "checker": "Y"})
+        seen = {}
+
+        def fake_draw(graph, rng, tried=(), bad=(), asked=()):
+            seen.update(tried=tried, bad=bad, asked=asked)
+            return None
+        with mock.patch.object(SY, "draw", fake_draw):
+            IQ._system_question(_adapter(), random.Random(1), Blackboard("inorganic"), lambda e: None, 1)
+        self.assertIn(("system:a,b",), seen["tried"])
+        self.assertIn("e1", seen["bad"])
 
     def _products_run(self, checker_agrees):
         from core.pipeline import inorg_products as IP
@@ -214,7 +372,7 @@ class EndToEnd(unittest.TestCase):
                     prods[0]["formula"] = "XeF4"
                 return {"products": prods}
             if role == "council":
-                a = str(want + 1) if model == bottom else str(want)
+                a = str(want + 1) if model in (bottom, models.LADDER[1][1]) else str(want)   # medium-hard
                 return {"working": "w", "answer": a, "final_answer": a}
             return self.fake(role, model, system, user, **kw)
         draws = iter([dict(cand)] + [None] * 10)

@@ -1,0 +1,824 @@
+{
+ "subject": "physical",
+ "saved_at": "20261125T031840",
+ "spend": {
+  "total_cost_usd": 0.12596,
+  "by_role": {
+   "formula_fit": {
+    "calls": 51,
+    "prompt_tokens": 30616,
+    "completion_tokens": 0,
+    "cost": 0.0012858719999999998
+   },
+   "designer": {
+    "calls": 3,
+    "prompt_tokens": 5873,
+    "completion_tokens": 6228,
+    "cost": 0.086482
+   },
+   "design_check": {
+    "calls": 3,
+    "prompt_tokens": 2120,
+    "completion_tokens": 0,
+    "cost": 8.904e-05
+   },
+   "generator": {
+    "calls": 5,
+    "prompt_tokens": 15105,
+    "completion_tokens": 2754,
+    "cost": 0.021656250000000002
+   },
+   "level_check": {
+    "calls": 4,
+    "prompt_tokens": 2527,
+    "completion_tokens": 0,
+    "cost": 0.000106134
+   },
+   "coder": {
+    "calls": 4,
+    "prompt_tokens": 16785,
+    "completion_tokens": 11088,
+    "cost": 0.0076418250000000005
+   },
+   "coherence_check": {
+    "calls": 1,
+    "prompt_tokens": 794,
+    "completion_tokens": 0,
+    "cost": 3.3348e-05
+   },
+   "council": {
+    "calls": 62,
+    "prompt_tokens": 86898,
+    "completion_tokens": 11378,
+    "cost": 0.008665321999999998
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "bohr_orbit_to_de_broglie_wavelength_2rnn",
+     "bohr_orbit_to_electron_velocity_vn218e6znms",
+     "electron_velocity_to_revolutions_per_second_fv2r0657e16z"
+    ],
+    "nodes": [
+     "electron_velocity",
+     "revolutions_per_second",
+     "bohr_orbit",
+     "de_broglie_wavelength"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     63,
+     62,
+     74
+    ],
+    "trap_ids": [
+     "forgets_2pi",
+     "forgets_n_waves",
+     "uses_n_squared"
+    ],
+    "description": "number of revolutions per second [f = v / 2πr] | velocity of the electron (m s⁻¹) [v_n = 2.18 × 10⁶ Z/n m s⁻¹] | de Broglie wavelength of the electron (m) [2πr_n = nλ]",
+    "twist": "two_state_ratio"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-25T03:12:49.519084+00:00",
+     "p": 0.55
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-25T03:13:12.119794+00:00",
+     "try_": 1,
+     "twist": "two_state_ratio",
+     "system": "The electron in a hydrogen-like helium ion (He⁺) in an excited state A, and the electron in a lithium ion (Li²⁺) in an excited state B.",
+     "hidden_link": "The principal quantum numbers (n) of the two states, which are not given but whose ratio is fixed by the ratio of the de Broglie wavelengths and the atomic numbers.",
+     "route": "1. Use the standard de Broglie relation (λ = h/mv) and Formula 2 (v ∝ Z/n) to deduce that λ ∝ n/Z, which yields the ratio of principal quantum numbers n_A/n_B from the given ratio of wavelengths. 2. Use Formula 3 (2πr = nλ) to substitute for 2πr in Formula 1. 3. Use Formula 1 to write the frequency of revolution as f = v / (nλ). Substitute Formula 2 for v to get f ∝ Z / (n²λ), and calculate the ratio of frequencies.",
+     "student_must_notice": "That the orbital radius r does not need to be calculated or recalled from Bohr's formula; the term 2πr can be directly replaced by nλ, linking the frequency directly to the de Broglie wavelength and velocity.",
+     "trap": "Attempting to use the Bohr radius formula r ∝ n²/Z from memory and making an error in the proportionality or the constants, or assuming the states A and B have the same principal quantum number because they are not specified.",
+     "given": "The ratio of the de Broglie wavelength of the electron in state A of He⁺ to that in state B of Li²⁺.",
+     "hidden": "The actual principal quantum numbers of states A and B, the velocities, and the orbital radii.",
+     "asked": "The ratio of the number of revolutions per second of the electron in state A of He⁺ to that in state B of Li²⁺.",
+     "why_hard": "The student must algebraically combine the quantization condition and the frequency formula to eliminate the radius, realizing that the unknown quantum numbers can be extracted purely from the wavelength ratio.",
+     "_reasoning": "**Developing Challenging Questions**\n\nI'm currently formulating a challenging physical chemistry numerical for JEE Advanced. My focus is on integrating concepts of atomic structure and wave mechanics, specifically utilizing the relationships between frequency, velocity, radius, wavelength, and electron speed in quantized orbits. I'm also exploring how to introduce an interesting twist, perhaps involving inverse relationships or two-state ratios to increase the difficulty.\n\n**Comparing Orbital Frequencies**\n\nI'm currently exploring the ratio of electron revolution frequencies for different energy levels within single-electron species. The challenge lies in leveraging a given ratio of de Broglie wavelengths to deduce this frequency ratio, incorporating atomic number and principal quantum number relationships. This should add a novel dimension.\n\n**Linking De Broglie Wavelengths**\n\nI've figured out the core mechanism! By combining the de Broglie wavelength with the Bohr model's quantized orbits and velocity dependence on Z/n, I can establish that the ratio of wavelengths directly reveals the ratio of principal quantum numbers. This then allows us to derive the velocity ratio and ultimately the frequency ratio, beautifully integrating all relevant concepts.\n\n",
+     "situation": "The electron in a hydrogen-like helium ion (He⁺) in an excited state A, and the electron in a lithium ion (Li²⁺) in an excited state B.",
+     "insight": "That the orbital radius r does not need to be calculated or recalled from Bohr's formula; the term 2πr can be directly replaced by nλ, linking the frequency directly to the de Broglie wavelength and velocity.",
+     "links": "1. Use the standard de Broglie relation (λ = h/mv) and Formula 2 (v ∝ Z/n) to deduce that λ ∝ n/Z, which yields the ratio of principal quantum numbers n_A/n_B from the given ratio of wavelengths. 2. Use Formula 3 (2πr = nλ) to substitute for 2πr in Formula 1. 3. Use Formula 1 to write the frequency of revolution as f = v / (nλ). Substitute Formula 2 for v to get f ∝ Z / (n²λ), and calculate the ratio of frequencies.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-25T03:13:12.613558+00:00",
+     "twist": "two_state_ratio",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T03:13:18.203552+00:00",
+     "attempt": 1,
+     "twist": "two_state_ratio",
+     "examples": [
+      "2013P1_Chem_Q36",
+      "2012P1_Chem_Q36"
+     ],
+     "stem": "An electron in an excited state A of a helium ion (He⁺) has a de Broglie wavelength that is [[lambda_ratio]] times the de Broglie wavelength of an electron in an excited state B of a lithium ion (Li²⁺). The ratio of the number of revolutions per second of the electron in state A of He⁺ to that in state B of Li²⁺ is\n(Given: velocity of the electron in the first Bohr orbit of H = [[v_1_H]] m s^-1; radius of the first Bohr orbit of H = [[r_1_H]] Å)",
+     "asks": "the ratio of the orbital frequency (revolutions per second) of the electron in state A of He⁺ to that in state B of Li²⁺",
+     "unit": "",
+     "asked": "ratio_of_orbital_frequencies",
+     "ranges": {
+      "lambda_ratio": [
+       0.5,
+       2.5,
+       false
+      ]
+     },
+     "fixed": {
+      "v_1_H": 2180000.0,
+      "r_1_H": 0.529
+     },
+     "answer_range": [
+      0.05,
+      20.0
+     ],
+     "free": {
+      "v_1_H": 2180000.0,
+      "r_1_H": 0.529
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T03:13:56.898158+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    # Normalize n_B to 1; the frequency ratio is independent of the common scale of the two n values.\n    n_B = 1\n    wavelength_B = step_74(n=n_B, Z=3)['de_broglie_wavelength']\n    n_A = find(step_74, 'n', result=lambda_ratio * wavelength_B, Z=2)\n\n    velocity_A = step_62(n=n_A, Z=2)['electron_velocity']\n    velocity_B = step_62(n=n_B, Z=3)['electron_velocity']\n    wavelength_A = step_74(n=n_A, Z=2)['de_broglie_wavelength']\n\n    radius_A = n_A * wavelength_A / (2 * math.pi)\n    radius_B = n_B * wavelength_B / (2 * math.pi)\n    frequency_A = step_63(electron_velocity=velocity_A, orbit_radius_m=radius_A)['revolutions_per_second']\n    frequency_B = step_63(electron_velocity=velocity_B, orbit_radius_m=radius_B)['revolutions_per_second']\n    return frequency_A / frequency_B",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (find(step_74, 'n'): no whole number n from 1 to 7 gives de_broglie_wavelength = 8.48678e-11 with the other inputs); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null,
+     "reasoning": "**Evaluating formulas and steps**\n\nI'm considering the intended route involving step74 and step63. I could formulate a set like nB=1 and then infer nA. Using step62 for velocities and radius; step74 would give wavelengths while step63 would give frequencies via velocity and radius. The ratio seems important. But I wonder if I must use the provided v1_H and r1_H to calculate the frequency ratio? It feels like the author expects these formulas to be used in a general sense."
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T03:14:20.775633+00:00",
+     "attempt": 2,
+     "code": "def solve():\n    # Normalize n_B to 1; only the ratio n_A/n_B is needed for the frequency ratio.\n    n_B = 1\n    n_A = (2 * lambda_ratio / 3) * n_B\n\n    wavelength_H = step_74(n=1, Z=1)['de_broglie_wavelength']\n    wavelength_A = step_74(n=n_A, Z=2)['de_broglie_wavelength']\n    wavelength_B = step_74(n=n_B, Z=3)['de_broglie_wavelength']\n\n    velocity_reference = step_62(n=1, Z=1)['electron_velocity']\n    velocity_A_model = step_62(n=n_A, Z=2)['electron_velocity']\n    velocity_B_model = step_62(n=n_B, Z=3)['electron_velocity']\n    velocity_A = v_1_H * velocity_A_model / velocity_reference\n    velocity_B = v_1_H * velocity_B_model / velocity_reference\n\n    radius_H_m = r_1_H * 1e-10\n    radius_A = radius_H_m * (n_A * wavelength_A) / wavelength_H\n    radius_B = radius_H_m * (n_B * wavelength_B) / wavelength_H\n\n    frequency_H = step_63(electron_velocity=v_1_H, orbit_radius_m=radius_H_m)['revolutions_per_second']\n    frequency_A = step_63(electron_velocity=velocity_A, orbit_radius_m=radius_A)['revolutions_per_second']\n    frequency_B = step_63(electron_velocity=velocity_B, orbit_radius_m=radius_B)['revolutions_per_second']\n    return (frequency_A / frequency_H) / (frequency_B / frequency_H)",
+     "ok": false,
+     "problems": [
+      "on values from the question's ranges every run fails inside a formula (step_74: input n (principal quantum number of the orbit) must be a whole number, got 0.5106666666666667; you passed 0.5106666666666667); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) and which input of which formula it is"
+     ],
+     "probe_values": null,
+     "reasoning": "**Crafting code for ratios**\n\nI need to create code using input parameters like the lambda ratio, v1_H, and r1_H, and incorporate each function at least once. The design calls for deriving n ratios, but the absolute n isn't specified, which complicates the output frequency ratio. I should think about using functions from steps 74 and 62 with n values. \n\nIt’s a bit tricky since I can't infer absolute n, and I can't use n_B=1. I might need to find a way to evaluate things without constants.**Determining ratios for calculations**\n\nI’m thinking about choosing n_A and n_B based on the lambda ratio, and maybe fractional n will be acceptable. The step functions allow for this, even though they typically use quantum integers. To establish the ratio, I could set n_B to 1 and n_A as lambda_ratio * 2/3. \n\nI’ll check the equations involving wavelengths and find n values. I have to use the user’s provided v1_H and r1_H directly, even if they seem a bit irrelevant to the desired ratios, as they might be essential for calculating frequency H."
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-25T03:14:20.775714+00:00",
+     "attempt": 1,
+     "problems": [
+      "with values in your ranges the situation is physically impossible (step_74: input n (principal quantum number of the orbit) must be a whole number, got 0.5106666666666667; you passed 0.5106666666666667); choose ranges (and values) in which every step of the situation is possible"
+     ]
+    },
+    {
+     "stage": "impossible",
+     "at": "2026-11-25T03:14:23.819965+00:00",
+     "attempt": 2,
+     "reason": "The principal quantum numbers n_A and n_B for electronic orbits must be integers. A continuous range for lambda_ratio leads to non-integer principal quantum numbers n in step_74 and step_62, which is physically impossible for discrete atomic states."
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "frequency_to_photoelectron_ke_kehvhv0hvw",
+     "frequency_to_work_function_slopehuniver",
+     "stopping_potential_to_photoelectron_ke_ev0kemax12mv"
+    ],
+    "nodes": [
+     "stopping_potential",
+     "photoelectron_ke",
+     "frequency",
+     "work_function"
+    ],
+    "chapters": [
+     "Atomic Structure"
+    ],
+    "txs": [
+     72,
+     71,
+     327
+    ],
+    "trap_ids": [
+     "forgets_factor_2",
+     "forgets_work_function",
+     "leaves_in_joules"
+    ],
+    "description": "maximum kinetic energy of the photoelectrons (eV) [eV₀ = KE_max = ½mv²] | maximum kinetic energy of the photoelectrons (eV) [KE_max = hν − W] | work function of the metal (eV) [W = hν₀ (slope h, x-intercept ν₀)]",
+    "twist": "simultaneous"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-25T03:14:29.296206+00:00",
+     "p": 0.52
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-25T03:14:44.078130+00:00",
+     "try_": 1,
+     "twist": "simultaneous",
+     "system": "A photoelectric effect experiment performed on a clean potassium metal surface in a vacuum, illuminated by monochromatic light of two different frequencies.",
+     "hidden_link": "Planck's constant (h) and the work function (W) are unstated and must be treated as simultaneous unknowns across the two irradiation states to find the threshold frequency.",
+     "route": "Use Formula 1 to convert the two given stopping potentials into the maximum kinetic energies of the photoelectrons for each frequency. Use Formula 2 substituted with Formula 3 (KE_max = hν - hν₀) for both frequencies to set up a system of two linear equations. Solve simultaneously to eliminate the unknown slope (h) and find the x-intercept (threshold frequency, ν₀).",
+     "student_must_notice": "Planck's constant is deliberately not provided in the data, meaning the student cannot simply calculate W from one state; they must use the slope of the two data points to find the intercept.",
+     "trap": "A student might try to use a memorized standard value for Planck's constant to solve for W from just one data point, which will yield an incorrect threshold frequency due to experimental variance built into the provided numerical values.",
+     "given": "The stopping potentials (in V) for two specific frequencies of incident radiation (in Hz), and the elementary charge (e).",
+     "hidden": "Planck's constant (h), the work function of potassium (W), and the maximum kinetic energies of the photoelectrons.",
+     "asked": "The threshold frequency of the potassium metal, in Hz.",
+     "why_hard": "It forces the student to recognize that fundamental constants can be treated as empirical unknowns in a system of equations derived from a linear plot.",
+     "_reasoning": "**Analyzing Photoelectric Equations**\n\nI'm now focusing on the photoelectric effect equations. I've got the standard formulas down and am ready to start applying some twists. Specifically, I'm thinking of using the \"inverse\" twist, potentially followed by the \"simultaneous\" twist to solve this problem. I have also considered the two-state twists, both ratio and difference, if needed.\n\n\n**Solving Simultaneous Equations**\n\nOkay, I'm now honing in on a classic scenario: determining Planck's constant or the work function by measuring stopping potentials at two distinct frequencies. I see it—using simultaneous equations, given the stopping potentials $V_1$ and $V_2$ at frequencies $\\nu_1$ and $\\nu_2$, to extract the threshold frequency $\\nu_0$ without knowing *h* or *W* directly. My thought process hinges on Formula 1 (KE from stopping potential), Formula 2 (KE related to *hν* and *W*), and Formula 3 (Work function).\n\n\n",
+     "situation": "A photoelectric effect experiment performed on a clean potassium metal surface in a vacuum, illuminated by monochromatic light of two different frequencies.",
+     "insight": "Planck's constant is deliberately not provided in the data, meaning the student cannot simply calculate W from one state; they must use the slope of the two data points to find the intercept.",
+     "links": "Use Formula 1 to convert the two given stopping potentials into the maximum kinetic energies of the photoelectrons for each frequency. Use Formula 2 substituted with Formula 3 (KE_max = hν - hν₀) for both frequencies to set up a system of two linear equations. Solve simultaneously to eliminate the unknown slope (h) and find the x-intercept (threshold frequency, ν₀).",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-25T03:14:44.575255+00:00",
+     "twist": "simultaneous",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T03:14:49.593056+00:00",
+     "attempt": 1,
+     "twist": "simultaneous",
+     "examples": [
+      "2021P2_Chem_Q7",
+      "2018P1_Chem_Q9"
+     ],
+     "stem": "In a photoelectric effect experiment, a clean potassium metal surface placed in an evacuated chamber is irradiated with monochromatic light. When radiation of frequency [[nu_1]] Hz is incident on the metal surface, photoelectrons are emitted with a stopping potential of [[V_stop1]] V. When the frequency of the incident radiation is changed to [[nu_2]] Hz, the required stopping potential is found to be [[V_stop2]] V. Calculate the threshold frequency of the potassium metal.\n(Given: elementary charge e = [[e_charge]] C, mass of electron = [[m_e]] kg)",
+     "asks": "threshold frequency of the potassium metal",
+     "unit": "Hz",
+     "asked": "nu_0",
+     "ranges": {
+      "V_stop1": [
+       0.35,
+       0.75,
+       false
+      ],
+      "nu_2": [
+       850000000000000.0,
+       1200000000000000.0,
+       false
+      ],
+      "V_stop2": [
+       1.4,
+       2.2,
+       false
+      ],
+      "nu_1": [
+       600000000000000.0,
+       750000000000000.0,
+       false
+      ]
+     },
+     "fixed": {
+      "e_charge": 1.6e-19,
+      "m_e": 9.1e-31
+     },
+     "answer_range": [
+      400000000000000.0,
+      600000000000000.0
+     ],
+     "free": {
+      "e_charge": 1.6e-19,
+      "m_e": 9.1e-31
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T03:15:01.597165+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    ke1 = step_72(stopping_potential=V_stop1)['photoelectron_ke']\n    ke2 = step_72(stopping_potential=V_stop2)['photoelectron_ke']\n    threshold_estimate = nu_1 - ke1 * (nu_2 - nu_1) / (ke2 - ke1)\n    work_function = step_327(frequency=threshold_estimate)['work_function']\n    modeled_ke1 = step_71(frequency=nu_1, work_function=work_function)['photoelectron_ke']\n    return nu_1 - modeled_ke1 * (nu_2 - nu_1) / (ke2 - ke1)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "e_charge": 1.6e-19,
+      "m_e": 9.1e-31,
+      "V_stop1": 0.706,
+      "nu_2": 872000000000000.0,
+      "V_stop2": 1.92,
+      "nu_1": 609000000000000.0
+     },
+     "reasoning": "**Evaluating calculations for energy**\n\nI'm thinking about how to derive the work function using slope and data points. I can calculate kinetic energy (KE) from those values, but I'll need to use the frequency at step 71 to do so. It seems like the work function output from step 327 should be integrated into my calculations for KE predictability, while also leveraging observed energies. Hmm, I want to confirm, so I might need to include step 71 calculations and validate the results along the way.**Calculating threshold and KE**\n\nI'm considering how to use the function results to calculate the final answer. I could reconstruct the threshold through the ratio using predicted kinetic energy (KE). First, I want to compute one KE using step 71 for validation. From there, I can derive the threshold based on other data points. If I get the work from step 327, then I can calculate my KE model and recompute the threshold. It's a bit of a complex process, but it should yield consistent results!"
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-25T03:15:03.426142+00:00",
+     "ok": true,
+     "values": {
+      "e_charge": 1.6e-19,
+      "m_e": 9.1e-31,
+      "V_stop1": 0.706,
+      "nu_2": 872000000000000.0,
+      "V_stop2": 1.92,
+      "nu_1": 609000000000000.0
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-25T03:15:03.429967+00:00",
+     "attempt": 1,
+     "problems": [
+      "state this constant in the Given line: h = 6.626 × 10⁻³⁴ J s"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T03:15:08.763204+00:00",
+     "attempt": 2,
+     "twist": "simultaneous",
+     "examples": [
+      "2022P2_Chem_Q1",
+      "2020P2_Chem_Q14"
+     ],
+     "stem": "In a photoelectric effect experiment, a clean potassium metal surface placed in an evacuated chamber is irradiated with monochromatic light. When radiation of frequency [[nu_1]] Hz is incident on the metal surface, photoelectrons are emitted with a stopping potential of [[V_stop1]] V. When the frequency of the incident radiation is changed to [[nu_2]] Hz, the required stopping potential is found to be [[V_stop2]] V. Calculate the threshold frequency of the potassium metal.\n(Given: elementary charge e = [[e_charge]] C, mass of electron = [[m_e]] kg, h = [[h_const]] J s)",
+     "asks": "threshold frequency of the potassium metal",
+     "unit": "Hz",
+     "asked": "nu_0",
+     "ranges": {
+      "nu_1": [
+       600000000000000.0,
+       750000000000000.0,
+       false
+      ],
+      "V_stop1": [
+       0.35,
+       0.75,
+       false
+      ],
+      "nu_2": [
+       850000000000000.0,
+       1200000000000000.0,
+       false
+      ],
+      "V_stop2": [
+       1.4,
+       2.2,
+       false
+      ]
+     },
+     "fixed": {
+      "e_charge": 1.6e-19,
+      "m_e": 9.1e-31,
+      "h_const": 6.626e-34
+     },
+     "answer_range": [
+      400000000000000.0,
+      600000000000000.0
+     ],
+     "free": {
+      "e_charge": 1.6e-19,
+      "m_e": 9.1e-31,
+      "h_const": 6.626e-34
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "question_rejected",
+     "at": "level",
+     "attempt": 2,
+     "problems": [
+      "it reads as JEE Main medium (level 1.16 of 4; JEE Advanced needs at least 1.16): the solver can follow the formulas step by step. Make the connection between them non-obvious: keep the hidden link unstated, ask for a quantity that must be worked out backwards or fixed by two results together, and do not hand over the data in the order they are used"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "delta_g_to_equilibrium_constant_grtlnk2303rt",
+     "delta_h_to_delta_g_ghtsconsttp",
+     "delta_h_to_delta_h_kirchhoffht2",
+     "delta_h_to_enthalpy_data_rhfhproducts",
+     "delta_u_to_delta_h_hqp"
+    ],
+    "nodes": [
+     "delta_h",
+     "enthalpy_data",
+     "delta_u",
+     "delta_g",
+     "equilibrium_constant"
+    ],
+    "chapters": [
+     "Thermodynamics",
+     "Thermochemistry"
+    ],
+    "txs": [
+     114,
+     382,
+     113,
+     135
+    ],
+    "trap_ids": [
+     "counts_all_species",
+     "ignores_coefficients",
+     "kJ_not_converted",
+     "log10_as_ln",
+     "units_mixed"
+    ],
+    "description": "reaction enthalpy at T₂ (kJ mol⁻¹) [Kirchhoff: ΔH(T₂) = ΔH(T₁) + ΔC_p(T₂ − T₁); a ΔS known at T₁ becomes ΔS(T₁) + ΔC_p ln(T₂/T₁)] | standard enthalpy of formation of the species (kJ mol⁻¹) [ΔrH = ΣνΔfH(products) − ΣνΔfH(reactants), solved for the one unknown] | enthalpy change (kJ mol⁻¹) [ΔH = ΔU + Δn_g RT (q_p = ΔH)] | Gibbs energy change (kJ mol⁻¹) [ΔG = ΔH − TΔS] | equilibrium constant K [ΔG° = −RT ln K]",
+    "twist": "condition",
+    "drawn_txs": [
+     114,
+     382,
+     113,
+     135
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-25T03:15:10.801771+00:00",
+     "p": 0.52
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-25T03:15:44.371202+00:00",
+     "try_": 1,
+     "twist": "condition",
+     "system": "Dry reforming of methane: CH4(g) + CO2(g) ⇌ 2CO(g) + 2H2(g), and the combustion of CH4(g) in a bomb calorimeter at 298 K producing liquid water.",
+     "hidden_link": "The standard enthalpy of formation of CH4(g) is the shared quantity. It is not given directly; instead, it must be extracted from the bomb calorimeter measurement of its combustion, which introduces a different reaction and a phase consideration (liquid water) before the main reforming reaction can be evaluated.",
+     "route": "Formula 3 uses the bomb calorimeter's ΔU and Δn_g for methane combustion to find ΔH_comb(CH4) at T1. Formula 2 uses this ΔH_comb with the given formation enthalpies of CO2(g) and H2O(l) to find the unknown ΔfH(CH4). Formula 2 is used again to find ΔrH(T1) for the dry reforming reaction. Formula 1 updates ΔrH and ΔrS to the unknown temperature T2 using ΔC_p. Formula 5 sets ΔG°(T2) = 0 since the condition is the onset of spontaneity (K = 1). Formula 4 sets ΔH(T2) = T2 × ΔS(T2) to solve for the condition T2.",
+     "student_must_notice": "The bomb calorimeter measures ΔU for the combustion of CH4, which produces H2O(l) at 298 K, meaning Δn_g = -2. The student must correctly formulate this combustion to find ΔfH(CH4) before looking at the reforming reaction.",
+     "trap": "Applying the bomb calorimeter's ΔU directly to the dry reforming reaction, or assuming H2O(g) is formed in the bomb calorimeter (giving a wrong Δn_g), leading to a fundamentally flawed enthalpy of reaction and an incorrect spontaneity temperature.",
+     "given": "ΔU of combustion of CH4(g) at 298 K, standard enthalpies of formation for CO2(g), CO(g), and H2O(l) at 298 K, standard molar entropies for all species in the reforming reaction at 298 K, and constant molar heat capacities (C_p) for all species.",
+     "hidden": "The balanced chemical equation for the combustion of methane, the phase of water in the bomb calorimeter at 298 K, the standard enthalpy of formation of CH4(g), and the standard enthalpy of the dry reforming reaction at 298 K.",
+     "asked": "The temperature (in K) at which the dry reforming of methane becomes spontaneous under standard conditions.",
+     "why_hard": "It forces the student to pivot away from the main reaction to fully analyze an unwritten combustion reaction with a phase trap, just to find a missing formation enthalpy required to even begin the Kirchhoff temperature dependence for the actual equilibrium condition.",
+     "_reasoning": "**Devising Quantitative Problems**\n\nI'm currently focused on crafting a numerical problem that integrates five core physical chemistry formulas. My primary challenge lies in harmonizing Kirchhoff's Law, the First Law of Thermodynamics, the Second Law of Thermodynamics, the Gibbs-Helmholtz equation, and the van't Hoff equation into a coherent and solvable scenario. I'm exploring how to link enthalpy, entropy, and Gibbs free energy changes across varying temperatures and pressures to create a comprehensive question.\n\n**Designing Problems**\n\nI'm currently refining the problem by selecting a specific gas-phase reaction: $SO_2(g) + \\frac{1}{2}O_2(g) \\rightleftharpoons SO_3(g)$. The twist will be to ask at what temperature the reaction becomes spontaneous, requiring the use of the condition twist. This will link the bomb calorimeter data to Gibbs free energy changes.\n\n**Investigating Reaction Pathways**\n\nI'm now exploring an \"inverse\" problem structure, starting with a known equilibrium constant at one temperature and seeking to determine fundamental thermodynamic properties at another. The decomposition of $CaCO_3(s)$ is a promising candidate for this approach.\n\n**Working Backwards**\n\nI'm now constructing an \"inverse\" problem. The student will be given an equilibrium constant at a specific temperature and asked to determine a standard enthalpy of formation. This requires them to use the equilibrium constant to find Gibbs free energy, then work through the Gibbs-Helmholtz and van't Hoff equations to deduce enthalpy and entropy changes, ultimately calculating the requested formation enthalpy.\n\n**Relating Thermodynamic Quantities**\n\nI'm exploring how to incorporate the First Law of Thermodynamics, specifically $\\Delta H = \\Delta U + \\Delta n_g RT$, into the problem. My current focus is on how to use a given $\\Delta U^\\circ$ at one temperature to determine $\\Delta H^\\circ$ at another, or vice versa.\n\n**Connecting Energy and Equilibrium**\n\nI'm focusing on a problem where students use bomb calorimeter data ($\\Delta U^\\circ$) to find the heat of reaction at a different temperature, then calculate $\\Delta G^\\circ$, $K$, and finally a formation enthalpy. This integrates the First Law, Gibbs-Helmholtz, and van't Hoff equations.\n\n**Structuring a Problem**\n\nI'm now consolidating a forward problem structure for the dry reforming of methane. This involves using bomb calorimetry data to derive a standard enthalpy of formation for methane, then calculating the standard enthalpy and entropy changes for the main reaction at a new temperature. Finally, I'll determine the equilibrium constant at that temperature.\n\n**Determining Equilibrium Conditions**\n\nI'm exploring the condition where the dry reforming of methane reaches $K_p = 1$. This requires calculating the $\\Delta_f H^\\circ$ of methane using bomb calorimetry, then determining $\\Delta_r H^\\circ$ and $\\Delta_r S^\\circ$ at a new temperature, ultimately leading to $\\Delta G^\\circ = 0$ at the target temperature.\n\n",
+     "situation": "Dry reforming of methane: CH4(g) + CO2(g) ⇌ 2CO(g) + 2H2(g), and the combustion of CH4(g) in a bomb calorimeter at 298 K producing liquid water.",
+     "insight": "The bomb calorimeter measures ΔU for the combustion of CH4, which produces H2O(l) at 298 K, meaning Δn_g = -2. The student must correctly formulate this combustion to find ΔfH(CH4) before looking at the reforming reaction.",
+     "links": "Formula 3 uses the bomb calorimeter's ΔU and Δn_g for methane combustion to find ΔH_comb(CH4) at T1. Formula 2 uses this ΔH_comb with the given formation enthalpies of CO2(g) and H2O(l) to find the unknown ΔfH(CH4). Formula 2 is used again to find ΔrH(T1) for the dry reforming reaction. Formula 1 updates ΔrH and ΔrS to the unknown temperature T2 using ΔC_p. Formula 5 sets ΔG°(T2) = 0 since the condition is the onset of spontaneity (K = 1). Formula 4 sets ΔH(T2) = T2 × ΔS(T2) to solve for the condition T2.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-25T03:15:44.852740+00:00",
+     "twist": "condition",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T03:15:53.939368+00:00",
+     "attempt": 1,
+     "twist": "condition",
+     "examples": [
+      "2020P2_Chem_Q18",
+      "2023P1_Chem_Q11"
+     ],
+     "stem": "Dry reforming of methane is represented by the equilibrium reaction: CH4(g) + CO2(g) ⇌ 2 CO(g) + 2 H2(g). In a separate thermochemical experiment, the complete combustion of methane gas in a bomb calorimeter at [[T_ref]] K yields an internal energy change of [[delta_U_comb]] kJ mol^-1. Assuming that the molar heat capacities at constant pressure (C_p) remain constant over the temperature range, determine the temperature (in K) at which the dry reforming of methane becomes spontaneous under standard conditions.\n\n(Given: At [[T_ref]] K, standard enthalpies of formation are ΔfH°[CO2(g)] = [[dfH_CO2]] kJ mol^-1, ΔfH°[H2O(l)] = [[dfH_H2O_l]] kJ mol^-1, and ΔfH°[CO(g)] = [[dfH_CO]] kJ mol^-1. Standard molar entropies S° are [[S_CH4]] J K^-1 mol^-1 for CH4(g), [[S_CO2]] J K^-1 mol^-1 for CO2(g), [[S_CO]] J K^-1 mol^-1 for CO(g), and [[S_H2]] J K^-1 mol^-1 for H2(g). Molar heat capacities C_p are [[Cp_CH4]] J K^-1 mol^-1 for CH4(g), [[Cp_CO2]] J K^-1 mol^-1 for CO2(g), [[Cp_CO]] J K^-1 mol^-1 for CO(g), and [[Cp_H2]] J K^-1 mol^-1 for H2(g). Universal gas constant R = [[R]] J K^-1 mol^-1.)",
+     "asks": "the temperature at which the standard dry reforming of methane becomes spontaneous",
+     "unit": "K",
+     "asked": "T_spontaneous",
+     "ranges": {
+      "delta_U_comb": [
+       -895.0,
+       -880.0,
+       false
+      ]
+     },
+     "fixed": {
+      "T_ref": 298,
+      "dfH_CO2": -393.5,
+      "dfH_H2O_l": -285.8,
+      "dfH_CO": -110.5,
+      "S_CH4": 186.3,
+      "S_CO2": 213.7,
+      "S_CO": 197.7,
+      "S_H2": 130.7,
+      "Cp_CH4": 35.3,
+      "Cp_CO2": 37.1,
+      "Cp_CO": 29.1,
+      "Cp_H2": 28.8,
+      "R": 8.314
+     },
+     "answer_range": [
+      800.0,
+      1200.0
+     ],
+     "free": {
+      "T_ref": 298,
+      "dfH_CO2": -393.5,
+      "dfH_H2O_l": -285.8,
+      "dfH_CO": -110.5,
+      "S_CH4": 186.3,
+      "S_CO2": 213.7,
+      "S_CO": 197.7,
+      "S_H2": 130.7,
+      "Cp_CH4": 35.3,
+      "Cp_CO2": 37.1,
+      "Cp_CO": 29.1,
+      "Cp_H2": 28.8,
+      "R": 8.314
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T03:16:15.300221+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    combustion = step_113(\n        reaction_delta_u=delta_U_comb,\n        balanced_equation=\"CH4(g) + 2 O2(g) -> CO2(g) + 2 H2O(l)\",\n        T=T_ref\n    )\n    delta_f_CH4 = step_382(\n        delta_h=combustion['delta_h'],\n        balanced_equation=combustion['balanced_equation'],\n        formation_enthalpies={\n            \"CO2(g)\": dfH_CO2,\n            \"H2O(l)\": dfH_H2O_l,\n            \"O2(g)\": 0\n        },\n        unknown_species=\"CH4(g)\"\n    )['formation_enthalpy']\n\n    reforming_equation = \"CH4(g) + CO2(g) -> 2 CO(g) + 2 H2(g)\"\n    delta_h_ref = find(\n        step_382,\n        \"delta_h\",\n        result=delta_f_CH4,\n        balanced_equation=reforming_equation,\n        formation_enthalpies={\n            \"CO2(g)\": dfH_CO2,\n            \"CO(g)\": dfH_CO,\n            \"H2(g)\": 0\n        },\n        unknown_species=\"CH4(g)\"\n    )\n    delta_s_ref = 2 * S_CO + 2 * S_H2 - S_CH4 - S_CO2\n    delta_cp = 2 * Cp_CO + 2 * Cp_H2 - Cp_CH4 - Cp_CO2\n\n    def onset_mismatch(T):\n        updated = step_114(\n            delta_h=delta_h_ref,\n            delta_cp=delta_cp,\n            T1=T_ref,\n            T2=T,\n            delta_s=delta_s_ref\n        )\n        gibbs = step_132(\n            delta_h=updated['delta_h'],\n            delta_s=updated['delta_s'],\n            T=T\n        )['delta_g']\n        return step_135(delta_g=gibbs, T=T)['equilibrium_constant'] - 1\n\n    return solve_for(onset_mismatch, 1, 1000000)",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "T_ref": 298,
+      "dfH_CO2": -393.5,
+      "dfH_H2O_l": -285.8,
+      "dfH_CO": -110.5,
+      "S_CH4": 186.3,
+      "S_CO2": 213.7,
+      "S_CO": 197.7,
+      "S_H2": 130.7,
+      "Cp_CH4": 35.3,
+      "Cp_CO2": 37.1,
+      "Cp_CO": 29.1,
+      "Cp_H2": 28.8,
+      "R": 8.314,
+      "delta_U_comb": -882.0
+     },
+     "reasoning": "**Clarifying function requirements**\n\nI’m noticing that the function’s needs list doesn’t mention `delta_s`, but the code still supports it if it's present, alongside the carry declaration. For the inputs of the step, it looks like only four are necessary, but it seems that extra ones might also be accepted? They seem to expect the use of `delta_s` in the arguments, even though the exact call line doesn't include it. I’ll keep this in mind!"
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-25T03:16:17.233688+00:00",
+     "ok": true,
+     "values": {
+      "T_ref": 298,
+      "dfH_CO2": -393.5,
+      "dfH_H2O_l": -285.8,
+      "dfH_CO": -110.5,
+      "S_CH4": 186.3,
+      "S_CO2": 213.7,
+      "S_CO": 197.7,
+      "S_H2": 130.7,
+      "Cp_CH4": 35.3,
+      "Cp_CO2": 37.1,
+      "Cp_CO": 29.1,
+      "Cp_H2": 28.8,
+      "R": 8.314,
+      "delta_U_comb": -882.0
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "dropped_formulas",
+     "at": "2026-11-25T03:16:17.233885+00:00",
+     "txs": [
+      132
+     ]
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-25T03:16:17.758456+00:00",
+     "stem": "Dry reforming of methane is represented by the equilibrium reaction: CH4(g) + CO2(g) ⇌ 2 CO(g) + 2 H2(g). In a separate thermochemical experiment, the complete combustion of methane gas in a bomb calorimeter at 298 K yields an internal energy change of -882 kJ mol^-1. Assuming that the molar heat capacities at constant pressure (C_p) remain constant over the temperature range, determine the temperature (in K) at which the dry reforming of methane becomes spontaneous under standard conditions.\n\n(Given: At 298 K, standard enthalpies of formation are ΔfH°[CO2(g)] = -393.5 kJ mol^-1, ΔfH°[H2O(l)] = -285.8 kJ mol^-1, and ΔfH°[CO(g)] = -110.5 kJ mol^-1. Standard molar entropies S° are 186.3 J K^-1 mol^-1 for CH4(g), 213.7 J K^-1 mol^-1 for CO2(g), 197.7 J K^-1 mol^-1 for CO(g), and 130.7 J K^-1 mol^-1 for H2(g). Molar heat capacities C_p are 35.3 J K^-1 mol^-1 for CH4(g), 37.1 J K^-1 mol^-1 for CO2(g), 29.1 J K^-1 mol^-1 for CO(g), and 28.8 J K^-1 mol^-1 for H2(g). Universal gas constant R = 8.314 J K^-1 mol^-1.) Give the answer in K, to 3 significant figures.",
+     "code": "def solve():\n    combustion = step_113(\n        reaction_delta_u=delta_U_comb,\n        balanced_equation=\"CH4(g) + 2 O2(g) -> CO2(g) + 2 H2O(l)\",\n        T=T_ref\n    )\n    delta_f_CH4 = step_382(\n        delta_h=combustion['delta_h'],\n        balanced_equation=combustion['balanced_equation'],\n        formation_enthalpies={\n            \"CO2(g)\": dfH_CO2,\n            \"H2O(l)\": dfH_H2O_l,\n            \"O2(g)\": 0\n        },\n        unknown_species=\"CH4(g)\"\n    )['formation_enthalpy']\n\n    reforming_equation = \"CH4(g) + CO2(g) -> 2 CO(g) + 2 H2(g)\"\n    delta_h_ref = find(\n        step_382,\n        \"delta_h\",\n        result=delta_f_CH4,\n        balanced_equation=reforming_equation,\n        formation_enthalpies={\n            \"CO2(g)\": dfH_CO2,\n            \"CO(g)\": dfH_CO,\n            \"H2(g)\": 0\n        },\n        unknown_species=\"CH4(g)\"\n    )\n    delta_s_ref = 2 * S_CO + 2 * S_H2 - S_CH4 - S_CO2\n    delta_cp = 2 * Cp_CO + 2 * Cp_H2 - Cp_CH4 - Cp_CO2\n\n    def onset_mismatch(T):\n        updated = step_114(\n            delta_h=delta_h_ref,\n            delta_cp=delta_cp,\n            T1=T_ref,\n            T2=T,\n            delta_s=delta_s_ref\n        )\n        gibbs = step_132(\n            delta_h=updated['delta_h'],\n            delta_s=updated['delta_s'],\n            T=T\n        )['delta_g']\n        return step_135(delta_g=gibbs, T=T)['equilibrium_constant'] - 1\n\n    return solve_for(onset_mismatch, 1, 1000000)",
+     "asks": "the temperature at which the standard dry reforming of methane becomes spontaneous",
+     "unit": "K",
+     "twist": "condition",
+     "givens": [
+      {
+       "value": 298,
+       "quote": "T_ref"
+      },
+      {
+       "value": -882.0,
+       "quote": "delta_U_comb"
+      },
+      {
+       "value": -393.5,
+       "quote": "dfH_CO2"
+      },
+      {
+       "value": -285.8,
+       "quote": "dfH_H2O_l"
+      },
+      {
+       "value": -110.5,
+       "quote": "dfH_CO"
+      },
+      {
+       "value": 186.3,
+       "quote": "S_CH4"
+      },
+      {
+       "value": 213.7,
+       "quote": "S_CO2"
+      },
+      {
+       "value": 197.7,
+       "quote": "S_CO"
+      },
+      {
+       "value": 130.7,
+       "quote": "S_H2"
+      },
+      {
+       "value": 35.3,
+       "quote": "Cp_CH4"
+      },
+      {
+       "value": 37.1,
+       "quote": "Cp_CO2"
+      },
+      {
+       "value": 29.1,
+       "quote": "Cp_CO"
+      },
+      {
+       "value": 28.8,
+       "quote": "Cp_H2"
+      },
+      {
+       "value": 8.314,
+       "quote": "R"
+      }
+     ],
+     "answer": 908.1,
+     "trace": [
+      {
+       "tx": 113,
+       "src": "delta_u",
+       "dst": "delta_h",
+       "formula": "ΔH = ΔU + Δn_g RT (q_p = ΔH)",
+       "inputs": {
+        "reaction_delta_u": -882,
+        "balanced_equation": "CH4(g) + 2 O2(g) -> CO2(g) + 2 H2O(l)",
+        "T": 298
+       },
+       "outputs": {
+        "delta_h": -886.96,
+        "T1": 298,
+        "balanced_equation": "CH4(g) + 2 O2(g) -> CO2(g) + 2 H2O(l)"
+       }
+      },
+      {
+       "tx": 382,
+       "src": "delta_h",
+       "dst": "enthalpy_data",
+       "formula": "ΔrH = ΣνΔfH(products) − ΣνΔfH(reactants), solved for the one unknown",
+       "inputs": {
+        "delta_h": -886.955144,
+        "balanced_equation": "CH4(g) + 2 O2(g) -> CO2(g) + 2 H2O(l)",
+        "formation_enthalpies": {
+         "CO2(g)": -393.5,
+         "H2O(l)": -285.8,
+         "O2(g)": 0
+        },
+        "unknown_species": "CH4(g)"
+       },
+       "outputs": {
+        "formation_enthalpy": -78.145
+       }
+      },
+      {
+       "tx": 382,
+       "src": "delta_h",
+       "dst": "enthalpy_data",
+       "formula": "ΔrH = ΣνΔfH(products) − ΣνΔfH(reactants), solved for the one unknown",
+       "inputs": {
+        "balanced_equation": "CH4(g) + CO2(g) -> 2 CO(g) + 2 H2(g)",
+        "formation_enthalpies": {
+         "CO2(g)": -393.5,
+         "CO(g)": -110.5,
+         "H2(g)": 0
+        },
+        "unknown_species": "CH4(g)",
+        "delta_h": 250.644856
+       },
+       "outputs": {
+        "formation_enthalpy": -78.145
+       }
+      },
+      {
+       "tx": 114,
+       "src": "delta_h",
+       "dst": "delta_h",
+       "formula": "Kirchhoff: ΔH(T₂) = ΔH(T₁) + ΔC_p(T₂ − T₁); a ΔS known at T₁ becomes ΔS(T₁) + ΔC_p ln(T₂/T₁)",
+       "inputs": {
+        "delta_h": 250.644856,
+        "delta_cp": 43.4,
+        "T1": 298,
+        "T2": 908.127439122,
+        "delta_s": 256.8
+       },
+       "outputs": {
+        "delta_h": 277.12,
+        "T": 908.13,
+        "delta_s": 305.16
+       }
+      },
+      {
+       "tx": 132,
+       "src": "delta_h",
+       "dst": "delta_g",
+       "formula": "ΔG = ΔH − TΔS",
+       "inputs": {
+        "delta_h": 277.124386858,
+        "delta_s": 305.160239543,
+        "T": 908.127439122
+       },
+       "outputs": {
+        "delta_g": 1.7053e-13,
+        "T": 908.13,
+        "delta_h": 277.12,
+        "delta_s": 305.16
+       }
+      },
+      {
+       "tx": 135,
+       "src": "delta_g",
+       "dst": "equilibrium_constant",
+       "formula": "ΔG° = −RT ln K",
+       "inputs": {
+        "delta_g": 1.70530256582e-13,
+        "T": 908.127439122
+       },
+       "outputs": {
+        "equilibrium_constant": 1,
+        "T1": 908.13,
+        "T": 908.13
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "counts_all_species",
+       "desc": "counts liquids and solids in Δn",
+       "tx": 113,
+       "step": 0,
+       "wrong_answer": 924.3
+      },
+      {
+       "id": "ignores_coefficients",
+       "desc": "ignores the coefficients",
+       "tx": 382,
+       "step": 1,
+       "wrong_answer": 293.4
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "R = 8.314 J K⁻¹ mol⁻¹"
+     ],
+     "depth": 4,
+     "extra_txs": [],
+     "preset": {
+      "T_ref": 298,
+      "delta_U_comb": -882.0,
+      "dfH_CO2": -393.5,
+      "dfH_H2O_l": -285.8,
+      "dfH_CO": -110.5,
+      "S_CH4": 186.3,
+      "S_CO2": 213.7,
+      "S_CO": 197.7,
+      "S_H2": 130.7,
+      "Cp_CH4": 35.3,
+      "Cp_CO2": 37.1,
+      "Cp_CO": 29.1,
+      "Cp_H2": 28.8,
+      "R": 8.314
+     },
+     "template": "Dry reforming of methane is represented by the equilibrium reaction: CH4(g) + CO2(g) ⇌ 2 CO(g) + 2 H2(g). In a separate thermochemical experiment, the complete combustion of methane gas in a bomb calorimeter at [[T_ref]] K yields an internal energy change of [[delta_U_comb]] kJ mol^-1. Assuming that the molar heat capacities at constant pressure (C_p) remain constant over the temperature range, determine the temperature (in K) at which the dry reforming of methane becomes spontaneous under standard conditions.\n\n(Given: At [[T_ref]] K, standard enthalpies of formation are ΔfH°[CO2(g)] = [[dfH_CO2]] kJ mol^-1, ΔfH°[H2O(l)] = [[dfH_H2O_l]] kJ mol^-1, and ΔfH°[CO(g)] = [[dfH_CO]] kJ mol^-1. Standard molar entropies S° are [[S_CH4]] J K^-1 mol^-1 for CH4(g), [[S_CO2]] J K^-1 mol^-1 for CO2(g), [[S_CO]] J K^-1 mol^-1 for CO(g), and [[S_H2]] J K^-1 mol^-1 for H2(g). Molar heat capacities C_p are [[Cp_CH4]] J K^-1 mol^-1 for CH4(g), [[Cp_CO2]] J K^-1 mol^-1 for CO2(g), [[Cp_CO]] J K^-1 mol^-1 for CO(g), and [[Cp_H2]] J K^-1 mol^-1 for H2(g). Universal gas constant R = [[R]] J K^-1 mol^-1.)",
+     "ranges": {
+      "delta_U_comb": [
+       -895.0,
+       -880.0,
+       false
+      ]
+     },
+     "answer_range": [
+      800.0,
+      1200.0
+     ]
+    }
+   ]
+  }
+ ]
+}

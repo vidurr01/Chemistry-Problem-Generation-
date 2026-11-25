@@ -90,13 +90,16 @@ a senior setter; your job is to turn it into the exact question text, faithfully
 
 THE DESIGN:
 """ + "\n".join(f"- {k.replace('_', ' ')}: {design[k]}" for k in
-                ("system", "hidden_link", "route", "student_must_notice", "trap", "given", "hidden", "asked")
+                ("system", "hidden_link", "route", "hidden_step", "student_must_notice", "trap", "given", "hidden",
+                 "asked")
                 if design.get(k)) + f"""
 
 How to write it up:
 - state exactly the quantities under "given", and NOT those under "hidden": the hidden link and every
   intermediate stay unstated, so the student must find the connection;
 - never state or hint at what the student must notice; never name a law, equation or method;
+- keep it short and plain: the situation in at most three sentences, no device, industry or story
+  dressing; the hidden step must stay in the question and stay unstated;
 - do not give the data in the order the route uses them;
 - nothing the solver should work out is given: no ratio ("1 mol reacts with 6 mol"), n-factor,
   equivalent mass or intermediate result that one of the formulas computes.

@@ -18,6 +18,7 @@ import ast as _ast
 import json as _json
 import math as _math
 import operator as _mathop
+import re as _re
 
 load_env()
 
@@ -294,7 +295,7 @@ def _eval_calc(expr: str) -> str:
                _ast.Div: _mathop.truediv, _ast.Pow: _calc_pow, _ast.Mod: _mathop.mod,
                _ast.FloorDiv: _mathop.floordiv}
     _UNOPS  = {_ast.USub: _mathop.neg, _ast.UAdd: _mathop.pos}
-    _FUNCS  = {"sqrt": _math.sqrt, "log": _math.log, "log10": _math.log10,
+    _FUNCS  = {"sqrt": _math.sqrt, "log": _math.log, "ln": _math.log, "log10": _math.log10,
                "log2": _math.log2, "exp": _math.exp, "abs": abs,
                "sin": _math.sin, "cos": _math.cos, "tan": _math.tan,
                "asin": _math.asin, "acos": _math.acos, "atan": _math.atan,
@@ -326,6 +327,9 @@ def _eval_calc(expr: str) -> str:
             return _FUNCS[node.func.id](*(_ev(a) for a in node.args))
         raise ValueError(f"unsupported node: {_ast.dump(node)}")
 
+    # common spellings solvers use (17 of 149 calls on saved physical solves errored, 2026-11-25):
+    # math.log(...) / numpy-style prefixes, and ln for the natural log
+    expr = _re.sub(r"\b(?:math|np|numpy)\.", "", str(expr))
     try:
         result = _ev(_ast.parse(expr.strip(), mode="eval").body)
         if isinstance(result, float) and result == int(result) and abs(result) < 1e15:
@@ -350,7 +354,8 @@ CALC_TOOL = [{
                     "type": "string",
                     "description": (
                         "A numeric expression using numbers, +, -, *, /, ** (power), % "
-                        "and functions: sqrt, log, log10, log2, exp, abs, sin, cos, tan, "
+                        "and functions: sqrt, ln, log (natural log, same as ln), log10 (base 10), log2, "
+                        "exp, abs, sin, cos, tan, "
                         "asin, acos, atan, sinh, cosh, tanh, ceil, floor, round, factorial. "
                         "Constants: pi, e. No variables — only numbers and these functions."
                     )
@@ -373,6 +378,8 @@ FORMAT_NUDGE = ("That reply is not what was asked for. Do not write code or a pr
 # 2026-11-19: unforced, Llama 3.3 called it 0/5 (even when told it must), Granite 1/2, Qwen3.5 1/2, GLM 1/3; forced,
 # Llama called it 5/5. The author: the calculator is a must, so it no longer depends on the model.
 FORCE_FIRST_TOOL_CALL = ("council",)
+ROUND_CAP_NUDGE = ("You have used the calculator many times; it is now off. Using the results you already have, "
+                   "reply now with ONLY the JSON object, with exactly the keys the problem asked for.")
 EMPTY_NUDGE = ("Your last reply was empty. Reply now with ONLY the JSON object, with exactly the keys the problem "
                "asked for.")
 
@@ -487,6 +494,29 @@ def _ask_json_with_tools(role, model, asked_for, where, system, user,
             turns[-1]["tool_result"] = result
         print(f"    [{role} {asked_for.split('/')[-1]}] calc tool: {len(tool_calls)} call(s) in round {_round + 1}")
 
+    # Round cap reached: one last turn with the calculator off, asking for the answer. Before, the whole
+    # conversation was thrown away and asked again from scratch, twice (GLM 5.3 Flash, 3 x 20 rounds on one
+    # question, 2026-11-25), and the solve was lost.
+    print(f"    [{role} {asked_for.split('/')[-1]}] {MAX_TOOL_ROUNDS} calculator rounds: asking for the answer now")
+    messages.append({"role": "user", "content": ROUND_CAP_NUDGE})
+    for _last in range(FORMAT_NUDGES + 1):
+        resp = call_with_retry(lambda: create("none"), label=role)
+        holder["usage"] = getattr(resp, "usage", None)
+        SPEND.add(role, holder["usage"])
+        choice = resp.choices[0] if getattr(resp, "choices", None) else None
+        msg = choice.message if choice else None
+        content = (getattr(msg, "content", None) or "") if msg else ""
+        turns.append({"reasoning": _thought(msg), "content": content})
+        holder["reasoning"] = "\n\n".join(t["reasoning"] for t in turns if t.get("reasoning")) or None
+        try:
+            if not str(content).strip():
+                raise ValueError("empty final reply after the round cap")
+            return parse_json(content)
+        except ValueError as e:
+            _log_unparseable(role, resp, content, e)
+            if str(content).strip():
+                messages.append({"role": "assistant", "content": content})
+            messages.append({"role": "user", "content": FORMAT_NUDGE if str(content).strip() else EMPTY_NUDGE})
     raise ValueError(f"tool-calling loop did not terminate after {MAX_TOOL_ROUNDS} rounds")
 
 

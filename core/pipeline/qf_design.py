@@ -103,6 +103,23 @@ does not). The trap sits at that link: a student who misses it uses a plausible 
 gets a believable wrong number. A question where each formula's output is simply the next one's input,
 with all data handed over in order, is NOT hard: avoid it.
 
+BUILD IT AROUND ONE HIDDEN STEP (2026-11-25: every draft without one was a JEE Main exercise). The hardest
+real questions are SHORT, in one plain situation, and turn on one step that the usual route skips, so a
+good student who applies the formulas directly gets a believable wrong answer. Kinds of hidden step (choose
+what THESE formulas and THIS system allow; invent the system yourself):
+- something the usual route treats as fixed changes in this situation (an amount, a volume, the number of
+  particles, which species is in excess, the phase present);
+- a second process or species the usual approximation ignores matters at these values;
+- the situation decides which case of a formula applies, and the obvious case is the wrong one;
+- quantities that cannot be combined directly must first be converted to ones that can;
+- the asked quantity is not the one the formulas give directly (per mole of a different species, a
+  count of particles of a different kind, a quantity of the other substance).
+Recognising a standard exercise and reversing it, taking a ratio of two states, or making the solver solve
+an equation is NOT a hidden step by itself: a Main student does each of these routinely.
+
+KEEP IT SHORT AND PLAIN: the situation in at most three sentences. No device, industry or story dressing
+(no "rocket chamber", "spectrometer", "industrial plant"): a real paper states the system plainly.
+
 Rules:
 - ONE definite, real system: name the substances, the reaction(s) and the conditions. No alternatives
   ("X or Y"), no unspecified reaction.
@@ -133,6 +150,7 @@ Return JSON:
   "route": "for each formula, in the order a solver uses it: what it takes and what it gives here",
   "student_must_notice": "the non-obvious point that decides the answer",
   "trap": "the tempting wrong route at the link, and why a good student takes it",
+  "hidden_step": "the ONE step the usual route skips, which kind above it is, and why it changes the answer",
   "given": "the quantities the question states (in words, no numbers)",
   "hidden": "the quantities it must NOT state",
   "asked": "the asked quantity, with its unit",

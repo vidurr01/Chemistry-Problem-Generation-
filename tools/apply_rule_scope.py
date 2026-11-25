@@ -391,8 +391,118 @@ RUN13 = {
     "ketone_to_ketone_x2": {"absent": ["acetal"]},
 }
 
+# Layer 2, the reagent × group table (2026-11-25). Live runs kept finding, one edge at a time, a second group the
+# same conditions attack (53 of the 81 steps the blind step check held were still drawable). So the limits now go
+# by reagent CLASS: every edge whose conditions fall in a class refuses a molecule carrying any of the class's
+# groups, except the group(s) the edge itself acts on (OWN, by the edge's start node). tools/replay_step_holds.py
+# re-checks every held step against this.
+OWN = {
+    "alkyl_halide": {"alkyl_halide", "halide_2", "halide_3", "activated_cx", "gem_dihalide", "vicinal_dihalide"},
+    "vicinal_dihalide": {"alkyl_halide", "vicinal_dihalide"},
+    "ester": {"ester"}, "nitrile": {"nitrile", "cyanohydrin"}, "alkene": {"alkene"}, "cycloalkene": {"alkene"},
+    "diene_conjugated": {"alkene"}, "alkyne": {"alkyne", "terminal_alkyne"}, "epoxide": {"epoxide"},
+    "alcohol": {"alcohol", "alcohol_1", "alcohol_2", "alcohol_3", "methyl_carbinol"},
+    "diol": {"alcohol", "alcohol_1", "alcohol_2", "alcohol_3"}, "aldehyde": {"aldehyde"},
+    "ketone": {"ketone", "alpha_ch_ch2_ketone"}, "amine": {"amine_any", "amine_nh", "amine_aliphatic_nh2"},
+    "aniline": {"amine_any", "amine_nh", "aryl_nh2"}, "carboxylic_acid": {"carboxylic_acid"},
+    "phenol": {"phenol"}, "amide": {"amide"}, "lactam": {"amide"}, "acid_chloride": {"acid_chloride"},
+    "anhydride": {"anhydride"}, "ether": {"dialkyl_ether", "benzylic_allylic_ether", "alkoxy_aryl"},
+    "nitro_compound": {"nitro", "nitro_aliphatic"}, "oxime": {"oxime"},
+}
+HYDROLYTIC = ["ester", "amide", "nitrile", "acid_chloride", "anhydride", "acetal", "oxime", "imine", "cyanohydrin",
+              "gem_dihalide", "activated_cx", "sulfonate_ester", "epoxide", "alcohol_3", "beta_hydroxy_carbonyl",
+              "benzylic_allylic_ether", "alkene"]
+BASIC = ["ester", "acid_chloride", "anhydride", "halohydrin", "alpha_halo_carbonyl", "cyanohydrin",
+         "sulfonate_ester", "gem_dihalide", "epoxide", "alkyl_halide",
+         "allylic_halide", "neopentyl_halide"]          # OH⁻ is a nucleophile too: SN2′, no SN2 (live run 2, 11-25)
+NUCLEOPHILE = ["sulfonate_ester", "allylic_halide", "neopentyl_halide", "halohydrin", "alpha_halo_carbonyl",
+               "epoxide", "acid_chloride", "anhydride", "cyanohydrin"]
+LAYER2 = [
+    # (what, label regex or explicit edge ids, groups)
+    ("aqueous acid, hydrolysing", {"alkyne_to_ketone_ho", "alkene_to_alcohol_ho", "nitrile_to_carboxylic_acid_ho",
+                                   "ester_to_carboxylic_acid_h3odiluteaci", "epoxide_to_epoxide_h3odiluteaci",
+                                   "isocyanide_to_amine_hydrolysis", "diazonium_salt_to_phenol_ho",
+                                   "acid_chloride_to_amine_nan3h3o"}, HYDROLYTIC),
+    ("strong acid / HX / acid + alcohol", r"conc\. H|HBr|HI\b|dry HCl|HN₃|Zn–Hg|Sn, conc",
+     ["imine", "cyanohydrin", "alcohol_3", "activated_cx", "beta_hydroxy_carbonyl", "halohydrin"]),
+    # live run 2 (2026-11-25): acid α-halogenation slows after the first X (a second Br2 does not settle on the
+    # same carbon), and Baeyer–Villiger next to a C–X has no settled migrating group
+    ("α-halo ketones: no second acid halogenation, no clear Baeyer–Villiger",
+     {"ketone_to_ketone_x2", "ketone_to_ester_mcpbametachl"}, ["alpha_halo_carbonyl"]),
+    ("HX protonates amines first", r"HBr|HI\b", ["amine_any"]),
+    ("acid + methanol: transesterification, other OH", {"aldehyde_to_acetal_roh2", "ketone_to_ether_roh",
+                                                        "carboxylic_acid_to_ester_roh"},
+     ["ester", "alcohol", "phenol", "activated_cx"]),
+    ("hydroxide / alkoxide", r"NaOH|KOH|OH⁻|CH₃ONa|NaOMe", BASIC),
+    ("nucleophiles (SN2 / addition)", r"NaCN|KCN|CuCN|AgNO₂|NaI|NH₃|CH₃NH₂|NaN₃|CH₃ONa|CH₃I", NUCLEOPHILE),
+    ("CN⁻ and amines also displace C–X", r"KCN|NH₃|CH₃NH₂", ["alkyl_halide"]),
+    ("amines are protonated by COOH", r"NH₃|CH₃NH₂", ["carboxylic_acid"]),
+    # live run 4 (2026-11-25): CH3NH2 opened an epoxide beside an acetate; NH3/amines turn esters into amides
+    # (alkyl_halide_to_amine_excessnh already had this limit, the methylamine edges did not)
+    ("ammonia and amines aminolyse esters", r"NH₃|CH₃NH₂", ["ester"]),
+    # live run 5 (2026-11-25): Hunsdiecker (Ag2O, Br2) beside a 3° benzylic C–Br (Ag⁺ ionises it), then Zn dust
+    # beside a benzylic CH2Br; Tollens' reagent is Ag⁺ in NH3 (both attack C–X)
+    ("Ag⁺ pulls the halide off C–X", r"Ag₂O|Tollens", ["alkyl_halide"]),
+    ("zinc metal also reduces an activated C–X", r"Zn dust", ["lone_activated_cx"]),
+    # live run 6 (2026-11-25): each held by the step check
+    ("strong base also attacks a CHO (Cannizzaro / aldol)", r"NaOH|KOH|OH⁻|CH₃ONa|\bNa;", ["aldehyde"]),
+    ("Na / alkoxide also deprotonates an α-nitro C–H (the nitronate is alkylated)", r"\bNa;|CH₃ONa",
+     ["nitro_aliphatic"]),
+    ("Ag₂O oxidises a CHO", r"Ag₂O", ["aldehyde"]),
+    ("pyridine is alkylated by an activated C–X", r"pyridine", ["activated_cx"]),
+    ("a Grignard reagent attacks a sulfonate ester", r"Mg, dry ether", ["sulfonate_ester"]),
+    # live run 9: aqueous/strong acid protonates an amine first
+    ("acid protonates amines first", {"alkyne_to_ketone_ho", "alkene_to_alcohol_ho", "alcohol_to_alkene_conchso",
+                                      "alcohol_to_sulfonate_conchso"}, ["amine_any"]),
+    ("catalytic hydrogenation: hydrogenolysis, C=N", r"(?<![NC])H₂[,/]|H₂$", ["activated_cx", "gem_dihalide", "imine",
+                                                                    "oxime"]),
+    ("hydride reducers", r"NaBH₄|LiAlH₄|DIBAL", ["imine", "alpha_halo_carbonyl"]),
+    ("LiAlH4 reduces tosylates", r"LiAlH₄", ["sulfonate_ester"]),
+    ("bromine", r"Br₂", ["amine_any", "imine"]),
+    ("acylating / sulfonylating / chlorinating agents take COOH and N–H", r"COCl|TsCl|SOCl₂|\(CH₃CO\)₂O|PCl₅",
+     ["carboxylic_acid", "amine_nh"]),
+    ("oxidants open epoxides, cleave imines", r"KMnO₄|Cr₂O₇|mCPBA|H₂SO₅", ["epoxide", "imine", "cyanohydrin"]),
+    ("Hg²⁺/CH3OH: an OH or COOH in the molecule traps the mercurinium ion", r"Hg\(OAc\)₂",
+     ["alcohol", "phenol", "carboxylic_acid", "cyanohydrin", "activated_cx"]),
+    ("haloform: Br2/OH⁻ also attacks C=C and C–X", r"Br₂, NaOH|I₂, NaOH", ["alkene", "alkyne", "alkyl_halide",
+                                                                         "sulfonate_ester"]),
+    ("everything: a C=N or cyanohydrin does not survive", r".", ["imine"]),
+]
+# electrophilic additions: two DIFFERENT C=C (or C≡C) — which one reacts is not settled (live run 2026-11-25)
+ADDITION_EQUIVALENT = {
+    "alkene_to_vicinal_dihalide_x": "alkene", "alkene_to_halohydrin_br": "alkene", "alkene_to_alkyl_halide_hx": "alkene",
+    "alkene_to_alcohol_ho": "alkene", "alkene_to_ether_hgoacrohorhg": "alkene", "alkene_to_epoxide_mcpba": "alkene",
+    "alkyne_to_ketone_ho": "alkyne", "alkyne_to_vinyl_halide_hx1equiv": "alkyne",
+    "alkyne_to_geminal_dihalide_hxexcess2equ": "alkyne", "alkyne_to_alkene_h": "alkyne",
+}
+
+
+def _layer2() -> dict:
+    import re as _re
+    from core.engine.organic.labels import REAGENT_LABEL as _L
+    with open(GRAPH, encoding="utf-8") as f:
+        start = {e["id"]: e.get("from", "") for e in json.load(f)["edges"]}
+    out = {}
+    for eid, lab in _L.items():
+        own = OWN.get(start.get(eid, ""), set())
+        for _what, match, groups in LAYER2:
+            hit = eid in match if isinstance(match, set) else bool(_re.search(match, lab))
+            if not hit:
+                continue
+            lst = out.setdefault(eid, {}).setdefault("absent", [])
+            lst.extend(g for g in groups if g not in own and g not in lst)
+    for eid, g in ADDITION_EQUIVALENT.items():
+        out.setdefault(eid, {})["equivalent_only"] = [g]
+    out.setdefault("alkene_to_vicinal_dihalide_x", {}).setdefault("absent", []).append("vinyl_halide")
+    out.setdefault("alcohol_to_substituted_benzene_4methylbenze", {}).setdefault("absent", []).extend(
+        ["alcohol_3", "activated_oh"])
+    return out
+
+
+LAYER2_SCOPE = _layer2()
+
 for _eid, _spec in (list(REVIEW.items()) + list(PASS3.items()) + list(RUN9.items()) + list(RUN12.items())
-                    + list(RUN13.items())):
+                    + list(RUN13.items()) + list(LAYER2_SCOPE.items())):
     _cur = SCOPE.setdefault(_eid, {})
     for _k in ("absent", "requires", "at_most_one", "equivalent_only"):
         if _spec.get(_k):
@@ -411,6 +521,8 @@ LEFT_OUT = {
     "alkyl_halide_to_ketone_dmsodimethyl": "Kornblum needs an activated halide",
     "ester_to_ether_conchso": "the product drops the skeleton",
     "ether_to_ester_co": "industrial, not JEE",
+    "alcohol_to_carbene_chndiazometh": "O-methylation of an alcohol by CH2N2/HBF4 is outside JEE; the step check "
+                                       "read it as a C=O homologation in 4 of 4 held schemes (2026-11-24/25)",
 }
 for _eid, _why in LEFT_OUT.items():
     SCOPE.setdefault(_eid, {})["left_out"] = _why

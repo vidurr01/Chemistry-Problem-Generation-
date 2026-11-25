@@ -18,6 +18,7 @@ Formats: msq (4 claims, 1-3 true), mcq_correct (exactly one true), count (4-8 cl
 from __future__ import annotations
 
 import json
+import os
 import re
 import random
 
@@ -196,21 +197,87 @@ def draw(adapter, rng, tried=(), start=None, attempts=800):
         key = tuple(comps[k]["edge"]["id"] for k in order[1:])
         if key in tried:
             continue
-        path = [comps[k]["edge"] for k in order[1:]]
-        chapters = list(dict.fromkeys(e.get("chapter", "") for e in path))
-        txs = [t for e in path for t in (e.get("tx_ids") or [])]
-        cand = {"edges": list(key), "nodes": [comps[k]["node"] for k in order], "chapters": chapters, "txs": txs,
-                "trap_ids": [], "_comps": comps, "_order": order, "_start": (name, canon(start_smi)),
-                "description": f"{name}: {n_steps} steps, {branches} branch point(s)",
-                "_hint": "Work out every lettered compound in order, deciding at each step which product is major; "
-                         "only then judge each statement about it."}
-        cand["_props"] = {k: OP.askable(comps[k]["smiles"]) for k in order}
-        cand["_wrong"] = wrong_structures(cand)
-        cand["_hinge"] = hinge_facts(cand)
+        cand = _candidate(comps, order, name, start_smi, branches)
         if len({(h[0], h[1]) for h in cand["_hinge"]}) < MIN_HINGE or len(hinge_sources(cand)) < MIN_HINGE:
             continue                                  # fewer than two steps where a wrong turn changes a fact: not hard
         return cand
     return None
+
+
+def _candidate(comps, order, name, start_smi, branches) -> dict:
+    """The candidate dict for a built scheme (draw, and rebuild() for a resumed run)."""
+    path = [comps[k]["edge"] for k in order[1:]]
+    chapters = list(dict.fromkeys(e.get("chapter", "") for e in path))
+    txs = [t for e in path for t in (e.get("tx_ids") or [])]
+    cand = {"edges": [e["id"] for e in path], "nodes": [comps[k]["node"] for k in order], "chapters": chapters,
+            "txs": txs, "trap_ids": [], "_comps": comps, "_order": order, "_start": (name, canon(start_smi)),
+            "description": f"{name}: {len(order) - 1} steps, {branches} branch point(s)",
+            "_hint": "Work out every lettered compound in order, deciding at each step which product is major; "
+                     "only then judge each statement about it."}
+    cand["_props"] = {k: OP.askable(comps[k]["smiles"]) for k in order}
+    cand["_wrong"] = wrong_structures(cand)
+    cand["_hinge"] = hinge_facts(cand)
+    return cand
+
+
+# ── checkpoint: resume a run at the stage where it stopped (the author, 2026-11-25) ──
+# After every paid stage the run writes what it has (the scheme as start + edges, the design, the question) to
+# CHECKPOINT. `run_groundup_final.py --subject organic --resume` rebuilds the scheme with the engine (free: the
+# rules are deterministic) and goes on from the next stage, so a fix is checked on the very case that failed.
+
+CHECKPOINT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                          "outputs", "org_checkpoint.json")
+
+
+def scheme_spec(cand) -> dict:
+    return {"start": list(cand["_start"]),
+            "steps": [[k, cand["_comps"][k]["parent"], cand["_comps"][k]["edge"]["id"]] for k in cand["_order"][1:]]}
+
+
+def save_checkpoint(stage: str, cand, **data) -> None:
+    with open(CHECKPOINT, "w", encoding="utf-8") as f:
+        json.dump({"stage": stage, "scheme": scheme_spec(cand), **data}, f, ensure_ascii=False, indent=1)
+
+
+def clear_checkpoint() -> None:
+    if os.path.exists(CHECKPOINT):
+        os.remove(CHECKPOINT)
+
+
+def rebuild(adapter, spec: dict) -> dict:
+    """The candidate of a saved scheme, every step recomputed by today's rules and scopes. EngineError if a step
+    no longer applies (the fix changed the scheme)."""
+    from core.engine.organic.mol import classes
+    g = _graph(adapter)
+    name, start_smi = spec["start"]
+    comps = {"P": {"smiles": canon(start_smi), "node": None, "parent": None, "edge": None, "result": None}}
+    order = ["P"]
+    for lab, parent, eid in spec["steps"]:
+        e = g["edges"][eid]
+        r = R.apply(e, comps[parent]["smiles"])
+        comps[lab] = {"smiles": canon(r.product), "node": e["to"], "parent": parent, "edge": e, "result": r}
+        order.append(lab)
+    first = comps[order[1]]["edge"]["from"]
+    comps["P"]["node"] = first if first in classes(start_smi) else sorted(classes(start_smi))[0]
+    parents = [comps[k]["parent"] for k in order[1:]]
+    branches = sum(1 for p in set(parents) if parents.count(p) > 1)
+    return _candidate(comps, order, name, start_smi, branches)
+
+
+def load_checkpoint(adapter):
+    """(cand, saved checkpoint) from CHECKPOINT, or None when there is nothing to resume."""
+    if not os.path.exists(CHECKPOINT):
+        print("  [resume] no checkpoint: a normal run")
+        return None
+    with open(CHECKPOINT, encoding="utf-8") as f:
+        cp = json.load(f)
+    try:
+        cand = rebuild(adapter, cp["scheme"])
+    except EngineError as e:
+        print(f"  [resume] the saved scheme no longer builds ({e}): a normal run")
+        return None
+    print(f"  [resume] from after stage '{cp['stage']}' of {cand['description']}")
+    return cand, cp
 
 
 def _wrong_props(cand) -> dict:
@@ -561,10 +628,17 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
     name = adapter.config["display_name"]
     used_starts = []
     start, uses = None, 0
+    resumed = load_checkpoint(adapter) if adapter.config.get("resume") else None
     for n_draw in range(1, MAX_DRAWS + 1):
         if over_budget(cap):
             break
-        if adapter.config.get("start_picker"):          # a model invents the start, the engine checks it
+        saved = {}
+        if resumed is not None:                       # the checkpointed scheme first, from its next stage
+            cand, saved = resumed
+            resumed = None
+            start, uses = cand["_start"], 1
+            used_starts.append(start[0])
+        elif adapter.config.get("start_picker"):          # a model invents the start, the engine checks it
             if start is None or uses >= SCHEMES_PER_START:
                 from core.pipeline import org_start
                 pick = org_start.pick_start(adapter, rng, avoid=used_starts, log=log)
@@ -577,8 +651,10 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 start, uses = (pick["name"], pick["smiles"]), 0
             else:
                 print(f"  [start] same molecule, scheme {uses + 1} of {SCHEMES_PER_START}: {start[0]}")
-        cand = draw(adapter, rng, tried=bb.tried_edges(), start=start)
-        uses += 1
+        if not saved:
+            clear_checkpoint()                        # the previous scheme ended (held, rejected): nothing to resume
+            cand = draw(adapter, rng, tried=bb.tried_edges(), start=start)
+            uses += 1
         if cand is None:
             if start is not None:
                 print("  no new scheme from this start")
@@ -590,7 +666,9 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
         print("  " + scheme_text(cand).replace("\n", "\n  "))
         print("  " + "\n  ".join(f"{k} = {cand['_comps'][k]['smiles']}" for k in cand["_order"]))
         bb.start_chain(cand)
-        if STEP_CHECK:                                # every step checked blind before anything is paid for
+        if STEP_CHECK and saved:
+            print("  [step check] passed before the resume")
+        elif STEP_CHECK:                              # every step checked blind before anything is paid for
             from core.pipeline import org_step_check
             bad = org_step_check.check_scheme(cand)
             if bad:
@@ -607,8 +685,9 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 continue
             bb.note("step_check", held=None, steps=[])
             print(f"  [step check] all {len(cand['_order']) - 1} steps confirmed (GPT-6 Luna, blind)")
+            save_checkpoint("step_check", cand)
         try:
-            design = design_question(name, cand)
+            design = saved.get("design") or design_question(name, cand)
         except ValueError as e:
             bb.note("design_unusable", error=str(e)[:300])
             print(f"    design unusable: {str(e)[:160]}")
@@ -626,12 +705,14 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             bb.note("design_rejected", problem=problem)
             print(f"    design rejected: {problem[:160]}")
             continue
+        if not saved.get("design"):
+            save_checkpoint("design", cand, design=design)
         feedback, made = None, None
         for attempt in range(1 + CLAIM_RETRIES):
             if over_budget(cap):
                 return {"status": "none"}
             try:
-                q = write_question(name, cand, design, feedback=feedback)
+                q = saved.pop("question", None) or write_question(name, cand, design, feedback=feedback)
             except ValueError as e:
                 bb.note("question", attempt=attempt + 1, error=str(e)[:300])
                 print(f"    question reply unusable: {str(e)[:120]}")
@@ -644,6 +725,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 feedback = "; ".join(probs)
                 continue
             made = (q, result)
+            save_checkpoint("question", cand, design=design, question=q)
             break
         if made is None:
             log({"event": "question_failed", "chain": cand["edges"]})
@@ -683,6 +765,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
         log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"], "stem": stem,
              "answer": result.answer, "reason": decision.get("reason")})
         if decision["decision"] == "accept":
+            clear_checkpoint()
             return {"status": "accepted", "payload": {
                 "cand": cand, "plan": None, "values": values, "scenario": f"organic question-first ({q['format']})",
                 "result": result, "stem": stem, "decision": decision, "sig": sig, "solver_code": None}}

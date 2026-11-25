@@ -25,7 +25,9 @@ SINGLE_STEP_WEIGHT = 0.5      # a step that cannot join any chain is offered alo
 # (two systems compared): docs/advanced_formula_map.md.
 TREE_SHARE = 0.25
 CONDITION_SHARE = 0.10
-FORMULAS_MIN, FORMULAS_MAX = 3, 5   # question first: 3 to 5 formulas drawn at random
+# question first: 2 to 3 formulas drawn at random (was 3 to 5 until 2026-11-25: long chains made plug-in
+# questions; real hard physical questions are short, with one hidden step)
+FORMULAS_MIN, FORMULAS_MAX = 2, 3
 CHAIN_MIN, CHAIN_MAX = 3, 5         # all_chains / random_chain: 3 to 5 linked steps
 SHAPE_TRIES = 40              # random attempts per shaped idea before giving up on it
 BRANCH_MAX = 2                # steps in one branch of a tree or condition

@@ -376,6 +376,9 @@ def parse_args():
     ap.add_argument("--rerun-held", action="store_true",
                     help="move every on-hold question (outputs/on_hold_questions_<subject>.json: its ladder calls "
                          "kept failing) back to be judged first this run, e.g. after a fix")
+    ap.add_argument("--resume", action="store_true",
+                    help="organic: go on from the stage where the last run stopped (outputs/org_checkpoint.json: "
+                         "the scheme, its design and question), e.g. after fixing the error that stopped it")
     return ap.parse_args()
 
 
@@ -398,7 +401,7 @@ def main():
         return EXIT_CONFIG_ERROR
     rng = random.Random(args.seed)
     config = {**config, "question_first": args.flow == "question",
-              "max_run_spend": args.max_run_spend or None}
+              "max_run_spend": args.max_run_spend or None, "resume": args.resume}
     facts_only = False
     try:
         adapter = adapter_for(args.subject, config, rng)
@@ -468,10 +471,12 @@ def main():
                             "chain_values": last_inputs.get("values"), "shape": last_form.get("shape"),
                             "form_result": last_form.get("result"),
                             "scenario": last_inputs.get("scenario"), "stem": last_gate.get("stem"),
-                            **({"qfirst": {**{k: last_q[k] for k in ("code", "asks", "unit", "twist")},
+                            # .get: an inorganic question has no program, givens or twist (holding one
+                            # crashed with KeyError 'code', 2026-11-25); physical records are unchanged
+                            **({"qfirst": {**{k: last_q.get(k) for k in ("code", "asks", "unit", "twist")},
                                            "preset": last_q.get("preset")},
-                                "values": {g["quote"]: g["value"] for g in last_q["givens"]},
-                                "stem": last_q["stem"]} if last_q else {}),
+                                "values": {g["quote"]: g["value"] for g in last_q.get("givens") or []},
+                                "stem": last_q.get("stem")} if last_q else {}),
                             "rounds": bb.current["rounds"] if bb.current else 0})
         if _out_of_credits(p.item.get("error")):
             print(f"\n✗ Question parked as {pid}; it is judged first on the next run.")

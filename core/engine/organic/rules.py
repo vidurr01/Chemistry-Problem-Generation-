@@ -275,7 +275,11 @@ def _alkyne_2hx(s):
 def _alkyne_hydration(s):
     _one_group(s, "[CX2]#[CX2]", "C≡C")
     _need(s, "[CX2]#[CX2]", "C≡C")
-    return pick(run("[C:1]#[C:2]>>[C:1](=O)[C:2]", s), markovnikov,
+    prods = run("[C:1]#[C:2]>>[C:1](=O)[C:2]", s)
+    if not _has(s, "[CX2H1]#[CX2]") and len({smi(p) for p in prods}) > 1:
+        # live run 2026-11-25 (step check): an unsymmetrical internal alkyne gives both ketones
+        raise EngineError(f"{s}: an unsymmetrical internal alkyne hydrates to two ketones: no single product")
+    return pick(prods, markovnikov,
                 "HgSO4/H2SO4 hydration: Markovnikov enol tautomerises to the ketone (ethyne gives ethanal)",
                 "anti_markovnikov_product")
 

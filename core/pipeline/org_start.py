@@ -173,6 +173,32 @@ def close_groups(smiles: str) -> list:
     return sorted(set(out))
 
 
+def _canon_or_none(smi: str):
+    from core.engine.organic.mol import canon
+    try:
+        return canon(smi)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _accepted_starts(adapter) -> set:
+    """Canonical start SMILES of every accepted organic question (outputs file), so runs do not repeat a start."""
+    import json
+    import os
+    p = adapter.config.get("output_file", "")
+    if not p or not os.path.exists(p):
+        return set()
+    with open(p, encoding="utf-8") as f:
+        items = json.load(f)
+    out = set()
+    for q in items if isinstance(items, list) else []:
+        s = ((q.get("engine") or {}).get("givens") or {}).get("start")
+        c = _canon_or_none(s) if s else None
+        if c:
+            out.add(c)
+    return out
+
+
 def pick_start(adapter, rng=None, avoid=(), log=None) -> dict | None:
     """{"name", "smiles", "why", "stats", "tries"} for a start the engine accepts, or None after PICK_TRIES."""
     from core.pipeline import org_qfirst as O
@@ -210,6 +236,9 @@ Return JSON: {{"name": "IUPAC name", "smiles": "SMILES", "why": "one line: which
             continue
         name, smi = str(d.get("name") or "").strip(), str(d.get("smiles") or "").strip()
         ok, reason, st = check_start(adapter, smi, rng)
+        if ok and _canon_or_none(smi) in _accepted_starts(adapter):
+            # live runs 8-9 (2026-11-25): the picker reused starts of accepted questions across runs
+            ok, reason = False, "an accepted question already starts from this molecule: invent a different one"
         if ok:
             same, theirs = name_matches(name, smi)
             if not same:

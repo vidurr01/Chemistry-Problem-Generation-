@@ -21,6 +21,7 @@ student would write must agree.
 from __future__ import annotations
 
 import json
+import os
 import re
 
 from core import models
@@ -40,7 +41,7 @@ METAL_CENTRES = {"Be", "Mg", "Al", "Ga", "In", "Tl", "Sn", "Pb", "Bi"}
 # twice); SbOCl is a layered solid
 NO_SHAPE = {"[Cu(NH3)4]SO4", "[Cu(NH3)4]2+", "PH4Br", "N2O", "SbOCl"}
 
-N_MIN, N_MAX = 5, 8            # reactions in the list (real papers: 4 to 8)
+N_MIN, N_MAX = 6, 8            # reactions in the list (real papers: 4 to 8; hp_2 with 5 was too easy)
 MIN_LOOKALIKES = 2             # reactions without the value whose product is of the same kind as a true one
 CHECKER = "openai/gpt-6-luna"  # names each product blind; not used elsewhere in the inorganic pipeline
 
@@ -92,6 +93,11 @@ def focus(sid: str, key: str):
         return None
 
 
+def _flat(text: str) -> str:
+    """Plain digits and signs, spaces KEPT: for finding a formula as a word ('gives CO2', not 'givesCO2')."""
+    return str(text or "").translate(_PLAIN).replace("−", "-").replace("–", "-")
+
+
 def _plain(text: str) -> str:
     """Plain digits and signs, no spaces: the checker writes '2−' with U+2212 and Unicode sub/superscripts."""
     return str(text or "").translate(_PLAIN).replace("−", "-").replace("–", "-").replace(" ", "")
@@ -101,17 +107,62 @@ def _plain(text: str) -> str:
 START_NAMES = {"borax", "borazine", "dolomite"}
 
 
-# parts of a graph "conditions" text that are notes, not conditions (live run 7 printed "werner's study")
-_NOTE_PART = re.compile(r"mechanism|\bstud(y|ies)\b|commercial|industrial|\bvia\b|\bused (in|for)\b", re.I)
+# parts of a graph "conditions" text that are notes, not conditions (live run 7 printed "werner's study"; the review
+# of 2026-11-25 found "Addition-elimination" reworded into "via an addition-elimination pathway", and notes that
+# name the product: "ZnO called philosopher's wool", "SiO₂ also dissolves as Na₂SiO₃")
+_NOTE_PART = re.compile(
+    r"mechanism|\bstud(y|ies)\b|commercial|industrial|\bvia\b|\bused (in|for)\b|pathway"
+    r"|\baddition|elimination|\bnot\b|\bbut\b|\balso\b|\bcalled\b|amphoteric|dissolves|exothermic|equilibrium"
+    r"|reversible|\breaction\b|double decomposition|\bproduct\b|protective|explosive|readily|\bslow in\b"
+    r"|stomach|water treatment|concentration of|included|percolating|b\.p\."
+    # what the product is or looks like (review 2026-11-25: "Pt(II), square planar", "purple to colourless"),
+    # alternatives ("(or with KClO3/KNO3)") and explanations ("(low OH- concentration)", "(violent)")
+    r"|square planar|tetrahedral|octahedral|paramagnetic|diamagnetic|colourless|\bor with\b|violent"
+    r"|\b(low|high) \S+ concentration", re.I)
+_NAMED = re.compile(r"\s*\(\s*[A-Z][a-z]+[A-Z]?[a-z]+-[A-Z][a-z]{2,}\s*\)")   # "(McArthur-Forrest)": a named process
+_COLOUR = r"\((?:white|black|yellow|red|green|blue|brown|violet)\)"
+# what drives a reaction that has no reagent (else it is a salt dissolving: 'NaBr' alone)
+_DRIVER = re.compile(r"heat|therm|decompos|fus|roast|ignit|calcin|burn|electr|°C|\d\s*K\b|warm|boil|spark|"
+                     r"discharge|sunlight|UV|arc|cool|unstable|high temperature", re.I)
+_COLOUR_PAIR = re.compile(_COLOUR + r".*" + _COLOUR, re.I)    # "room temperature (white), boiling (black)"
+_PURPOSE = re.compile(r"\s+to (lower|avoid|keep|prevent|remove|increase|reduce)\b[^,;()]*", re.I)   # "... to lower m.p."
 
 
 def _conditions(text) -> str:
     """The printable conditions: 'Trace alkali, push-pull mechanism.' -> 'Trace alkali';
-    '50-100°C (used in baking powder).' -> '50-100°C'; "Werner's study." -> ''."""
+    '50-100°C (used in baking powder).' -> '50-100°C'; "Werner's study." -> '';
+    'Electrolysis of molten NaCl with CaCl₂ to lower melting point' -> 'Electrolysis of molten NaCl with CaCl₂'."""
     s = re.sub(r"\s*\([^()]*\)", lambda m: "" if _NOTE_PART.search(m.group(0)) else m.group(0),
                str(text or "").strip().rstrip("."))
+    s = _PURPOSE.sub("", _NAMED.sub("", s))
     parts = [p.strip() for p in re.split(r"[;,]", s)]
     return ", ".join(p for p in parts if p and not _NOTE_PART.search(p))
+
+
+def lead_lower(cond: str) -> str:
+    """'Room temperature' -> 'room temperature'; a leading formula keeps its case ('I₂ vapour', 'Pt(II)':
+    the review of 2026-11-25 found 'i₂ vapour' and 'pt(II)' printed)."""
+    w = re.match(r"[A-Za-z]+", cond or "")
+    if w and len(w.group(0)) > 2 and w.group(0)[1:].islower() and not re.match(r"[A-Za-z]+[₀-₉0-9(\[⁺⁻]", cond):
+        return cond[0].lower() + cond[1:]
+    return cond
+
+
+def printed_condition(e) -> str:
+    """An edge's conditions as printed; '' when they name the product or are a note (mechanism, 'gives ...')."""
+    cond = _conditions(e.get("conditions"))
+    prod = S.to_formula_charge(e["to"])[0]
+    leak = re.compile(r"(?<![A-Za-z0-9(\[])" + re.escape(prod) + r"(?![A-Za-z0-9([])")
+    if cond and (leak.search(_flat(cond)) or len(cond) > 60 or re.search(r"\bvia\b|gives|forms|provides", cond)):
+        return ""
+    return lead_lower(cond)
+
+
+def drop_repeated(reagents, cond: str) -> list:
+    """Reagents the condition already names: 'CuSO₄, KI, excess KI' -> 'CuSO₄, excess KI'."""
+    flat = _flat(cond)
+    return [r for r in reagents
+            if not re.search(r"(?<![A-Za-z0-9(\[])" + re.escape(_plain(r)) + r"(?![A-Za-z0-9(\[])", flat)]
 
 
 def _reaction(e):
@@ -121,16 +172,18 @@ def _reaction(e):
                 and r.strip().lower() not in START_NAMES]
     if any(r.strip() == "M" for r in reagents):        # a placeholder metal, not a reagent a student can read
         return None
-    cond = _conditions(e.get("conditions"))
+    if _COLOUR_PAIR.search(str(e.get("conditions") or "")):
+        return None                                # two conditions, two products: no single answer
     prod = S.to_formula_charge(e["to"])[0]
     if prod == S.to_formula_charge(e["from"])[0]:      # FeSO4·7H2O -> FeSO4: the start names the product
         return None
     leak = re.compile(r"(?<![A-Za-z0-9(\[])" + re.escape(prod) + r"(?![A-Za-z0-9([])")
-    if any(leak.search(_plain(r)) for r in reagents):
+    if any(leak.search(_flat(r)) for r in reagents):
         return None
-    if cond and (leak.search(_plain(cond)) or len(cond) > 60 or re.search(r"\bvia\b|gives|forms|provides", cond)):
-        cond = ""                                  # a mechanism note or the product: not printed
-    return ", ".join([pretty(e["from"])] + reagents + ([cond[0].lower() + cond[1:]] if cond else []))
+    cond = printed_condition(e)                    # a mechanism note or the product: not printed
+    if not reagents and not _DRIVER.search(cond):
+        return None                                # "NaBr", "K[PtCl₃(C₂H₄)], Pt(II)": no reaction to read
+    return ", ".join([pretty(e["from"])] + drop_repeated(reagents, cond) + ([cond] if cond else []))
 
 
 def _pool(graph_edges):
@@ -141,6 +194,8 @@ def _pool(graph_edges):
             continue
         props = S.askable(e["to"])
         for fam, (keys, _phrase) in FAMILIES.items():
+            if e.get("ask") and fam not in e["ask"]:
+                continue                           # a variant whose product books write in several forms
             key = next((k for k in keys if k in props), None)
             if key is None:
                 continue
@@ -154,24 +209,117 @@ def _pool(graph_edges):
     return out
 
 
+# Designed trap (redesign plan 2026-11-25, inorganic kind 1): at least MIN_TRAP_ROWS reactions whose start gives a
+# RIVAL product in the graph (same start, another reagent or condition) that would flip the count. A student who
+# works out the rival (ignores the printed condition, takes the usual reagent's product) gets the trap answer.
+MIN_TRAP_ROWS = 2             # live run hp_2: one trap among 5 obvious reactions was Advanced-easy at most
+VARIANTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                             "knowledge", "inorg_condition_variants.json")
+
+
+def _load_variants(path=None) -> dict:
+    try:
+        with open(path or VARIANTS_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def variant_edges(path=None) -> list:
+    """The condition variants of knowledge/inorg_condition_variants.json as graph-style edges (ids 'cv_...')."""
+    out = []
+    for v in _load_variants(path).get("variants", []):
+        for i, o in enumerate(v["options"]):
+            out.append({"id": f"{v['id']}_{i + 1}", "from": v["from"], "to": o["to"], "reagents": o["reagents"],
+                        "conditions": o["conditions"], "chapter": v.get("chapter", ""), "tx_ids": [],
+                        **({"ask": o["ask"]} if o.get("ask") else {}),
+                        **({"naive": o["naive"], "naive_why": o.get("why", "")} if o.get("naive") else {})})
+    return out
+
+
+def with_naive(graph_edges, path=None) -> list:
+    """Graph edges with the tempting wrong products of 'naive_for_graph_edges' attached (copies; graph unchanged)."""
+    naive = _load_variants(path).get("naive_for_graph_edges", {})
+    return [{**e, "naive": naive[e["id"]]["naive"], "naive_why": naive[e["id"]].get("why", "")} if e["id"] in naive
+            else e for e in graph_edges]
+
+
+def _reagent_set(e) -> set:
+    src = _plain(e["from"])
+    return {_plain(r).lower() for r in (e.get("reagents") or []) if _plain(r) != src}
+
+
+def rivals(graph_edges) -> dict:
+    """{edge id: [(rival species, how it is reached)]}: TEMPTING other products for the same start: the product of
+    the same reagents under another condition (or of another heating), and the edge's own 'naive' wrong product.
+    A product of different reagents (CO + Cl₂ against CO + H₂O) is not a trap: no student confuses them."""
+    out = {}
+    for e in graph_edges:
+        if not e.get("synthetic"):
+            out.setdefault(e["from"], []).append(e)
+    res = {}
+    for e in graph_edges:
+        mine, lst = _reagent_set(e), []
+        for o in out.get(e["from"], []):
+            theirs = _reagent_set(o)
+            if o["to"] != e["to"] and ((mine & theirs) or (not mine and not theirs)):
+                cond = _conditions(o.get("conditions"))
+                lst.append((o["to"], ", ".join(o.get("reagents") or []) + (f"; {cond}" if cond else "")))
+        if e.get("naive"):
+            lst.append((e["naive"], f"the usual product, missing that {e.get('naive_why') or 'the conditions change it'}"))
+        res[e["id"]] = lst
+    return res
+
+
+def trap_of(row, fam, value, riv) -> dict | None:
+    """The rival that flips this row's count for the asked value: {"rival", "rival_value", "via"}, or None.
+    The rival's property must be of the same kind and about the same named element."""
+    keys = FAMILIES[fam][0]
+    for sid, via in riv.get(row["edge"]["id"], []):
+        try:
+            props = S.askable(sid)
+        except EngineError:
+            continue
+        k = next((k for k in keys if k in props), None)
+        if k is None or focus(sid, k) != row["element"]:
+            continue
+        if (props[k] == value) != (row["value"] == value):
+            return {"rival": sid, "rival_value": props[k], "via": via}
+    return None
+
+
 def draw(graph_edges, rng, tried=(), bad=()):
     """A candidate for one hidden-products question, or None. tried: keys already used; bad: edge ids the blind
-    check did not confirm in this run."""
-    pool = _pool([e for e in graph_edges if e["id"] not in bad])
+    check did not confirm in this run. At least MIN_TRAP_ROWS reactions carry a designed trap (trap_of)."""
+    tried = IL.tried_keys(tried)
+    usable = [e for e in graph_edges if e["id"] not in bad]
+    pool = _pool(usable)
+    riv = rivals(usable)
     for _ in range(300):
         fam = rng.choice(sorted(FAMILIES))
         rows = pool[fam]
         value = rng.choice(sorted({r["value"] for r in rows}))
-        have = [r for r in rows if r["value"] == value]
-        lack = [r for r in rows if r["value"] != value]
-        kinds = {r["key"] for r in have}
+        trap_rows = [r for r in rows if trap_of(r, fam, value, riv)]
+        if len(trap_rows) < MIN_TRAP_ROWS:
+            continue
+        seed = rng.sample(trap_rows, min(len(trap_rows), rng.randint(MIN_TRAP_ROWS, MIN_TRAP_ROWS + 1)))
+        have = [r for r in rows if r["value"] == value and r not in seed]
+        lack = [r for r in rows if r["value"] != value and r not in seed]
+        kinds = {r["key"] for r in have} | {r["key"] for r in seed if r["value"] == value}
         look = [r for r in lack if r["key"] in kinds]     # same kind of product (metal salt, complex, molecule)
         n = rng.randint(N_MIN, N_MAX)
-        k = rng.randint(2, n - 2)
-        if len(have) < k or len(look) < MIN_LOOKALIKES:
+        n_true = rng.randint(2, n - 2)                 # reactions counted
+        need_true = n_true - sum(r["value"] == value for r in seed)
+        need_false = n - len(seed) - need_true
+        if need_true < 0 or need_false < 0 or len(have) < need_true:
             continue
-        chosen = rng.sample(have, k) + rng.sample(look, min(len(look), rng.randint(MIN_LOOKALIKES, n - k)))
-        rest = [r for r in lack if r not in chosen]
+        n_look = min(len(look), need_false, rng.randint(MIN_LOOKALIKES, max(MIN_LOOKALIKES, need_false)))
+        if n_look < min(MIN_LOOKALIKES, need_false):
+            continue
+        chosen = seed + rng.sample(have, need_true) + rng.sample(look, n_look)
+        # no free eliminations (live run hp_1: C, S, Zn and Ag products in a d²sp³ count): every reaction gives the
+        # same kind of product as the counted ones, so the student must judge each one
+        rest = [r for r in lack if r not in chosen and r["key"] in kinds]
         if len(rest) < n - len(chosen):
             continue
         chosen += rng.sample(rest, n - len(chosen))
@@ -186,11 +334,16 @@ def draw(graph_edges, rng, tried=(), bad=()):
         if key in tried:
             continue
         truth = [r["value"] == value for r in chosen]
+        traps = {i: t for i, r in enumerate(chosen) if (t := trap_of(r, fam, value, riv))}
+        if len(traps) < MIN_TRAP_ROWS:
+            continue
+        if len({truth[i] for i in traps}) > 1:
+            continue                                  # traps pushing opposite ways cancel: both mistakes, right count
         return {"edges": [key], "nodes": products, "chapters": list(dict.fromkeys(r["edge"].get("chapter", "")
                                                                                      for r in chosen)),
                 "txs": [t for r in chosen for t in (r["edge"].get("tx_ids") or [])], "trap_ids": [],
                 "description": f"hidden products: {fam} = {value} ({n} reactions, {sum(truth)} true)",
-                "_products": {"family": fam, "value": value, "rows": chosen, "truth": truth},
+                "_products": {"family": fam, "value": value, "rows": chosen, "truth": truth, "traps": traps},
                 "_hint": "Write the product of every reaction first; then count the electrons of the named "
                          "element in it (d electrons, lone pairs) before judging its spin or geometry."}
     return None
@@ -211,8 +364,15 @@ def question(cand):
               "inputs": {"reaction": r["text"], "named element": r["element"], "counted when": D["value"]},
               "outputs": {"product": r["edge"]["to"], "computed value": r["value"], "counted": t}}
              for r, t in zip(D["rows"], D["truth"])]
-    traps = [{"id": f"reaction{ROMAN[i]}", "desc": f"wrong product or misjudges it in reaction ({ROMAN[i]})",
-              "wrong_answer": answer + (-1 if t else 1)} for i, t in enumerate(D["truth"])]
+    designed = D.get("traps") or {}
+    traps = [{"id": f"rival{ROMAN[i]}", "designed": True,
+              "desc": f"writes {designed[i]['rival']} for reaction ({ROMAN[i]}) ({designed[i]['via']})",
+              "wrong_answer": answer + (-1 if t else 1)} for i, t in enumerate(D["truth"]) if i in designed]
+    if len(designed) >= 2:                             # every designed trap taken together
+        traps.append({"id": "all_rivals", "designed": True, "desc": "writes the rival product in every trap reaction",
+                      "wrong_answer": answer + sum(-1 if D["truth"][i] else 1 for i in designed)})
+    traps += [{"id": f"reaction{ROMAN[i]}", "desc": f"wrong product or misjudges it in reaction ({ROMAN[i]})",
+               "wrong_answer": answer + (-1 if t else 1)} for i, t in enumerate(D["truth"]) if i not in designed]
     res = ChainResult(answer=answer, unit="", kind="count", asks=stem, trace=trace, traps=traps, constants=[])
     res.tolerance = 0.001
     res.options = [r["text"] for r in D["rows"]]

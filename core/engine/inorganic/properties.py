@@ -447,6 +447,8 @@ def oxidation_state(formula: str, element: str, *, peroxide: bool = False, hydri
     counts = parse_formula(body)[0]
     if element not in counts:
         raise EngineError(f"{element} is not in {formula}")
+    if group_of(element) == 17 and any(group_of(e) == 17 and row_of(e) > row_of(element) for e in counts):
+        return Fraction(-1)                        # interhalogen: the more electronegative halogen (Cl in ICl) is -1
     known = 0
     for e, n in counts.items():
         if e == element:
@@ -460,7 +462,12 @@ def oxidation_state(formula: str, element: str, *, peroxide: bool = False, hydri
         elif group_of(e) in (1, 2) and e != "H":
             v = group_of(e)
         elif group_of(e) == 17:
-            v = -1
+            if group_of(element) == 17 and row_of(e) < row_of(element):
+                v = -1                             # I in ICl: the lighter halogen is the negative one
+            elif group_of(element) == 17:
+                raise EngineError(f"{formula}: {e} is the positive halogen; give its state")
+            else:
+                v = -1
         else:
             raise EngineError(f"{formula}: the oxidation state of {e} is not fixed by the rules; give it")
         known += v * n

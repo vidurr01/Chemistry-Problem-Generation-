@@ -82,6 +82,58 @@ class ValidRepliesUnchanged(unittest.TestCase):
             self.assertEqual(parse_json(text), obj, text)
 
 
+class ObjectEscapedTwice(unittest.TestCase):
+    """Gemini 3.8 Flash's solution replies, 2026-11-24/25: \\n written between tokens, not only in strings."""
+
+    def test_solution_reply(self):
+        text = '{\\n  "solution": "1. Sum: 1 + 0 + 1 = 2.\\nFinal answer: 2"\\n}'
+        self.assertEqual(parse_json(text), {"solution": "1. Sum: 1 + 0 + 1 = 2.\nFinal answer: 2"})
+
+    def test_escapes_inside_strings_kept(self):
+        text = '{\\n\\t"a": "x\\\\ny \\"q\\"",\\r\\n "b": 1\\n}'
+        self.assertEqual(parse_json(text), {"a": 'x\\ny "q"', "b": 1})
+
+    def test_logged_replies(self):
+        log = Path(llm.UNPARSEABLE_LOG)
+        if not log.exists():
+            self.skipTest("no log")
+        rows = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines() if x.strip()]
+        rows = [r for r in rows if r.get("label") == "solution_writer" and r.get("finish_reason") == "stop"]
+        for r in rows:
+            self.assertTrue(parse_json(r["content"])["solution"].strip().splitlines()[-1].startswith("Final answer"))
+
+
+class WriterFinishesCutOff(unittest.TestCase):
+    """A cut-off solution is finished from the writer's own thinking, at its usual thinking level."""
+
+    def test_finishes_from_thinking(self):
+        from core.pipeline import stages
+        calls = []
+
+        def fake(role, model, system, user, **kw):
+            calls.append((user, kw))
+            if len(calls) == 1:
+                raise llm.CutOffError("cut", partial='{"solution": "1. K = 3.2', reasoning="PLAN: K, then T2 = 365 K")
+            return {"solution": "1. K = 3.2\nFinal answer: 365 K"}
+        with mock.patch.object(stages.models, "ask_json", fake), mock.patch("builtins.print"):
+            self.assertTrue(stages.write_solution("Q", "trace", "365 K").endswith("Final answer: 365 K"))
+        self.assertEqual(len(calls), 2)
+        self.assertIn('{"solution": "1. K = 3.2', calls[1][0])
+        self.assertIn("PLAN: K, then T2 = 365 K", calls[1][0])
+        for _, kw in calls:
+            self.assertNotIn("reasoning_effort", kw)
+            self.assertFalse(kw["retry_cut_off"])
+
+    def test_nothing_written(self):
+        from core.pipeline import stages
+
+        def fake(role, model, system, user, **kw):
+            raise llm.CutOffError("cut", partial="", reasoning=None)
+        with mock.patch.object(stages.models, "ask_json", fake):
+            with self.assertRaises(ValueError):
+                stages.write_solution("Q", "trace", "1")
+
+
 class UnreadableRepliesAreKept(unittest.TestCase):
     def test_logged_whole(self):
         tmp = os.path.join(tempfile.mkdtemp(), "unparseable.jsonl")

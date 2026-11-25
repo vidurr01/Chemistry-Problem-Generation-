@@ -31,13 +31,17 @@ def _squash(s) -> str:
     return " ".join(answers.normalise_text(s).replace("−", "-").split())
 
 
+# Dropping an unneeded formula must leave at least this many. 3, as when draws had 3-5 formulas: since draws have
+# 2-3 (2026-11-25), a drawn formula is the design's and a program that skips one goes back to the coder.
+DROP_KEEPS = 3
+
+
 def unneeded(drawn, run) -> list:
     """Drawn formulas the solving program did not use or whose result does not change the answer,
-    when dropping them still leaves FORMULAS_MIN: those are dropped, not a reason to reject the
+    when dropping them still leaves DROP_KEEPS: those are dropped, not a reason to reject the
     question (a rewrite costs a writer call and the ladder never needed them either)."""
-    from core.pipeline.adapters import FORMULAS_MIN
     bad = [t for t in drawn if t in set(run.get("unused_steps") or ()) | set(run.get("irrelevant_steps") or ())]
-    return bad if bad and len(drawn) - len(bad) >= FORMULAS_MIN else []
+    return bad if bad and len(drawn) - len(bad) >= DROP_KEEPS else []
 
 
 def question_problems(stem: str, run: dict, txs, constants: list, examples=(), accepted=(), built=False) -> list:
@@ -262,3 +266,130 @@ def _unused_by_name(problem: str, drawn=None) -> list:
     names = re.findall(r"'([^']+)'", m.group(1))
     pool = list(drawn) if drawn else list(ph.STEPS)
     return [t for t in pool if ph.step(t).asks in names]
+
+
+# ---- Trace checks (2026-11-25 post-mortem: 3 of 17 accepted physical questions were wrong) -------------------
+# The engine's chain builder follows roles (base.roles_consistent), but a question-first program wires steps
+# freely, so nothing stopped K_c from k_f/k_b reaching K_p = K_x P^Δn (GEN_20261125T022806), two routes to ΔS
+# that disagree (GEN_20261125T031247), or "the alkali metal" coming out as 24.4 g/mol (GEN_20261125T041311).
+
+# Inputs that are the same kind of quantity as another input of the same step (van 't Hoff's K₂ is the
+# same kind of constant as K₁).
+SAME_ROLE_INPUTS = {136: {"K2": "equilibrium_constant"}}
+
+# Quantities taken as constant over the question (JEE treats ΔH° and ΔS° as temperature-independent): two
+# steps giving different values for one of them mean the stated data contradict each other.
+CONSTANT_OUTPUTS = {"delta_h": ("ΔH°", "kJ mol⁻¹"), "delta_s": ("ΔS°", "J K⁻¹ mol⁻¹")}
+CONSTANT_RTOL = 0.03
+
+ROLE_WORDS = {"Kc": "K_c (concentration units)", "Kp": "K_p (pressures in atm)", "K°": "K° (thermodynamic)",
+              "Kx": "K_x (mole fractions)"}
+
+_ALKALI = ("Li", "Na", "K", "Rb", "Cs")
+_ALKALINE_EARTH = ("Be", "Mg", "Ca", "Sr", "Ba")
+ELEMENT_MASS_TOL = 0.6     # g mol⁻¹: the table is rounded (Mg 24.0 for 24.31) and answers have 3 s.f.
+
+
+def _num(x):
+    return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) else None
+
+
+def _same(a, b, rtol=1e-4):           # trace outputs are rounded to 5 significant figures
+    return abs(a - b) <= rtol * max(abs(a), abs(b), 1e-300)
+
+
+def role_problems(trace) -> list:
+    """A value a step gave with one role (K_c) reaching an input that wants another (K_p): follows values
+    through the program's trace by identity, as base.roles_consistent does for engine chains."""
+    from core.engine import physical as ph
+    from core.engine.base import role_ok
+    tagged = []                                  # (value, role, tx that gave it)
+    probs = []
+    for rec in trace or ():
+        try:
+            st = ph.step(int(rec.get("tx")))
+        except Exception:                        # noqa: BLE001
+            continue
+        params = {p.key: p for p in st.needs}
+        ins = rec.get("inputs") or {}
+        wired = {}
+        for key, val in ins.items():
+            v = _num(val)
+            if v is None:
+                continue
+            hit = next(((r, t) for (x, r, t) in reversed(tagged) if _same(x, v)), None)
+            if hit is None:
+                continue
+            wired[key] = hit
+            p = params.get(key)
+            if p is not None and getattr(p, "role", None) and not role_ok(p, hit[0]):
+                want = p.role if isinstance(p.role, tuple) else (p.role,)
+                probs.append(
+                    f"the solution uses {ROLE_WORDS.get(hit[0], hit[0])} from '{ph.step(hit[1]).formula}' "
+                    f"in '{st.formula}', which needs {' or '.join(ROLE_WORDS.get(w, w) for w in want)}; "
+                    f"these are different constants and must not be mixed")
+        for key, other in SAME_ROLE_INPUTS.get(st.tx, {}).items():
+            v = _num(ins.get(key))
+            if v is not None and other in wired:
+                tagged.append((v, *wired[other]))       # K₂ is the same kind as K₁, from the same source
+        inherited = next(iter(wired.values()), (None,))[0] if st.keeps_role else None
+        for key, val in (rec.get("outputs") or {}).items():
+            v = _num(val)
+            role = st.roles.get(key) or inherited
+            if v is not None and role:
+                tagged.append((v, role, st.tx))
+    return list(dict.fromkeys(probs))
+
+
+def consistency_problems(trace) -> list:
+    """Two steps giving one constant quantity (ΔH°, ΔS°) different values: the question states more data than
+    it needs and they disagree (031247: ΔS° −66.8 from (∂E°/∂T) but −146 from K and ΔH°)."""
+    from core.engine import physical as ph
+    if any("delta_cp" in (rec.get("inputs") or {}) for rec in trace or ()):
+        return []                                # ΔC_p given: ΔH° and ΔS° change with T (033339's tangent)
+    seen = {}
+    for rec in trace or ():
+        for key, val in (rec.get("outputs") or {}).items():
+            v = _num(val)
+            if key in CONSTANT_OUTPUTS and v is not None:
+                seen.setdefault(key, []).append((v, rec.get("tx")))
+    probs = []
+    for key, vals in seen.items():
+        for i, (a, ta) in enumerate(vals):
+            for b, tb in vals[i + 1:]:
+                tol = CONSTANT_RTOL * max(abs(a), abs(b))
+                # exact negatives: the program passed a slope with the other sign and did not use that result
+                # (025814: ΔH° +86.47 from "slope −10400", −86.47 used); the stated data agree
+                if abs(a - b) > tol and abs(a - b) > 1e-6 and abs(a + b) > 1e-3 * max(abs(a), abs(b)):
+                    name, unit = CONSTANT_OUTPUTS[key]
+                    fa, fb = (ph.step(int(t)).formula if t is not None else "?" for t in (ta, tb))
+                    probs.append(f"the stated data contradict each other: {name} is {a:.4g} {unit} by '{fa}' "
+                                 f"but {b:.4g} {unit} by '{fb}'; state only the data one route needs, or "
+                                 f"values that agree")
+                    break
+            else:
+                continue
+            break
+    return probs
+
+
+def answer_real_problems(asks: str, answer) -> list:
+    """An asked-for element's atomic mass must be a real element's (041311: 'the alkali metal M' = 24.4)."""
+    from core.engine.chem import ATOMIC_MASS
+    a = _num(answer)
+    text = (asks or "").lower()
+    if a is None or not re.search(r"(atomic|molar) (mass|weight) of (the |an |a )?(unknown )?"
+                                  r"(alkali|alkaline|metal|element)", text):
+        return []
+    pool = (_ALKALI if "alkali metal" in text else _ALKALINE_EARTH if "alkaline earth" in text
+            else tuple(ATOMIC_MASS))
+    if any(abs(ATOMIC_MASS[s] - a) <= ELEMENT_MASS_TOL for s in pool if s in ATOMIC_MASS):
+        return []
+    kind = "alkali metal" if pool is _ALKALI else "alkaline earth metal" if pool is _ALKALINE_EARTH else "element"
+    return [f"the answer {a:.4g} g mol⁻¹ is not the atomic mass of any {kind}; choose values that give a real "
+            f"{kind}"]
+
+
+def trace_problems(run: dict, asks: str) -> list:
+    return (role_problems(run.get("trace")) + consistency_problems(run.get("trace"))
+            + answer_real_problems(asks, run.get("answer")))

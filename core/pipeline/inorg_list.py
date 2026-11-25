@@ -8,11 +8,12 @@ About nine in ten real Advanced inorganic questions make the student judge every
 (complexes, molecules, ions, diatomics), and the lists are chosen so that the usual rule fails on some of them
 (d⁸ Pd is square planar while d¹⁰ Cu(I) is tetrahedral; XeF₄ has four F but is square planar). Main asks one fact.
 
-Code builds the whole question: it picks a property and a value, then a list in which
-    - several classes of species are mixed,
-    - some species have the value and some do not (the answer is never 0, 1 or the whole list), and
-    - at least two species that do NOT have the value look like those that do: the same number of attached
-      ligands or atoms (four-coordinate but square planar), or, for magnetism, the same kind of species.
+Code builds the whole question: since 2026-11-25 it picks TWO conditions ("paramagnetic and tetrahedral",
+"polar and sp³d") and a list in which
+    - some species meet both (the answer is never 0, 1 or all but one),
+    - at least one meets only the first and one only the second (half right: the trap), and
+    - the rest meet neither.
+One condition was too easy at medium-hard (Granite solved 6 of 8 judged lists).
 Every value is computed by core/engine/inorganic/properties.py; no model writes or judges any part of the key.
 """
 
@@ -40,13 +41,6 @@ NO_HYBRID = {"PH3", "H2S", "AsH3", "SbH3", "H2Se", "H2Te"}   # the heavier hydri
 # XeF6 is a distorted octahedron with a small dipole that books report both ways: no polarity claim on it
 NO_POLARITY = {"XeF6"}
 
-# property -> (classes it applies to, stem phrase for a value)
-PROPS = {
-    "shape": (("complex", "molecule"), "species with {value} geometry"),
-    "hybridisation": (("complex", "molecule"), "species having {value} hybridised central atom"),
-    "magnetism": (("complex", "diatomic"), "{value} species"),
-    "polarity": (("molecule",), "{value} molecules"),
-}
 CHAPTER = {"complex": "coordination_compounds", "molecule": "chemical_bonding", "diatomic": "chemical_bonding"}
 
 
@@ -95,68 +89,99 @@ def pretty(sid: str) -> str:
     return body + charge.translate(_SUP)
 
 
-def draw(rng, tried=()):
-    """A candidate for one list question, or None. tried: keys already used in this run."""
+def tried_keys(tried) -> set:
+    """The draw keys already used, as strings. The pipeline passes Blackboard.tried_edges(), a set of TUPLES of
+    edge keys (("list:...",)); tests pass a plain list. Comparing a string against the tuples never matched, so a
+    question could be drawn twice in one run (review of 2026-11-25)."""
+    return {k for t in tried or () for k in (t if isinstance(t, (tuple, list)) else (t,))}
+
+
+# Two conditions per list (the author, 2026-11-25): one condition was solved by Granite in 6 of 8 judged lists, so
+# every item now needs two judgements. Pairs where one value does not fix the other: shape x hybridisation left
+# out (a molecule's shape fixes its hybridisation), polarity x shape too (in our table every shape is all polar or
+# all non-polar, so no draw passed the "half right both ways" rule).
+PAIRS = (("magnetism", "shape"), ("magnetism", "hybridisation"),       # complexes
+         ("polarity", "hybridisation"))                                 # molecules
+# "the total number of species that ... and ..."
+THAT = {"magnetism": "are {value}", "polarity": "are {value}", "shape": "have {value} geometry",
+        "hybridisation": "have {value} hybridisation of the central atom"}
+
+
+def _shown(prop, value):
+    return value.translate(_SUP_DIGITS) if prop == "hybridisation" else value
+
+
+def _cond(props, values) -> str:
+    return "&".join(f"{p}={v}" for p, v in zip(props, values))
+
+
+def draw(rng, tried=(), used=None):
+    """A candidate for one two-condition list question, or None. tried: keys already used in this run.
+    used: {condition: accepted questions using it}; a condition is drawn with weight 1/(1 + uses), so accepted
+    lists spread over the conditions (batch 2026-11-25: 3 of the first 4 asked paramagnetic and d2sp3).
+    Items: some meet both conditions (counted), at least one meets only the first and one only the second
+    (the traps: half right), the rest neither."""
+    tried = tried_keys(tried)
+    used = used or {}
+    options = []                                    # every (pair, values) a list can ask, with its weight
+    for props in PAIRS:
+        pool = {s: r for s, r in ROWS.items() if all(r.get(p) for p in props)}
+        for values in sorted({tuple(r[p] for p in props) for r in pool.values()}):
+            options.append((props, values, 1.0 / (1 + used.get(_cond(props, values), 0))))
     for _ in range(300):
-        prop = rng.choice(sorted(PROPS))
-        classes, _phrase = PROPS[prop]
-        pool = {s: r for s, r in ROWS.items() if r["class"] in classes and r.get(prop)}
-        values = sorted({r[prop] for r in pool.values()})
-        value = rng.choice(values)
-        have = [s for s, r in pool.items() if r[prop] == value]
-        lack = [s for s, r in pool.items() if r[prop] != value]
-        if prop == "magnetism":                     # look alike: same kind of species (complex, diatomic)
-            kinds = {pool[s]["class"] for s in have}
-            look = [s for s in lack if pool[s]["class"] in kinds]
-        else:                                       # look alike: as many attached atoms or ligands as a true one
-            counts = {pool[s]["attached"] for s in have}
-            look = [s for s in lack if pool[s]["attached"] in counts]
+        props, values, _w = rng.choices(options, weights=[w for *_, w in options])[0]
+        pool = {s: r for s, r in ROWS.items() if all(r.get(p) for p in props)}
+        meets = {s: tuple(r[p] == v for p, v in zip(props, values)) for s, r in pool.items()}
+        both = [s for s, m in meets.items() if all(m)]
+        first = [s for s, m in meets.items() if m == (True, False)]
+        second = [s for s, m in meets.items() if m == (False, True)]
+        neither = [s for s, m in meets.items() if not any(m)]
+        if not first or not second:
+            continue                                # one condition would imply the other: not two judgements
         n = rng.randint(N_MIN, N_MAX)
         k = rng.randint(2, n - 2)
-        if len(have) < k or len(look) < MIN_LOOKALIKES:
+        n1 = rng.randint(1, max(1, min(len(first), (n - k) // 2)))
+        n2 = rng.randint(1, max(1, min(len(second), n - k - n1 - 1)))
+        n0 = n - k - n1 - n2
+        if len(both) < k or n0 < 0 or len(neither) < n0 or n1 > len(first) or n2 > len(second):
             continue
-        pick_have = rng.sample(have, k)
-        n_look = min(len(look), rng.randint(MIN_LOOKALIKES, n - k))
-        pick_look = rng.sample(look, n_look)
-        rest = [s for s in lack if s not in pick_look]
-        if len(rest) < n - k - n_look:
-            continue
-        chosen = pick_have + pick_look + rng.sample(rest, n - k - n_look)
-        if len({pool[s]["class"] for s in chosen}) < min(2, len(classes)):
-            continue                                # mix the classes where the property allows it
+        half = rng.sample(first, n1) + rng.sample(second, n2)
+        chosen = rng.sample(both, k) + half + rng.sample(neither, n0)
         rng.shuffle(chosen)
-        key = (f"list:{prop}:{value}:" + ",".join(sorted(chosen)),)
-        if key[0] in tried:
+        cond = _cond(props, values)
+        key = f"list:{cond}:" + ",".join(sorted(chosen))
+        if key in tried:
             continue
-        truth = [pool[s][prop] == value for s in chosen]
+        truth = [all(meets[s]) for s in chosen]
         chapters = list(dict.fromkeys(CHAPTER[pool[s]["class"]] for s in chosen))
-        return {"edges": list(key), "nodes": chosen, "chapters": chapters, "txs": [], "trap_ids": [],
-                "description": f"how many species: {prop} = {value} ({n} species, {sum(truth)} true)",
-                "_list": {"property": prop, "value": value, "species": chosen, "truth": truth,
-                          "computed": [pool[s][prop] for s in chosen], "lookalikes": pick_look},
-                "_hint": "Judge every species on its own: count its electrons (metal d electrons and the ligand's "
-                         "field strength, or the central atom's lone pairs) before naming its geometry or spin; "
-                         "species with the same formula type need not share it."}
+        return {"edges": [key], "nodes": chosen, "chapters": chapters, "txs": [], "trap_ids": [],
+                "description": f"how many species: {' and '.join(f'{p} = {v}' for p, v in zip(props, values))} "
+                               f"({n} species, {sum(truth)} true)",
+                "_list": {"properties": list(props), "values": list(values), "species": chosen, "truth": truth,
+                          "computed": [[pool[s][p] for p in props] for s in chosen], "lookalikes": half},
+                "_hint": "Judge every species on both conditions: count its electrons (metal d electrons and the "
+                         "ligand's field strength, or the central atom's lone pairs) first; a species that meets "
+                         "only one condition is not counted."}
     return None
 
 
 def question(cand):
     """(stem, ChainResult) for a candidate from draw()."""
     L = cand["_list"]
-    value = L["value"].translate(_SUP_DIGITS) if L["property"] == "hybridisation" else L["value"]
-    phrase = PROPS[L["property"]][1].format(value=value)
+    props, values = L["properties"], L["values"]
+    phrase = " and ".join(THAT[p].format(value=_shown(p, v)) for p, v in zip(props, values))
     names = ", ".join(pretty(s) for s in L["species"][:-1]) + " and " + pretty(L["species"][-1])
-    stem = f"Among {names}, the total number of {phrase} is\nGive the answer as an integer."
+    stem = f"Among {names}, the total number of species that {phrase} is\nGive the answer as an integer."
     answer = sum(L["truth"])
-    trace = [{"tx": [], "src": s, "dst": L["property"],
-              "formula": f"{L['property']} computed by code (core/engine/inorganic/properties.py)",
-              "inputs": {"species": s, "counted when": L["value"]},
-              "outputs": {"computed value": v, "counted": t}}
+    trace = [{"tx": [], "src": s, "dst": " and ".join(props),
+              "formula": f"{' and '.join(props)} computed by code (core/engine/inorganic/properties.py)",
+              "inputs": {"species": s, "counted when": dict(zip(props, values))},
+              "outputs": {"computed value": dict(zip(props, v)), "counted": t}}
              for s, v, t in zip(L["species"], L["computed"], L["truth"])]
     traps = [{"id": f"item{i + 1}", "desc": f"misjudges {pretty(s)}", "wrong_answer": answer + (-1 if t else 1)}
              for i, (s, t) in enumerate(zip(L["species"], L["truth"]))]
     res = ChainResult(answer=answer, unit="", kind="count", asks=stem, trace=trace, traps=traps, constants=[])
     res.tolerance = 0.001
     res.options = [pretty(s) for s in L["species"]]
-    res.form = f"inorganic_species_list:{L['property']}"
+    res.form = f"inorganic_species_list:{'+'.join(props)}"
     return stem, res

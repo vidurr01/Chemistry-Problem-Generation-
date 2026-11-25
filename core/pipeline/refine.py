@@ -83,10 +83,15 @@ CASES = {
     "textbook_pattern": (
         "The question followed a standard textbook exercise pattern (its layout, phrasing or data set), so "
         "the solver recognised it and followed a memorised route.",
-        "The solver recognised a standard textbook exercise{evidence}. Keep the formulas but move the problem "
-        "into an unusual yet realistic setting (an industrial process, a laboratory analysis, an "
-        "environmental, geological or biological system) where the solver must first decide which relations "
-        "apply. Avoid the usual phrasing and the usual data layout of textbook problems."),
+        # was "move the problem into an unusual setting (an industrial process ...)": that only dressed the same
+        # exercise up ("ultra-high vacuum photoelectron spectrometer", "rocket chamber", 2026-11-25); the
+        # solver still recognised it
+        "The solver recognised a standard textbook exercise{evidence}. Do not dress it up in a new setting: "
+        "change the chemistry so the recognised route gives a wrong answer. Put one hidden step in the "
+        "situation that the standard route skips: something it treats as fixed changes here (an amount, a "
+        "volume, the number of particles, which species is in excess), a second process or species matters "
+        "at these values, or the asked quantity is not the one the formulas give directly. Keep it short and "
+        "plain, and leave the hidden step unstated."),
     "trivial_units": (
         "All data were in consistent units that went straight into the formulas, so no conversion could go "
         "wrong.",

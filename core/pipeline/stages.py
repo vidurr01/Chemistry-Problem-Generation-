@@ -19,7 +19,7 @@ import queue
 import threading
 
 from core import answers, models
-from core.llm import as_bool, as_number
+from core.llm import CutOffError, as_bool, as_number
 
 COUNCIL_MAX_TOKENS = 32000      # thinking models can reason past 16k on hard questions; empty replies otherwise
 
@@ -539,10 +539,37 @@ The solution is ONE plain-text string: numbered steps separated by line breaks, 
 JSON, no LaTeX. The last line is "Final answer: <answer>".
 {redo}
 Return JSON: {{"solution": "1. ...\\n2. ...\\nFinal answer: ..."}}"""
-    out = models.ask_json("solution_writer", models.SOLUTION_WRITER,
-                          "You write clear chemistry solutions. Output JSON only.", prompt,
-                          max_tokens=8000, temperature=0.3)
+    system = "You write clear chemistry solutions. Output JSON only."
+    try:
+        out = models.ask_json("solution_writer", models.SOLUTION_WRITER, system, prompt,
+                              max_tokens=8000, temperature=0.3, retry_cut_off=False)
+    except CutOffError as e:
+        out = finish_solution(prompt, system, e)
     return _solution_text(out.get("solution"))
+
+
+SOLUTION_THOUGHT_CHARS = 12000      # how much of the cut-off reply's thinking the finish call is shown (its end)
+
+
+def finish_solution(prompt: str, system: str, cut: CutOffError) -> dict:
+    """The solution reply was cut off at the output limit after long thinking (3 physical replies, 2026-11-25:
+    ~800 characters written). Asking the same prompt again pays for the same cut-off, so, as finish_design does
+    for the designer, the writer finishes from what it wrote and its thinking so far. Its thinking level is
+    left as it is (a low level wrote worse solutions). Raises ValueError if nothing was written or thought."""
+    if not cut.partial.strip() and not cut.reasoning:
+        raise ValueError(f"solution cut off before any text was written: {cut}")
+    print("    [solution_writer] reply cut off at the output limit; finishing it from its thinking so far")
+    thought = (f"\nYOUR THINKING SO FAR (end of it):\n{cut.reasoning[-SOLUTION_THOUGHT_CHARS:]}\n"
+               if cut.reasoning else "")
+    finish = f"""{prompt}
+
+Your earlier reply to this was cut off at the output limit. This is what you had written of the JSON:
+{cut.partial}
+{thought}
+Do not start over and do not redo the working: your thinking above already has it. Keep what you wrote,
+complete the solution from where it stops, and return the COMPLETE JSON object and nothing else."""
+    return models.ask_json("solution_writer", models.SOLUTION_WRITER, system, finish,
+                           max_tokens=8000, temperature=0.3, retry_cut_off=False)
 
 
 def check_solution(stem: str, trace_text: str, answer_text: str, solution: str) -> list:

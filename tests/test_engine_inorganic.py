@@ -170,6 +170,14 @@ class SpeciesWider(unittest.TestCase):
         self.assertEqual(self.a("Zn2+")["metal_ion_magnetism"], "diamagnetic")
         self.assertNotIn("metal_ion_unpaired", self.a("Fe3O4"))       # averaged state: not computed
 
+    def test_oxidation_states_never_impossible(self):
+        # review 2026-11-25: the rules miss peroxides (CrO5 came out +10) and balancing a fixed cation gave KClO3 K +7
+        for sid, el in (("CrO5", "Cr"), ("H2SO5", "S"), ("H2S2O8", "S"), ("KClO3", "K"), ("BaO2", "Ba"),
+                        ("KO2", "K"), ("Ca(OCl)2", "Ca"), ("NaClO2", "Na"), ("NH4", "N")):
+            self.assertNotIn(f"oxidation_state:{el}", self.a(sid), sid)
+        for sid, el, ox in (("K2Cr2O7", "Cr", 6), ("KMnO4", "Mn", 7), ("KClO3", "Cl", 5), ("Ca(OCl)2", "Cl", 1)):
+            self.assertEqual(self.a(sid)[f"oxidation_state:{el}"], ox, sid)
+
     def test_claims(self):
         from core.engine.inorganic import species as S
         self.assertTrue(S.check_claim("H3PO3", "basicity", "2"))

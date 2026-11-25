@@ -106,8 +106,17 @@ class Draw(unittest.TestCase):
         self.assertEqual(set(R.RULES), set(REAGENT_LABEL))
 
     def test_evaluate_claims(self):
-        c = OQ.draw(_adapter(), random.Random(3))
-        claims = hinge_claims(c)
+        # the first scheme with two printable decisive facts on different steps (scope changes alter what a
+        # given seed draws, so the test does not pin one seed)
+        for seed in range(3, 40):
+            c = OQ.draw(_adapter(), random.Random(seed))
+            try:
+                claims = hinge_claims(c)
+                break
+            except StopIteration:
+                continue
+        else:
+            self.fail("no scheme with two decisive facts in 37 draws")
         res, probs = OQ.evaluate(c, {"format": "msq", "lead": "x", "ask": "Which?", "claims": claims})
         self.assertEqual(probs, [])
         self.assertEqual(res.answer, "A")
@@ -305,7 +314,8 @@ class StartPicker(unittest.TestCase):
                 return {"smiles": "CC(=O)c1ccc(CC=C)cc1"}         # same molecule, written differently
             prompts.append(user)
             return next(replies)
-        with mock.patch.object(models, "ask_json", fake):
+        # the live outputs hold an accepted question from this very molecule: the test must not depend on them
+        with mock.patch.object(models, "ask_json", fake), mock.patch.object(S, "_accepted_starts", lambda a: set()):
             p = S.pick_start(_adapter(), random.Random(1))
         self.assertEqual(p["tries"], 2)
         self.assertIn("was refused", prompts[1])                   # the picker is told why
@@ -463,6 +473,25 @@ class EndToEnd(unittest.TestCase):
         with mock.patch.object(models, "ask_json", self.fake),                 mock.patch("core.pipeline.qf_checks._level_floor", lambda *a, **k: 1.85),                 mock.patch("core.pipeline.qf_checks.jev_level", lambda *a, **k: 1.2),                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "organic", "--seed", "1"]):
             self.entry.main()
         self.assertFalse(os.path.exists(self.cfg["output_file"]) and json.load(open(self.cfg["output_file"])))
+
+
+class Checkpoint(unittest.TestCase):
+    """--resume (the author, 2026-11-25): a saved scheme is rebuilt exactly, with the design and question kept."""
+
+    def test_save_and_rebuild(self):
+        ad = _adapter()
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(OQ, "CHECKPOINT", os.path.join(d, "cp.json")):
+            for seed in range(5):
+                c = OQ.draw(ad, random.Random(seed))
+                OQ.save_checkpoint("question", c, design={"format": "msq"}, question={"ask": "x"})
+                back, cp = OQ.load_checkpoint(ad)
+                self.assertEqual(back["edges"], c["edges"])
+                self.assertEqual({k: back["_comps"][k]["smiles"] for k in back["_order"]},
+                                 {k: c["_comps"][k]["smiles"] for k in c["_order"]})
+                self.assertEqual(back["_hinge"], c["_hinge"])
+                self.assertEqual((cp["design"], cp["question"]), ({"format": "msq"}, {"ask": "x"}))
+            OQ.clear_checkpoint()
+            self.assertIsNone(OQ.load_checkpoint(ad))
 
 
 if __name__ == "__main__":

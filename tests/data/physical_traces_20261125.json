@@ -1,0 +1,906 @@
+{
+ "GEN_20261125T021939": {
+  "trace": [
+   {
+    "tx": 215,
+    "src": "activation_energy",
+    "dst": "fraction_above_ea",
+    "formula": "fraction = e^(−E_a/RT)",
+    "inputs": {
+     "activation_energy": 516.445467494,
+     "T": 641
+    },
+    "outputs": {
+     "fraction_above_ea": 8.1979e-43
+    }
+   },
+   {
+    "tx": 215,
+    "src": "activation_energy",
+    "dst": "fraction_above_ea",
+    "formula": "fraction = e^(−E_a/RT)",
+    "inputs": {
+     "T": 641,
+     "activation_energy": 438
+    },
+    "outputs": {
+     "fraction_above_ea": 2.0249e-36
+    }
+   },
+   {
+    "tx": 216,
+    "src": "delta_h",
+    "dst": "activation_energy",
+    "formula": "ΔH = E_a,f − E_a,b",
+    "inputs": {
+     "forward_activation_energy": 438,
+     "delta_h": -78.4454674938
+    },
+    "outputs": {
+     "activation_energy": 516.45
+    }
+   },
+   {
+    "tx": 142,
+    "src": "enthalpy_data",
+    "dst": "delta_h",
+    "formula": "ΔH = ΣBE(broken) − ΣBE(formed) (gases)",
+    "inputs": {
+     "bonds_broken": {
+      "N≡N": 1,
+      "H-H": 3
+     },
+     "bonds_formed": {
+      "N-H": 6
+     },
+     "bond_enthalpies": {
+      "N≡N": 959.554532506,
+      "H-H": 438,
+      "N-H": 392
+     }
+    },
+    "outputs": {
+     "delta_h": -78.445
+    }
+   }
+  ],
+  "answer": 959.6,
+  "asks": "the average bond enthalpy of the N≡N bond"
+ },
+ "GEN_20261125T022806": {
+  "trace": [
+   {
+    "tx": 210,
+    "src": "rate_constant",
+    "dst": "equilibrium_constant",
+    "formula": "K = k_f/k_b",
+    "inputs": {
+     "rate_constant": 0.101,
+     "kb": 1.63
+    },
+    "outputs": {
+     "equilibrium_constant": 0.061963
+    }
+   },
+   {
+    "tx": 136,
+    "src": "equilibrium_constant",
+    "dst": "delta_h",
+    "formula": "ln(K₂/K₁) = −(ΔH°/R)(1/T₂ − 1/T₁)",
+    "inputs": {
+     "equilibrium_constant": 0.061963190184,
+     "T1": 303,
+     "T2": 364.912842573,
+     "K2": 3.20755019525
+    },
+    "outputs": {
+     "delta_h": 58.6,
+     "delta_s": 170.28
+    }
+   },
+   {
+    "tx": 155,
+    "src": "equilibrium_constant",
+    "dst": "equilibrium_constant",
+    "formula": "K_p = K_x P^Δn",
+    "inputs": {
+     "equilibrium_constant": 3.20755019525,
+     "balanced_equation": "N2O4(g) -> 2NO2(g)",
+     "total_pressure": 3.91238060971
+    },
+    "outputs": {
+     "equilibrium_constant": 0.81985
+    }
+   }
+  ],
+  "answer": 364.9,
+  "asks": "the final operating temperature of the reactor"
+ },
+ "GEN_20261125T025814": {
+  "trace": [
+   {
+    "tx": 378,
+    "src": "vant_hoff_plot",
+    "dst": "delta_s",
+    "formula": "ln K = −ΔH°/RT + ΔS°/R: intercept = ΔS°/R",
+    "inputs": {
+     "intercept": -17.1,
+     "plot": "ln K"
+    },
+    "outputs": {
+     "delta_s": -142.17
+    }
+   },
+   {
+    "tx": 315,
+    "src": "vant_hoff_plot",
+    "dst": "delta_h",
+    "formula": "ln K = −ΔH°/RT + ΔS°/R: slope = −ΔH°/R",
+    "inputs": {
+     "slope": -10400,
+     "plot": "ln K"
+    },
+    "outputs": {
+     "delta_h": 86.466
+    }
+   },
+   {
+    "tx": 132,
+    "src": "delta_h",
+    "dst": "delta_g",
+    "formula": "ΔG = ΔH − TΔS",
+    "inputs": {
+     "delta_h": -86.4656,
+     "delta_s": -142.1694,
+     "T": 505.23258235
+    },
+    "outputs": {
+     "delta_g": -14.637,
+     "T": 505.23,
+     "delta_h": -86.466,
+     "delta_s": -142.17
+    }
+   },
+   {
+    "tx": 369,
+    "src": "equilibrium_constant",
+    "dst": "delta_g",
+    "formula": "ΔG° = −RT ln K",
+    "inputs": {
+     "equilibrium_constant": 32.6086956522,
+     "T": 505.23258235
+    },
+    "outputs": {
+     "delta_g": -14.637
+    }
+   }
+  ],
+  "answer": 505.2,
+  "asks": "the temperature at which the reaction reaches the target equilibrium conversion"
+ },
+ "GEN_20261125T025936": {
+  "trace": [
+   {
+    "tx": [
+     237,
+     242,
+     245,
+     246,
+     337
+    ],
+    "src": "cells_and_corrosion",
+    "dst": "answer",
+    "formula": "each statement checked against the fact table",
+    "inputs": {
+     "question": "Which one of the following statements about electrochemical cells and corrosion is NOT correct?",
+     "options": [
+      "(A) A fuel cell converts the energy of a fuel's oxidation directly into electrical energy while the reactants are fed in continuously.",
+      "(B) In a galvanic cell, oxidation occurs at the anode, which is the negative electrode.",
+      "(C) In standard cell notation, a single vertical line represents the salt bridge.",
+      "(D) Zinc or magnesium blocks protect a steel hull because they are oxidised in preference to iron."
+     ]
+    },
+    "outputs": {
+     "statement truth": {
+      "(A)": "TRUE",
+      "(B)": "TRUE",
+      "(C)": "FALSE",
+      "(D)": "TRUE"
+     },
+     "answer": "C"
+    }
+   }
+  ],
+  "answer": "C",
+  "asks": "Which one of the following statements about electrochemical cells and corrosion is NOT correct?"
+ },
+ "GEN_20261125T031247": {
+  "trace": [
+   {
+    "tx": 210,
+    "src": "rate_constant",
+    "dst": "equilibrium_constant",
+    "formula": "K = k_f/k_b",
+    "inputs": {
+     "rate_constant": 921000,
+     "kb": 0.0121
+    },
+    "outputs": {
+     "equilibrium_constant": 76116000
+    }
+   },
+   {
+    "tx": 240,
+    "src": "cell_emf",
+    "dst": "delta_h",
+    "formula": "ΔH = −nFE + nFT(∂E/∂T)_P",
+    "inputs": {
+     "cell_emf": 0.713,
+     "electrons": 1,
+     "T": 299,
+     "temperature_coefficient": -0.000692
+    },
+    "outputs": {
+     "delta_h": -88.771,
+     "delta_s": -66.778,
+     "T": 299,
+     "T1": 299
+    }
+   },
+   {
+    "tx": 136,
+    "src": "equilibrium_constant",
+    "dst": "delta_h",
+    "formula": "ln(K₂/K₁) = −(ΔH°/R)(1/T₂ − 1/T₁)",
+    "inputs": {
+     "equilibrium_constant": 76115702.4793,
+     "T1": 299,
+     "T2": 318,
+     "K2": 9012703.08653
+    },
+    "outputs": {
+     "delta_h": -88.771,
+     "delta_s": -146.01
+    }
+   },
+   {
+    "tx": 210,
+    "src": "rate_constant",
+    "dst": "equilibrium_constant",
+    "formula": "K = k_f/k_b",
+    "inputs": {
+     "rate_constant": 3350000,
+     "kb": 0.371697588153
+    },
+    "outputs": {
+     "equilibrium_constant": 9012700
+    }
+   }
+  ],
+  "answer": 0.3717,
+  "asks": "the backward rate constant at temperature T₂"
+ },
+ "GEN_20261125T032838": {
+  "trace": [
+   {
+    "tx": 135,
+    "src": "delta_g",
+    "dst": "equilibrium_constant",
+    "formula": "ΔG° = −RT ln K",
+    "inputs": {
+     "delta_g": 13.5,
+     "T": 439
+    },
+    "outputs": {
+     "equilibrium_constant": 0.024754,
+     "T1": 439,
+     "T": 439
+    }
+   },
+   {
+    "tx": 153,
+    "src": "partial_pressure",
+    "dst": "equilibrium_constant",
+    "formula": "K_p = Πp(products)^ν / Πp(reactants)^ν",
+    "inputs": {
+     "balanced_equation": "2 NOCl(g) ⇌ 2 NO(g) + Cl2(g)",
+     "partial_pressures": {
+      "NOCl": 0.742,
+      "NO": 0.100017489475,
+      "Cl2": 0.162
+     }
+    },
+    "outputs": {
+     "equilibrium_constant": 0.0029435,
+     "total_pressure": 1.004,
+     "balanced_equation": "2 NOCl(g) ⇌ 2 NO(g) + Cl2(g)"
+    }
+   },
+   {
+    "tx": 369,
+    "src": "equilibrium_constant",
+    "dst": "delta_g",
+    "formula": "ΔG° = −RT ln K",
+    "inputs": {
+     "equilibrium_constant": 0.0029434665335,
+     "T": 439
+    },
+    "outputs": {
+     "delta_g": 21.272
+    }
+   }
+  ],
+  "answer": 21.27,
+  "asks": "the standard Gibbs energy change for the decomposition of nitrosyl chloride into nitric oxide and chlorine, in kJ mol⁻¹"
+ },
+ "GEN_20261125T033103": {
+  "trace": [
+   {
+    "tx": 40,
+    "src": "equivalents",
+    "dst": "normality",
+    "formula": "law of equivalence: eq(titrant) = eq(analyte); N = eq / V(L)",
+    "inputs": {
+     "volume": 43,
+     "equivalents": 0.016383
+    },
+    "outputs": {
+     "normality": 0.381
+    }
+   },
+   {
+    "tx": 379,
+    "src": "equivalents",
+    "dst": "moles",
+    "formula": "n = eq/n-factor × V(total)/V(aliquot)",
+    "inputs": {
+     "equivalents": 0.016383,
+     "n_factor": 2,
+     "total_volume": 997,
+     "aliquot_volume": 43
+    },
+    "outputs": {
+     "moles": 0.18993
+    }
+   },
+   {
+    "tx": 151,
+    "src": "moles",
+    "dst": "equilibrium_moles",
+    "formula": "reactant n₀(1 − α); product n₀α ν/ν_reactant",
+    "inputs": {
+     "balanced_equation": "2 SO3 -> 2 SO2 + O2",
+     "moles": 0.248563577317,
+     "species_asked": "SO2",
+     "gas_dissociation_degree": 0.764104307035
+    },
+    "outputs": {
+     "equilibrium_moles": 0.18993,
+     "eq_amounts": {
+      "SO3": 0.058635,
+      "SO2": 0.18993,
+      "O2": 0.094964
+     },
+     "balanced_equation": "2 SO3 -> 2 SO2 + O2",
+     "total_moles": 0.34353
+    }
+   }
+  ],
+  "answer": 0.7641,
+  "asks": "the degree of dissociation of sulfur trioxide at equilibrium"
+ },
+ "GEN_20261125T033339": {
+  "trace": [
+   {
+    "tx": 131,
+    "src": "standard_entropy",
+    "dst": "delta_s",
+    "formula": "ΔS° = ΣνS°(products) − ΣνS°(reactants)",
+    "inputs": {
+     "balanced_equation": "CO + 2 H2 -> CH3OH",
+     "standard_entropies": {
+      "CO": 222,
+      "H2": 153,
+      "CH3OH": 281
+     }
+    },
+    "outputs": {
+     "delta_s": -247
+    }
+   },
+   {
+    "tx": 388,
+    "src": "delta_s",
+    "dst": "delta_s",
+    "formula": "ΔS(T₂) = ΔS(T₁) + ∫ΔC_p/T dT = ΔS(T₁) + ΔC_p ln(T₂/T₁)",
+    "inputs": {
+     "delta_cp": -53.7,
+     "T1": 314,
+     "T2": 626,
+     "delta_s": -209.949288415
+    },
+    "outputs": {
+     "delta_s": -247
+    }
+   },
+   {
+    "tx": 378,
+    "src": "vant_hoff_plot",
+    "dst": "delta_s",
+    "formula": "ln K = −ΔH°/RT + ΔS°/R: intercept = ΔS°/R",
+    "inputs": {
+     "plot": "ln K",
+     "intercept": -25.2525004108
+    },
+    "outputs": {
+     "delta_s": -209.95
+    }
+   }
+  ],
+  "answer": -25.25,
+  "asks": "the y-intercept of the tangent to the plot of ln K versus 1/T at temperature T1"
+ },
+ "GEN_20261125T033838": {
+  "trace": [
+   {
+    "tx": 362,
+    "src": "moles",
+    "dst": "molality",
+    "formula": "m = n_solute / (w_solvent in kg)",
+    "inputs": {
+     "solvent_mass": 197.153651469,
+     "moles": 0.488941055643
+    },
+    "outputs": {
+     "molality": 2.48,
+     "solvent_mass": 197.15
+    }
+   },
+   {
+    "tx": 362,
+    "src": "moles",
+    "dst": "molality",
+    "formula": "m = n_solute / (w_solvent in kg)",
+    "inputs": {
+     "solvent_mass": 197.153651469,
+     "moles": 0.144316472875
+    },
+    "outputs": {
+     "molality": 0.732,
+     "solvent_mass": 197.15
+    }
+   },
+   {
+    "tx": 14,
+    "src": "limiting_reagent",
+    "dst": "moles",
+    "formula": "left = n_excess − n_LR × ν_excess/ν_LR",
+    "inputs": {
+     "n_B": 0.488941055643,
+     "coef_A": 1,
+     "coef_B": 2,
+     "n_A": 0.172312291384
+    },
+    "outputs": {
+     "moles": 0.14432
+    }
+   },
+   {
+    "tx": 0,
+    "src": "mass",
+    "dst": "moles",
+    "formula": "n = m / M",
+    "inputs": {
+     "molar_mass": 24.3,
+     "mass": 4.18718868063
+    },
+    "outputs": {
+     "moles": 0.17231
+    }
+   }
+  ],
+  "answer": 4.187,
+  "asks": "mass of magnesium metal added"
+ },
+ "GEN_20261125T034056": {
+  "trace": [
+   {
+    "tx": [
+     259,
+     324
+    ],
+    "src": "raoult_deviations",
+    "dst": "answer",
+    "formula": "each statement checked against the fact table",
+    "inputs": {
+     "question": "Which one of the following statements about non-ideal solutions is correct?",
+     "options": [
+      "(A) A mixture of acetone and carbon disulphide shows nearly ideal behaviour.",
+      "(B) A mixture of water and nitric acid shows nearly ideal behaviour.",
+      "(C) A mixture of chloroform and carbon tetrachloride shows nearly ideal behaviour.",
+      "(D) A mixture of water and ethanol shows positive deviation from Raoult's law."
+     ]
+    },
+    "outputs": {
+     "statement truth": {
+      "(A)": "FALSE",
+      "(B)": "FALSE",
+      "(C)": "FALSE",
+      "(D)": "TRUE"
+     },
+     "answer": "D"
+    }
+   }
+  ],
+  "answer": "D",
+  "asks": "Which one of the following statements about non-ideal solutions is correct?"
+ },
+ "GEN_20261125T035027": {
+  "trace": [
+   {
+    "tx": 247,
+    "src": "resistance",
+    "dst": "conductivity",
+    "formula": "κ = G*/R",
+    "inputs": {
+     "resistance": 34.7,
+     "cell_constant": 0.48233
+    },
+    "outputs": {
+     "conductivity": 0.0139
+    }
+   },
+   {
+    "tx": 247,
+    "src": "resistance",
+    "dst": "conductivity",
+    "formula": "κ = G*/R",
+    "inputs": {
+     "resistance": 536,
+     "cell_constant": 0.48233
+    },
+    "outputs": {
+     "conductivity": 0.00089987
+    }
+   },
+   {
+    "tx": 248,
+    "src": "conductivity",
+    "dst": "molar_conductivity",
+    "formula": "Λm = κ × 1000/M",
+    "inputs": {
+     "conductivity": 0.000899869402985,
+     "molarity": 0.0717
+    },
+    "outputs": {
+     "molar_conductivity": 12.55
+    }
+   },
+   {
+    "tx": 251,
+    "src": "molar_conductivity",
+    "dst": "degree_of_dissociation",
+    "formula": "α = Λm/Λ°m",
+    "inputs": {
+     "molar_conductivity": 12.5504798185,
+     "limiting_molar_conductivity": 390.5
+    },
+    "outputs": {
+     "degree_of_dissociation": 0.03214
+    }
+   }
+  ],
+  "answer": 7.216,
+  "asks": "the volume of pure water added to the solution to reach the target pH, in L"
+ },
+ "GEN_20261125T035254": {
+  "trace": [
+   {
+    "tx": [
+     292,
+     294,
+     295,
+     298,
+     299
+    ],
+    "src": "colloid_properties",
+    "dst": "answer",
+    "formula": "each statement checked against the fact table",
+    "inputs": {
+     "question": "Which one of the following statements about properties of colloids is NOT correct?",
+     "options": [
+      "(A) Colloidal particles are retained by ordinary filter paper.",
+      "(B) Colloidal particles range in size from about 1 nm to 1000 nm.",
+      "(C) Colloidal particles pass through ordinary filter paper.",
+      "(D) Soap forms micelles only above the critical micelle concentration and the Krafft temperature."
+     ]
+    },
+    "outputs": {
+     "statement truth": {
+      "(A)": "FALSE",
+      "(B)": "TRUE",
+      "(C)": "TRUE",
+      "(D)": "TRUE"
+     },
+     "answer": "A"
+    }
+   }
+  ],
+  "answer": "A",
+  "asks": "Which one of the following statements about properties of colloids is NOT correct?"
+ },
+ "GEN_20261125T040244": {
+  "trace": [
+   {
+    "tx": 272,
+    "src": "unit_cell_type",
+    "dst": "atoms_per_cell",
+    "formula": "corner ⅛, face ½, edge ¼, body 1",
+    "inputs": {
+     "corner_atoms": 8,
+     "face_atoms": 0,
+     "edge_atoms": 0,
+     "body_atoms": 1
+    },
+    "outputs": {
+     "atoms_per_cell": 2
+    }
+   },
+   {
+    "tx": 272,
+    "src": "unit_cell_type",
+    "dst": "atoms_per_cell",
+    "formula": "corner ⅛, face ½, edge ¼, body 1",
+    "inputs": {
+     "corner_atoms": 8,
+     "face_atoms": 6,
+     "edge_atoms": 0,
+     "body_atoms": 0
+    },
+    "outputs": {
+     "atoms_per_cell": 4
+    }
+   },
+   {
+    "tx": 274,
+    "src": "unit_cell_type",
+    "dst": "edge_length",
+    "formula": "SC a = 2r; BCC a = 4r/√3; FCC a = 2√2 r",
+    "inputs": {
+     "lattice": "body-centred cubic",
+     "atomic_radius": 1
+    },
+    "outputs": {
+     "edge_length": 2.3094,
+     "atoms_per_cell": 2
+    }
+   },
+   {
+    "tx": 274,
+    "src": "unit_cell_type",
+    "dst": "edge_length",
+    "formula": "SC a = 2r; BCC a = 4r/√3; FCC a = 2√2 r",
+    "inputs": {
+     "lattice": "face-centred cubic",
+     "atomic_radius": 1
+    },
+    "outputs": {
+     "edge_length": 2.8284,
+     "atoms_per_cell": 4
+    }
+   },
+   {
+    "tx": 273,
+    "src": "edge_length",
+    "dst": "crystal_density",
+    "formula": "d = ZM/(N_A a³), a in cm",
+    "inputs": {
+     "edge_length": 2.30940107676,
+     "atoms_per_cell": 2,
+     "molar_mass": 1
+    },
+    "outputs": {
+     "crystal_density": 269640
+    }
+   },
+   {
+    "tx": 273,
+    "src": "edge_length",
+    "dst": "crystal_density",
+    "formula": "d = ZM/(N_A a³), a in cm",
+    "inputs": {
+     "edge_length": 2.82842712475,
+     "atoms_per_cell": 4,
+     "molar_mass": 1
+    },
+    "outputs": {
+     "crystal_density": 293550
+    }
+   }
+  ],
+  "answer": 1.006,
+  "asks": "the ratio of the atomic radius of the metal in the face-centred cubic phase to that in the body-centred cubic phase (r_FCC / r_BCC)"
+ },
+ "GEN_20261125T040400": {
+  "trace": [
+   {
+    "tx": [
+     110
+    ],
+    "src": "system_types",
+    "dst": "answer",
+    "formula": "each statement checked against the fact table",
+    "inputs": {
+     "question": "Which of the following statements about thermodynamic systems is/are correct? (One or more options may be correct.)",
+     "options": [
+      "(A) A living cell is an example of a closed system.",
+      "(B) A gas heated in a sealed rigid steel cylinder is an example of a closed system.",
+      "(C) Water boiling in an open beaker is an example of a closed system.",
+      "(D) A hot drink in a perfectly insulated, sealed flask is an example of a closed system."
+     ]
+    },
+    "outputs": {
+     "statement truth": {
+      "(A)": "FALSE",
+      "(B)": "TRUE",
+      "(C)": "FALSE",
+      "(D)": "FALSE"
+     },
+     "answer": "B"
+    }
+   }
+  ],
+  "answer": "B",
+  "asks": "Which of the following statements about thermodynamic systems is/are correct? (One or more options may be correct.)"
+ },
+ "GEN_20261125T040525": {
+  "trace": [
+   {
+    "tx": [
+     171,
+     172
+    ],
+    "src": "acids_and_bases",
+    "dst": "answer",
+    "formula": "each statement checked against the fact table",
+    "inputs": {
+     "question": "Which of the following statements about acids, bases and conjugate pairs is/are correct? (One or more options may be correct.)",
+     "options": [
+      "(A) The conjugate base of H₂PO₄⁻ is PO₄³⁻.",
+      "(B) A strong acid has a strong conjugate base.",
+      "(C) The conjugate acid of NH₃ is NH₂⁻.",
+      "(D) HCO₃⁻ can act both as a Brønsted acid and as a Brønsted base."
+     ]
+    },
+    "outputs": {
+     "statement truth": {
+      "(A)": "FALSE",
+      "(B)": "FALSE",
+      "(C)": "FALSE",
+      "(D)": "TRUE"
+     },
+     "answer": "D"
+    }
+   }
+  ],
+  "answer": "D",
+  "asks": "Which of the following statements about acids, bases and conjugate pairs is/are correct? (One or more options may be correct.)"
+ },
+ "GEN_20261125T040623": {
+  "trace": [
+   {
+    "tx": [
+     296,
+     305,
+     307,
+     345,
+     346,
+     347
+    ],
+    "src": "colloid_preparation_and_uses",
+    "dst": "answer",
+    "formula": "each statement checked against the fact table",
+    "inputs": {
+     "question": "Which of the following statements about preparation and uses of colloids is/are correct? (One or more options may be correct.)",
+     "options": [
+      "(A) Butter is an oil-in-water emulsion.",
+      "(B) In an artificial kidney, blood proteins pass through the membrane while urea is held back.",
+      "(C) River deltas form where rivers meet the sea because sea salts coagulate the clay sol.",
+      "(D) Gels never lose liquid on standing."
+     ]
+    },
+    "outputs": {
+     "statement truth": {
+      "(A)": "FALSE",
+      "(B)": "FALSE",
+      "(C)": "TRUE",
+      "(D)": "FALSE"
+     },
+     "answer": "C"
+    }
+   }
+  ],
+  "answer": "C",
+  "asks": "Which of the following statements about preparation and uses of colloids is/are correct? (One or more options may be correct.)"
+ },
+ "GEN_20261125T041311": {
+  "trace": [
+   {
+    "tx": 3,
+    "src": "moles",
+    "dst": "number_of_particles",
+    "formula": "N = n × N_A × (particles per unit)",
+    "inputs": {
+     "particles_per_unit": 8,
+     "moles": 0.0437977416141
+    },
+    "outputs": {
+     "number_of_particles": 2.11e+23
+    }
+   },
+   {
+    "tx": 15,
+    "src": "moles",
+    "dst": "percent_yield",
+    "formula": "% yield = actual/theoretical × 100",
+    "inputs": {
+     "actual_moles": 0.0437977416141,
+     "moles": 0.056223031597
+    },
+    "outputs": {
+     "percent_yield": 77.9
+    }
+   },
+   {
+    "tx": 2,
+    "src": "mass",
+    "dst": "moles",
+    "formula": "n = m / M",
+    "inputs": {
+     "mass": 30,
+     "molar_mass": 110.98
+    },
+    "outputs": {
+     "moles": 0.27032
+    }
+   },
+   {
+    "tx": 13,
+    "src": "moles",
+    "dst": "limiting_reagent",
+    "formula": "limiting reagent has the smallest n/ν",
+    "inputs": {
+     "balanced_equation": "3 CaCl2(aq) + 2 K3PO4(aq) -> Ca3(PO4)2(s) + 6 KCl(aq)",
+     "reactant_A": "CaCl2",
+     "moles": 0.270318976392,
+     "reactant_B": "K3PO4",
+     "moles_B": 0.112446063194
+    },
+    "outputs": {
+     "limiting_reagent": "K3PO4",
+     "n_A": 0.27032,
+     "n_B": 0.11245,
+     "coef_A": 3,
+     "coef_B": 2,
+     "reactant_A": "CaCl2",
+     "reactant_B": "K3PO4"
+    }
+   },
+   {
+    "tx": 2,
+    "src": "mass",
+    "dst": "moles",
+    "formula": "n = m / M",
+    "inputs": {
+     "mass": 18.9,
+     "molar_mass": 168.080584265
+    },
+    "outputs": {
+     "moles": 0.11245
+    }
+   }
+  ],
+  "answer": 24.37,
+  "asks": "the atomic mass of the alkali metal M"
+ }
+}

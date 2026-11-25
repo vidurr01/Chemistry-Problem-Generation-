@@ -84,6 +84,31 @@ def _escape_inner_quotes(text: str) -> str:
     return "".join(out)
 
 
+def _unescape_structure(text: str) -> str:
+    """Turn \\n, \\r, \\t written OUTSIDE strings into spaces. Gemini 3.8 Flash sometimes writes the
+    whole object escaped once too often ('{\\n  "solution": "...\\nFinal answer: 4"\\n}', four solution
+    replies, 2026-11-24/25): the escapes inside the strings are valid, the ones between tokens are not."""
+    out, in_str, escape, i = [], False, False, 0
+    while i < len(text):
+        ch = text[i]
+        if in_str:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch == "\\" and i + 1 < len(text) and text[i + 1] in "nrtf":   # form feed too (2026-11-25)
+            out.append(" ")
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def parse_json(content) -> dict:
     """A JSON object from a model reply. Tolerates ```json fences, prose before or after
     the object, a second object, and a single-element list. Raises ValueError (or
@@ -95,8 +120,18 @@ def parse_json(content) -> dict:
         obj = json.loads(text)
     except json.JSONDecodeError:
         obj = None
-        # the object as written; then with quotes a model left unescaped inside the text
-        for source in (text, _escape_inner_quotes(text)):
+        # the object as written; then with quotes a model left unescaped inside the text; then with
+        # line-break escapes written between tokens (an object escaped once too often)
+        unescaped = _unescape_structure(text)
+        sources = [text, _escape_inner_quotes(text), unescaped, _escape_inner_quotes(unescaped)]
+        if text.startswith("{\\"):
+            # the whole object written as a JSON string literal, quotes escaped too ('{\\n  \\"solution\\": ...',
+            # Gemini solution replies, 2026-11-25): unescape it once
+            try:
+                sources.append(json.loads('"' + text + '"'))
+            except json.JSONDecodeError:
+                pass
+        for source in sources:
             block = _first_json_object(source)
             if not block:
                 continue

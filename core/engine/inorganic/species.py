@@ -55,6 +55,8 @@ _SALT_CATIONS = {**{k: v for k, v in _CATIONS.items() if k != "H"}, "Be": 2, "Al
 _SALT_ANIONS = {"F": -1, "Cl": -1, "Br": -1, "I": -1, "O": -2, "S": -2, "OH": -1, "CN": -1, "SCN": -1,
                 "NO3": -1, "NO2": -1, "SO4": -2, "SO3": -2, "S2O3": -2, "CO3": -2, "HCO3": -1, "C2O4": -2,
                 "PO4": -3, "ClO3": -1, "ClO4": -1, "OCl": -1}
+# elements less electronegative than H (Pauling): H is hydridic (-1) in their hydrides
+_HYDRIDE_FORMERS = {"B", "Al", "Ga", "Si", "Ge", "Sn"}
 _ANIONS = {"Cl": -1, "Br": -1, "I": -1, "F": -1, "NO3": -1, "OH": -1, "SO4": -2, "CO3": -2}
 
 
@@ -82,6 +84,8 @@ def to_formula_charge(sid: str):
 def _complex_text(sid: str):
     """The coordination entity of a species with its charge: '[Fe(CN)6]4-' from 'K4[Fe(CN)6]'."""
     s = sid.split("·")[0].strip()
+    if re.fullmatch(r"[A-Z][a-z]?\(CO\)\d+", s):     # a neutral metal carbonyl written without brackets: Ni(CO)4
+        return f"[{s}]"
     m = re.fullmatch(r"(.*?)(\[[^\]]+\])(\d*[+-]?)(.*)", s)
     if not m:
         return None
@@ -269,13 +273,21 @@ def askable(sid: str) -> dict:
     except EngineError:
         counts = {}
     if len(counts) >= 2:
+        # B, Al, Si ... are less electronegative than H: in their hydrides H is -1 (B2H6, NaBH4, LiAlH4: +3, SiH4: +4)
+        hydride = "H" in counts and all(e == "H" or e in _HYDRIDE_FORMERS or P.group_of(e) in (1, 2) for e in counts)
         for el in counts:
-            if el in ("O", "H", "F"):
-                continue
+            if el in ("O", "H", "F") or P.group_of(el) in (1, 2):
+                continue                           # K, Na, Ca are fixed by the rules: balancing them gives KClO3 K +7
+            if parts and parts[0] == "NH4" and el == "N" and "N" in parse_formula(parts[1])[0]:
+                continue                           # NH4NO3: N is -3 and +5; the average (+1) is not a fact to ask
             try:
-                ox = P.oxidation_state(text, el)
+                ox = P.oxidation_state(text, el, hydride=hydride and el in _HYDRIDE_FORMERS)
             except EngineError:
                 continue
+            if ox > _max_ox(el):                   # the rules missed a peroxide (CrO5 "+10" is +6): refused, not guessed
+                continue
+            if P.group_of(el) >= 13 and ox < P.group_of(el) - 18:
+                continue                           # below the lowest state (graph node "NH4" gave N -4)
             out[f"oxidation_state:{el}"] = float(ox) if ox.denominator != 1 else int(ox)
     return out
 

@@ -1,0 +1,429 @@
+{
+ "subject": "organic",
+ "saved_at": "20261125T033335",
+ "spend": {
+  "total_cost_usd": 0.03669,
+  "by_role": {
+   "start_picker": {
+    "calls": 3,
+    "prompt_tokens": 6058,
+    "completion_tokens": 3653,
+    "cost": 0.01824225
+   },
+   "name_checker": {
+    "calls": 2,
+    "prompt_tokens": 192,
+    "completion_tokens": 121,
+    "cost": 7.97e-05
+   },
+   "step_checker": {
+    "calls": 30,
+    "prompt_tokens": 4929,
+    "completion_tokens": 35753,
+    "cost": 0.0183694
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkyl_halide_to_alkene_alckoh",
+     "alkene_to_alkyl_halide_hx",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "aldehyde_to_imine_rnh",
+     "aldehyde_to_imine_rnh"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "alkene",
+     "alkyl_halide",
+     "nitro_compound",
+     "imine",
+     "imine"
+    ],
+    "chapters": [
+     "Alkyl Halides",
+     "Hydrocarbons",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     17,
+     320,
+     330,
+     337,
+     345,
+     2,
+     3,
+     182,
+     183,
+     184,
+     285,
+     36,
+     36
+    ],
+    "trap_ids": [],
+    "description": "4-(2-bromoethyl)benzaldehyde: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T03:29:15.562551+00:00",
+     "held": "STE_20261125T032915_49",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "alkyl_halide_to_alkene_alckoh",
+       "substrate": "O=Cc1ccc(CCBr)cc1",
+       "reagent": "alc. KOH, heat",
+       "engine": "C=Cc1ccc(C=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Alcoholic KOH/heat can eliminate HBr to form p-vinylbenzaldehyde, while this aldehyde has no α-hydrogen and can undergo Cannizzaro disproportionation under sufficiently strong aqueous-base conditions, so the unspecified solvent water content and base conditions do not establish a unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "aldehyde_to_alcohol_nabh",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alcohol_to_ether_na",
+     "alkyl_halide_to_nitrile_nacn"
+    ],
+    "nodes": [
+     "aldehyde",
+     "alcohol",
+     "nitro_compound",
+     "ether",
+     "nitrile"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Alkyl Halides",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     32,
+     498,
+     285,
+     30,
+     132,
+     133,
+     149,
+     20,
+     282,
+     283
+    ],
+    "trap_ids": [],
+    "description": "4-(2-bromoethyl)benzaldehyde: 4 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T03:29:32.398335+00:00",
+     "held": "STE_20261125T032932_50",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "alcohol_to_ether_na",
+       "substrate": "O=[N+]([O-])CCc1ccc(CO)cc1",
+       "reagent": "(i) Na; (ii) CH₃I",
+       "engine": "COCc1ccc(CC[N+](=O)[O-])cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Na can form both the benzyl alkoxide and the nitroalkane nitronate, which MeI can methylate at oxygen and at the α-carbon, respectively, so without specified stoichiometry and conditions there is no uniquely determined major product."
+      },
+      {
+       "label": "T",
+       "edge": "alkyl_halide_to_nitrile_nacn",
+       "substrate": "OCc1ccc(CCBr)cc1",
+       "reagent": "NaCN, DMSO",
+       "engine": "N#CCCc1ccc(CO)cc1",
+       "verdict": "disagree",
+       "checker_product": "OCc1ccc(CC#N)cc1",
+       "reason": "Cyanide displaces bromide by SN2 at the primary bromoethyl carbon to give a nitrile, while the alcohol remains unchanged."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkyl_halide_to_alkene_alckoh",
+     "alkene_to_alkyl_halide_hx",
+     "aldehyde_to_alcohol_nabh",
+     "aldehyde_to_geminal_dihalide_pcl5",
+     "alkyl_halide_to_nitro_compound_agno2silvern"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "alkene",
+     "alkyl_halide",
+     "alcohol",
+     "geminal_dihalide",
+     "nitro_compound"
+    ],
+    "chapters": [
+     "Alkyl Halides",
+     "Hydrocarbons",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     17,
+     320,
+     330,
+     337,
+     345,
+     2,
+     3,
+     182,
+     183,
+     184,
+     32,
+     498,
+     195,
+     285
+    ],
+    "trap_ids": [],
+    "description": "4-(2-bromoethyl)benzaldehyde: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T03:29:52.201603+00:00",
+     "held": "STE_20261125T032952_51",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "alkyl_halide_to_alkene_alckoh",
+       "substrate": "O=Cc1ccc(CCBr)cc1",
+       "reagent": "alc. KOH, heat",
+       "engine": "C=Cc1ccc(C=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Alcoholic KOH and heat can eliminate HBr to form p-vinylbenzaldehyde, while the aldehyde has no α-hydrogen and can undergo Cannizzaro disproportionation under strong base, so the stated conditions do not establish a unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+     "aldehyde_to_alcohol_nabh",
+     "alkyl_halide_to_nitrile_nacn",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alkyl_halide_to_alkyl_halide_nai"
+    ],
+    "nodes": [
+     "aldehyde",
+     "alkyl_halide",
+     "alcohol",
+     "nitrile",
+     "nitro_compound",
+     "alkyl_halide"
+    ],
+    "chapters": [
+     "Carboxylic Acids & Derivatives",
+     "Aldehydes & Ketones",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     196,
+     197,
+     349,
+     32,
+     498,
+     20,
+     282,
+     283,
+     285,
+     23,
+     199,
+     200,
+     202,
+     206,
+     255,
+     294,
+     366,
+     505
+    ],
+    "trap_ids": [],
+    "description": "2-(4-formylphenyl)acetic acid: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T03:31:24.385043+00:00",
+     "held": "STE_20261125T033124_52",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+       "substrate": "O=Cc1ccc(CC(=O)O)cc1",
+       "reagent": "(i) Ag₂O; (ii) Br₂, CCl₄, heat",
+       "engine": "O=Cc1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)c1ccc(CBr)cc1",
+       "reason": "Ag₂O oxidizes the aldehyde to a carboxyl group, and Br₂ then gives Hunsdiecker decarboxylation of the aliphatic silver carboxylate to form the benzylic bromide while the aryl carboxyl group remains."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+     "aldehyde_to_alcohol_nabh",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alcohol_to_substituted_benzene_4methylbenze",
+     "alkyl_halide_to_grignard_mg",
+     "alkyl_halide_to_nitro_compound_agno2silvern"
+    ],
+    "nodes": [
+     "aldehyde",
+     "alkyl_halide",
+     "alcohol",
+     "nitro_compound",
+     "sulfonate",
+     "grignard",
+     "nitro_compound"
+    ],
+    "chapters": [
+     "Carboxylic Acids & Derivatives",
+     "Aldehydes & Ketones",
+     "Alkyl Halides",
+     "Alcohols, Phenols & Ethers",
+     "Organometallics & Grignard"
+    ],
+    "txs": [
+     196,
+     197,
+     349,
+     32,
+     498,
+     285,
+     247,
+     19,
+     285
+    ],
+    "trap_ids": [],
+    "description": "2-(4-formylphenyl)acetic acid: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T03:32:09.228948+00:00",
+     "held": "STE_20261125T033209_53",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+       "substrate": "O=Cc1ccc(CC(=O)O)cc1",
+       "reagent": "(i) Ag₂O; (ii) Br₂, CCl₄, heat",
+       "engine": "O=Cc1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)c1ccc(CBr)cc1",
+       "reason": "Ag₂O oxidizes the aldehyde to a carboxyl group, then Hunsdiecker decarboxylation of the phenylacetate side chain gives the para-bromomethyl benzoic acid while the aryl carboxyl group remains."
+      },
+      {
+       "label": "T",
+       "edge": "alcohol_to_substituted_benzene_4methylbenze",
+       "substrate": "OCc1ccc(CBr)cc1",
+       "reagent": "TsCl, pyridine",
+       "engine": "Cc1ccc(S(=O)(=O)OCc2ccc(CBr)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Although TsCl/pyridine ordinarily converts the alcohol to a tosylate, the benzylic bromide can also alkylate pyridine, so the conditions given do not establish a single major product."
+      },
+      {
+       "label": "U",
+       "edge": "alkyl_halide_to_grignard_mg",
+       "substrate": "Cc1ccc(S(=O)(=O)OCc2ccc(CBr)cc2)cc1",
+       "reagent": "Mg, dry ether",
+       "engine": "Cc1ccc(S(=O)(=O)OCc2ccc([CH2][Mg][Br])cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "Mg can insert into the benzylic C–Br bond, but the resulting organomagnesium species is incompatible with the tethered benzyl tosylate and can undergo competing reactions, so no unique standard textbook product is justified."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+     "aldehyde_to_alcohol_nabh",
+     "alkyl_halide_to_nitro_compound_agno2silvern",
+     "alkyl_halide_to_alkyl_halide_nai",
+     "alkyl_halide_to_nitro_compound_agno2silvern"
+    ],
+    "nodes": [
+     "aldehyde",
+     "alkyl_halide",
+     "alcohol",
+     "nitro_compound",
+     "alkyl_halide",
+     "nitro_compound"
+    ],
+    "chapters": [
+     "Carboxylic Acids & Derivatives",
+     "Aldehydes & Ketones",
+     "Alkyl Halides"
+    ],
+    "txs": [
+     196,
+     197,
+     349,
+     32,
+     498,
+     285,
+     23,
+     199,
+     200,
+     202,
+     206,
+     255,
+     294,
+     366,
+     505,
+     285
+    ],
+    "trap_ids": [],
+    "description": "2-(4-formylphenyl)acetic acid: 5 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-25T03:33:35.626906+00:00",
+     "held": "STE_20261125T033335_54",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+       "substrate": "O=Cc1ccc(CC(=O)O)cc1",
+       "reagent": "(i) Ag₂O; (ii) Br₂, CCl₄, heat",
+       "engine": "O=Cc1ccc(CBr)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)c1ccc(CBr)cc1",
+       "reason": "Ag₂O oxidizes the aldehyde to a carboxylic acid, then Hunsdiecker decarboxylation of the phenylacetic-acid side chain gives the benzyl bromide while the aromatic carboxyl group remains."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

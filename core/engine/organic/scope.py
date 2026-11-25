@@ -77,6 +77,27 @@ GROUPS: dict = {
     "oxime":             ("[CX3]=N[OX2H1]", "oxime (Beckmann / hydrolysis in acid)"),
     "sulfonate_ester":   ("[CX4]OS(=O)(=O)[#6]", "alkyl tosylate / sulfonate ester (a leaving group)"),
     "methyl_carbinol":   ("[CH3][CX4;H1,H2][OX2H1]", "CH3CH(OH)– (gives the haloform test)"),
+    # reagent × group table (2026-11-25, tools/apply_rule_scope.py LAYER2): groups that hydrolyse, solvolyse,
+    # cyclise or fall apart under conditions aimed at another group
+    "gem_dihalide":      ("[CX4]([Cl,Br,I])[Cl,Br,I]", "gem-dihalide (hydrolyses to C=O)"),
+    "imine":             ("[C]=[NX2;!$(N~[O,N])]", "imine C=N (hydrolysed, reduced, protonated)"),
+    "cyanohydrin":       ("[CX4]([OX2H1])C#N", "cyanohydrin (reverts to C=O + CN⁻ in acid or base)"),
+    "halohydrin":        ("[OX2H1][CX4][CX4][Cl,Br,I]", "halohydrin (closes to an epoxide in base)"),
+    "alpha_halo_carbonyl": ("[Cl,Br,I][CX4][CX3]=O", "α-halo carbonyl"),
+    "activated_cx":      ("[$([CX4]([Cl,Br,I])c),$([CX4]([Cl,Br,I])[CX3]=[CX3]),$([CX4]([#6])([#6])([#6])[Cl,Br,I]),"
+                          "$([CX4;!H2;!H3]OS(=O)=O),$([CX4](c)OS(=O)=O),$([CX4]([CX3]=[CX3])OS(=O)=O)]",
+                          "benzylic, allylic or 3° C–X, or a 2°/3°/benzylic/allylic sulfonate (solvolysis, "
+                          "hydrogenolysis)"),
+    # live run 7 (2026-11-25): TsCl/pyridine turns a benzylic or allylic OH largely into the chloride
+    "activated_oh":      ("[CX4;$([CX4]c),$([CX4][CX3]=[CX3])][OX2H1]", "benzylic or allylic OH"),
+    # SN2′ gives a DIFFERENT product (allyl chloride itself gives the same one either way and stays allowed)
+    "lone_activated_cx": ("[$([CX4]([Cl,Br,I])c),$([CX4]([Cl,Br,I])[CX3]=[CX3]),$([CX4]([#6])([#6])([#6])[Cl,Br,I]);"
+                          "!$([CX4]([Cl,Br,I])[CX4][Cl,Br,I])]",
+                          "benzylic, allylic or 3° C–X outside a vicinal dihalide"),
+    "allylic_halide":    ("[$([CX4;!H2]([Cl,Br,I])[CX3]=[CX3]),$([CH2]([Cl,Br,I])[CX3]=[CX3;!H2])]",
+                          "substituted allylic C–X (SN2′ gives another product)"),
+    "neopentyl_halide":  ("[CH2]([Cl,Br,I])[CX4H0]", "neopentyl-type CH2–X (no SN2)"),
+    "beta_hydroxy_carbonyl": ("[OX2H1][CX4][CX4;!H0][$([CX3]=O),$(C#N)]", "β-hydroxy C=O / C≡N (dehydrates on heating)"),
 }
 
 
