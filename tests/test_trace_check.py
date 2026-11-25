@@ -200,3 +200,23 @@ class OrganicDecorativeStep(unittest.TestCase):
         self.assertEqual(OQ.decorative_steps(comps, order), ["R"])
         del comps["S"], comps["R"]                                    # without the NaI step nothing is decorative
         self.assertEqual(OQ.decorative_steps(comps, ["P", "Q", "T"]), [])
+
+
+class AnnouncedHiddenStep(unittest.TestCase):
+    """P1 (live review 2026-11-26): a question that announces its hidden step is sent back; a quote not in the
+    question is ignored."""
+
+    def _check(self, announced):
+        from core.pipeline import qf_shortcut
+        stem = ("For N2 + 3H2 -> 2NH3, assuming the molar heat capacities are independent of temperature, find S of NH3 "
+                "at 298 K.")
+        reply = {"code": "def solve():\n    return a * 3\n", "announced": announced}
+        with mock.patch.object(models, "ask_json", lambda *a, **k: reply), mock.patch("builtins.print"):
+            return qf_shortcut.shortcut_problem({"hidden_step": "Cp correction", "trap": "no correction"}, stem,
+                                                "def solve():\n    return a * 2\n", {"answer": 2.0}, {"a": 1.0})
+
+    def test_announced(self):
+        self.assertIn("announces its hidden step",
+                      self._check("assuming the molar heat capacities are independent of temperature"))
+        self.assertIsNone(self._check(""))
+        self.assertIsNone(self._check("words that are not in the question at all"))

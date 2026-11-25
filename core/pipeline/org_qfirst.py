@@ -516,7 +516,9 @@ def write_question(subject_name: str, cand, design, feedback: str | None = None)
     fmt = design["format"]
     shape = {"msq": 'exactly 4 "claims", 1 to 3 true', "mcq_correct": 'exactly 4 "claims", exactly one true',
              "count": '4 to 8 "claims", not all true and not all false',
-             "integer": 'one "claim" with compound and property only (a numeric property); no value'}[fmt]
+             "integer": 'one "claim" with compound and property only (a numeric property); no value',
+             "amount": 'no claims ("claims": []); write only "lead" (one plain sentence before the scheme) and '
+                       '"ask": "-" (code writes the question line: the mass of a compound from a mass of P)'}[fmt]
     redo = f"\nYour previous draft was rejected: {feedback}\nFix exactly that.\n" if feedback else ""
     # real JEE Advanced stems of this format, for wording only (reviewer, 2026-11-26; style_examples.copied rejects
     # a draft that copies one)
@@ -560,6 +562,14 @@ Return JSON: {{"lead": "...", "ask": "...", "format": "{fmt}",
 def evaluate(cand, q) -> tuple:
     """(result, problems). Every claim decided by code; problems the writer can fix are listed."""
     fmt = q["format"]
+    if fmt == "amount":                            # keyed by code from the target the run chose (no claims)
+        lab = q.get("_amount_target")
+        if not lab or lab not in cand["_comps"]:
+            return None, ["amount: no target compound"]
+        seed = sum(ord(c) for c in "".join(cand["edges"]) + lab)
+        nums, res = amount_result(cand, lab, random.Random(seed))
+        q["_amount"] = nums
+        return res, []
     rows = [r for r in q.get("claims") or [] if isinstance(r, dict)]
     problems = []
     need = {"msq": (4, 4), "mcq_correct": (4, 4), "count": (4, 8), "integer": (1, 1)}[fmt]
@@ -671,7 +681,100 @@ def evaluate(cand, q) -> tuple:
     return res, []
 
 
+# ── amounts through the scheme (live review 2026-11-26, item 3: hidden intermediates) ───────────────────────────
+# "m g of P, every step y % yield: the mass of U formed". The student must work out every hidden intermediate,
+# because U's formula decides the answer; each wrong turn gives another mass (a saved trap). Real Advanced:
+# organic amounts through a scheme, ~7 % full marks. Code picks U, m and y and computes the key; the writer
+# writes only the lead.
+AMOUNT_SHARE = 1.0            # asked as an amount whenever a compound qualifies (only ~1 scheme in 30 does)
+ATOMIC = {"H": 1, "C": 12, "N": 14, "O": 16, "F": 19, "Na": 23, "Mg": 24, "P": 31, "S": 32, "Cl": 35.5, "K": 39,
+          "Br": 80, "I": 127}  # the values printed in the question, so the key uses exactly these
+YIELDS = (50, 60, 70, 75, 80, 90)
+AMOUNT_GAP = 0.02             # a wrong turn counts only if it moves the mass by more than 2 %
+
+
+def _mass(smiles):
+    from core.engine.chem import parse_formula
+    f = OP.askable(smiles).get("molecular_formula")
+    counts = parse_formula(f)[0]
+    if any(el not in ATOMIC for el in counts):
+        return None, {}
+    return sum(ATOMIC[el] * n for el, n in counts.items()), counts
+
+
+def _depth(cand, lab):
+    n, k = 0, lab
+    while cand["_comps"][k]["parent"] is not None:
+        k, n = cand["_comps"][k]["parent"], n + 1
+    return n
+
+
+def amount_target(cand):
+    """(label, its wrong masses by step) of the compound whose mass changes under wrong turns at the most different
+    steps (at least MIN_HINGE), or None."""
+    best = None
+    for lab in cand["_order"][1:]:
+        try:
+            right, _ = _mass(cand["_comps"][lab]["smiles"])
+        except EngineError:
+            continue
+        if right is None:
+            continue
+        by_step = {}
+        for w, how in cand["_wrong"].get(lab, {}).items():
+            try:
+                wm, _ = _mass(w)
+            except EngineError:
+                continue
+            if wm is not None and abs(wm - right) > AMOUNT_GAP * right:
+                by_step.setdefault(_source(how), wm)
+        if len(by_step) >= MIN_HINGE and (best is None or len(by_step) > len(best[1])):
+            best = (lab, by_step)
+    return best
+
+
+def amount_result(cand, lab, rng):
+    """(numbers dict, ChainResult) for "mass of lab from m g of P at y % per step"."""
+    mp, cp = _mass(cand["_comps"]["P"]["smiles"])
+    ml, cl = _mass(cand["_comps"][lab]["smiles"])
+    k = _depth(cand, lab)
+    mol = rng.choice((0.02, 0.025, 0.04, 0.05, 0.08, 0.1, 0.2))
+    m_p = round(mol * mp, 2)
+    y = rng.choice(YIELDS)
+    answer = round(m_p / mp * (y / 100) ** k * ml, 2)
+    traps = []
+    for w, how in cand["_wrong"].get(lab, {}).items():
+        try:
+            wm, _ = _mass(w)
+        except EngineError:
+            continue
+        if wm is not None and abs(wm - ml) > AMOUNT_GAP * ml:
+            traps.append({"id": f"wrong_{lab}", "desc": how, "wrong_answer": round(m_p / mp * (y / 100) ** k * wm, 2)})
+    traps.append({"id": "yield_once", "desc": "applies the yield once, not at every step",
+                  "wrong_answer": round(m_p / mp * (y / 100) * ml, 2)})
+    els = sorted(set(cp) | set(cl), key=lambda e: ATOMIC[e])
+    nums = {"m_P": m_p, "yield": y, "steps": k, "label": lab,
+            "given": ", ".join(f"{e} = {ATOMIC[e]:g}" for e in els)}
+    trace = [{"tx": [], "src": "P", "dst": lab, "formula": "m(L) = m(P)/M(P) × (y/100)^k × M(L), computed by code",
+              "inputs": {"m(P)": m_p, "M(P)": mp, "yield %": y, "steps": k, "M(L)": ml,
+                         "structure": cand["_comps"][lab]["smiles"]}, "outputs": {"mass": answer}}]
+    res = ChainResult(answer=answer, unit="g", kind="real", asks=f"mass of {lab}", trace=trace, traps=traps,
+                      constants=[])
+    res.tolerance = 0.01
+    res.options = []
+    res.form = "organic_question_first:amount"
+    return nums, res
+
+
+def amount_ask(nums) -> str:
+    return (f"If {nums['m_P']:g} g of P is used and every step of the sequence proceeds with {nums['yield']}% yield, "
+            f"the mass (in g) of {nums['label']} obtained is ____.\n(Given: atomic masses {nums['given']})\n"
+            f"Give the answer correct to two decimal places.")
+
+
 def full_stem(cand, q, result) -> str:
+    if q["format"] == "amount":
+        return f"{str(q.get('lead') or '').strip()}\n{scheme_text(cand)}\n{amount_ask(q['_amount'])}"
     head = f"{str(q.get('lead') or '').strip()}\n{scheme_text(cand)}\n{str(q['ask']).strip()}"
     if q["format"] == "integer":
         return f"{head}\nGive the answer as an integer."
@@ -772,6 +875,12 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             bb.note("design_rejected", problem=problem)
             print(f"    design rejected: {problem[:160]}")
             continue
+        # amounts through the scheme (item 3): asked when a compound's mass hinges on wrong turns at 2+ steps
+        target = amount_target(cand)
+        if target and design.get("format") != "amount" and rng.random() < AMOUNT_SHARE:
+            design = dict(design, format="amount")
+            print(f"  [amount] asking the mass of {target[0]} (wrong turns at {', '.join(sorted(target[1]))} "
+                  f"change it)")
         if not saved.get("design"):
             save_checkpoint("design", cand, design=design)
         feedback, made = None, None
@@ -784,6 +893,10 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 bb.note("question", attempt=attempt + 1, error=str(e)[:300])
                 print(f"    question reply unusable: {str(e)[:120]}")
                 continue
+            if q.get("format") == "amount" or design.get("format") == "amount":
+                if not target:
+                    target = amount_target(cand)
+                q["format"], q["_amount_target"] = "amount", target[0] if target else None
             result, probs = evaluate(cand, q)
             bb.note("question", attempt=attempt + 1, **{k: q.get(k) for k in ("lead", "ask", "format", "claims")})
             if probs:

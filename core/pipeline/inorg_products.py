@@ -246,9 +246,10 @@ def with_naive(graph_edges, path=None) -> list:
     naive = data.get("naive_for_graph_edges", {})
     printed = data.get("print_reagents_for_graph_edges", {})   # alternatives listed as one set (live run hp_4)
     two = data.get("two_products_contain_the_element", {})     # no single "product containing X" (hp_5)
+    kept_out = data.get("not_for_hidden_products", {})         # disputed by the blind check (graph audit 2026-11-26)
     out = []
     for e in graph_edges:
-        if e["id"] in two:
+        if e["id"] in two or e["id"] in kept_out:
             continue
         if e["id"] in printed:
             e = {**e, "reagents": printed[e["id"]]}
@@ -478,6 +479,26 @@ def _ox_of(props, el):
     return None
 
 
+_LEAD_SPECTATORS = re.compile(r"^((?:Li|Na|K|Rb|Cs)\d*)+")
+
+
+def _bracketed(formula, charge) -> list:
+    """The checker's species id and, if it wrote a complex without brackets ("Zn(OH)4" 2-, "K3Co(NO2)6"), the bracketed
+    form the engine knows ("[Zn(OH)4]2-", "K3[Co(NO2)6]") (graph audit 2026-11-26)."""
+    out = [_graph_id(formula, charge)]
+    f = _plain(formula).split("·")[0].replace("^", "")
+    if "[" in f or "(" not in f:
+        return out
+    body = re.sub(r"\d*[+-]$", "", f)
+    lead = _LEAD_SPECTATORS.match(body)
+    pre = lead.group(0) if lead else ""
+    try:
+        out.append(_graph_id(f"{pre}[{body[len(pre):]}]", charge))
+    except (EngineError, ValueError, TypeError, IndexError):
+        pass
+    return out
+
+
 def other_form(row, formula, charge) -> bool:
     """The checker wrote the same product in another form that cannot change the count (live review 2026-11-26,
     round 2: 2 of 5 refusals were Na2ZnO2 vs [Zn(OH)4]2- and BO2- vs NaBO2): the formulas differ only by alkali-metal
@@ -492,14 +513,21 @@ def other_form(row, formula, charge) -> bool:
         n = diff.get("O", 0)
         if any(v for el, v in diff.items() if el not in ("H", "O")) or diff.get("H", 0) != 2 * n:
             return False
-        pa, pb = S.askable(ours), S.askable(theirs)
+        pa = S.askable(ours)
         el = row["element"]
-        if _ox_of(pa, el) is None or _ox_of(pa, el) != _ox_of(pb, el):
-            return False
         keys = FAMILIES[row["family"]][0] + _EXTRA_KEYS.get(row["family"], ())
         va = next((pa[k] for k in keys if k in pa), None)
-        vb = next((pb[k] for k in keys if k in pb), None)
-        return va is not None and va == vb
+        if _ox_of(pa, el) is None or va is None:
+            return False
+        for alt in _bracketed(formula, charge):
+            try:
+                pb = S.askable(alt)
+            except (EngineError, ValueError, TypeError, IndexError, KeyError):
+                continue
+            vb = next((pb[k] for k in keys if k in pb), None)
+            if _ox_of(pb, el) == _ox_of(pa, el) and vb == va:
+                return True
+        return False
     except (EngineError, ValueError, TypeError, IndexError, KeyError):
         return False
 

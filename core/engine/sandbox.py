@@ -33,6 +33,7 @@ import time
 import multiprocessing as mp
 
 TIMEOUT_S = 30
+WHOLE_FIND_TOL = 6e-3      # find() on a whole-number input: the nearest whole number within 3-figure rounding
 ROUND_SIG = 3
 RELEVANCE_FACTORS = (1.001, 0.5, 2.0, 0.1, 10.0)   # a step's result is scaled by these in turn
 MAX_TOLERANCE = 0.10
@@ -540,7 +541,8 @@ def _whole_root(fn, lo, hi, cause):
                      f"to {stop} makes f zero; check the range and that f is the mismatch for the unknown")
 
 
-def _run_once(code, steps, ctx, want="number", preset=None):
+def _run_once(code, steps, ctx, want="number", preset=None, entry="solve"):
+    """Run the program's entry function (solve, or derive for derived values) on the preset values."""
     from core.engine.base import EngineError, solve_bisect
 
     def given(value, quote=""):
@@ -624,7 +626,9 @@ def _run_once(code, steps, ctx, want="number", preset=None):
                         best = (n, miss)
             finally:
                 ctx.recording = was
-            if best is None or best[1] > 1e-3 * abs(target) + 1e-12:
+            # 6e-3 (was 1e-3): a stated value printed to 3 significant figures is off by up to 0.5 %, and with derived
+            # values (2026-11-26) the whole number is picked first and the printed value computed from it
+            if best is None or best[1] > WHOLE_FIND_TOL * abs(target) + 1e-12:
                 raise SolveError(f"find(step_{st.tx}, {unknown!r}): no whole number {unknown} from {start} to "
                                  f"{stop} gives {st.answer} = {target:g} with the other inputs")
             step_fn(**known, **{unknown: best[0]})       # the chosen value goes into the trace
@@ -665,14 +669,16 @@ def _run_once(code, steps, ctx, want="number", preset=None):
 
     env["_check_value_"] = _check_value_
     exec(_instrumented(code), env)                     # noqa: S102 - checked by check_code, own process
-    ans = env["solve"]()
+    if entry not in env:
+        raise SolveError(f"define a function {entry}()")
+    ans = env[entry]()
     if want == "dict":
         if not isinstance(ans, dict) or not ans:
-            raise SolveError(f"solve() must return a dict of named numbers, got {ans!r}")
+            raise SolveError(f"{entry}() must return a dict of named numbers, got {ans!r}")
         out = {}
         for k, v in ans.items():
             if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
-                raise SolveError(f"solve() returned {k!r} = {v!r}: every value must be one finite number")
+                raise SolveError(f"{entry}() returned {k!r} = {v!r}: every value must be one finite number")
             out[str(k)] = float(v)
         return out
     if isinstance(ans, dict):
@@ -957,7 +963,7 @@ def _aim(code, steps, values, ranges, answer_range, rng, deadline):
 
 
 def _search(code, txs, ranges, fixed, answer_range=None, tries=200, fragile_tol=0.02, min_traps=2,
-            exempt=(), seed=0, deadline_s=60.0, probe=False):
+            exempt=(), seed=0, deadline_s=60.0, probe=False, hidden=None, derived=None):
     """Pick the question's values. probe=True: the first set the program runs on at all (does the program
     work?). Otherwise the first set that also gives an answer in answer_range, is not fragile (rounding the
     steps to 3 figures moves it by at most fragile_tol), has at least min_traps typical mistakes that change
@@ -995,6 +1001,21 @@ def _search(code, txs, ranges, fixed, answer_range=None, tries=200, fragile_tol=
         if time.time() - t0 > deadline_s:
             break
         values = sample_values(ranges, fixed, rng)
+        if derived:
+            # derived values (2026-11-26): the hidden free choices are drawn, derive() computes the stated values
+            # from them with engine steps, and only the stated values (rounded as printed) go to solve()
+            hv = sample_values(hidden or {}, {}, rng)
+            try:
+                dv = _run_once(code, steps, _Ctx(), want="dict", preset={**values, **hv}, entry="derive")
+            except Exception as e:                      # noqa: BLE001
+                msg = str(e) if isinstance(e, SolveError) else f"{type(e).__name__}: {e}"
+                fail("code" if CODE_ERRORS.search(msg) or "derive" in msg else "engine", msg)
+                continue
+            gone = [d for d in derived if d not in dv]
+            if gone:
+                fail("code", f"derive() returned no value for {', '.join(gone)}")
+                continue
+            values = {**values, **{d: _round3(dv[d]) for d in derived}}
         try:
             ans = _run_once(code, steps, _Ctx(), preset=values)
         except Exception as e:                          # noqa: BLE001
@@ -1006,7 +1027,9 @@ def _search(code, txs, ranges, fixed, answer_range=None, tries=200, fragile_tol=
         if probe:
             return {"ok": True, "values": values, "run": _evaluate(code, txs, True, values, exempt), "tries": n}
         if answer_range and not (answer_range[0] <= ans <= answer_range[1]):
-            aimed = _aim(code, steps, values, ranges, answer_range, rng, t0 + deadline_s) if ranges else None
+            # no aiming with derived values: moving one stated value would break what derive() computed
+            aimed = _aim(code, steps, values, ranges, answer_range, rng, t0 + deadline_s) \
+                if ranges and not derived else None
             if aimed is None:
                 fail("answer_range", f"{ans:.4g}")
                 seen.append(ans)
@@ -1049,14 +1072,16 @@ def _search_worker(q, args, kwargs):
 
 def search_numbers(code: str, txs, ranges: dict, fixed: dict, answer_range=None, *, tries: int = 200,
                    fragile_tol: float = 0.02, min_traps: int = 2, exempt=(), seed: int = 0,
-                   timeout: float = 90.0, probe: bool = False) -> dict:
+                   timeout: float = 90.0, probe: bool = False, hidden=None, derived=None) -> dict:
     """_search in its own process (the same isolation as evaluate). ranges: {name: (lo, hi, whole)};
-    fixed: {name: value}."""
+    fixed: {name: value}; hidden: the free choices derived values are computed from ({name: (lo, hi, whole)});
+    derived: the stated values derive() computes."""
     code = clean_code(code)
     ctx = mp.get_context("spawn")
     q = ctx.Queue()
     kwargs = {"answer_range": answer_range, "tries": tries, "fragile_tol": fragile_tol, "min_traps": min_traps,
-              "exempt": tuple(exempt), "seed": seed, "deadline_s": max(5.0, timeout - 15), "probe": probe}
+              "exempt": tuple(exempt), "seed": seed, "deadline_s": max(5.0, timeout - 15), "probe": probe,
+              "hidden": {k: tuple(v) for k, v in (hidden or {}).items()}, "derived": list(derived or ())}
     p = ctx.Process(target=_search_worker, args=(q, (code, list(txs), dict(ranges), dict(fixed)), kwargs),
                     daemon=True)
     p.start()

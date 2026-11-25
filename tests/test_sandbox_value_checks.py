@@ -53,6 +53,39 @@ def solve():
         self.assertEqual(run["inputs_unused"], [])
 
 
+class DerivedValues(unittest.TestCase):
+    """Spec §4c (2026-11-26): the free choice (copper's share of the charge) is drawn, derive() computes the stated
+    mass from it with engine steps, solve() works from the stated values only: the data are possible by construction."""
+
+    CODE = '''
+def derive():
+    Q = current * time_min * 60
+    m = (step_234(charge=share_Cu * Q, molar_mass=63.5, electrons=2)["mass"]
+         + step_234(charge=(1 - share_Cu) * Q, molar_mass=107.9, electrons=1)["mass"])
+    return {"m_total": m}
+
+def solve():
+    Q = current * time_min * 60
+    a, b = 63.5 / (2 * 96485), 107.9 / 96485
+    Q_Ag = (m_total - a * Q) / (b - a)
+    Q_Cu = Q - Q_Ag
+    m_cu = step_234(charge=Q_Cu, molar_mass=63.5, electrons=2)["mass"]
+    return m_cu
+'''
+
+    def test_possible_by_construction(self):
+        ranges = {"current": (1.0, 5.0, False), "time_min": (30.0, 180.0, False)}
+        for seed in range(5):
+            out = sandbox._search(sandbox.clean_code(self.CODE), [234], ranges, {}, answer_range=None, tries=50,
+                                  min_traps=0, seed=seed, deadline_s=60,
+                                  hidden={"share_Cu": (0.2, 0.8, False)}, derived=["m_total"])
+            self.assertTrue(out["ok"], out)
+            v = out["values"]
+            q = v["current"] * v["time_min"] * 60
+            self.assertTrue(q * 63.5 / (2 * 96485) * 0.99 <= v["m_total"] <= q * 107.9 / 96485 * 1.01, v)
+            self.assertNotIn("share_Cu", v)                     # the hidden choice is never stated
+
+
 class AimAnswer(unittest.TestCase):
     RANGES = {"current": (1.0, 5.0, False), "time_min": (30.0, 180.0, False), "m_total": (2.0, 12.0, False)}
 

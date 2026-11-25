@@ -74,9 +74,10 @@ def pick_numbers(q: dict, code: str, drawn, seed: int = 0) -> dict:
     names, ranges, fixed = blank_spec(q)
     ar = q.get("answer_range")
     ar = (float(ar[0]), float(ar[1])) if ar else None
-    out = sandbox.search_numbers(code, drawn, ranges, fixed, ar, tries=PICK_TRIES if ranges else 1,
+    out = sandbox.search_numbers(code, drawn, ranges, fixed, ar,
+                                 tries=PICK_TRIES if (ranges or q.get("hidden")) else 1,
                                  fragile_tol=FRAGILE_TOL, min_traps=MIN_TRAPS, exempt=list(fixed), seed=seed,
-                                 timeout=PICK_TIMEOUT)
+                                 timeout=PICK_TIMEOUT, hidden=q.get("hidden"), derived=q.get("derived"))
     if not out.get("ok"):
         out["why"] = numbers_problem(out, q, drawn)
     return out

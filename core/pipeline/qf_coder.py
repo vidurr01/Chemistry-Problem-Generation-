@@ -247,7 +247,7 @@ def design_block(design: dict | None) -> str:
 
 def write_blank_program(template: str, asks: str, unit: str, names, consts, library: str, *,
                         previous: str | None = None, errors: list | None = None, model: str | None = None,
-                        txs=None, design: dict | None = None) -> dict:
+                        txs=None, design: dict | None = None, derived=None, hidden=None) -> dict:
     """{"code"} or {"cannot"}: coder 2 solves the question from its blanks, before any number is chosen.
     The question's values are variables when the program runs, so one program serves every value set the
     number step tries. design: the designer's plan; its route and the point to notice are shown, because
@@ -258,6 +258,16 @@ def write_blank_program(template: str, asks: str, unit: str, names, consts, libr
         redo = "\nYour previous program:\n" + previous + "\nwas rejected:\n" + \
                "\n".join(f"- {e}" for e in errors or []) + "\nFix it.\n"
     in_unit = (' in ' + unit) if unit else ''
+    derive_block = ""
+    if derived and hidden:                        # derived values (2026-11-26): stated values computed, not drawn
+        hid = ", ".join(f"{k} in [{lo}, {hi}]" + (" (whole)" if w else "") for k, (lo, hi, w) in hidden.items())
+        derive_block = f"""
+DERIVED VALUES: {', '.join(derived)} are not chosen freely: they follow from hidden choices the question does not
+state ({hid}). Besides solve(), define derive() that RETURNS A DICT {{{', '.join(repr(d) + ': ...' for d in derived)}}}
+computed from the hidden values (variables with those names) and the question's other values, with the step functions
+(e.g. the mass each metal deposits from its share of the charge). solve() must NOT use the hidden values: it solves
+from the stated values only, as a student would.
+"""
     prompt = f"""Write a Python program that solves this chemistry question using ONLY the functions below.
 
 QUESTION (every number is a blank [[name]]: the numbers are chosen later, so the program must work for any
@@ -270,7 +280,7 @@ THE QUESTION'S VALUES: when solve() runs, each blank is already a variable with 
 the number in the unit written after it in the question:
 {blank_lines(template, names, consts)}
 Use them directly. Never assign to them, never redefine them, never type a number for them.
-
+{derive_block}
 FUNCTIONS (the formulas the question is built on: chapter, formula, inputs, outputs and the
 engine's own code; each checks its inputs and returns a dict). Call each of them at least once:
 {library}
@@ -369,7 +379,7 @@ def solver_program(q: dict, drawn, bb, *, previous: str | None = None, errors: l
             model = coder_for(attempt, escalate)
             out = write_blank_program(q["stem"], q["asks"], q.get("unit") or "", names, consts, library,
                                       previous=previous, errors=errors, model=model, txs=drawn,
-                                      design=design)
+                                      design=design, derived=q.get("derived"), hidden=q.get("hidden"))
         except Exception as e:                   # noqa: BLE001 - an unusable reply or a provider down
             if getattr(e, "status_code", None) == 402:
                 raise                            # out of credits: the run stops and says so
@@ -384,7 +394,7 @@ def solver_program(q: dict, drawn, bb, *, previous: str | None = None, errors: l
             return None, f"a solver could not solve it with the formulas alone: {out['cannot']}"
         code = out["code"]
         pr = sandbox.search_numbers(code, drawn, ranges, fixed, tries=PROBE_TRIES, exempt=list(fixed), seed=seed,
-                                    probe=True, timeout=60)
+                                    probe=True, timeout=60, hidden=q.get("hidden"), derived=q.get("derived"))
         kind = None if pr.get("ok") else pr.get("kind")
         if kind:
             probs = [_probe_problem(pr, names)]

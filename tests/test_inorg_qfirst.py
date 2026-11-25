@@ -40,7 +40,7 @@ class Draw(unittest.TestCase):
         """Wrong and condition-dependent edges (graph audit of 2026-11-24) are gone for both paths."""
         blocked = IQ.blocked_edges()
         self.assertIn("Na_to_Na2O_na", blocked)
-        self.assertEqual(len(blocked), 28)
+        self.assertEqual(len(blocked), 29)          # + SOCl2_to_H2SO3_socl (graph audit 2026-11-26)
         g = IQ._graph(_adapter())
         self.assertFalse(blocked & set(g["edges"]))
         self.assertFalse(blocked & {e["id"] for es in g["out"].values() for e in es})

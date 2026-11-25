@@ -12,6 +12,8 @@ never rejects a question by itself failing)."""
 
 from __future__ import annotations
 
+import re
+
 from core import models
 from core.engine import sandbox
 
@@ -55,7 +57,11 @@ usual range, such as α > 1, is what that student gets and must be kept). Same f
 variable names for the given values; change only what missing the hidden step changes. Do not add any other
 mistake: the given values are in the question's units (a ΔH in kJ mol⁻¹, as stated), so convert exactly as the
 formulas need (run 4 of 2026-11-25: a shortcut that used kJ as J gave −7.3 K). NO import line. If missing the step cannot change the method at all, return {{"same": "why"}}.
-Return JSON: {{"code": "def solve():\\n    ..."}}"""
+Also say whether the QUESTION ANNOUNCES the hidden step: a sentence or a given value whose only use is that step and
+that tells a student to take it (e.g. "assuming the heat capacities are independent of temperature" next to
+heat-capacity data, when the hidden step is a temperature correction). Ordinary data the situation needs anyway
+does not count. "announced": the exact words copied from the question, or "" if nothing announces it.
+Return JSON: {{"code": "def solve():\\n    ...", "announced": ""}}"""
 
 
 def shortcut_problem(design: dict | None, stem: str, code: str, run: dict, preset: dict | None,
@@ -98,6 +104,17 @@ def shortcut_problem(design: dict | None, stem: str, code: str, run: dict, prese
     gap = abs(wrong - key) / max(abs(key), abs(wrong), 1e-300)
     print(f"    shortcut check: missing the hidden step gives {wrong:.4g} against {key:.4g} ({gap:.1%} apart)")
     if gap > SHORTCUT_GAP:
+        # P1 (live review 2026-11-26): the NH3 entropy question handed over every C_p and said "assuming the molar heat
+        # capacities are independent of temperature", which told the student to make the correction. Only a quote
+        # found word for word in the question counts.
+        said = re.sub(r"\s+", " ", str(out.get("announced") or "")).strip()
+        if len(said) >= 12 and said.lower() in re.sub(r"\s+", " ", stem).lower():
+            if bb is not None:
+                bb.note("shortcut", announced=said)
+            print(f"    shortcut check: the question announces its hidden step (\"{said[:100]}\")")
+            return (f"the question announces its hidden step with \"{said[:160]}\": give the data the step needs one "
+                    f"level earlier (each species' own values, which the student must combine) or let the situation "
+                    f"imply it, so the student has to see that the step is needed")
         return None
     return (f"the hidden step does not change the answer: a student who misses it ({design.get('trap', '')[:160]}) "
             f"gets {wrong:.4g}, the right answer is {key:.4g} ({gap:.1%} apart). Choose values and ranges, or "

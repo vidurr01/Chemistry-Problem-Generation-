@@ -4,6 +4,32 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Pipeline frozen (tag `pipeline-final-20261126`)
+- Final check: one run per subject ($0.335 ≈ ₹29.5 at ₹88/$): organic and inorganic accepted (keys right by hand),
+  physical none (quality refusals only, no error). Full suite 659 pass; engine audit 0 flags.
+- `tests/test_pipeline_offline.InorganicFactQuestions` now runs `--kind facts` (auto inorganic runs no longer make
+  fact questions since `fact_share` is 0 and the question-first kinds took over).
+- From here the pipeline is only changed for a real error found while generating (reviewer, 2026-11-26).
+
+### Finishing the agreed items before the freeze (`docs/live_review_2026-11-26.md`, "Progress")
+- Physical derived values (spec §4c, P2): `qf_writer` rules + `parse_values` (`derived`, `hidden`), `blank_problems`;
+  `qf_coder.write_blank_program` asks for `derive()`; `sandbox._search`/`search_numbers` draw hidden values, run
+  `derive()` (`_run_once(entry=...)`), solve on the stated values; no answer aiming with derived values;
+  `WHOLE_FIND_TOL` 6e-3 for whole-number `find()`. Test `DerivedValues`.
+- Physical P3: `adapters.CHAIN_PREFER = 0.7` (every formula linked to another: 148/300 → 235/300 draws).
+- Physical P1: `qf_shortcut` also reports words that announce the hidden step; a quote found in the question goes back
+  to the writer. Test `AnnouncedHiddenStep`.
+- Organic "amount" format (item 3): `org_qfirst.amount_target`, `amount_result`, `amount_ask`, `ATOMIC`, `YIELDS`;
+  asked whenever a compound's mass changes under wrong turns at 2+ steps (`AMOUNT_SHARE = 1.0`; ~1 scheme in 30).
+- Inorganic graph audit (item 2): new `tools/audit_inorg_products.py` (₹1.80; `outputs/audit_inorg_products.json`):
+  148 reactions, 13 disputed. Approved by the reviewer: `SOCl2_to_H2SO3_socl` blocked as wrong, variant
+  `cv_socl2_h2o` (→ SO₂); `cv_p4o10_h2o` (excess water → H₃PO₄; pinned rather than split, because the engine's planar
+  HPO₃ geometry is disputable); six contested edges in the new `not_for_hidden_products` list of
+  `knowledge/inorg_condition_variants.json` (honoured by `inorg_products.with_naive`). `other_form` also matches a
+  complex written without brackets (`_bracketed`). `tests/test_inorg_qfirst` blocked count 28 → 29.
+- Organic two-system schemes (item 4): not built — the engine has no two-molecule rules; the reviewer chose to freeze
+  without it.
+
 ### Live review rounds 1–5: fixes from hand-graded questions (`docs/live_review_2026-11-26.md`)
 - Spend: physical $0.156, organic $0.058 + $0.062 + $0.077, inorganic $0.016 + $0.008 + $0.011 + $0.006
   (≈ ₹34.9 at ₹88/$). Accepted and graded by hand: physical 1, organic 3, inorganic 2; every key right.

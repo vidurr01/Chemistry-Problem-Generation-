@@ -37,6 +37,13 @@ picks them inside the ranges you give and checks them with the formulas, so they
 - A COUNT (half-lives, electrons, ions per formula, atoms) is whole: {"range": [2, 5], "whole": true}
   or a whole value {"value": 8}. Every other range gives values to 3 significant figures, even when
   you write its ends as whole numbers ([250, 600] for a temperature).
+- DERIVED VALUES: when a stated value is fixed by other choices of the situation (the mass a current
+  deposits is fixed by the current, the time and how the charge splits between two metals; an orbit's
+  frequency is fixed by a whole n), do NOT give it a range: write {"derived": true} for it, and give
+  the free choice it depends on in "hidden": {"share_Cu": {"range": [0.2, 0.8]}} or
+  {"n": {"range": [2, 5], "whole": true}}. Hidden values never appear in the question. Code picks them
+  and computes the derived values, so the stated data always agree. Use this only where independent
+  ranges could contradict each other.
 - "answer_range": [low, high], a realistic range for the answer in "unit"; values that give an answer
   outside it are not used.
 - The constants of the closing "(Given: ...)" line (R, F, N_A, h, c, k_B) are placeholders too, each with
@@ -182,6 +189,7 @@ If no sensible JEE question can genuinely need ALL of the drawn formulas, return
   "unit": "the plain unit of the answer, no power of ten (empty if dimensionless)",
   "asked": "name of the asked quantity",
   "values": {{"name": {{"range": [low, high]}}, "other_name": {{"value": x}}, ...}},
+  "hidden": {{}} or {{"free_choice": {{"range": [low, high]}}}} (only with "derived" values, see the rules),
   "answer_range": [low, high],
   "links": ["Formula 1: takes [[a]], [[b]]; its result feeds Formula 3", "... one line for EVERY formula"],
   "stem": "the full question text, with every number as [[name]]"}}
@@ -237,10 +245,22 @@ def parse_values(out: dict) -> dict:
     "free": the fixed values (shown in previews)}. A range is a count (whole numbers) only when marked
     "whole": true: a writer wrote [250, 600] for a temperature and [1, 8] for a volume ,
     and those must not come out as 329 K and 5 L only."""
-    ranges, fixed, bad = {}, {}, []
+    ranges, fixed, bad, derived, hidden = {}, {}, [], [], {}
     vals = out.get("values") if isinstance(out.get("values"), dict) else {}
+    for k, spec in (out.get("hidden") or {}).items() if isinstance(out.get("hidden"), dict) else []:
+        r = spec.get("range") if isinstance(spec, dict) else None   # derived values' free choices (2026-11-26)
+        lo, hi = (_num(r[0]), _num(r[1])) if isinstance(r, (list, tuple)) and len(r) == 2 else (None, None)
+        if lo is None or hi is None or not (math.isfinite(lo) and math.isfinite(hi)) or lo >= hi:
+            bad.append(str(k))
+            continue
+        whole = spec.get("whole") is True or str(spec.get("whole")).lower() == "true"
+        hidden[str(k)] = (int(lo), int(hi), True) if whole and float(lo).is_integer() and float(hi).is_integer() \
+            else (float(lo), float(hi), False)
     for k, spec in vals.items():
         k = str(k)
+        if isinstance(spec, dict) and (spec.get("derived") is True or str(spec.get("derived")).lower() == "true"):
+            derived.append(k)
+            continue
         if isinstance(spec, dict) and "range" in spec:
             r = spec.get("range")
             lo, hi = (_num(r[0]), _num(r[1])) if isinstance(r, (list, tuple)) and len(r) == 2 else (None, None)
@@ -268,7 +288,11 @@ def parse_values(out: dict) -> dict:
         lo, hi = _num(ar[0]), _num(ar[1])
         if lo is not None and hi is not None and lo < hi:
             ans = (float(lo), float(hi))
-    return {"ranges": ranges, "fixed": fixed, "answer_range": ans, "free": dict(fixed), "bad_values": bad}
+    if derived and not hidden:
+        bad.extend(derived)                        # a derived value needs the free choice it is computed from
+        derived = []
+    return {"ranges": ranges, "fixed": fixed, "answer_range": ans, "free": dict(fixed), "bad_values": bad,
+            "derived": derived, "hidden": hidden if derived else {}}
 
 
 def blank_problems(q: dict) -> list:
@@ -291,7 +315,12 @@ def blank_problems(q: dict) -> list:
     if q.get("bad_values"):
         probs.append(f"unusable range or value for {', '.join(q['bad_values'])}: give [low, high] with low < high, "
                      f"or one plain number")
-    missing = [n for n in names if n not in ranges and n not in fixed and n != asked]
+    derived, hidden = set(q.get("derived") or ()), q.get("hidden") or {}
+    shown_hidden = [n for n in names if n in hidden]
+    if shown_hidden:
+        probs.append(f"hidden values appear in the question ({', '.join(shown_hidden)}): a hidden value is never "
+                     f"stated; state only the values derived from it")
+    missing = [n for n in names if n not in ranges and n not in fixed and n not in derived and n != asked]
     if missing:
         probs.append(f"no range or value for {', '.join('[[' + n + ']]' for n in missing)}: give each placeholder "
                      f"a range in \"values\" (or a value, if it belongs to the substance)")

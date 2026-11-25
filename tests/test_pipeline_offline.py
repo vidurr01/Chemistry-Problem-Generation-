@@ -859,7 +859,7 @@ class LadderConsensus(unittest.TestCase):
 
 
 class InorganicFactQuestions(FactQuestions):
-    """Inorganic has fact questions only so far (2026-11-19): a run makes one, every statement's truth computed
+    """Inorganic fact questions (asked with --kind facts since auto runs make hidden-products and reaction-system questions, 2026-11-26): a run makes one, every statement's truth computed
     by core/engine/inorganic/properties.py, graded by letters, judged by the same ladder."""
 
     def test_inorganic_fact_question_end_to_end(self):
@@ -868,7 +868,7 @@ class InorganicFactQuestions(FactQuestions):
         slugs = [s for _, s in models.LADDER]
         wrong = lambda key: "ABCD".replace(key[0], "")[0]
         self.fake = FakeFactModels({slugs[0]: wrong, slugs[1]: lambda key: " and ".join(key), slugs[2]: wrong})
-        self.assertEqual(self._run(self.fake, kind="auto", extra=["--subject", "inorganic"]), 0)
+        self.assertEqual(self._run(self.fake, kind="facts", extra=["--subject", "inorganic"]), 0)
         recs = self._records()
         self.assertEqual(len(recs), 1)
         r = recs[0]

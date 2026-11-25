@@ -18,6 +18,47 @@
    constant"); P2 "given f, find a whole n" questions pick n first and compute f (same idea as item 1); P3 prefer
    formula draws where one formula's result feeds the next over draws that only share a quantity.
 
+**Progress (2026-11-26, after ecaf346):**
+- Item 1 + P2 BUILT: derived values (writer marks `derived`, gives `hidden` free choices; coder writes `derive()`;
+  `sandbox._search` draws hidden values, runs `derive()`, solves on the stated values). Whole-number `find()`
+  accepts 3-figure rounding (`WHOLE_FIND_TOL` 6e-3). Test `DerivedValues` (Cu/Ag: every drawn mass possible).
+- P3 BUILT: `adapters.CHAIN_PREFER = 0.7`; draws where every formula links to another 148/300 → 235/300, variety
+  unchanged (281 → 286 distinct formulas).
+- P1 BUILT: the shortcut check also reports words that announce the hidden step; a quote found in the question sends
+  it back to the writer. Test `AnnouncedHiddenStep`.
+- Item 3 BUILT (first form): organic "amount" questions — mass of a compound from m g of P at y % per step, keyed by
+  code, traps from wrong structures; asked whenever a compound's mass changes under wrong turns at 2+ steps (about 1
+  scheme in 30).
+- Item 2 audit DONE (`tools/audit_inorg_products.py`, ₹1.80, report `outputs/audit_inorg_products.json`): 148
+  reactions, 13 disagree. Code fix (no graph change): a complex written without brackets is now matched
+  (K⁺/cobaltinitrite, ZnCl₂ + excess NaOH accepted). Graph changes **approved and applied** (P₄O₁₀ pinned to excess water instead of split: the engine's planar HPO₃
+  geometry is disputable):
+  - fix product: `SOCl2_to_H2SO3_socl` → SO₂ (SOCl₂ + H₂O → SO₂ + 2HCl);
+  - split by water: `P4O10_to_H3PO4_po` → H₃PO₄ with excess water, HPO₃ with limited water;
+  - block from hidden products (contested or two products contain the element): `CCl4_to_COCl2_ccl`,
+    `H2O2_to_H2O_ho`, `NaNO2_to_NO2_nano`, `SF4_to_H2SO3_sf`, `SO32-_to_H2S_dilhso`, `Cu2S_to_Cu2O_cus`;
+  - keep (graph right; refused only when geometry is asked): `H2SO5_to_H2SO4_hso`, `SiCl4_to_Si(OH)4_sicl`,
+    `cv_cu_cn_1`.
+- Item 4 NOT BUILT: the organic engine has no two-molecule rules (every rule applies a fixed reagent to one compound).
+  It needs new coupling rules plus changes to wrong-structure tracking, scheme printing and the step check. The
+  reviewer chose to **freeze without it**; it can come later as a new question kind.
+- Error sweep of the 9 live runs today: no crash, no parked question; trace checker cut-offs fixed; two solver
+  replies recovered on retry.
+
+**Final check before the freeze (one run per subject, $0.335 ≈ ₹29.5; logs `outputs/live_20261126/final_*.log`):**
+- Organic `GEN_20261125T222739` accepted: 1-(4-ethynylphenyl)ethan-1-one → HgSO₄ hydration → Wittig → OsO₄ → hot
+  KMnO₄ (terephthalic acid); branch NH₂OH (symmetric dioxime). Key ABD checked by hand. Advanced easy–medium.
+- Inorganic `GEN_20261125T222916` accepted: PCl₃, H₂SO₄, XeO₃, H₃PO₄, PH₃ — trigonal pyramidal count 3, checked by
+  hand; Granite gave a saved trap answer. Advanced easy.
+- Physical: nothing accepted in 6 draws ($0.25), every refusal a quality check (shortcut ×2, Main level, too easy,
+  answer range), no error. The He⁺ "find a whole n" draw still failed: the writer did not use the derived-values
+  option. Physical is the costly, low-yield subject (the designer is about ₹2–3 a design).
+- No crash, traceback or parked question in any run. Full suite 659 pass (the stale inorganic fact test now runs
+  `--kind facts`). Engine audit 0 flags.
+
+**PIPELINE FROZEN 2026-11-26** (tag `pipeline-final-20261126`). From here: generate questions; change code only for a
+real error found while generating.
+
 **Decided — not to do:**
 - **Every organic branch need not be asked about.** A branch no statement uses is acceptable (reviewer; supersedes
   the redesign plan's "every step is asked about").

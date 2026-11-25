@@ -29,6 +29,7 @@ CONDITION_SHARE = 0.10
 # back to 3 to 5 on the reviewer's decision: 2-3 formulas with two hard traps gave clearly worse questions than 3-5
 # with one (docs/implementation_spec_2026-11-25.md §4)
 FORMULAS_MIN, FORMULAS_MAX = 3, 5
+CHAIN_PREFER = 0.7                  # share of next-formula picks taken from chain links when there are any (P3)
 CHAIN_MIN, CHAIN_MAX = 3, 5         # all_chains / random_chain: 3 to 5 linked steps
 SHAPE_TRIES = 40              # random attempts per shaped idea before giving up on it
 BRANCH_MAX = 2                # steps in one branch of a tree or condition
@@ -384,7 +385,12 @@ class PhysicalAdapter:
                 nxt = [t for t in pool if t not in txs and quantities(t) & shared]
                 if not nxt:
                     break
-                txs.append(self.rng.choice(nxt))
+                # P3 (live review 2026-11-26): prefer a formula whose result feeds a drawn one or that takes a drawn
+                # one's result (a chain link), over one that only shares a quantity; ~52 of 300 draws chained by chance
+                ins = {ph.step(t).src for t in txs}
+                outs = {ph.step(t).dst for t in txs}
+                linked = [t for t in nxt if ph.step(t).src in outs or ph.step(t).dst in ins]
+                txs.append(self.rng.choice(linked if linked and self.rng.random() < CHAIN_PREFER else nxt))
             if len(txs) < FORMULAS_MIN:
                 continue
             edges = [self.edge_of_tx[t] for t in txs]
