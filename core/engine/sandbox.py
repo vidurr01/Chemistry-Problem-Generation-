@@ -29,6 +29,7 @@ import ast
 import builtins
 import math
 import re
+import time
 import multiprocessing as mp
 
 TIMEOUT_S = 30
@@ -57,6 +58,98 @@ _SAFE_BUILTINS = {n: getattr(builtins, n)
 
 class SolveError(Exception):
     """The program broke a rule or failed; the message goes back to the coder."""
+
+
+# ── values the program computes itself ───────────────────────────────────────
+# A step checks its own inputs and result (check_kind), but a value the program computes in plain Python between
+# steps was never checked. Cu/Ag co-deposition (2026-11-25, another laptop): 3.05 A for 126 min is 23,058 C, so the
+# deposit must weigh 7.59-25.8 g, yet 6.62 g was stated; the program split the charge in plain Python, Q_Ag came out
+# -1,223 C, the energy came from Q_Cu alone and the question was accepted. Each name a program assigns is now checked
+# by the kind its name implies. Only names that clearly denote an amount are checked; a name with a change/difference
+# token (dH, delta_n, n_diff) or an unclear one (Q: charge or heat) is left alone.
+_NAME_TOKEN = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+")
+_SIGNED_TOKENS = {"d", "delta", "change", "diff", "difference", "net", "shift", "dev", "deviation", "err", "error",
+                  "log", "ln", "lg", "slope", "intercept", "coeff", "coef", "sign", "signed", "rel", "lhs", "rhs",
+                  "residual", "mismatch", "f", "g", "res", "wrong", "trap", "excess"}
+_NONNEG_TOKENS = {"charge", "charges", "mass", "masses", "mol", "mole", "moles", "nmol", "amount", "amounts",
+                  "volume", "volumes", "vol", "pressure", "pressures", "press", "conc", "concentration", "molarity",
+                  "molality", "current", "time", "density", "count", "particles", "atoms", "electrons", "faradays"}
+_NONNEG_LETTERS = {"m", "n", "V", "P", "I", "t", "M"}          # case matters: T is temperature, v is not checked
+_FRACTION_TOKENS = {"frac", "fraction", "fractions", "share", "degree"}
+_FRACTION_FIRST = {"alpha"}           # alpha, alpha_1: degree of dissociation; density_alpha is the α phase (replay)
+_TEMPERATURE_TOKENS = {"temp", "temperature", "kelvin"}
+_TEMPERATURE_LETTERS = {"T"}
+_SLACK = 1e-9                                                    # rounding noise around 0 and 1
+# Q is charge or heat; tied to a two-letter element symbol (Q_Ag, q_Cu, charge share of a metal) it is a charge
+_ELEMENTS_2 = set("He Li Be Ne Na Mg Al Si Cl Ar Ca Sc Ti Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Zr Nb Mo Tc "
+                  "Ru Rh Pd Ag Cd In Sn Sb Te Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta Re Os Ir "
+                  "Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa Np Pu".split())
+
+
+def value_kind(name: str):
+    """The kind a program variable's name implies ("nonneg", "fraction", "temperature") or None (not checked)."""
+    raw = _NAME_TOKEN.findall(str(name))
+    if not raw:
+        return None
+    low = [t.lower() for t in raw]
+    if any(t in _SIGNED_TOKENS for t in low):
+        return None
+    if any(t in _FRACTION_TOKENS for t in low) or low[0] in _FRACTION_FIRST:
+        return "fraction"
+    if any(t in _TEMPERATURE_TOKENS for t in low) or raw[0] in _TEMPERATURE_LETTERS:
+        return "temperature"
+    if any(t in _NONNEG_TOKENS for t in low) or raw[0] in _NONNEG_LETTERS:
+        return "nonneg"
+    if low[0] == "q" and any(t in _ELEMENTS_2 for t in raw[1:]):
+        return "nonneg"
+    return None
+
+
+def check_value(name: str, value) -> None:
+    """Raise SolveError if a value the program computed is impossible for the kind its name implies."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        return
+    kind = value_kind(name)
+    x = float(value)
+    tol = _SLACK * max(1.0, abs(x))
+    bad = ((kind == "nonneg" and x < -tol) or (kind == "temperature" and x <= 0)
+           or (kind == "fraction" and not -tol <= x <= 1 + tol))
+    if bad:
+        want = {"nonneg": "must be >= 0", "temperature": "must be > 0 K", "fraction": "must be between 0 and 1"}[kind]
+        raise SolveError(f"the program computed {name} = {x:.4g}, which is impossible ({name} {want}): "
+                         f"the stated values contradict each other")
+
+
+class _CheckAssigned(ast.NodeTransformer):
+    """After each assignment to plain names inside a function, check every assigned name's value."""
+
+    def _names(self, target):
+        if isinstance(target, ast.Name):
+            return [target.id]
+        if isinstance(target, (ast.Tuple, ast.List)):
+            return [n for e in target.elts for n in self._names(e)]
+        return []
+
+    def _after(self, node, names):
+        checks = [ast.Expr(ast.Call(ast.Name("_check_value_", ast.Load()),
+                                    [ast.Constant(n), ast.Name(n, ast.Load())], []))
+                  for n in dict.fromkeys(names)]
+        return [node] + [ast.copy_location(c, node) for c in checks]
+
+    def visit_Assign(self, node):
+        return self._after(node, [n for t in node.targets for n in self._names(t)])
+
+    def visit_AugAssign(self, node):
+        return self._after(node, self._names(node.target))
+
+    def visit_AnnAssign(self, node):
+        return self._after(node, self._names(node.target)) if node.value is not None else node
+
+
+def _instrumented(code: str):
+    tree = _CheckAssigned().visit(ast.parse(code))
+    ast.fix_missing_locations(tree)
+    return compile(tree, "<solve>", "exec")
 
 
 # ── static check ─────────────────────────────────────────────────────────────
@@ -565,7 +658,13 @@ def _run_once(code, steps, ctx, want="number", preset=None):
     for k, val in (preset or {}).items():
         if str(k).isidentifier() and not keyword.iskeyword(k) and k not in env:
             env[k] = val if isinstance(val, int) and not isinstance(val, bool) else float(val)
-    exec(compile(code, "<solve>", "exec"), env)        # noqa: S102 - checked by check_code, own process
+    def _check_value_(name, value):
+        # only the program's real run: not a solve_for trial value, not a trap or relevance perturbation
+        if ctx.recording and ctx.patch is None and ctx.scale is None:
+            check_value(name, value)
+
+    env["_check_value_"] = _check_value_
+    exec(_instrumented(code), env)                     # noqa: S102 - checked by check_code, own process
     ans = env["solve"]()
     if want == "dict":
         if not isinstance(ans, dict) or not ans:
@@ -791,6 +890,65 @@ def sample_values(ranges: dict, fixed: dict, rng) -> dict:
     return out
 
 
+AIM_GRID = 9            # points scanned across a value's range when aiming the answer
+AIM_BISECT = 40         # bisection steps once the answer is bracketed
+AIM_VALUES = 2          # range values tried per out-of-range draw
+
+
+def _aim(code, steps, values, ranges, answer_range, rng, deadline):
+    """Answer first: a target drawn inside answer_range, then one range value solved so the program's answer hits
+    it (scan the value's own range for a sign change, then bisect), the rest of the draw kept. A value set the
+    program refuses (a step's input check, an impossible computed value) is simply not a solution, so the solved
+    value also lands where the stated data are possible. (values, answer) or None. Draws whose answer fell outside
+    answer_range were thrown away before (2026-11-25); with wide ranges most were."""
+    lo_a, hi_a = float(answer_range[0]), float(answer_range[1])
+    if lo_a > 0 and hi_a / lo_a >= 20:
+        target = math.exp(rng.uniform(math.log(lo_a), math.log(hi_a)))
+    else:
+        target = rng.uniform(lo_a, hi_a)
+    names = [k for k, (lo, hi, whole) in ranges.items() if not whole and hi > lo]
+    rng.shuffle(names)
+    for k in names[:AIM_VALUES]:
+        lo, hi, _ = ranges[k]
+        logscale = lo > 0 and hi / lo >= 20
+
+        def g(x):
+            try:
+                return _run_once(code, steps, _Ctx(), preset={**values, k: x}) - target
+            except Exception:                           # noqa: BLE001 - refused or broken here: no solution
+                return None
+
+        if logscale:
+            grid = [math.exp(math.log(lo) + (math.log(hi) - math.log(lo)) * i / (AIM_GRID - 1)) for i in range(AIM_GRID)]
+        else:
+            grid = [lo + (hi - lo) * i / (AIM_GRID - 1) for i in range(AIM_GRID)]
+        pts = []
+        for x in grid:
+            if time.time() > deadline:
+                return None
+            pts.append((x, g(x)))
+        for (a, fa), (b, fb) in zip(pts, pts[1:]):
+            if fa is None or fb is None or fa * fb > 0:
+                continue
+            for _ in range(AIM_BISECT):
+                mid = math.sqrt(a * b) if logscale else (a + b) / 2
+                fm = g(mid)
+                if fm is None:
+                    break
+                if fa * fm <= 0:
+                    b, fb = mid, fm
+                else:
+                    a, fa = mid, fm
+            new = {**values, k: _round3((a + b) / 2)}
+            try:
+                ans = _run_once(code, steps, _Ctx(), preset=new)
+            except Exception:                           # noqa: BLE001
+                continue
+            if lo_a <= ans <= hi_a:
+                return new, ans
+    return None
+
+
 def _search(code, txs, ranges, fixed, answer_range=None, tries=200, fragile_tol=0.02, min_traps=2,
             exempt=(), seed=0, deadline_s=60.0, probe=False):
     """Pick the question's values. probe=True: the first set the program runs on at all (does the program
@@ -841,9 +999,12 @@ def _search(code, txs, ranges, fixed, answer_range=None, tries=200, fragile_tol=
         if probe:
             return {"ok": True, "values": values, "run": _evaluate(code, txs, True, values, exempt), "tries": n}
         if answer_range and not (answer_range[0] <= ans <= answer_range[1]):
-            fail("answer_range", f"{ans:.4g}")
-            seen.append(ans)
-            continue
+            aimed = _aim(code, steps, values, ranges, answer_range, rng, t0 + deadline_s) if ranges else None
+            if aimed is None:
+                fail("answer_range", f"{ans:.4g}")
+                seen.append(ans)
+                continue
+            values, ans = aimed
         run = _evaluate(code, txs, True, values, exempt)
         if not run.get("ok"):
             fail("engine", run.get("error", "?"))

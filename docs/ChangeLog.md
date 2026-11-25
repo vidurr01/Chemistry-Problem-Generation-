@@ -4,6 +4,27 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-25
 
+### Physical number step: computed values checked, answer aimed into range
+- `core/engine/sandbox.py`: every name a solving program assigns is checked by the kind its name implies
+  (`value_kind`, `check_value`, AST instrumentation in `_run_once`): amounts ≥ 0, alpha/fraction/share in [0, 1],
+  T > 0 K, Q tied to an element symbol is a charge; change/difference names and bare Q are not checked. Only the
+  real run is checked (not solve_for trials or trap/relevance perturbations). Cause: Cu/Ag co-deposition question
+  (another laptop) split the charge in plain Python, Q_Ag ≈ −1,223 C, accepted as advanced_medium.
+- `sandbox._aim` (in `_search`): a draw whose answer is outside answer_range gets one value solved so the answer
+  hits a target inside the range; refused sets are not solutions. `AIM_GRID`, `AIM_BISECT`, `AIM_VALUES` (0 = off).
+- Checked: 26 saved physical programs replay with no false flag; on a Cu/Ag-style program over 20 seeds the old code
+  accepted 11 impossible value sets, the new code 0, and aiming needed fewer draws. New
+  `tests/test_sandbox_value_checks.py`. Spec `docs/implementation_spec_2026-11-25.md` §4 updated (4c, derived values,
+  not built).
+
+### Implementation spec from the 25 Nov review (doc only, no code)
+- New `docs/implementation_spec_2026-11-25.md`: agreed changes for an implementing agent — trace checker on
+  ladder failures (trap / concept / hallucination / too_long / slip / question_flawed), objections hold the
+  question, multiple answers for grading only, physical rate-constant units and typed quantities, inorganic
+  sequential-states questions (cap 4), organic two-system schemes, statements format; open: fact probe.
+  §4 item 4 added: plain-Python values between engine steps are never kind-checked (confirmed with an offline
+  probe of the Cu/Ag co-deposition question, Q_Ag ≈ −1,223 C accepted); check every computed value.
+
 ### Inorganic hidden products: live runs hp_1 to hp_6, each graded by hand, fixes between runs
 - Runs (`outputs/live_inorganic_hp_<n>.log`, total $0.0645 ≈ ₹5.68 at ₹88/$; cap $0.05 a run). Hand grade:
   hp_1 rejected (Cr³⁺ + excess NaOH written [Cr(OH)₆]³⁻ or [Cr(OH)₄]⁻: key 2 or 1); hp_2 Advanced-easy (one trap,
