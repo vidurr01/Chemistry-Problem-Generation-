@@ -222,7 +222,9 @@ class EndToEnd(unittest.TestCase):
             return self.fake(role, model, system, user, **kw)
         draws = iter([dict(cand)] + [None] * 20)
         self.system_cand, self.checker_prompts = cand, []
+        # systems only: an empty system draw falls back to hidden products since 2026-11-26 (I1); not tested here
         with mock.patch.object(IQ, "SYSTEM_SHARE", 1), mock.patch.object(SY, "draw", lambda *a, **k: next(draws)), \
+                mock.patch.object(IQ, "_list_question", lambda *a, **k: None), \
                 mock.patch.object(SY, "build", lambda c, r, form=None, _b=SY.build: _b(c, random.Random(1), form)), \
                 mock.patch.object(models, "ask_json", fake), \
                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
@@ -268,7 +270,9 @@ class EndToEnd(unittest.TestCase):
                 return {"working": "w", "answer": "A", "final_answer": "A"}
             return self.fake(role, model, system, user, **kw)
         draws = iter([dict(cand)] + [None] * 20)
+        # systems only: an empty system draw falls back to hidden products since 2026-11-26 (I1); not tested here
         with mock.patch.object(IQ, "SYSTEM_SHARE", 1), mock.patch.object(SY, "draw", lambda *a, **k: next(draws)), \
+                mock.patch.object(IQ, "_list_question", lambda *a, **k: None), \
                 mock.patch.object(models, "ask_json", fake), \
                 mock.patch.object(sys, "argv", ["run_groundup_final.py", "--subject", "inorganic", "--seed", "1"]):
             self.entry.main()

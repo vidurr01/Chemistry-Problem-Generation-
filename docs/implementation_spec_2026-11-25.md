@@ -51,7 +51,13 @@ order** (§4).
 
 ---
 
-## 2. Change A — trace checker on ladder failures (shared, all subjects)
+## 2. Change A — trace checker on ladder failures (shared, all subjects) — BUILT 2026-11-26
+
+Built as `core/pipeline/trace_check.py` + `flow._judge`; checker `models.TRACE_CHECKER = "qwen/qwen3.8-flash"`
+(effort low). A failed checker call gives `unchecked` and grading behaves as before. Granite failing by
+`slip`/`hallucination`/`too_long`/`unexplained` → too easy. Labels saved per member (`failure_label`,
+`failure_quote`, `failure_reason`). Tests `tests/test_trace_check.py` (scripted replies only). Not yet run on real
+model replies: replay 022806/031247/041311 through the real checker (price it first).
 
 **Goal:** know *why* each ladder model failed, so only real difficulty counts, and flawed questions are caught.
 
@@ -94,7 +100,8 @@ call; existing tests pass.
 
 ---
 
-## 3. Change B — objections and multiple answers (shared)
+## 3. Change B — objections and multiple answers (shared) — BUILT 2026-11-26 (chemistry objections hold the question,
+queue `question_flawed`; wording objections unchanged: still recorded only)
 
 **Objections hold the question.** Solvers already return `objection` (`core/pipeline/stages.py` ~351, parsed
 ~416). Today `flow.py` ~496 only prints "kept in the record". Change: an objection of type `chemistry` →
@@ -118,12 +125,31 @@ Keep: three-chapter questions (kinetics + equilibrium + thermodynamics is a comm
 hidden-step design (`qf_design.py`) and the shortcut check (`qf_shortcut.py`, uncommitted improvements in the
 working tree), `fact_share = 0.0`.
 
+**Formula count and traps (reviewer's decision, 2026-11-26): 3–5 formulas per draw and ONE designed hard step.**
+- Physical gave better questions with 3–5 formulas and one hard trap. Narrowing to 2–3 formulas and asking for
+  two hard traps made results clearly worse. Do not apply the redesign plan's Stage 2 length cap ("at most 4
+  engine steps and 2 chapters") to physical, and do not require more than one hard step.
+- Code today: `core/pipeline/adapters.py` `FORMULAS_MIN, FORMULAS_MAX = 2, 3` (lowered from 3–5 on 25 Nov with
+  the one-hidden-step design) → set back to **3, 5**. `qf_checks.DROP_KEEPS` was set to 3 for 2–3 formula draws;
+  re-check it with 3–5. `qf_checks.MIN_TRAPS = 1` (typical mistakes that must change the answer) stays at 1.
+  Update `tests/test_qfirst.py` to match.
+- Evidence on record (small): 25 Nov batch run 1 with 3–5 formulas: 5 drafts, all solved by Granite, Main
+  medium. After the change to 2–3: runs 1, 2, 4, 5, 6 gave 1 Advanced-medium, 2 Advanced-easy, 1 Main-medium,
+  1 Main-hard. The reviewer's wider experience is that 3–5 formulas did better; judge the switch back on the next
+  hand-graded physical questions (bar set before running).
+
+Status 2026-11-26: item 1 BUILT (`qf_checks.rate_unit_problems`, called from `qfirst` via `trace_problems`; on 97
+saved physical questions it flags only 022806). Item 2 DROPPED (see below). Item 3 covered by the existing
+`role_problems` refusal (the writer/coder must fix the mix). 4a/4b BUILT, 4c NOT BUILT.
+
 Add:
 1. **Rate-constant units vs order.** A value produced as a rate constant carries its reaction order; a
    2nd-order constant must be printed in L mol⁻¹ s⁻¹ or atm⁻¹ s⁻¹, never s⁻¹. Refuse the question otherwise.
    Put it next to `role_problems` in `core/pipeline/qf_checks.py`.
-2. **Units are written by code, not the writer model.** The unit printed for each given value comes from its
-   engine role (and order). The writer may not type units for given values.
+2. ~~Units are written by code, not the writer model.~~ **DROPPED 2026-11-26.** The writer picks the natural unit
+   (min, mL, kJ, atm) and the coder already converts (its prompt: "convert units in the program … where a function
+   needs another unit"); engine input units are the formula's, not the question's, and some are order-dependent
+   (step 210 declares both rate constants s⁻¹). The one real unit error (an impossible unit) is caught by item 1.
 3. **K_c → K_p conversion is an engine step.** If a K_c reaches a K_p input, the engine inserts
    K_p = K_c(RT)^Δn (and states R in the question) or refuses; the coder cannot wire it directly.
 
@@ -223,7 +249,10 @@ partners). The same shape applies to inorganic (a gas from one vessel passed int
 
 ---
 
-## 7. Change F — "which of these are correct" format
+## 7. Change F — "which of these are correct" format — ALREADY MET (checked 2026-11-26, no code change)
+
+Organic: 7 of 7 accepted questions are statement questions. Inorganic, last 30: 9 statement MSQs and 21
+"count how many in this list" integers. Both exceed 1 in 5; revisit only if a batch falls below it.
 
 At least 1 question in every 5 (organic and inorganic) is a statements question: "which of the following
 is/are correct" or "how many of the following are correct". Up to ~8 items (real papers use 4–8). Each item is

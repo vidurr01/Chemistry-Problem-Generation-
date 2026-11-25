@@ -32,10 +32,15 @@ CHAIN_MIN, CHAIN_MAX = 2, 4
 LETTERS = "ABCD"
 FORMATS = ("msq", "mcq_correct", "mcq_incorrect", "count", "identify")
 CLAIM_RETRIES = 1        # a draft whose claims code cannot read is sent back once with the exact problems
-SYSTEM_SHARE = 0.7       # "one reaction system, products as letters" (inorg_system.py): the commonest real
-                         # Advanced inorganic shape (2019-2025 papers read on 2026-11-25)
-PRODUCTS_SHARE = 0.0     # "hidden products" counts (inorg_products.py): retired 2026-11-25, not a real JEE format
-LIST_SHARE = 0.3         # "how many species in this list" (inorg_list.py): a real Advanced format (2023, 2024)
+# Kind shares, 2026-11-26 (docs/live_review_2026-11-26.md, I2/I4). Accepted out of judged, all attempts logged so far:
+# hidden products 18/33 (55 %), species list 14/56 (25 %), reaction system 11/56 (20 %); hidden products also gave
+# every inorganic question graded Advanced by hand (24 Nov; hp_3, hp_6). Before: system 0.7, products 0.0 (retired
+# 25 Nov as "not a real JEE format"; real papers do ask hidden products then a property, B2), list 0.3.
+SYSTEM_SHARE = 0.3       # "one reaction system, products as letters" (inorg_system.py); its pool is nearly used up
+PRODUCTS_SHARE = 0.7     # "hidden products" counts (inorg_products.py)
+# "how many species in this list" (inorg_list.py): 0 since 2026-11-26 (was 0.2, before that 0.3): recall only,
+# Granite solved 8 of 8 in live review rounds 1-3. INORG_ONLY=list still makes one.
+LIST_SHARE = 0.0
 # Inorganic only. A model listed here solving a question makes it "too easy". GLM was listed on 2026-11-25 and
 # removed the same day: on 17 real Advanced inorganic questions with student results, altered so nothing could be
 # recalled (calibration/ladder_vs_students_inorganic.py), GLM solved 4 of 6 hard and 4 of 6 medium ones, while
@@ -65,6 +70,13 @@ def blocked_edges() -> set:
     except OSError:
         return set()
     return set(b.get("wrong", {})) | set(b.get("depends_on_conditions", {}))
+
+
+def _with_twins(graph, edge_ids) -> set:
+    """The edge ids plus every edge with the same start and product (I3, 2026-11-26: the graph has P₄ + NaOH → PH₃
+    twice, P4_to_PH3_p and P4_to_PH3_p_2; the blind check refused one and the next draw took the other)."""
+    pairs = {(e["from"], e["to"]) for i in edge_ids for e in [graph["edges"].get(i)] if e}
+    return set(edge_ids) | {i for i, e in graph["edges"].items() if (e["from"], e["to"]) in pairs}
 
 
 def _graph(adapter):
@@ -366,12 +378,23 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 return made
             continue
         r = 0.0 if only == "system" else rng.random()
-        if r < SYSTEM_SHARE:
+        if r < SYSTEM_SHARE and not getattr(adapter, "_systems_empty", False):
             made = _system_question(adapter, rng, bb, log, n_draw)
             if made is not None:
                 return made
+            if not getattr(adapter, "_systems_empty", False) or only == "system":
+                continue
+            # I1 (2026-11-26): no system left wasted 6 of 10 draws of a run; this draw becomes a hidden-products one,
+            # and the rest of the run skips systems
+            print("  (no reaction system left: this draw makes a hidden-products question instead)")
+            made = _list_question(adapter, rng, bb, log, n_draw, kind="products")
+            if made is not None:
+                return made
             continue
-        r -= SYSTEM_SHARE
+        if r < SYSTEM_SHARE:                       # systems used up earlier in this run: a hidden-products draw
+            r = 0.0
+        else:
+            r -= SYSTEM_SHARE
         if r < PRODUCTS_SHARE + LIST_SHARE:
             made = _list_question(adapter, rng, bb, log, n_draw,
                                   kind="products" if r < PRODUCTS_SHARE else "list")
@@ -451,12 +474,25 @@ def _list_question(adapter, rng, bb, log, n_draw, kind="list"):
     """One count question built and keyed by code, then judged like any other: kind "list" (how many species
     in this list, inorg_list.py) or "products" (hidden products of listed reactions, inorg_products.py).
     The accepted result, or None (a product not confirmed, too easy, a duplicate, nothing left to draw)."""
-    from core.pipeline import flow, inorg_list, inorg_products
+    import collections
+    from core.pipeline import flow, inorg_list, inorg_products, inorg_system as SY
     if kind == "products":
         if not hasattr(adapter, "_bad_products"):
             adapter._bad_products = set()          # reactions the blind check did not confirm in this run
         edges = inorg_products.with_naive(list(_graph(adapter)["edges"].values())) + inorg_products.variant_edges()
-        cand = inorg_products.draw(edges, rng, tried=bb.tried_edges(), bad=adapter._bad_products)
+        used = {f: 0 for f in inorg_products.FAMILIES}   # accepted hidden-products questions per family
+        for e in _accepted_engines(adapter):
+            f = str(e.get("form", "")).partition("inorganic_hidden_products:")[2]
+            if f in used:
+                used[f] += 1
+        prefer = min(sorted(used), key=lambda f: (used[f], rng.random()))
+        # refused reactions from earlier runs too, with their duplicates (live review round 3: the ambiguous SO2/H2SO3
+        # reaction came back every run); a failed call is never kept
+        g = _graph(adapter)
+        refused = _with_twins(g, set(SY.load_memory()["unconfirmed_edges"]) | adapter._bad_products)
+        asked = asked_reaction_sets(adapter)
+        cand = inorg_products.draw(edges, rng, tried=bb.tried_edges(), bad=refused, prefer=prefer, asked=asked,
+                                   used=collections.Counter(e for a in asked for e in a))
     else:
         cand = inorg_list.draw(rng, tried=bb.tried_edges(), used=used_list_conditions(adapter))
     if cand is None:
@@ -469,6 +505,10 @@ def _list_question(adapter, rng, bb, log, n_draw, kind="list"):
         bb.note("product_check", disagree=bad)
         if bad:
             adapter._bad_products.update(b["edge"] for b in bad)
+            for b in bad:                          # kept for later runs (not a failed call: that says nothing)
+                if not str(b.get("checker", "")).startswith("error:"):
+                    SY._remember("unconfirmed_edges", b["edge"], {"graph": b["graph"], "checker": b["checker"],
+                                                                  "from": "hidden_products"})
             log({"event": "product_disagreement", "chain": cand["edges"], "reactions": bad})
             print(f"  ✗ product check (GPT-6 Luna, blind) differs on {len(bad)} reaction(s): "
                   + "; ".join(f"{b['graph']} vs {b['checker']}" for b in bad)[:240] + "; next draw")
@@ -520,7 +560,25 @@ def _accepted_engines(adapter) -> list:
             recs = json.load(f)
     except (OSError, ValueError, TypeError):
         return []
-    return [r.get("engine") or {} for r in recs if isinstance(r, dict) and not r.get("rejected")]
+    try:                                           # tools/results.py reject lists ids here; outputs/ keeps the record
+        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                               "results", "rejected.json"), encoding="utf-8") as f:
+            rejected = set(json.load(f))
+    except (OSError, ValueError, TypeError):
+        rejected = set()
+    return [r.get("engine") or {} for r in recs if isinstance(r, dict) and not r.get("rejected")
+            and r.get("question_id") not in rejected]
+
+
+def asked_reaction_sets(adapter) -> list:
+    """The reaction ids of each accepted hidden-products question (live runs hp_8-10 repeated XeF₂, NO₂⁺, the CO shift
+    and Al₄C₃: only a few reactions carry a geometry trap)."""
+    out = []
+    for e in _accepted_engines(adapter):
+        for key in e.get("graph_edges") or []:
+            if str(key).startswith("products:"):
+                out.append(frozenset(str(key).split(":", 3)[3].split(",")))
+    return out
 
 
 def asked_species_sets(adapter) -> list:
@@ -687,10 +745,13 @@ def _system_question(adapter, rng, bb, log, n_draw):
     if not hasattr(adapter, "_bad_system"):
         adapter._bad_system = set()                # edges whose product the blind check did not confirm
     memory = SY.load_memory()                      # what earlier runs learned (review item #6, 2026-11-25)
-    cand = SY.draw(_graph(adapter), rng, tried=bb.tried_edges() | {(k,) for k in memory["bottom_solved"]},
-                   bad=adapter._bad_system | set(memory["unconfirmed_edges"]), asked=asked_species_sets(adapter))
+    g = _graph(adapter)
+    cand = SY.draw(g, rng, tried=bb.tried_edges() | {(k,) for k in memory["bottom_solved"]},
+                   bad=_with_twins(g, adapter._bad_system | set(memory["unconfirmed_edges"])),
+                   asked=asked_species_sets(adapter))
     if cand is None:
         print("  no reaction system left")
+        adapter._systems_empty = True
         return None
     cand["_system"]["asked_facts"] = asked_fact_pairs(adapter)   # the statements avoid what was asked before
     print(f"\n╔═══ DRAW {n_draw}: {cand['description']} ({', '.join(cand['chapters'])}) ═══╗")
@@ -709,7 +770,7 @@ def _system_question(adapter, rng, bb, log, n_draw):
     bb.note("letter_check", disagree=bad)
     if bad:
         for e, _b in SY.blamed_steps(cand, bad):  # not the correct steps after a misread one
-            adapter._bad_system.add(e["id"])
+            adapter._bad_system |= _with_twins(g, {e["id"]})
         SY.remember_unconfirmed(cand, bad)         # later runs skip it too (a failed call is not kept)
         log({"event": "letter_disagreement", "chain": cand["edges"], "letters": bad})
         print(f"  ✗ letter check (GPT-6 Luna, blind) differs on {len(bad)}: "

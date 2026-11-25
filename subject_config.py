@@ -62,7 +62,10 @@ SUBJECT_CONFIGS = {
         # Verifier-passed questions whose council check failed (API error); rechecked first next run.
         "pending_file":      os.path.join(OUTPUT_DIR, "pending_questions_physical.json"),
         "default_archetype": "Multi-Formulae",
-        "fact_share": 0.25,      # share of runs that make a fact (MCQ/MSQ) question instead of a chain
+        # share of runs that make a fact (MCQ/MSQ) question instead of a chain. 0 since 2026-11-25 (was 0.25): no
+        # physical fact question has reached Advanced (4 accepted, all Mains-hard; live run 3 of 2026-11-25, four
+        # statement sets on kinetic theory and basic thermodynamics, all solved by Granite)
+        "fact_share": 0.0,
         "default_archetype_code": "I",
     },
 }

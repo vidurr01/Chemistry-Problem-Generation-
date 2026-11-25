@@ -1,0 +1,704 @@
+{
+ "subject": "physical",
+ "saved_at": "20261125T132219",
+ "spend": {
+  "total_cost_usd": 0.0677,
+  "by_role": {
+   "formula_fit": {
+    "calls": 11,
+    "prompt_tokens": 5499,
+    "completion_tokens": 0,
+    "cost": 0.000230958
+   },
+   "designer": {
+    "calls": 2,
+    "prompt_tokens": 4944,
+    "completion_tokens": 3241,
+    "cost": 0.048780000000000004
+   },
+   "design_check": {
+    "calls": 2,
+    "prompt_tokens": 1434,
+    "completion_tokens": 0,
+    "cost": 6.022800000000001e-05
+   },
+   "generator": {
+    "calls": 3,
+    "prompt_tokens": 8977,
+    "completion_tokens": 1494,
+    "cost": 0.012335249999999999
+   },
+   "level_check": {
+    "calls": 4,
+    "prompt_tokens": 2325,
+    "completion_tokens": 0,
+    "cost": 9.765e-05
+   },
+   "coder": {
+    "calls": 3,
+    "prompt_tokens": 9068,
+    "completion_tokens": 2118,
+    "cost": 0.002192275
+   },
+   "coherence_check": {
+    "calls": 3,
+    "prompt_tokens": 1722,
+    "completion_tokens": 0,
+    "cost": 7.2324e-05
+   },
+   "shortcut_coder": {
+    "calls": 3,
+    "prompt_tokens": 2069,
+    "completion_tokens": 3935,
+    "cost": 0.0021744
+   },
+   "council": {
+    "calls": 6,
+    "prompt_tokens": 5262,
+    "completion_tokens": 4834,
+    "cost": 0.001754706
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "rate_constant_to_activity_aa0etbetween",
+     "rate_constant_to_time_elapsed_abc"
+    ],
+    "nodes": [
+     "rate_constant",
+     "activity",
+     "time_elapsed"
+    ],
+    "chapters": [
+     "Chemical Kinetics & Nuclear Chemistry"
+    ],
+    "txs": [
+     333,
+     212
+    ],
+    "trap_ids": [
+     "hours_not_converted",
+     "log10_without_2303"
+    ],
+    "description": "activity at administration (mCi) [A = A₀ e^(−λt)] | time at which [B] is maximum (s) [t_max = ln(k₁/k₂)/(k₁ − k₂)]",
+    "twist": "inverse"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-25T13:19:09.530340+00:00",
+     "p": 0.54
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-25T13:19:39.003550+00:00",
+     "try_": 1,
+     "twist": "inverse",
+     "system": "A radionuclide generator initially containing pure isotope A, which decays to a medically useful radioactive isotope B (A → B → C). B is extracted at the exact time its concentration is maximum, then transported to a hospital and administered to a patient.",
+     "hidden_link": "The activity of B at the time of its extraction (t_max). The question never states it because at t_max, the rate of formation of B equals its rate of decay, meaning the activity of B exactly equals the activity of A at that moment.",
+     "route": "Use Formula 2 with the decay constants of A and B to find the extraction time (t_max). Use Formula 1 on isotope A to find its activity at t_max, which equals the initial activity of the extracted B. Finally, use Formula 1 backwards on isotope B, starting from the given activity at administration and the transport time, to find the required initial activity of A at production.",
+     "student_must_notice": "At the time when [B] is maximum, d[B]/dt = 0, which means k₁[A] = k₂[B]. Therefore, the activity of B at extraction is simply the activity of A at that time, evaluated as A₀(A)e^(−k₁t_max).",
+     "trap": "A student who misses the equality of activities at t_max will attempt to use or derive the full, complex integrated rate equation for consecutive reactions to find the amount of B, which is mathematically tedious and prone to algebraic errors under exam pressure.",
+     "hidden_step": "quantities that cannot be combined directly must first be converted to ones that can; the student must convert the condition for maximum concentration (rates being equal) into an equality of activities to bypass the full consecutive reaction equation.",
+     "given": "the decay constants (or half-lives) of isotopes A and B, the transport time from extraction to administration, and the required activity of B at administration",
+     "hidden": "the activity of B at the time of extraction, the full integrated rate law for [B] over time, and the equality of activities at t_max",
+     "asked": "the required initial activity of isotope A at the time of the generator's production, in mCi",
+     "why_hard": "It demands a deep conceptual understanding of consecutive kinetics to realise that the complex concentration of the intermediate at its maximum simplifies beautifully to the activity of the parent isotope.",
+     "_reasoning": "**Formulating Chemistry Problems**\n\nI'm integrating radioactive decay and consecutive reaction kinetics. The goal is a complex physical chemistry problem using the provided formulas for activity decay and maximum intermediate concentration in sequential reactions, ensuring a robust challenge.\n\n**Integrating Decay and Kinetics**\n\nI'm refining the integration of radioactive decay and consecutive reaction kinetics. Specifically, I'm focusing on how to apply Formula 1, representing activity at administration, within the context of Formula 2, which describes the time of maximum intermediate concentration in sequential reactions. The intent is to create a problem where the activity of a medically useful intermediate isotope (B) is relevant, considering its production, decay, and subsequent decay.\n\n**Solving Decay & Kinetics**\n\nI'm connecting radioactive decay to sequential reaction kinetics, specifically A→B→C. My current focus is on identifying the time of maximum intermediate concentration for B, which is then \"milked\" from the generator. This extracted B will decay via a simple first-order process.\n\n**Calculating Administration Activity**\n\nI'm now calculating the activity of B at administration, considering its initial extraction at the time of maximum concentration and subsequent decay during transit. I'm also exploring an inverse problem: determining the initial activity of precursor A required to achieve a specific administered activity of B.\n\n**Calculating Required Precursor Activity**\n\nI'm investigating the inverse problem: determining the initial activity of precursor A needed to achieve a specific administered activity of B after extraction and transit. This requires deriving the amount of B at maximum intermediate concentration and then accounting for its decay during transit to the administration site.\n\n**Discovering Hidden Link**\n\nI've found a critical shortcut! At the time of maximum intermediate concentration (t_max), the activity of the intermediate isotope B actually equals the activity of the precursor isotope A. This significantly simplifies the calculation, avoiding complex N_B(t) formulas.\n\n**Applying the Link**\n\nI'm now using this key insight. The activity of B at t_max is A_A0 * e^(-k₁ * t_max). This value, after accounting for decay during transit (e^(-k₂ * t_transit)), directly gives the administered activity of B. This elegantly combines the decay and kinetics formulas.\n\n**Simplifying Calculations**\n\nThe realization that Activity B = Activity A at t_max streamlines the entire process. I can now directly calculate the administered activity of B by finding t_max, calculating A_A(t_max), and then applying transit decay. This is a much cleaner approach than initially anticipated.\n\n**Refining Problem Structure**\n\nI'm solidifying the problem structure around this new understanding. The focus is on the inverse problem: determining the required initial activity of A (A_A0) given a desired administered activity of B, leveraging the t_max and transit decay calculations.\n\n**Validating Inverse Problem**\n\nI am now validating the inverse problem derivation. Using the simplified relationship A_B(t_max) = A_A(t_max), I can work backward from the desired administered activity to find the necessary initial activity of A, ensuring the mathematical consistency of the problem.\n\n",
+     "situation": "A radionuclide generator initially containing pure isotope A, which decays to a medically useful radioactive isotope B (A → B → C). B is extracted at the exact time its concentration is maximum, then transported to a hospital and administered to a patient.",
+     "insight": "At the time when [B] is maximum, d[B]/dt = 0, which means k₁[A] = k₂[B]. Therefore, the activity of B at extraction is simply the activity of A at that time, evaluated as A₀(A)e^(−k₁t_max).",
+     "links": "Use Formula 2 with the decay constants of A and B to find the extraction time (t_max). Use Formula 1 on isotope A to find its activity at t_max, which equals the initial activity of the extracted B. Finally, use Formula 1 backwards on isotope B, starting from the given activity at administration and the transport time, to find the required initial activity of A at production.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-25T13:19:39.524135+00:00",
+     "twist": "inverse",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T13:19:43.709706+00:00",
+     "attempt": 1,
+     "twist": "inverse",
+     "examples": [
+      "2020P1_Chem_Q15",
+      "2019P2_Chem_Q13"
+     ],
+     "stem": "A radionuclide generator initially containing pure parent radioisotope A decays via consecutive first-order processes according to A → B → C, where C is a stable nuclide. Daughter radioisotope B is completely extracted from the generator at the exact moment its quantity reaches maximum, immediately transported for [[t_transport]] h, and then administered to a patient with an activity of [[activity_admin]] mCi.\n\nCalculate the initial activity of isotope A in the generator at the time of its preparation, in mCi.\n(Given: the decay constants of A and B are [[k1]] s^-1 and [[k2]] s^-1, respectively; 1 h = 3600 s).",
+     "asks": "the initial activity of isotope A at the time of generator preparation",
+     "unit": "mCi",
+     "asked": "initial_activity_A",
+     "ranges": {
+      "k1": [
+       2.5e-06,
+       5e-06,
+       false
+      ],
+      "k2": [
+       2.5e-05,
+       5e-05,
+       false
+      ],
+      "t_transport": [
+       1.5,
+       4.0,
+       false
+      ],
+      "activity_admin": [
+       15.0,
+       45.0,
+       false
+      ]
+     },
+     "fixed": {},
+     "answer_range": [
+      30.0,
+      250.0
+     ],
+     "free": {},
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T13:19:53.773290+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    t_max = step_212(rate_constant=k1, k2=k2)[\"time_elapsed\"]\n    activity_at_extraction = find(\n        step_333,\n        \"initial_activity\",\n        result=activity_admin,\n        rate_constant=k2,\n        time=t_transport,\n    )\n    return find(\n        step_333,\n        \"initial_activity\",\n        result=activity_at_extraction,\n        rate_constant=k1,\n        time=t_max / 3600,\n    )",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "k1": 4.26e-06,
+      "k2": 3.84e-05,
+      "t_transport": 3.37,
+      "activity_admin": 41.6
+     },
+     "reasoning": null
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-25T13:19:56.522707+00:00",
+     "ok": true,
+     "values": {
+      "k1": 4.26e-06,
+      "k2": 3.84e-05,
+      "t_transport": 3.37,
+      "activity_admin": 41.6
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "shortcut",
+     "at": "2026-11-25T13:20:09.309389+00:00",
+     "code": "def solve():\n    t_max = math.log(k1 / k2) / (k1 - k2)\n    activity_at_extraction = activity_admin * math.exp(k2 * t_transport * 3600)\n    return activity_at_extraction * (k2 - k1) / (\n        k2 * (math.exp(-k1 * t_max) - math.exp(-k2 * t_max))\n    )",
+     "answer": 87.21,
+     "key": 87.21,
+     "error": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-25T13:20:09.309467+00:00",
+     "attempt": 1,
+     "problems": [
+      "the hidden step does not change the answer: a student who misses it (A student who misses the equality of activities at t_max will attempt to use or derive the full, complex integrated rate equation for consecutive reactions to f) gets 87.21, the right answer is 87.21 (0.0% apart). Choose values and ranges, or change what is asked, so that missing the hidden step gives an answer at least 10% different"
+     ]
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T13:20:14.166761+00:00",
+     "attempt": 2,
+     "twist": "inverse",
+     "examples": [
+      "2020P1_Chem_Q15",
+      "2017P1_Chem_Q26"
+     ],
+     "stem": "A radionuclide generator initially containing pure parent radioisotope A decays via consecutive first-order processes according to A → B → C, where C is a stable nuclide. Daughter radioisotope B is completely separated and extracted from the generator at the exact moment its quantity reaches maximum, immediately transported for [[t_transport]] h, and then administered to a patient with an activity of [[activity_admin]] mCi.\n\nCalculate the initial activity of isotope A in the generator at the time of its preparation, in mCi.\n(Given: the decay constants of A and B are [[k1]] s^-1 and [[k2]] s^-1, respectively; 1 h = 3600 s).",
+     "asks": "the initial activity of parent radioisotope A in the generator at the time of preparation",
+     "unit": "mCi",
+     "asked": "initial_activity_A",
+     "ranges": {
+      "activity_admin": [
+       15.0,
+       45.0,
+       false
+      ],
+      "k1": [
+       2.5e-06,
+       5e-06,
+       false
+      ],
+      "k2": [
+       2.5e-05,
+       5e-05,
+       false
+      ],
+      "t_transport": [
+       1.5,
+       4.0,
+       false
+      ]
+     },
+     "fixed": {},
+     "answer_range": [
+      30.0,
+      250.0
+     ],
+     "free": {},
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T13:20:25.490111+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    t_max_s = step_212(rate_constant=k1, k2=k2)[\"time_elapsed\"]\n    b_activity_at_extraction = find(\n        step_333,\n        \"initial_activity\",\n        result=activity_admin,\n        rate_constant=k2,\n        time=t_transport,\n    )\n    initial_a_activity = find(\n        step_333,\n        \"initial_activity\",\n        result=b_activity_at_extraction,\n        rate_constant=k1,\n        time=t_max_s / 3600,\n    )\n    return initial_a_activity",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "activity_admin": 42.7,
+      "k1": 4.8e-06,
+      "k2": 2.6e-05,
+      "t_transport": 3.33
+     },
+     "reasoning": null
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-25T13:20:29.732797+00:00",
+     "ok": true,
+     "values": {
+      "activity_admin": 42.7,
+      "k1": 4.8e-06,
+      "k2": 2.6e-05,
+      "t_transport": 3.33
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "shortcut",
+     "at": "2026-11-25T13:20:59.890964+00:00",
+     "code": "def solve():\n    t_max_s = math.log(k1 / k2) / (k1 - k2)\n    transport_s = t_transport * 3600\n    b_activity_at_extraction = activity_admin * math.exp(k2 * transport_s)\n    b_activity_per_initial_a_activity = (\n        k2 / (k2 - k1)\n        * (math.exp(-k1 * t_max_s) - math.exp(-k2 * t_max_s))\n    )\n    initial_a_activity = b_activity_at_extraction / b_activity_per_initial_a_activity\n    return initial_a_activity",
+     "answer": 85.49,
+     "key": 85.49,
+     "error": null
+    },
+    {
+     "stage": "question_rejected",
+     "at": "2026-11-25T13:20:59.891061+00:00",
+     "attempt": 2,
+     "problems": [
+      "the hidden step does not change the answer: a student who misses it (A student who misses the equality of activities at t_max will attempt to use or derive the full, complex integrated rate equation for consecutive reactions to f) gets 85.49, the right answer is 85.49 (0.0% apart). Choose values and ranges, or change what is asked, so that missing the hidden step gives an answer at least 10% different"
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "equilibrium_constant_to_equilibrium_constant_kpkcrtng",
+     "equilibrium_constant_to_equilibrium_constant_kpkcrtng"
+    ],
+    "nodes": [
+     "equilibrium_constant"
+    ],
+    "chapters": [
+     "Chemical Equilibrium"
+    ],
+    "txs": [
+     163,
+     156
+    ],
+    "trap_ids": [
+     "arithmetic_instead_of_power",
+     "sign"
+    ],
+    "description": "K at T₂ [ln(K₂/K₁) = (ΔH/R)(T₂ − T₁)/(T₁T₂)] | K of the new reaction [reverse: 1/K; ×2: K²; ×½: √K]",
+    "twist": "condition",
+    "drawn_txs": [
+     163,
+     156
+    ],
+    "extra_txs": []
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "formula_fit",
+     "at": "2026-11-25T13:21:00.880190+00:00",
+     "p": 0.65
+    },
+    {
+     "stage": "design",
+     "at": "2026-11-25T13:21:15.793864+00:00",
+     "try_": 1,
+     "twist": "condition",
+     "system": "The dimerization of nitrogen dioxide: 2 NO2(g) ⇌ N2O4(g). The system is initially described by the equilibrium constant for this formation reaction at a specific temperature. The condition asked is the temperature at which the dissociation reaction N2O4(g) ⇌ 2 NO2(g) reaches a specific degree of dissociation at a given total pressure.",
+     "hidden_link": "The equilibrium constant K2 at the new temperature is linked to the condition through the ideal gas equation and partial pressures, but for the REVERSED reaction. The student must use Formula 2 to relate the K of the given formation reaction to the K of the dissociation reaction.",
+     "route": "1. Use the given degree of dissociation and total pressure to find the equilibrium constant of the dissociation reaction N2O4(g) ⇌ 2 NO2(g) using partial pressures derived from the ideal gas equation. 2. Use Formula 2 (reverse) to find the equilibrium constant K2 for the formation reaction 2 NO2(g) ⇌ N2O4(g) at the new temperature T2. 3. Use Formula 1 to find the new temperature T2 using K1, K2, T1, and the standard enthalpy change.",
+     "student_must_notice": "The provided standard enthalpy change and K1 correspond to the formation reaction 2 NO2 ⇌ N2O4, but the described condition (degree of dissociation) applies to the dissociation reaction N2O4 ⇌ 2 NO2. The K values must be inverted before applying the van 't Hoff equation.",
+     "trap": "The student might directly plug the K calculated from the degree of dissociation of N2O4 into the van 't Hoff equation with the ΔH of the formation reaction, ignoring that the reaction direction has been reversed.",
+     "hidden_step": "The situation decides which case of a formula applies, and the obvious case is the wrong one; the asked condition describes the reverse process, so the equilibrium constant obtained from the physical state must be inverted (Formula 2) to match the given ΔH and K1.",
+     "given": "Equilibrium constant K1 for 2 NO2(g) ⇌ N2O4(g) at temperature T1, standard enthalpy change ΔH for this formation reaction, the total pressure, and the degree of dissociation of pure N2O4 at the target temperature.",
+     "hidden": "The equilibrium constant of the dissociation reaction at T2, and the equilibrium constant of the formation reaction at T2.",
+     "asked": "The temperature T2 (in K) at which the given degree of dissociation is reached.",
+     "why_hard": "The student must recognize a mismatch between the reaction for which thermodynamic data is given and the reaction for which the physical state is described, requiring a reaction reversal before integrating the temperatures.",
+     "_reasoning": "**Drafting questions based on given formulas**\n\nI'm currently formulating a challenging JEE Advanced Physical Chemistry problem. My focus is to create a scenario that requires the precise application of both the integrated rate law (K at T₂) and the equilibrium constant relationship for reverse reactions (K of the new reaction). I'm aiming for a question that tests analytical skill and formula integration.\n\n**Formulating problem constraints**\n\nI'm refining the problem by incorporating a \"simultaneous\" approach. The goal is to present a gas-phase dimerization scenario, like 2 NO₂(g) ⇌ N₂O₄(g), and then link it to a modified, reversed reaction. My challenge is to devise a \"hidden step\" or a subtle connection that requires more than a direct application of the van 't Hoff equation and reaction manipulation. I'm exploring using a \"condition\" twist, aiming to ask for a specific physical condition where the system reaches a defined state.\n\n",
+     "situation": "The dimerization of nitrogen dioxide: 2 NO2(g) ⇌ N2O4(g). The system is initially described by the equilibrium constant for this formation reaction at a specific temperature. The condition asked is the temperature at which the dissociation reaction N2O4(g) ⇌ 2 NO2(g) reaches a specific degree of dissociation at a given total pressure.",
+     "insight": "The provided standard enthalpy change and K1 correspond to the formation reaction 2 NO2 ⇌ N2O4, but the described condition (degree of dissociation) applies to the dissociation reaction N2O4 ⇌ 2 NO2. The K values must be inverted before applying the van 't Hoff equation.",
+     "links": "1. Use the given degree of dissociation and total pressure to find the equilibrium constant of the dissociation reaction N2O4(g) ⇌ 2 NO2(g) using partial pressures derived from the ideal gas equation. 2. Use Formula 2 (reverse) to find the equilibrium constant K2 for the formation reaction 2 NO2(g) ⇌ N2O4(g) at the new temperature T2. 3. Use Formula 1 to find the new temperature T2 using K1, K2, T1, and the standard enthalpy change.",
+     "drop": null
+    },
+    {
+     "stage": "twist",
+     "at": "2026-11-25T13:21:16.277249+00:00",
+     "twist": "condition",
+     "by": "designer"
+    },
+    {
+     "stage": "question",
+     "at": "2026-11-25T13:21:21.174946+00:00",
+     "attempt": 1,
+     "twist": "condition",
+     "examples": [
+      "2023P1_Chem_Q11",
+      "2017P2_Chem_Q20"
+     ],
+     "stem": "For the dimerization reaction 2 NO2(g) ⇌ N2O4(g), the equilibrium constant Kp is [[Kp1]] bar^-1 at [[T1]] K, and the standard enthalpy change is [[delta_H]] kJ mol^-1 over the temperature range considered. Pure N2O4(g) is introduced into a container and allowed to dissociate according to N2O4(g) ⇌ 2 NO2(g) at a constant total pressure of [[P_total]] bar. The temperature at which the degree of dissociation of N2O4 reaches [[alpha]] is: (Given: R = [[R]] J K^-1 mol^-1)",
+     "asks": "the temperature at which the dissociation of dinitrogen tetroxide reaches the specified degree of dissociation",
+     "unit": "K",
+     "asked": "T2",
+     "ranges": {
+      "T1": [
+       280.0,
+       310.0,
+       false
+      ],
+      "Kp1": [
+       5.0,
+       15.0,
+       false
+      ],
+      "delta_H": [
+       -60.0,
+       -50.0,
+       false
+      ],
+      "P_total": [
+       0.8,
+       2.0,
+       false
+      ],
+      "alpha": [
+       0.4,
+       0.7,
+       false
+      ]
+     },
+     "fixed": {
+      "R": 8.314
+     },
+     "answer_range": [
+      320.0,
+      420.0
+     ],
+     "free": {
+      "R": 8.314
+     },
+     "bad_values": []
+    },
+    {
+     "stage": "program",
+     "at": "2026-11-25T13:21:31.252177+00:00",
+     "attempt": 1,
+     "code": "def solve():\n    Kp_dissociation = 4 * alpha**2 * P_total / (1 - alpha**2)\n    Kp_formation = step_156(equilibrium_constant=Kp_dissociation, manipulation='reverse the reaction')['equilibrium_constant']\n    T2 = find(step_163, 'T2', result=Kp_formation, equilibrium_constant=Kp1, delta_h=delta_H, T1=T1)\n    return T2",
+     "ok": true,
+     "problems": [],
+     "probe_values": {
+      "R": 8.314,
+      "T1": 303.0,
+      "Kp1": 5.2,
+      "delta_H": -53.8,
+      "P_total": 0.839,
+      "alpha": 0.621
+     },
+     "reasoning": null
+    },
+    {
+     "stage": "numbers",
+     "at": "2026-11-25T13:21:33.798495+00:00",
+     "ok": true,
+     "values": {
+      "R": 8.314,
+      "T1": 303.0,
+      "Kp1": 5.2,
+      "delta_H": -53.8,
+      "P_total": 0.839,
+      "alpha": 0.621
+     },
+     "tries": 1,
+     "kind": null,
+     "counts": null,
+     "problem": null
+    },
+    {
+     "stage": "shortcut",
+     "at": "2026-11-25T13:21:45.377815+00:00",
+     "code": "def solve():\n    Kp_dissociation = 4 * alpha**2 * P_total / (1 - alpha**2)\n    T2 = 1 / (1 / T1 - (R / delta_H) * math.log(Kp_dissociation / Kp1))\n    return T2",
+     "answer": -7.335,
+     "key": 341.2,
+     "error": null
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-25T13:21:45.377951+00:00",
+     "stem": "For the dimerization reaction 2 NO2(g) ⇌ N2O4(g), the equilibrium constant Kp is 5.20 bar^-1 at 303 K, and the standard enthalpy change is -53.8 kJ mol^-1 over the temperature range considered. Pure N2O4(g) is introduced into a container and allowed to dissociate according to N2O4(g) ⇌ 2 NO2(g) at a constant total pressure of 0.839 bar. The temperature at which the degree of dissociation of N2O4 reaches 0.621 is: (Given: R = 8.314 J K^-1 mol^-1) Give the answer in K, to 3 significant figures.",
+     "code": "def solve():\n    Kp_dissociation = 4 * alpha**2 * P_total / (1 - alpha**2)\n    Kp_formation = step_156(equilibrium_constant=Kp_dissociation, manipulation='reverse the reaction')['equilibrium_constant']\n    T2 = find(step_163, 'T2', result=Kp_formation, equilibrium_constant=Kp1, delta_h=delta_H, T1=T1)\n    return T2",
+     "asks": "the temperature at which the dissociation of dinitrogen tetroxide reaches the specified degree of dissociation",
+     "unit": "K",
+     "twist": "condition",
+     "givens": [
+      {
+       "value": 5.2,
+       "quote": "Kp1"
+      },
+      {
+       "value": 303.0,
+       "quote": "T1"
+      },
+      {
+       "value": -53.8,
+       "quote": "delta_H"
+      },
+      {
+       "value": 0.839,
+       "quote": "P_total"
+      },
+      {
+       "value": 0.621,
+       "quote": "alpha"
+      },
+      {
+       "value": 8.314,
+       "quote": "R"
+      }
+     ],
+     "answer": 341.2,
+     "trace": [
+      {
+       "tx": 156,
+       "src": "equilibrium_constant",
+       "dst": "equilibrium_constant",
+       "formula": "reverse: 1/K; ×2: K²; ×½: √K",
+       "inputs": {
+        "equilibrium_constant": 2.10660411258,
+        "manipulation": "reverse the reaction"
+       },
+       "outputs": {
+        "equilibrium_constant": 0.4747
+       }
+      },
+      {
+       "tx": 163,
+       "src": "equilibrium_constant",
+       "dst": "equilibrium_constant",
+       "formula": "ln(K₂/K₁) = (ΔH/R)(T₂ − T₁)/(T₁T₂)",
+       "inputs": {
+        "equilibrium_constant": 5.2,
+        "delta_h": -53.8,
+        "T1": 303,
+        "T2": 341.248791651
+       },
+       "outputs": {
+        "equilibrium_constant": 0.4747,
+        "T": 341.25
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "sign",
+       "desc": "uses the opposite sign in the exponent",
+       "tx": 163,
+       "step": 1,
+       "wrong_answer": 272.5
+      }
+     ],
+     "tolerance": 0.01,
+     "constants": [
+      "R = 8.314 J K⁻¹ mol⁻¹"
+     ],
+     "depth": 1,
+     "extra_txs": [],
+     "preset": {
+      "Kp1": 5.2,
+      "T1": 303.0,
+      "delta_H": -53.8,
+      "P_total": 0.839,
+      "alpha": 0.621,
+      "R": 8.314
+     },
+     "template": "For the dimerization reaction 2 NO2(g) ⇌ N2O4(g), the equilibrium constant Kp is [[Kp1]] bar^-1 at [[T1]] K, and the standard enthalpy change is [[delta_H]] kJ mol^-1 over the temperature range considered. Pure N2O4(g) is introduced into a container and allowed to dissociate according to N2O4(g) ⇌ 2 NO2(g) at a constant total pressure of [[P_total]] bar. The temperature at which the degree of dissociation of N2O4 reaches [[alpha]] is: (Given: R = [[R]] J K^-1 mol^-1)",
+     "ranges": {
+      "T1": [
+       280.0,
+       310.0,
+       false
+      ],
+      "Kp1": [
+       5.0,
+       15.0,
+       false
+      ],
+      "delta_H": [
+       -60.0,
+       -50.0,
+       false
+      ],
+      "P_total": [
+       0.8,
+       2.0,
+       false
+      ],
+      "alpha": [
+       0.4,
+       0.7,
+       false
+      ]
+     },
+     "answer_range": [
+      320.0,
+      420.0
+     ]
+    },
+    {
+     "stage": "council",
+     "at": "2026-11-25T13:22:06.920272+00:00",
+     "members": [
+      {
+       "name": "granite-4.2-8b",
+       "model": "ibm-granite/granite-4.2-8b",
+       "working": "Given dimerization 2 NO2 ⇌ N2O4 with Kp_dim = P_N2O4 / P_NO2^2 = 5.20 bar^{-1} at 303 K and ΔH° = -53.8 kJ mol^{-1}. For dissociation N2O4 ⇌ 2 NO2, Kp_diss = P_NO2^2 / P_N2O4 = 1/Kp_dim. Pure N2O4 dissociates under constant total pressure P_total = 0.839 bar. Let α be degree of dissociation. Initial moles of N2O4 = 1 (arbitrary), after dissociation: N2O4 = 1-α, NO2 = 2α, total moles = 1+α. Partial pressures: P_N2O4 = (1-α)P_total/(1+α), P_NO2 = (2α)P_total/(1+α). Hence Kp_diss = (P_NO2)^2 / P_N2O4 = 4α P_total / (1-α^2). Set α = 0.621, P_total = 0.839 bar → Kp_diss_needed = 4*0.621*0.839/(1-0.621^2) ≈ 3.395 bar. Thus Kp_dim_needed = 1/Kp_diss_needed ≈ 0.295 bar^{-1}. Use van’t Hoff: ln(Kp_dim(T)/Kp_dim(303)) = -ΔH°/R (1/T - 1/303). ΔH° = -53.8 kJ mol^{-1} = -53800 J mol^{-1}, R = 8.314 J K^{-1} mol^{-1}. So -ΔH°/R = 53800/8.314 ≈ 6465 K. Solve ln(0.295/5.20) = 6465 (1/303 - 1/T). ln(0.05673) ≈ -2.874. Thus -2.874 = 6465 (0.003300 - 1/T). 1/T = 0.003300 + 2.874/6465 ≈ 0.003300 + 0.000443 = 0.003743 K^{-1}. T ≈ 267.3 K. Rounded to three significant figures: 267 K.",
+       "objection": null,
+       "answer_line": "[TYPE: thermochemistry] [CALC_VALUE: 267] [CALC_UNIT: K] [SUBSTANCE: null]",
+       "reasoning": "We need solve for T where α=0.621 given Kp? Use Kp = P_N2O4 / P_NO2^2? For dissociation N2O4 ⇌ 2 NO2, Kp = P_NO2^2 / P_N2O4? Actually equilibrium constant for reaction N2O4 ⇌ 2 NO2 is Kp = (P_NO2)^2 / P_N2O4. Given total pressure constant 0.839 bar. Let initial pure N2O4, dissociates to α fraction. Moles: initial 1 mol N2O4, dissociates α -> N2O4 left =1-α, NO2 formed =2α. Total moles =1-α+2α =1+α. Partial pressures: P_N2O4 = (1-α)/ (1+α) * P_total, P_NO2 = (2α)/(1+α)*P_total. Kp = (P_NO2)^2 / P_N2O4 = [ (2α P_tot)/(1+α) ]^2 / [ (1-α)P_tot/(1+α) ] = (4α^2 P_tot^2)/(1+α)^2 * (1+α)/[(1-α)P_tot] = (4α^2 P_tot)/( (1+α)(1-α) ). So Kp = 4α P_tot / (1-α^2). Given Kp at T? The equilibrium constant for dimerization 2 NO2 ⇌ N2O4 is Kp' = P_N2O4 / P_NO2^2 = 1/Kp? Actually given Kp for dimerization 2 NO2 ⇌ N2O4 is 5.20 bar^-1 at 303 K. That means Kp_dim = P_N2O4 / P_NO2^2 =5.20 bar^-1. So Kp for dissociation = 1/Kp_dim = 1/5.20 =0.1923 bar. But temperature dependent via ΔH. Use van't Hoff: ln(K2/K1) = -ΔH/R (1/T2 -1/T1). Let K1 = Kp_dim at T1=303 K =5.20 bar^-1. Want T where α=0.621 for dissociation under total pressure 0.839 bar. Need Kp_dim at T? Use relation Kp_dim = 1/Kp_diss. So Kp_diss = 1/Kp_dim. So Kp_diss(T) = 1/Kp_dim(T). We have Kp_dim(T) = Kp_dim(303)*(exp(-ΔH/R)(1/T-1/303)? Actually van't Hoff: ln(K2/K1)= -ΔH/R (1/T2-1/T1). ΔH = -53.8 kJ = -53800 J. So -ΔH/R = 53800/8.314 =6465. So ln(K2/K1)= (53800/8.314)*(1/T1-1/T2). Rearranged: ln(K2)= ln(K1)+ (53800/8.314)*(1/T1-1/T2). Want Kp_dim at T such that α=0.621 satisfies Kp_diss = 4α P_tot/(1-α^2). Compute Kp_diss needed: α=0.621, P_tot=0.839. Compute numerator:4*0.621*0.839 = 4*0.521 =2.084? Let's calculate: 0.621*0.839=0.521, times4 =2.084. Denominator 1-α^2 =1-0.386=0.614. So Kp_diss =2.084/0.614=3.395. So Kp_diss ≈3.395 bar? Units? Kp_diss dimensionless? Actually Kp for dissociation has units bar? Kp = P_NO2^2 / P_N2O4 gives units bar. So Kp_diss ≈3.395 bar. Then Kp_dim = 1/Kp_diss =0.295 bar^-1.\n\nSet Kp_dim(T)=0.295. Use van't Hoff: ln(Kp_dim(T)/Kp_dim(303)) = -ΔH/R (1/T -1/303). ΔH negative, -ΔH/R = 53800/8.314=6465. So ln(Kp_dim(T)/5.20) = 6465*(1/303 -1/T). Want Kp_dim(T)=0.295. Compute ratio =0.295/5.20=0.05673. ln = -2.874. So -2.874 = 6465*(1/303 -1/T). 1/303=0.003300. So 6465*(0.003300 -1/T)= -2.874. Divide: 0.003300 -1/T = -2.874/6465 = -0.000443. So 1/T = 0.003300 +0.000443 =0.003743. Thus T = 267.3 K.\n\nAnswer 267 K to 3 sig figs 267 K? 267.3 -> 267 K? 3 sig figs 267 K.\n\nReturn JSON.\n",
+       "turns": [
+        {
+         "reasoning": "We need solve for T where α=0.621 given Kp? Use Kp = P_N2O4 / P_NO2^2? For dissociation N2O4 ⇌ 2 NO2, Kp = P_NO2^2 / P_N2O4? Actually equilibrium constant for reaction N2O4 ⇌ 2 NO2 is Kp = (P_NO2)^2 / P_N2O4. Given total pressure constant 0.839 bar. Let initial pure N2O4, dissociates to α fraction. Moles: initial 1 mol N2O4, dissociates α -> N2O4 left =1-α, NO2 formed =2α. Total moles =1-α+2α =1+α. Partial pressures: P_N2O4 = (1-α)/ (1+α) * P_total, P_NO2 = (2α)/(1+α)*P_total. Kp = (P_NO2)^2 / P_N2O4 = [ (2α P_tot)/(1+α) ]^2 / [ (1-α)P_tot/(1+α) ] = (4α^2 P_tot^2)/(1+α)^2 * (1+α)/[(1-α)P_tot] = (4α^2 P_tot)/( (1+α)(1-α) ). So Kp = 4α P_tot / (1-α^2). Given Kp at T? The equilibrium constant for dimerization 2 NO2 ⇌ N2O4 is Kp' = P_N2O4 / P_NO2^2 = 1/Kp? Actually given Kp for dimerization 2 NO2 ⇌ N2O4 is 5.20 bar^-1 at 303 K. That means Kp_dim = P_N2O4 / P_NO2^2 =5.20 bar^-1. So Kp for dissociation = 1/Kp_dim = 1/5.20 =0.1923 bar. But temperature dependent via ΔH. Use van't Hoff: ln(K2/K1) = -ΔH/R (1/T2 -1/T1). Let K1 = Kp_dim at T1=303 K =5.20 bar^-1. Want T where α=0.621 for dissociation under total pressure 0.839 bar. Need Kp_dim at T? Use relation Kp_dim = 1/Kp_diss. So Kp_diss = 1/Kp_dim. So Kp_diss(T) = 1/Kp_dim(T). We have Kp_dim(T) = Kp_dim(303)*(exp(-ΔH/R)(1/T-1/303)? Actually van't Hoff: ln(K2/K1)= -ΔH/R (1/T2-1/T1). ΔH = -53.8 kJ = -53800 J. So -ΔH/R = 53800/8.314 =6465. So ln(K2/K1)= (53800/8.314)*(1/T1-1/T2). Rearranged: ln(K2)= ln(K1)+ (53800/8.314)*(1/T1-1/T2). Want Kp_dim at T such that α=0.621 satisfies Kp_diss = 4α P_tot/(1-α^2). Compute Kp_diss needed: α=0.621, P_tot=0.839. Compute numerator:4*0.621*0.839 = 4*0.521 =2.084? Let's calculate: 0.621*0.839=0.521, times4 =2.084. Denominator 1-α^2 =1-0.386=0.614. So Kp_diss =2.084/0.614=3.395. So Kp_diss ≈3.395 bar? Units? Kp_diss dimensionless? Actually Kp for dissociation has units bar? Kp = P_NO2^2 / P_N2O4 gives units bar. So Kp_diss ≈3.395 bar. Then Kp_dim = 1/Kp_diss =0.295 bar^-1.\n\nSet Kp_dim(T)=0.295. Use van't Hoff: ln(Kp_dim(T)/Kp_dim(303)) = -ΔH/R (1/T -1/303). ΔH negative, -ΔH/R = 53800/8.314=6465. So ln(Kp_dim(T)/5.20) = 6465*(1/303 -1/T). Want Kp_dim(T)=0.295. Compute ratio =0.295/5.20=0.05673. ln = -2.874. So -2.874 = 6465*(1/303 -1/T). 1/303=0.003300. So 6465*(0.003300 -1/T)= -2.874. Divide: 0.003300 -1/T = -2.874/6465 = -0.000443. So 1/T = 0.003300 +0.000443 =0.003743. Thus T = 267.3 K.\n\nAnswer 267 K to 3 sig figs 267 K? 267.3 -> 267 K? 3 sig figs 267 K.\n\nReturn JSON.\n",
+         "content": "\n{\n\"working\": \"Given dimerization 2 NO2 ⇌ N2O4 with Kp_dim = P_N2O4 / P_NO2^2 = 5.20 bar^{-1} at 303 K and ΔH° = -53.8 kJ mol^{-1}. For dissociation N2O4 ⇌ 2 NO2, Kp_diss = P_NO2^2 / P_N2O4 = 1/Kp_dim. Pure N2O4 dissociates under constant total pressure P_total = 0.839 bar. Let α be degree of dissociation. Initial moles of N2O4 = 1 (arbitrary), after dissociation: N2O4 = 1-α, NO2 = 2α, total moles = 1+α. Partial pressures: P_N2O4 = (1-α)P_total/(1+α), P_NO2 = (2α)P_total/(1+α). Hence Kp_diss = (P_NO2)^2 / P_N2O4 = 4α P_total / (1-α^2). Set α = 0.621, P_total = 0.839 bar → Kp_diss_needed = 4*0.621*0.839/(1-0.621^2) ≈ 3.395 bar. Thus Kp_dim_needed = 1/Kp_diss_needed ≈ 0.295 bar^{-1}. Use van’t Hoff: ln(Kp_dim(T)/Kp_dim(303)) = -ΔH°/R (1/T - 1/303). ΔH° = -53.8 kJ mol^{-1} = -53800 J mol^{-1}, R = 8.314 J K^{-1} mol^{-1}. So -ΔH°/R = 53800/8.314 ≈ 6465 K. Solve ln(0.295/5.20) = 6465 (1/303 - 1/T). ln(0.05673) ≈ -2.874. Thus -2.874 = 6465 (0.003300 - 1/T). 1/T = 0.003300 + 2.874/6465 ≈ 0.003300 + 0.000443 = 0.003743 K^{-1}. T ≈ 267.3 K. Rounded to three significant figures: 267 K.\",\n\"answer\": \"[TYPE: thermochemistry] [CALC_VALUE: 267] [CALC_UNIT: K] [SUBSTANCE: null]\",\n\"objection\": null\n}"
+        }
+       ],
+       "final_answer": "267 K",
+       "unit": "",
+       "answer_type": "thermochemistry",
+       "calc_value": [
+        267.0
+       ],
+       "calc_unit": [
+        "K"
+       ],
+       "target_unit": "K",
+       "final_value": [
+        267.0
+       ],
+       "substance": [],
+       "answer_matches": false,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": false
+      },
+      {
+       "name": "glm-5.3-flash",
+       "model": "z-ai/glm-5.3-flash",
+       "working": "Equilibrium constant for dissociation N2O4 ⇌ 2NO2 is Kp' = 1/Kp(dimerization). At temperature T, Kp' = P_N2O4^2 / P_N2O4 = 4α²P/(1−α²). With α = 0.621 and P = 0.839 bar: P_NO2 = 2αP/(1+α), P_N2O4 = (1−α)P/(1+α); ratio = 4α²P/(1−α²) = 4(0.621)²(0.839)/(1−0.621²) = 2.1066 bar. So Kp (dimerization) = 1/2.1066 = 0.4747 bar⁻¹. Van't Hoff: ln(K2/K1) = −ΔH/R (1/T − 1/T0). ln(0.4747/5.20) = −2.3938. So 1/T = 1/303 + (8.314/53800)(2.3938)... actually ln(K2/K1) = (ΔH/R)(1/T0 − 1/T) → 1/T = 1/303 − (R/ΔH)ln(K2/K1) = 1/303 − (8.314/53800)(−2.3938) = 0.0033003 + 0.0003698 = 0.0036701, T = 272.5? Check sign: ΔH < 0, lower K means lower T (dimerization favored at low T). K2 = 0.4747 < 5.20, so T < 303. Compute: 1/T = 1/303 + (R/|ΔH|)(−2.3938)... redo: ln(K2/K1) = −(ΔH/R)(1/T2 − 1/T1). −2.3938 = −(−53800/8.314)(1/T2 − 1/303) → 1/T2 − 1/303 = −2.3938 × 8.314/53800 = −0.00036984 → 1/T2 = 0.00330033 − 0.00036984 = 0.00293049 → T2 = 341.2 K. (This makes sense: higher T favors dissociation, higher K'.) T = 341 K to 3 sig figs.",
+       "objection": null,
+       "answer_line": "[TYPE: equilibrium] [CALC_VALUE: 341] [CALC_UNIT: K] [SUBSTANCE: N2O4]",
+       "reasoning": "Dissociation: N2O4 → 2NO2, degree α = 0.621, total pressure P = 0.839 bar.\n\nMoles: start 1, at equilibrium: 1-α + 2α = 1+α. Partial pressures: p(N2O4) = (1-α)/(1+α) P, p(NO2) = 2α/(1+α) P.\n\nFor dissociation Kp = p(NO2)²/p(N2O4) = [4α²/(1+α)² P²] / [(1-α)/(1+α) P] = 4α²P/[(1-α)(1+α)] = 4α²P/(1-α²).\n\nCompute: α=0.621, α²=0.385641, 1-α²=0.614359. 4α² = 1.542564. Kp_diss = 1.542564*0.839/0.614359.\n\nThen Kp_dimer = 1/Kp_diss. Use van't Hoff: ln(K2/K1) = -ΔH/R (1/T2 - 1/T1) for dimerization with ΔH = -53.8 kJ/mol, K1 = 5.20 at 303 K.\n\nCompute Kp_diss.\n\nKp for dissociation = 2.1066 bar, so Kp for dimerization = 1/2.1066 = 0.4747. ln(0.4747/5.20) = ln(0.09129) = -2.3937. ΔH for dimerization = -53800. ln(K2/K1) = -ΔH/R (1/T2 - 1/T1): -2.3937 = 53800/8.314 (1/T2 - 1/303). 1/T2 = 1/303 - 2.3937*8.314/53800.",
+       "turns": [
+        {
+         "reasoning": "Dissociation: N2O4 → 2NO2, degree α = 0.621, total pressure P = 0.839 bar.\n\nMoles: start 1, at equilibrium: 1-α + 2α = 1+α. Partial pressures: p(N2O4) = (1-α)/(1+α) P, p(NO2) = 2α/(1+α) P.\n\nFor dissociation Kp = p(NO2)²/p(N2O4) = [4α²/(1+α)² P²] / [(1-α)/(1+α) P] = 4α²P/[(1-α)(1+α)] = 4α²P/(1-α²).\n\nCompute: α=0.621, α²=0.385641, 1-α²=0.614359. 4α² = 1.542564. Kp_diss = 1.542564*0.839/0.614359.\n\nThen Kp_dimer = 1/Kp_diss. Use van't Hoff: ln(K2/K1) = -ΔH/R (1/T2 - 1/T1) for dimerization with ΔH = -53.8 kJ/mol, K1 = 5.20 at 303 K.\n\nCompute Kp_diss.",
+         "content": null,
+         "tool_call": {
+          "name": "calculate",
+          "arguments": "{\"expression\": \"4*0.621**2*0.839/(1-0.621**2)\"}"
+         },
+         "tool_result": "2.106604113"
+        },
+        {
+         "reasoning": "Kp for dissociation = 2.1066 bar, so Kp for dimerization = 1/2.1066 = 0.4747. ln(0.4747/5.20) = ln(0.09129) = -2.3937. ΔH for dimerization = -53800. ln(K2/K1) = -ΔH/R (1/T2 - 1/T1): -2.3937 = 53800/8.314 (1/T2 - 1/303). 1/T2 = 1/303 - 2.3937*8.314/53800.",
+         "content": null,
+         "tool_call": {
+          "name": "calculate",
+          "arguments": "{\"expression\": \"ln(0.474681/5.20)\"}"
+         },
+         "tool_result": "-2.393770905"
+        },
+        {
+         "reasoning": null,
+         "content": null,
+         "tool_call": {
+          "name": "calculate",
+          "arguments": "{\"expression\": \"303 + 2.393770905/(53800/ (8.314*303*303))\"}"
+         },
+         "tool_result": "336.962182"
+        },
+        {
+         "reasoning": null,
+         "content": "{\"working\":\"Equilibrium constant for dissociation N2O4 ⇌ 2NO2 is Kp' = 1/Kp(dimerization). At temperature T, Kp' = P_N2O4^2 / P_N2O4 = 4α²P/(1−α²). With α = 0.621 and P = 0.839 bar: P_NO2 = 2αP/(1+α), P_N2O4 = (1−α)P/(1+α); ratio = 4α²P/(1−α²) = 4(0.621)²(0.839)/(1−0.621²) = 2.1066 bar. So Kp (dimerization) = 1/2.1066 = 0.4747 bar⁻¹. Van't Hoff: ln(K2/K1) = −ΔH/R (1/T − 1/T0). ln(0.4747/5.20) = −2.3938. So 1/T = 1/303 + (8.314/53800)(2.3938)... actually ln(K2/K1) = (ΔH/R)(1/T0 − 1/T) → 1/T = 1/303 − (R/ΔH)ln(K2/K1) = 1/303 − (8.314/53800)(−2.3938) = 0.0033003 + 0.0003698 = 0.0036701, T = 272.5? Check sign: ΔH < 0, lower K means lower T (dimerization favored at low T). K2 = 0.4747 < 5.20, so T < 303. Compute: 1/T = 1/303 + (R/|ΔH|)(−2.3938)... redo: ln(K2/K1) = −(ΔH/R)(1/T2 − 1/T1). −2.3938 = −(−53800/8.314)(1/T2 − 1/303) → 1/T2 − 1/303 = −2.3938 × 8.314/53800 = −0.00036984 → 1/T2 = 0.00330033 − 0.00036984 = 0.00293049 → T2 = 341.2 K. (This makes sense: higher T favors dissociation, higher K'.) T = 341 K to 3 sig figs.\",\"answer\":\"[TYPE: equilibrium] [CALC_VALUE: 341] [CALC_UNIT: K] [SUBSTANCE: N2O4]\",\"objection\":null}"
+        }
+       ],
+       "final_answer": "341 K",
+       "unit": "",
+       "answer_type": "equilibrium",
+       "calc_value": [
+        341.0
+       ],
+       "calc_unit": [
+        "K"
+       ],
+       "target_unit": "K",
+       "final_value": [
+        341.0
+       ],
+       "substance": [
+        "N2O4"
+       ],
+       "answer_matches": true,
+       "match_by": "code",
+       "verdict": null,
+       "failure_type": null,
+       "slip_confirmed": null,
+       "counts_as_solved": true
+      }
+     ],
+     "skipped": [
+      "minimax-m3"
+     ],
+     "first_solver": "glm-5.3-flash"
+    },
+    {
+     "stage": "hints",
+     "at": "2026-11-25T13:22:19.131194+00:00",
+     "tests": [
+      {
+       "member": "granite-4.2-8b",
+       "hint": "insight",
+       "text": "Look again at the step where you work out the K of the new reaction. A common mistake there: negates, doubles or halves K instead.",
+       "solved": true,
+       "answer": "342 K"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

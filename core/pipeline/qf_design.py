@@ -116,6 +116,12 @@ what THESE formulas and THIS system allow; invent the system yourself):
   count of particles of a different kind, a quantity of the other substance).
 Recognising a standard exercise and reversing it, taking a ratio of two states, or making the solver solve
 an equation is NOT a hidden step by itself: a Main student does each of these routinely.
+The hidden step must change the ANSWER: the student who misses it gets a clearly different number (code checks
+this). An insight that only saves work, where the longer route still gets the right answer, is not one.
+Do not announce the hidden step through the data: a value whose only use is that step, handed over ready-made
+(a ΔC_p of the reaction, stated next to ΔS° at another temperature), tells the student to use it. Give such data
+one level earlier (each species' own value, which the student must combine) or as something the situation
+implies, so the student has to see that the step is needed.
 
 KEEP IT SHORT AND PLAIN: the situation in at most three sentences. No device, industry or story dressing
 (no "rocket chamber", "spectrometer", "industrial plant"): a real paper states the system plainly.

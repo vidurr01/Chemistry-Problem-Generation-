@@ -18,6 +18,22 @@ from core.engine import sandbox
 SHORTCUT_GAP = 0.05     # the shortcut answer must differ from the key by more than this fraction
 
 
+def _formulas(code: str) -> str:
+    """The engine formulas the correct program calls, as text: the shortcut is written in plain Python, since an
+    engine step refuses the values a wrong route gives (α = √(K/C) = 1.1 for a dilute acid, offline check)."""
+    import re
+    from core.engine import physical as ph
+    lines = []
+    for t in dict.fromkeys(int(x) for x in re.findall(r"step_(\d+)", code)):
+        try:
+            st = ph.step(t)
+        except Exception:                        # noqa: BLE001
+            continue
+        ins = ", ".join(f"{p.key} ({p.desc})" for p in st.needs)
+        lines.append(f"- step_{t}: {st.formula}; inputs {ins}; gives {st.asks}")
+    return "\n".join(lines) or "(none)"
+
+
 def _prompt(stem: str, code: str, design: dict) -> str:
     return f"""A JEE question, the exact program that solves it, and the one hidden step of its design.
 
@@ -27,13 +43,18 @@ QUESTION:
 CORRECT PROGRAM (its variables, e.g. the given values, are already defined when it runs):
 {code}
 
+THE FORMULAS ITS step_N FUNCTIONS COMPUTE:
+{_formulas(code)}
+
 THE HIDDEN STEP a good student may miss: {design.get('hidden_step', '')}
 THE TEMPTING WRONG ROUTE: {design.get('trap', '')}
 
-Write the program of a good student who MISSES that hidden step and takes the usual route instead. Same
-function name solve(), same variable names, same engine functions where the route is the same; change only
-what missing the hidden step changes (you may write a formula in plain Python with math). Do not add any other
-mistake. NO import line. If missing the step cannot change the method at all, return {{"same": "why"}}.
+Write the program of a good student who MISSES that hidden step and takes the usual route instead, in PLAIN
+PYTHON with math only: no step_N, find or solve_for calls (write each formula out yourself; a value outside its
+usual range, such as α > 1, is what that student gets and must be kept). Same function name solve(), same
+variable names for the given values; change only what missing the hidden step changes. Do not add any other
+mistake: the given values are in the question's units (a ΔH in kJ mol⁻¹, as stated), so convert exactly as the
+formulas need (run 4 of 2026-11-25: a shortcut that used kJ as J gave −7.3 K). NO import line. If missing the step cannot change the method at all, return {{"same": "why"}}.
 Return JSON: {{"code": "def solve():\\n    ..."}}"""
 
 

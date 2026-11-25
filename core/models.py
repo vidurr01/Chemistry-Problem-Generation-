@@ -56,6 +56,11 @@ START_PICKER = GENERATOR
 # graded by code only. The same model still checks the written solution after acceptance:
 SOLUTION_CHECKER = "anthropic/claude-haiku-5.5"
 NAME_CHECKER = SOLUTION_CHECKER   # DeepSeek Flash misplaced a locant (4-oxo read as 3-oxo) and ran out of tokens
+# Trace checker (core/pipeline/trace_check.py, 2026-11-26): reads the working of a ladder member that missed the key
+# and labels why (concept / hallucination / too_long / slip / question_flawed). A family used nowhere else (Alibaba);
+# Qwen3.8 Flash solved 49 real JEE questions for $0.256 in calibration, so one reading call is about $0.001-0.003.
+TRACE_CHECKER = "qwen/qwen3.8-flash"
+TRACE_CHECKER_EFFORT = "low"
 # Question-first refinement: Jev (TypeSafe AI) decides WHY a too-easy question was easy (one of
 # core/pipeline/refine.CASES); the generator then rewrites it. Served by OpenRouter on its Decisions
 # API (not /chat/completions), with the same OPENROUTER_KEY.
@@ -120,7 +125,7 @@ DIFFICULTY_LABELS = {
 
 ROSTER = {"generator": GENERATOR, "designer": DESIGNER, "refiner": REFINER, "extractor": EXTRACTOR, "coder": CODER,
           "coder_strong": CODER_STRONG, "refine_decider": JEV_MODEL,
-          "solution_writer": SOLUTION_WRITER, "solution_checker": SOLUTION_CHECKER,
+          "solution_writer": SOLUTION_WRITER, "solution_checker": SOLUTION_CHECKER, "trace_checker": TRACE_CHECKER,
           "start_picker": START_PICKER, "name_checker": NAME_CHECKER, "ladder": [slug for _, slug in LADDER]}
 
 

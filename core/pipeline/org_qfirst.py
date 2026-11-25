@@ -46,6 +46,12 @@ CLAIM_RETRIES = 1
 # decided. A "hinge" statement is true for the right structure and false for a tempting wrong one (or the reverse):
 # a scheme needs at least MIN_HINGE such facts to be drawn, and a question at least MIN_HINGE such statements.
 MIN_HINGE = 2
+# O2 (live review 2026-11-26): statements no wrong turn flips are rote fillers ("NaCN gives a nitrile"); both accepted
+# questions of the review had two of four. At most this many per 4 statements now.
+MAX_ROTE_PER_4 = 1
+# Reagent reuse: a reaction already in this many accepted questions is not drawn (AgNO2 -> nitro was in 6 of 10
+# accepted, Br2/H2O, CH3COCl and HBr in 4 each; the same trap again is rote for a student who has seen it).
+MAX_EDGE_USES = 2
 # Blind per-step check (core/pipeline/org_step_check.py, the author 2026-11-24): measured on known-good and
 # known-bad steps before use; a step GPT-6 Luna does not confirm holds the scheme (queue step_disagreement).
 STEP_CHECK = True
@@ -132,10 +138,50 @@ def _step(g, node, smiles, seen, rng, avoid=()):
     return None
 
 
-def draw(adapter, rng, tried=(), start=None, attempts=800):
+def decorative_steps(comps, order) -> list:
+    """O1 (live review 2026-11-26): labels X whose step changes nothing: every child of X comes out the same when its
+    reagent acts on X's parent directly (round 1: Q --NaI--> R --NaCN--> S, and NaCN on Q gives the same S). A last
+    compound (no child) is never decorative: it is what the question can ask about."""
+    out = []
+    for x in order[1:]:
+        kids = [k for k in order if comps[k]["parent"] == x]
+        par = comps[x]["parent"]
+        if not kids or par is None:
+            continue
+        same = True
+        for k in kids:
+            try:
+                r = R.apply(comps[k]["edge"], comps[par]["smiles"])
+                same = same and _single(r.product) and canon(r.product) == comps[k]["smiles"]
+            except EngineError:
+                same = False
+            if not same:
+                break
+        if same:
+            out.append(x)
+    return out
+
+
+def overused_edges(adapter) -> set:
+    """Edge ids already in MAX_EDGE_USES accepted organic questions (engine graph_edges of the output file)."""
+    import collections
+    p = adapter.config.get("output_file", "")
+    try:
+        with open(p, encoding="utf-8") as f:
+            recs = json.load(f)
+    except (OSError, ValueError, TypeError):
+        return set()
+    c = collections.Counter(e for r in recs if isinstance(r, dict) and not r.get("rejected")
+                            for e in ((r.get("engine") or {}).get("graph_edges") or []))
+    return {e for e, n in c.items() if n >= MAX_EDGE_USES}
+
+
+def draw(adapter, rng, tried=(), start=None, attempts=800, avoid=()):
     """A scheme of STEPS_MIN..STEPS_MAX steps with 1..MAX_BRANCHES branch points. A candidate dict, or None.
-    start=(name, smiles): build from that molecule (the start picker's); otherwise a random pool molecule."""
+    start=(name, smiles): build from that molecule (the start picker's); otherwise a random pool molecule.
+    avoid: edge ids never used (overused_edges)."""
     from core.engine.organic.mol import classes
+    avoid = set(avoid)
     g = _graph(adapter)
     starts = [n for n in P.POOL if g["out"].get(n)]
     if start is not None:
@@ -158,7 +204,7 @@ def draw(adapter, rng, tried=(), start=None, attempts=800):
         main_len = rng.randint(3, target - 1)
         while len(main) - 1 < main_len:
             cur = comps[main[-1]]
-            got = _step(g, cur["node"], cur["smiles"], seen, rng)
+            got = _step(g, cur["node"], cur["smiles"], seen, rng, avoid=avoid)
             if got is None:
                 break
             e, r = got
@@ -175,7 +221,7 @@ def draw(adapter, rng, tried=(), start=None, attempts=800):
                 break
             at = rng.choice(main[1:-1])               # branch from an intermediate (P → Q → R, then R → S and R → T)
             used = {comps[k]["edge"]["id"] for k in order if comps[k]["parent"] == at}
-            got = _step(g, comps[at]["node"], comps[at]["smiles"], seen, rng, avoid=used)
+            got = _step(g, comps[at]["node"], comps[at]["smiles"], seen, rng, avoid=used | avoid)
             if got is None:
                 continue
             branches += 1
@@ -190,13 +236,15 @@ def draw(adapter, rng, tried=(), start=None, attempts=800):
                 tip = lab
                 if rng.random() < 0.5:
                     break
-                got = _step(g, comps[tip]["node"], comps[tip]["smiles"], seen, rng)
+                got = _step(g, comps[tip]["node"], comps[tip]["smiles"], seen, rng, avoid=avoid)
         n_steps = len(order) - 1
         if branches == 0 or not STEPS_MIN <= n_steps <= STEPS_MAX:
             continue
         key = tuple(comps[k]["edge"]["id"] for k in order[1:])
         if key in tried:
             continue
+        if decorative_steps(comps, order):
+            continue                                  # a step that changes nothing (O1)
         cand = _candidate(comps, order, name, start_smi, branches)
         if len({(h[0], h[1]) for h in cand["_hinge"]}) < MIN_HINGE or len(hinge_sources(cand)) < MIN_HINGE:
             continue                                  # fewer than two steps where a wrong turn changes a fact: not hard
@@ -427,7 +475,7 @@ At least {MIN_HINGE} statements must be DECISIVE FACTS that depend on at least {
 the list names its step), so the student must get two separate decisions right; two statements on the same step
 test one decision twice. An integer must change under wrong turns at {MIN_HINGE} different steps. Code rejects the
 question otherwise. A statement any student gets right without that step (e.g. a C=C every route keeps) does not
-count.
+count, and at most ONE statement in four may be such a filler.
 
 Choose the format: "msq" (4 statements, 1-3 true), "mcq_correct" (4 statements, exactly one true), "count" (4-8
 statements, "how many are correct"), "integer" (one numeric property of one compound).
@@ -470,7 +518,13 @@ def write_question(subject_name: str, cand, design, feedback: str | None = None)
              "count": '4 to 8 "claims", not all true and not all false',
              "integer": 'one "claim" with compound and property only (a numeric property); no value'}[fmt]
     redo = f"\nYour previous draft was rejected: {feedback}\nFix exactly that.\n" if feedback else ""
-    prompt = f"""Write ONE JEE Advanced {subject_name} question from this design. Plain text, Unicode subscripts, no LaTeX.
+    # real JEE Advanced stems of this format, for wording only (reviewer, 2026-11-26; style_examples.copied rejects
+    # a draft that copies one)
+    import random as _random
+    from core.pipeline import style_examples
+    examples = style_examples.stems("organic", fmt, _random.Random())
+    prompt = f"""Write ONE JEE Advanced {subject_name} question from this design, worded exactly as a real JEE Advanced paper
+words its questions. Plain text, Unicode subscripts, no LaTeX.
 
 DESIGN:
 {json.dumps({k: design.get(k) for k in ("system", "hidden", "hidden_link", "student_must_notice", "trap", "asked", "format")}, ensure_ascii=False, indent=1)}
@@ -489,7 +543,7 @@ Rules:
   "structure", a group name for "functional_group"), and "text" (the statement as printed). A false claim states a
   WRONG value on purpose (a tempting wrong structure or property where possible).
 - Do not write option letters or the answer; code adds them.
-
+{style_examples.block(examples)}
 Return JSON: {{"lead": "...", "ask": "...", "format": "{fmt}",
   "claims": [{{"text": "...", "compound": "S", "property": "...", "value": "..."}}]}}"""
     out = models.ask_json("generator", models.GENERATOR, "You write chemistry exam questions. Output JSON only.",
@@ -497,6 +551,7 @@ Return JSON: {{"lead": "...", "ask": "...", "format": "{fmt}",
     if not out.get("ask") or not isinstance(out.get("claims"), list):
         raise ValueError("the writer returned no question or claims")
     out["format"] = fmt
+    out["_style_examples"] = examples
     return out
 
 
@@ -512,6 +567,12 @@ def evaluate(cand, q) -> tuple:
         problems.append(f"format {fmt} needs {need[0]}" + (f" to {need[1]}" if need[1] != need[0] else "")
                         + f" claims, the draft has {len(rows)}")
     text = f"{q.get('lead', '')} {q.get('ask', '')}"
+    from core.pipeline import style_examples
+    every = text + " " + " ".join(str(r.get("text", "")) for r in rows)
+    hit = style_examples.copied(every, q.get("_style_examples"))
+    if hit:
+        problems.append(f"the draft copies the wording of a real JEE question (\"{hit}\"): use the real questions "
+                        f"for style only and write your own sentences")
     for lab in cand["_order"][1:]:
         if cand["_comps"][lab]["smiles"] in text:
             problems.append(f"the lead or question shows the structure of {lab}")
@@ -567,6 +628,12 @@ def evaluate(cand, q) -> tuple:
                 problems.append(f"{n_hinge} statement(s) depend on a wrong turn, at {len(steps)} different step(s) "
                                 f"({', '.join(sorted(steps)) or 'none'}); at least {MIN_HINGE} statements must test "
                                 f"DECISIVE FACTS from at least {MIN_HINGE} DIFFERENT steps")
+            rote = [i + 1 for i, s in enumerate(srcs) if not s]
+            allowed = max(1, MAX_ROTE_PER_4 * len(rows) // 4)
+            if len(rote) > allowed:
+                problems.append(f"statement(s) {', '.join(map(str, rote))} are decided by no step (rote facts any "
+                                f"student gets right); at most {allowed} such statement is allowed: replace the others "
+                                f"with DECISIVE FACTS")
     if problems:
         return None, problems
     texts = [str(r.get("text") or "").strip() for r in rows]
@@ -653,7 +720,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 print(f"  [start] same molecule, scheme {uses + 1} of {SCHEMES_PER_START}: {start[0]}")
         if not saved:
             clear_checkpoint()                        # the previous scheme ended (held, rejected): nothing to resume
-            cand = draw(adapter, rng, tried=bb.tried_edges(), start=start)
+            cand = draw(adapter, rng, tried=bb.tried_edges(), start=start, avoid=overused_edges(adapter))
             uses += 1
         if cand is None:
             if start is not None:

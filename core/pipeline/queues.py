@@ -11,6 +11,8 @@ Review queues — one file per reason, for the questions code cannot settle.
                            engine step looks exactly like a very hard question)
     step_disagreement      organic only: the blind step check (org_step_check.py) did not confirm a reaction step of
                            a drawn scheme (held before any question is written)
+    question_flawed        a ladder member objected that the chemistry or data are wrong, or the trace checker found
+                           its answer a defensible reading of a flawed question (held; the question is regenerated)
 
 Each file is outputs/queue_<reason>_<subject>.json: a list of items, newest last.
 `python tools/results.py queue ...` lists, clears or dismisses them.
@@ -25,7 +27,7 @@ from datetime import datetime, timezone
 from core.llm import write_json_atomic
 
 REASONS = ("engine_unknown", "gate_unreadable", "engine_wrong", "objection_unresolved", "ladder_consensus",
-           "unconfirmed_key", "step_disagreement")
+           "unconfirmed_key", "step_disagreement", "question_flawed")
 _OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "outputs")
 
 

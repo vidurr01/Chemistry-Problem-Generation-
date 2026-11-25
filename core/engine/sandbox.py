@@ -826,18 +826,25 @@ def _input_role(code, steps, preset, name, answer, base_calls):
     else:
         tries = [v * 1.02, v * 0.97, v * 1.001, v * 0.999] if v else [1e-3, -1e-3]
     base = [c["_raw_in"] for c in base_calls]
-    role, ran = None, False
+    role, ran, refused = None, False, False
     for w in tries:
         c = _Ctx()
         try:
             moved = _run_once(code, steps, c, preset={**preset, name: w})
         except Exception:                               # noqa: BLE001 - this change is not possible
+            refused = True
             continue
         ran = True
         if abs(moved - answer) > 1e-7 * abs(answer) + 1e-300:
             return "answer"
         if [x["_raw_in"] for x in c.calls] != base:
             role = "formula"
+    # A non-whole value whose nudge the program refuses is read by it: a value it never reads cannot make it fail.
+    # Live run of 2026-11-26: f_rev was the target of a whole-number search for n (find); ±0.1 % gave the same n and
+    # ±2 % found no whole n, so f_rev was called unused and a right question was rejected twice. Whole numbers keep
+    # the old rule (2026-11-18: a count moved from 1 to 0 broke a division, which proved nothing).
+    if role is None and refused and not isinstance(v, int):
+        role = "formula"
     return role if ran else "answer"
 
 

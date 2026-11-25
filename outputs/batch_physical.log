@@ -2024,3 +2024,475 @@ Spend this run: $0.0557  {"total_cost_usd": 0.05567, "by_role": {"formula_fit": 
   physical   1/1   -> D:\Downloads\Prahlada-Chemistry-Problem-Generation\outputs\generated_questions_physical.json
 
   elapsed: 2.8 min   spend: $0.0557
+
+
+==============================================================================
+RUN 2026-11-25T18:46:46  ::  --physical 1 --max-spend 0.45 --max-consecutive-failures 1 --log outputs/batch_physical.log
+==============================================================================
+[18:46:46] PHYSICAL: requesting 1 question(s)
+[18:46:46] --- physical | attempt 1 | accepted 0/1 ---
+[18:46:46] physical: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: facts
+Physical Chemistry: 37 accepted so far.
+
+╔═══ FACT QUESTION: standard enthalpies of formation (msq) ═══╗
+  [engine] answer ABD; traps: ['reference_states:C']
+  [stem] round 0: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [granite-4.2-8b] ABD  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  [refine] too easy → new_inputs: Replace the well-memorized reference states of carbon and sulfur with counterintuitive or frequently confused cases, such as white phosphoru
+
+╔═══ FACT QUESTION: intensive and extensive properties (mcq_correct) ═══╗
+  [engine] answer D; traps: ['intensive_extensive:A', 'intensive_extensive:B', 'intensive_extensive:C']
+  [stem] round 0: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [granite-4.2-8b] D  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  [refine] too easy → new_inputs: Replace standard elementary properties with subtler thermodynamic quantities that challenge memorization, such as partial molar properties, 
+  [engine] new answer AB
+  [stem] round 1: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [granite-4.2-8b] AB  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  [refine] too easy → new_inputs: Replace standard elementary properties with subtler quantities where scaling behavior is often misunderstood, such as chemical potential, ce
+  [engine] new answer C
+  [stem] round 2: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [granite-4.2-8b] C  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  [refine] too easy → new_inputs: Replace standard introductory properties with thermodynamic quantities and derivatives where students frequently stumble, such as partial mo
+  [engine] new answer B
+  [stem] round 3: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [granite-4.2-8b] B  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  ✗ 3 refinements used; dropping this chain
+
+╔═══ FACT QUESTION: the postulates of the kinetic theory of gases (msq) ═══╗
+  [engine] answer AD; traps: ['kinetic_theory:B', 'kinetic_theory:C']
+  [stem] round 0: writing the question...
+    gate passed (attempt 1)
+  [council] closed-book solves (cheaper members first)...
+    [granite-4.2-8b] AD  → solved
+    ladder: granite-4.2-8b solved it → too easy
+  [refine] too easy → new_inputs: Replace the basic qualitative postulates with a more rigorous analysis of gas transport properties and Maxwell-Boltzmann distributions, such
+
+✗ No question accepted this run.
+
+Spend this run: $0.0202  {"total_cost_usd": 0.02019, "by_role": {"generator": {"calls": 6, "prompt_tokens": 1081, "completion_tokens": 3234, "cost": 0.01294}, "council": {"calls": 7, "prompt_tokens": 5132, "completion_tokens": 1458, "cost": 0.0005411}, "refiner": {"calls": 5, "prompt_tokens": 1744, "completion_tokens": 1441, "cost": 0.006712}}}
+[18:48:38] physical: run finished in 112s (exit=0, question saved: no)
+[18:48:38] spend so far: $0.0202 of $0.45
+[18:48:38] [no accept] physical: 1 consecutive failure(s).
+[18:48:38] [stop] physical: hit 1 consecutive failures, moving on with 0/1.
+
+======================================================================
+ SUMMARY
+======================================================================
+  physical   0/1   -> D:\Downloads\Prahlada-Chemistry-Problem-Generation\outputs\generated_questions_physical.json  <-- short
+
+  elapsed: 1.9 min   spend: $0.0202
+
+
+==============================================================================
+RUN 2026-11-25T18:49:06  ::  --physical 1 --max-spend 0.45 --max-consecutive-failures 1 --log outputs/batch_physical.log
+==============================================================================
+[18:49:06] PHYSICAL: requesting 1 question(s)
+[18:49:06] --- physical | attempt 1 | accepted 0/1 ---
+[18:49:06] physical: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Physical Chemistry: 37 accepted so far.
+
+  [fit] Jev scored 2 random formula sets: 54%, 44%; writing the first over the floor (54%), floor 50%
+
+╔═══ DRAW 1: txs [333, 212] (Chemical Kinetics & Nuclear Chemistry); twist: the designer's choice ═══╗
+    333: activity at administration (mCi) [A = A₀ e^(−λt)]
+    212: time at which [B] is maximum (s) [t_max = ln(k₁/k₂)/(k₁ − k₂)]
+  [design] A radionuclide generator initially containing pure isotope A, which decays to a medically useful radioactive i | insight: At the time when [B] is maximum, d[B]/dt = 0, which means k₁[A] = k₂[B]. Therefore, the activity of B at extra
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks the initial activity of isotope A at the time of generator preparation (mCi)
+    [level] Jev: 2.77 (JEE Advanced medium); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): t_transport = 3.37, activity_admin = 41.6, k1 = 4.26e-06, k2 = 3.84e-05
+    shortcut check: missing the hidden step gives 87.21 against 87.21 (0.0% apart)
+    question rejected (1/2): the hidden step does not change the answer: a student who misses it (A student who misses the equality of activities at t_max will attempt to use or derive the full, complex integrated rate equation for consecutive react
+  [question] attempt 2: asks the initial activity of parent radioisotope A in the generator at the time of preparation (mCi)
+    [level] Jev: 2.66 (JEE Advanced medium); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): t_transport = 3.33, activity_admin = 42.7, k1 = 4.8e-06, k2 = 2.6e-05
+    shortcut check: missing the hidden step gives 85.49 against 85.49 (0.0% apart)
+    question rejected (2/2): the hidden step does not change the answer: a student who misses it (A student who misses the equality of activities at t_max will attempt to use or derive the full, complex integrated rate equation for consecutive react
+
+  [fit] Jev scored 4 random formula sets: 38%, 39%, 49%, 65%; writing the first over the floor (65%), floor 50%
+
+╔═══ DRAW 2: txs [163, 156] (Chemical Equilibrium); twist: the designer's choice ═══╗
+    163: K at T₂ [ln(K₂/K₁) = (ΔH/R)(T₂ − T₁)/(T₁T₂)]
+    156: K of the new reaction [reverse: 1/K; ×2: K²; ×½: √K]
+  [design] The dimerization of nitrogen dioxide: 2 NO2(g) ⇌ N2O4(g). The system is initially described by the equilibrium | insight: The provided standard enthalpy change and K1 correspond to the formation reaction 2 NO2 ⇌ N2O4, but the descri
+  [twist] condition (chosen by the designer)
+  [question] attempt 1: asks the temperature at which the dissociation of dinitrogen tetroxide reaches the specified degree of dissociation (K)
+    [level] Jev: 2.45 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): Kp1 = 5.2, T1 = 303.0, delta_H = -53.8, P_total = 0.839, alpha = 0.621, R = 8.314
+    shortcut check: missing the hidden step gives -7.335 against 341.2 (102.1% apart)
+  [engine] answer 341.2 K; traps: ['sign']
+  [council] closed-book solves (cheaper members first)...
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 3
+    [granite-4.2-8b] 267 K  → failed
+    [glm-5.3-flash] 341 K  → solved
+    ladder: granite-4.2-8b failed; first solved by glm-5.3-flash → advanced (Jev level 2.42)
+    [hint] granite-4.2-8b: insight → solved (difficulty confirmed)
+
+✓ ACCEPTED GEN_20261125T132235 — answer 341 K; difficulty advanced (first solved by glm-5.3-flash); tags {'knowledge': 'closed_book', 'trap_types': ['sign']}
+============================================================
+For the dimerization reaction 2 NO2(g) ⇌ N2O4(g), the equilibrium constant Kp is 5.20 bar^-1 at 303 K, and the standard enthalpy change is -53.8 kJ mol^-1 over the temperature range considered. Pure N2O4(g) is introduced into a container and allowed to dissociate according to N2O4(g) ⇌ 2 NO2(g) at a constant total pressure of 0.839 bar. The temperature at which the degree of dissociation of N2O4 reaches 0.621 is: (Given: R = 8.314 J K^-1 mol^-1) Give the answer in K, to 3 significant figures.
+============================================================
+
+Spend this run: $0.0744  {"total_cost_usd": 0.0744, "by_role": {"formula_fit": {"calls": 11, "prompt_tokens": 5499, "completion_tokens": 0, "cost": 0.000231}, "designer": {"calls": 2, "prompt_tokens": 4944, "completion_tokens": 3241, "cost": 0.04878}, "design_check": {"calls": 2, "prompt_tokens": 1434, "completion_tokens": 0, "cost": 6.023e-05}, "generator": {"calls": 3, "prompt_tokens": 8977, "completion_tokens": 1494, "cost": 0.01234}, "level_check": {"calls": 4, "prompt_tokens": 2325, "completion_tokens": 0, "cost": 9.765e-05}, "coder": {"calls": 3, "prompt_tokens": 9068, "completion_tokens": 2118, "cost": 0.002192}, "coherence_check": {"calls": 3, "prompt_tokens": 1722, "completion_tokens": 0, "cost": 7.232e-05}, "shortcut_coder": {"calls": 3, "prompt_tokens": 2069, "completion_tokens": 3935, "cost": 0.002174}, "council": {"calls": 6, "prompt_tokens": 5262, "completion_tokens": 4834, "cost": 0.001755}, "solution_writer": {"calls": 1, "prompt_tokens": 659, "completion_tokens": 1430, "cost": 0.005857}, "solution_checker": {"calls": 1, "prompt_tokens": 1583, "completion_tokens": 1369, "cost": 0.0008428}}}
+[18:52:36] physical: run finished in 209s (exit=0, question saved: yes)
+[18:52:36] spend so far: $0.0744 of $0.45
+[18:52:36] [ok] physical: 1/1 accepted.
+
+======================================================================
+ SUMMARY
+======================================================================
+  physical   1/1   -> D:\Downloads\Prahlada-Chemistry-Problem-Generation\outputs\generated_questions_physical.json
+
+  elapsed: 3.5 min   spend: $0.0744
+
+
+==============================================================================
+RUN 2026-11-25T18:53:10  ::  --physical 1 --max-spend 0.45 --max-consecutive-failures 1 --log outputs/batch_physical.log
+==============================================================================
+[18:53:10] PHYSICAL: requesting 1 question(s)
+[18:53:10] --- physical | attempt 1 | accepted 0/1 ---
+[18:53:10] physical: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Physical Chemistry: 38 accepted so far.
+
+  [fit] Jev scored 2 random formula sets: 23%, 79%; writing the first over the floor (79%), floor 50%
+
+╔═══ DRAW 1: txs [131, 388] (Thermodynamics); twist: the designer's choice ═══╗
+    131: standard entropy change (J K⁻¹ mol⁻¹) [ΔS° = ΣνS°(products) − ΣνS°(reactants)]
+    388: entropy change at T₂ (J K⁻¹ mol⁻¹) [ΔS(T₂) = ΔS(T₁) + ∫ΔC_p/T dT = ΔS(T₁) + ΔC_p ln(T₂/T₁)]
+    design reply cut off at the output limit; asking the designer to finish it
+  [design] The gas-phase oxidation of sulfur dioxide: 2 SO2(g) + O2(g) ⇌ 2 SO3(g), evaluated at 298 K and 800 K. | insight: That the macroscopic reaction entropy must be shifted to 800 K first before applying the sum-of-species formul
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks the standard molar entropy of sulfur trioxide (SO3) gas at 800 K (J K^-1 mol^-1)
+    [level] Jev: 2.30 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): T1 = 298, delta_S_298 = -187.0, delta_Cp = -15.9, T2 = 800, S_SO2_800 = 289.0, S_O2_800 = 248.0
+    shortcut check: missing the hidden step gives 319.5 against 311.6 (2.5% apart)
+    question rejected (1/2): the hidden step does not change the answer: a student who misses it (Using the given 800 K species entropies directly with the 298 K reaction entropy, assuming ΔS° is temperature-independent, which yields a significantly
+  [question] attempt 2: asks the standard molar entropy of sulfur trioxide (SO3) at 800 K (J K^-1 mol^-1)
+    [level] Jev: 2.39 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): T1 = 298, delta_S_298 = -192.0, delta_Cp = -86.0, T2 = 800, S_SO2_800 = 301.0, S_O2_800 = 235.0
+    shortcut check: missing the hidden step gives 322.5 against 280 (13.2% apart)
+  [engine] answer 280 J K^-1 mol^-1; traps: ['linear_in_T', 'reactants_minus_products', 'ignores_coefficients']
+  [council] closed-book solves (cheaper members first)...
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [granite-4.2-8b] 813 J K^-1 mol^-1  → failed
+    [glm-5.3-flash] 280 J K^-1 mol^-1  → solved
+    ladder: granite-4.2-8b failed; first solved by glm-5.3-flash → advanced (Jev level 2.34)
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [hint] granite-4.2-8b: insight → still wrong
+
+✓ ACCEPTED GEN_20261125T132651 — answer 280 J K^-1 mol^-1; difficulty advanced (first solved by glm-5.3-flash); tags {'knowledge': 'closed_book', 'trap_types': ['ignores_coefficients', 'linear_in_T', 'reactants_minus_products']}
+============================================================
+For the gas-phase reaction 2 SO2(g) + O2(g) ⇌ 2 SO3(g), the standard reaction entropy at 298 K is -192 J K^-1 mol^-1, and the standard heat capacity change ΔC_p for the reaction is -86.0 J K^-1 mol^-1, assumed constant over the temperature range. At 800 K, the standard molar entropies of SO2(g) and O2(g) are 301 J K^-1 mol^-1 and 235 J K^-1 mol^-1, respectively. Calculate the standard molar entropy of SO3(g) at 800 K. Give the answer in J K^-1 mol^-1, to 3 significant figures.
+============================================================
+
+Spend this run: $0.1471  {"total_cost_usd": 0.1471, "by_role": {"formula_fit": {"calls": 5, "prompt_tokens": 2499, "completion_tokens": 0, "cost": 0.000105}, "designer": {"calls": 2, "prompt_tokens": 6896, "completion_tokens": 9407, "cost": 0.1267}, "design_check": {"calls": 1, "prompt_tokens": 700, "completion_tokens": 0, "cost": 2.94e-05}, "generator": {"calls": 2, "prompt_tokens": 6538, "completion_tokens": 1122, "cost": 0.009111}, "level_check": {"calls": 3, "prompt_tokens": 1716, "completion_tokens": 0, "cost": 7.207e-05}, "coder": {"calls": 2, "prompt_tokens": 6959, "completion_tokens": 2322, "cost": 0.002031}, "coherence_check": {"calls": 2, "prompt_tokens": 1120, "completion_tokens": 0, "cost": 4.704e-05}, "shortcut_coder": {"calls": 2, "prompt_tokens": 1745, "completion_tokens": 783, "cost": 0.000566}, "council": {"calls": 7, "prompt_tokens": 6380, "completion_tokens": 2428, "cost": 0.001059}, "solution_writer": {"calls": 1, "prompt_tokens": 699, "completion_tokens": 1724, "cost": 0.006989}, "solution_checker": {"calls": 1, "prompt_tokens": 1605, "completion_tokens": 515, "cost": 0.000418}}}
+[18:56:52] physical: run finished in 222s (exit=0, question saved: yes)
+[18:56:52] spend so far: $0.1471 of $0.45
+[18:56:52] [ok] physical: 1/1 accepted.
+
+======================================================================
+ SUMMARY
+======================================================================
+  physical   1/1   -> D:\Downloads\Prahlada-Chemistry-Problem-Generation\outputs\generated_questions_physical.json
+
+  elapsed: 3.7 min   spend: $0.1471
+
+
+==============================================================================
+RUN 2026-11-25T18:57:25  ::  --physical 1 --max-spend 0.45 --max-consecutive-failures 1 --log outputs/batch_physical.log
+==============================================================================
+[18:57:25] PHYSICAL: requesting 1 question(s)
+[18:57:25] --- physical | attempt 1 | accepted 0/1 ---
+[18:57:25] physical: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Physical Chemistry: 39 accepted so far.
+
+  [fit] Jev scored 1 random formula sets: 55%; writing the first over the floor (55%), floor 50%
+
+╔═══ DRAW 1: txs [94, 258] (Gaseous State, Dilute Solutions); twist: the designer's choice ═══╗
+    94: relative humidity (%) [%RH = p(H₂O)/VP(H₂O) × 100]
+    258: mole fraction of A in the vapour [y_A = P°_A X_A / P]
+  [design] A closed vessel contains air, water vapor, and the vapor of a volatile liquid A in equilibrium with an aqueous | insight: The relative humidity of the air in equilibrium with the solution defines the mole fraction of water in the li
+    design cannot be built with these formulas (1/1): it links quantities by a relation that is not real chemistry (Jev: 77%)
+
+  [fit] Jev scored 1 random formula sets: 58%; writing the first over the floor (58%), floor 50%
+
+╔═══ DRAW 2: txs [216, 315, 368] (Chemical Kinetics & Nuclear Chemistry, Chemical Equilibrium); twist: the designer's choice ═══╗
+    216: activation energy of the backward reaction (kJ mol⁻¹) [ΔH = E_a,f − E_a,b]
+    315: standard enthalpy change (kJ mol⁻¹) [ln K = −ΔH°/RT + ΔS°/R: slope = −ΔH°/R]
+    368: equilibrium constant [K = k_f/k_b = (A_f/A_b) e^((E_a,b − E_a,f)/RT)]
+  [design] The reversible gas-phase isomerization of cis-2-butene to trans-2-butene. | insight: The student must notice that the slope of the ln K vs 1/T plot directly gives the enthalpy change, which is ex
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks the ratio of the pre-exponential factors for the forward and backward reactions (A_f / A_b)
+    [level] Jev: 2.31 (JEE Main hard); floor 1.16
+    program rejected (1/3): on values from the question's ranges every run fails inside a formula (step_315: input slope (slope of the plot against 1/T) must be < 0, got 959.0; you passed 959.0); check how each value enters: its
+    program written (attempt 2); it runs on values from the question's ranges
+    numbers picked (14 sets tried): E_a_f = 220.0, slope = 840.0, T = 735.0, K_eq = 1.85, R = 8.314
+    shortcut check: missing the hidden step gives 3.136 against 0.59 (81.2% apart)
+  [engine] answer 0.59; traps: ['forgets_2303', 'sign']
+  [council] closed-book solves (cheaper members first)...
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [granite-4.2-8b] 0.589  → solved
+    ladder: granite-4.2-8b solved it → too easy
+    Jev's pick: plugin_order (confidence 39%)
+  [refine] too easy because: plugin_order; twist now condition
+  [design] The reversible gas-phase dissociation of sulfuryl chloride, SO2Cl2(g) ⇌ SO2(g) + Cl2(g), carried out in a rigi | insight: The student must realise that Kp must be used in Formula 3 to be consistent with the standard state, and the d
+    design cannot be built with these formulas (1/1): it links quantities by a relation that is not real chemistry (Jev: 41%)
+
+  [fit] Jev scored 1 random formula sets: 65%; writing the first over the floor (65%), floor 50%
+
+╔═══ DRAW 3: txs [160, 163, 156] (Chemical Equilibrium); twist: the designer's choice ═══╗
+    160: K_p [per mole of reactant: 1 − α and αν/ν_r; p_i = (n_i/n_total)P; K_p = Πp_i^ν]
+    163: K at T₂ [ln(K₂/K₁) = (ΔH/R)(T₂ − T₁)/(T₁T₂)]
+    156: K of the new reaction [reverse: 1/K; ×2: K²; ×½: √K]
+  [design] A rigid vessel initially contains pure N2O4(g) at a specified temperature T1 and pressure P1. It is heated to  | insight: The total pressure at equilibrium at T2 is not the initial pressure P1, nor is it simply P1*(1+α). It must acc
+  [twist] condition (chosen by the designer)
+  [question] attempt 1: asks the temperature to which the vessel must be heated (K)
+    [level] Jev: 2.31 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): Kp1 = 5.49, T1 = 305.0, P1 = 1.25, alpha = 0.525, delta_H = 59.5, R = 8.314
+    shortcut check: missing the hidden step gives 338.9 against 348 (2.6% apart)
+    question rejected (1/2): the hidden step does not change the answer: a student who misses it (Assuming the total pressure remains constant at P1, or forgetting to scale the initial pressure by T2/T1 before applying the dissociation stoichiometry
+    writer: these formulas cannot make one question: In the van 't Hoff equation for gaseous dissociation (N2O4 -> 2 NO2 with delta_H ~ 55 kJ/mol), Kp is an exponential function of temperature, while the rigid con
+
+  [fit] Jev scored 4 random formula sets: 40%, 32%, 30%, 77%; writing the first over the floor (77%), floor 50%
+
+╔═══ DRAW 4: txs [107, 108] (Gaseous State); twist: the designer's choice ═══╗
+    107: the critical constant (K, atm or L mol⁻¹) [T_c = 8a/27Rb; P_c = a/27b²; V_c = 3b]
+    108: the reduced variable [T_r = T/T_c; P_r = P/P_c]
+  [design] A specific mass of a real gas in a container at a given temperature and pressure. | insight: The critical volume given is for the entire mass of the gas, not one mole, so V_c = 3b cannot be equated direc
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks the reduced pressure of the gas
+    [level] Jev: 2.16 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): m = 295.0, T_r = 1.42, T = 613.0, P = 112.0, V_c_total = 0.799, M = 64.0, R = 0.0821
+    shortcut check: missing the hidden step gives 6.733 against 1.461 (78.3% apart)
+  [engine] answer 1.461; traps: ['boyle_for_tc', 'inverted']
+  [council] closed-book solves (cheaper members first)...
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 2
+    [council] reply was not the JSON asked for (empty final reply after tool calls (finish_reason=stop)); told so (1/2)
+    [council] reply was not the JSON asked for (empty final reply after tool calls (finish_reason=stop)); told so (2/2)
+    [council] ibm-granite/granite-4.2-8b: answer line unusable ('atm' cannot be converted to ''); restate failed
+    [granite-4.2-8b] answer [TYPE: thermodynamics] [CALC_VALUE: 2.52] [CALC_UNIT: atm] [SUBSTANCE: null] is nonsense for this question; asking again
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 2
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 3
+    [council] ibm-granite/granite-4.2-8b: answer line unusable ('atm' cannot be converted to ''); restate failed
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 3
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 4
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 5
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 6
+    [council] reply was not the JSON asked for (empty final reply after tool calls (finish_reason=length)); told so (1/2)
+    [council minimax-m3] calc tool: 1 call(s) in round 2
+    [council minimax-m3] calc tool: 1 call(s) in round 3
+    [council minimax-m3] calc tool: 1 call(s) in round 4
+    [council minimax-m3] calc tool: 1 call(s) in round 5
+    [council minimax-m3] calc tool: 1 call(s) in round 6
+    [granite-4.2-8b] [TYPE: thermodynamics] [CALC_VALUE: 2.52] [CALC_UNIT: atm] [SUBSTANCE: null]  → failed
+    [granite-4.2-8b] [TYPE: reducedpressure] [CALC_VALUE: 1.78] [CALC_UNIT: atm] [SUBSTANCE: null]  → failed
+    [glm-5.3-flash] 0.548  → failed
+    [minimax-m3] 1.46  → solved
+    ladder: granite-4.2-8b failed; first solved by minimax-m3 → advanced_medium
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 2
+    [council] ibm-granite/granite-4.2-8b: answer line unusable ('atm' cannot be converted to ''); restate failed
+    [hint] granite-4.2-8b: insight → still wrong
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 3
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 4
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 5
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 6
+    [hint] glm-5.3-flash: insight → solved (difficulty confirmed)
+
+✓ ACCEPTED GEN_20261125T133759 — answer 1.46; difficulty advanced_medium (first solved by minimax-m3); tags {'knowledge': 'closed_book', 'trap_types': ['boyle_for_tc', 'inverted']}
+============================================================
+A sample of sulfur dioxide (SO2) having a mass of 295 g exhibits a reduced temperature of 1.42 at a temperature of 613 K and a pressure of 112 atm. If the total critical volume of this entire sample is 0.799 L, calculate the reduced pressure of the gas at these conditions. (Given: molar mass of SO2 = 64.0 g mol^-1, R = 0.0821 L atm K^-1 mol^-1) Give the answer to 3 significant figures.
+============================================================
+
+Spend this run: $0.2156  {"total_cost_usd": 0.2156, "by_role": {"formula_fit": {"calls": 18, "prompt_tokens": 9578, "completion_tokens": 0, "cost": 0.0004023}, "designer": {"calls": 5, "prompt_tokens": 12666, "completion_tokens": 7292, "cost": 0.1128}, "design_check": {"calls": 5, "prompt_tokens": 3326, "completion_tokens": 0, "cost": 0.0001397}, "generator": {"calls": 4, "prompt_tokens": 13234, "completion_tokens": 2956, "cost": 0.02101}, "level_check": {"calls": 3, "prompt_tokens": 1711, "completion_tokens": 0, "cost": 7.186e-05}, "coder": {"calls": 4, "prompt_tokens": 14950, "completion_tokens": 3322, "cost": 0.003529}, "coherence_check": {"calls": 3, "prompt_tokens": 1693, "completion_tokens": 0, "cost": 7.111e-05}, "shortcut_coder": {"calls": 3, "prompt_tokens": 2490, "completion_tokens": 6646, "cost": 0.003572}, "council": {"calls": 38, "prompt_tokens": 36177, "completion_tokens": 47069, "cost": 0.0483}, "refiner": {"calls": 1, "prompt_tokens": 1720, "completion_tokens": 0, "cost": 7.224e-05}, "solution_writer": {"calls": 2, "prompt_tokens": 1941, "completion_tokens": 6333, "cost": 0.0252}, "solution_checker": {"calls": 1, "prompt_tokens": 1332, "completion_tokens": 517, "cost": 0.0003917}}}
+[19:07:59] physical: run finished in 634s (exit=0, question saved: yes)
+[19:07:59] spend so far: $0.2156 of $0.45
+[19:07:59] [ok] physical: 1/1 accepted.
+
+======================================================================
+ SUMMARY
+======================================================================
+  physical   1/1   -> D:\Downloads\Prahlada-Chemistry-Problem-Generation\outputs\generated_questions_physical.json
+
+  elapsed: 10.6 min   spend: $0.2156
+
+
+==============================================================================
+RUN 2026-11-25T19:08:25  ::  --physical 1 --max-spend 0.45 --max-consecutive-failures 1 --log outputs/batch_physical.log
+==============================================================================
+[19:08:25] PHYSICAL: requesting 1 question(s)
+[19:08:25] --- physical | attempt 1 | accepted 0/1 ---
+[19:08:25] physical: launching run_groundup_final.py (timeout 1800s)
+Question kind this run: chains
+Physical Chemistry: 40 accepted so far.
+
+  [fit] Jev scored 2 random formula sets: 56%, 36%; writing the first over the floor (56%), floor 50%
+
+╔═══ DRAW 1: txs [73, 74] (Atomic Structure); twist: the designer's choice ═══╗
+    73: de Broglie wavelength (m) [λ = h/p]
+    74: de Broglie wavelength of the electron (m) [2πr_n = nλ]
+  [design] He+ ion and Li2+ ion, both in excited states | insight: That λ = 2πr_n/n, and since r_n ∝ n^2/Z, λ ∝ n/Z. The student must notice that the momentum p ∝ Z/n.
+    design cannot be built with these formulas (1/1): it glues unrelated sub-problems together instead of one chemical situation (Jev: 13%)
+
+  [fit] Jev scored 1 random formula sets: 58%; writing the first over the floor (58%), floor 50%
+
+╔═══ DRAW 2: txs [371, 198] (Ionic Equilibrium); twist: the designer's choice ═══╗
+    371: equilibrium concentration of the ion that is not in excess (mol L⁻¹) [precipitation is complete; [minor ion] = K_sp/[ion in excess]]
+    198: which ion precipitates first [ion needing the lower [precipitant] = K_sp/c precipitates first]
+  [design] A solution containing two different anions (e.g., Cl⁻ and I⁻) is titrated with a solution of a precipitating c | insight: The addition of the precipitant solution significantly increases the total volume, so the concentration of the
+  [twist] condition (chosen by the designer)
+  [question] attempt 1: asks the volume of silver nitrate solution required until the second precipitate just begins to form (mL)
+    [level] Jev: 2.13 (JEE Main hard); floor 1.16
+    blanks need fixing: unusable range or value for Ksp_AgCl, Ksp_AgI: give [low, high] with low < high, or one plain number; no range or value for [[Ksp_AgCl]], [[Ksp_AgI]]: give each placeholder a range in "values" (or a value, if it belongs 
+  [question] attempt 1: asks the volume of the silver nitrate solution that must be added so that the second precipitate just begins to form (mL)
+    [level] Jev: 2.06 (JEE Main hard); floor 1.16
+    program rejected (1/3): on values from the question's ranges every run fails inside a formula (step_371: equal amounts: neither ion is in excess); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) an
+    program rejected (2/3): on values from the question's ranges every run fails inside a formula (step_371: equal amounts: neither ion is in excess); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) an
+    question rejected (1/2): with values in your ranges the situation is physically impossible (step_371: equal amounts: neither ion is in excess); choose ranges (and values) in which every step of the situation is possible
+  [question] attempt 2: asks the volume of the silver nitrate solution that must be added so that the second precipitate just begins to form (mL)
+    [level] Jev: 2.11 (JEE Main hard); floor 1.16
+    program rejected (1/3): on values from the question's ranges every run fails inside a formula (step_371: equal amounts: neither ion is in excess); check how each value enters: its unit (°C or K, g or kg, mL or L, kJ or J) an
+    program rejected (2/3): the program never calls step_371; the question is built on every function: use each where the question needs it (if the question truly does not need one, reply cannot and say which)
+    program written (attempt 3); it runs on values from the question's ranges
+    no good numbers in the writer's ranges (200 sets tried; {'traps': 200}): with values in your ranges fewer than 1 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 1 of these give a clearly different answer: uses the conce
+    question rejected (2/2): with values in your ranges fewer than 1 typical mistakes change the answer (only: none); choose the situation and the ranges so that at least 1 of these give a clearly different answer: uses the concentrations before mix
+
+  [fit] Jev scored 2 random formula sets: 78%, 34%; writing the first over the floor (78%), floor 50%
+
+╔═══ DRAW 3: txs [2, 151] (Stoichiometry, Chemical Equilibrium); twist: the designer's choice ═══╗
+    2: amount (in mol) of the ionic compound (formula units) [n = m / M]
+    151: equilibrium amount of the species (mol) [reactant n₀(1 − α); product n₀α ν/ν_reactant]
+  [design] A sealed rigid vessel initially contains a pure sample of solid phosphorus pentachloride (which exists as the  | insight: The solid ionic compound [PCl4]+[PCl6]- has a formula unit that is a dimer of PCl5 (i.e., P2Cl10). Therefore, 
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks the initial mass of the solid ionic phosphorus pentachloride introduced into the vessel (g)
+    [level] Jev: 2.30 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): V = 17.8, T = 482.0, alpha = 0.211, P_total = 3.13, R = 0.0821, M_P = 31.0, M_Cl = 35.5
+    shortcut check: missing the hidden step does not change the method (The factor of 2 in the ionic formula-unit molar mass exactly cancels dividing the PCl5 amount by 2, so the usual route g)
+    question rejected (1/2): the hidden step does not change the solution: a student who misses it solves it the same way (The factor of 2 in the ionic formula-unit molar mass exactly cancels dividing the PCl5 amount by 2, so the usual route gives t
+    writer: these formulas cannot make one question: The stoichiometry conversion factor of 2 between the ionic formula unit [PCl4]+[PCl6]- and gaseous PCl5 (1 mol ionic solid -> 2 mol PCl5) is mathematically iden
+
+  [fit] Jev scored 1 random formula sets: 55%; writing the first over the floor (55%), floor 50%
+
+╔═══ DRAW 4: txs [221, 220, 219] (Chemical Kinetics & Nuclear Chemistry); twist: the designer's choice ═══╗
+    221: daughter nuclide after positron emission [β⁺ decay: Z − 1, A unchanged]
+    220: daughter nuclide after β⁻ emission [β⁻ decay: Z + 1, A unchanged]
+    219: daughter nuclide after α emission [α decay: Z − 2, A − 4]
+    designer: these formulas cannot make one question: The prompt asks to design a numerical question using only formulas for alpha, beta+, and beta- decay (which change Z and A). However, the requested output must 
+
+  [fit] Jev scored 4 random formula sets: 44%, 23%, 14%, 82%; writing the first over the floor (82%), floor 50%
+
+╔═══ DRAW 5: txs [251, 173] (Electrochemistry, Ionic Equilibrium); twist: the designer's choice ═══╗
+    251: degree of dissociation [α = Λm/Λ°m]
+    173: degree of dissociation [K = Cα²/(1 − α) (≈ √(K/C) when α ≪ 1)]
+    designer: these formulas cannot make one question: Formulas 1 and 2 are a self-contained pair for the Ostwald dilution law (Formula 1 gives alpha from conductivity data; Formula 2 takes alpha and C to give K, or
+
+  [fit] Jev scored 3 random formula sets: 33%, 54%, 20%; writing the first over the floor (54%), floor 50%
+
+╔═══ DRAW 6: txs [119, 122] (Thermodynamics); twist: the designer's choice ═══╗
+    119: work done on the gas (J) [TV^(γ−1) = const; w = ΔU = nC_v(T₂ − T₁)]
+    122: molar heat capacity of the process [C = C_v + R/(1 − x)]
+  [design] A monatomic ideal gas undergoes two separate expansion processes from the same initial state (T1, V1) to the s | insight: The relation TV^(x-1) = constant applies to the polytropic process, just as TV^(γ-1) = constant applies to the
+  [twist] two_state_ratio (chosen by the designer)
+  [question] attempt 1: asks the ratio of the work done on the gas in Process B to that in Process A
+    [level] Jev: 3.01 (JEE Advanced medium); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    no good numbers in the writer's ranges (200 sets tried; {'answer_range': 200}): with values in your ranges the answer comes out between -8.11 and -1.11, never inside your answer_range [0.3, 2.5]: correct the answer_range, or the ranges if the answer should lie there
+    question rejected (1/2): with values in your ranges the answer comes out between -8.11 and -1.11, never inside your answer_range [0.3, 2.5]: correct the answer_range, or the ranges if the answer should lie there
+  [question] attempt 2: asks the ratio of the work done on the gas in Process B to that in Process A
+    [level] Jev: 3.03 (JEE Advanced medium); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): V_ratio = 4.42, C_poly = 27.8, R = 8.314
+    shortcut check: missing the hidden step gives 2.422 against -1.971 (181.4% apart)
+  [engine] answer -1.971; traps: ['sign', 'inverted_gamma']
+  [council] closed-book solves (cheaper members first)...
+    [council granite-4.2-8b] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council minimax-m3] calc tool: 1 call(s) in round 1
+    [council minimax-m3] calc tool: 1 call(s) in round 2
+    [council minimax-m3] calc tool: 1 call(s) in round 3
+    [council minimax-m3] calc tool: 1 call(s) in round 4
+    [council minimax-m3] calc tool: 1 call(s) in round 5
+    [council minimax-m3] calc tool: 1 call(s) in round 6
+    [council minimax-m3] calc tool: 1 call(s) in round 7
+    [council minimax-m3] calc tool: 1 call(s) in round 8
+    [council minimax-m3] calc tool: 1 call(s) in round 9
+    [council minimax-m3] calc tool: 1 call(s) in round 10
+    [council minimax-m3] calc tool: 1 call(s) in round 11
+    [council minimax-m3] calc tool: 1 call(s) in round 12
+    [granite-4.2-8b] 0.723  → failed
+    [glm-5.3-flash] 0.119  → failed
+    [minimax-m3] 2.42  → failed
+    ladder: granite-4.2-8b failed; first solved by no step → hard_advanced
+    [hint] granite-4.2-8b: insight → still wrong
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 3
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 4
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 5
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 6
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 7
+    [hint] glm-5.3-flash: insight → still wrong
+    [council minimax-m3] calc tool: 1 call(s) in round 1
+    [council minimax-m3] calc tool: 1 call(s) in round 2
+    [council minimax-m3] calc tool: 1 call(s) in round 3
+    [council minimax-m3] calc tool: 1 call(s) in round 4
+    [council minimax-m3] calc tool: 1 call(s) in round 5
+    [council minimax-m3] calc tool: 1 call(s) in round 6
+    [hint] minimax-m3: insight → still wrong
+
+✓ ACCEPTED GEN_20261125T135237 — answer -1.97; difficulty hard_advanced (first solved by no step); tags {'knowledge': 'closed_book', 'trap_types': ['inverted_gamma', 'sign']}
+============================================================
+A sample of a monatomic ideal gas expands from an initial volume V₁ to a final volume V₂ = 4.42 V₁. In Process A, the expansion is reversible and adiabatic. In a separate experiment starting from the exact same initial state, the gas undergoes a reversible polytropic expansion (Process B) with a constant molar heat capacity of 27.8 J K⁻¹ mol⁻¹ to reach the same final volume V₂. Calculate the ratio of the work done on the gas during Process B to that during Process A.
+(Given: R = 8.314 J K⁻¹ mol⁻¹) Give the answer to 3 significant figures.
+============================================================
+
+Spend this run: $0.2383  {"total_cost_usd": 0.2383, "by_role": {"formula_fit": {"calls": 30, "prompt_tokens": 14687, "completion_tokens": 0, "cost": 0.0006169}, "designer": {"calls": 6, "prompt_tokens": 15362, "completion_tokens": 4399, "cost": 0.08351}, "design_check": {"calls": 4, "prompt_tokens": 2604, "completion_tokens": 0, "cost": 0.0001094}, "generator": {"calls": 7, "prompt_tokens": 22410, "completion_tokens": 3059, "cost": 0.02828}, "level_check": {"calls": 6, "prompt_tokens": 3445, "completion_tokens": 0, "cost": 0.0001447}, "coder": {"calls": 8, "prompt_tokens": 29493, "completion_tokens": 33153, "cost": 0.01991}, "coherence_check": {"calls": 2, "prompt_tokens": 1139, "completion_tokens": 0, "cost": 4.784e-05}, "shortcut_coder": {"calls": 2, "prompt_tokens": 1646, "completion_tokens": 2083, "cost": 0.001206}, "council": {"calls": 34, "prompt_tokens": 40438, "completion_tokens": 61324, "cost": 0.06972}, "solution_writer": {"calls": 2, "prompt_tokens": 2007, "completion_tokens": 8298, "cost": 0.03262}, "solution_checker": {"calls": 2, "prompt_tokens": 3256, "completion_tokens": 3580, "cost": 0.002116}}}
+[19:22:38] physical: run finished in 853s (exit=0, question saved: yes)
+[19:22:38] spend so far: $0.2383 of $0.45
+[19:22:38] [ok] physical: 1/1 accepted.
+
+======================================================================
+ SUMMARY
+======================================================================
+  physical   1/1   -> D:\Downloads\Prahlada-Chemistry-Problem-Generation\outputs\generated_questions_physical.json
+
+  elapsed: 14.2 min   spend: $0.2383

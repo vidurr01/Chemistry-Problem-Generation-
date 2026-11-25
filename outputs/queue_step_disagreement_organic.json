@@ -2416,5 +2416,77 @@
         "reason": "The amine is protonated by the acid, while the secondary alcohol undergoes dehydration; Zaitsev elimination gives the more substituted alkene, predominantly the E isomer, without a favorable carbocation rearrangement."
       }
     ]
+  },
+  {
+    "id": "STE_20261125T203132_56",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-25T20:31:32.756971+00:00",
+    "chain": [
+      "aldehyde_to_alcohol_nabh",
+      "alkyne_to_ketone_ho",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "ketone_to_ketone_x2"
+    ],
+    "start": [
+      "4-(prop-2-yn-1-yl)benzaldehyde",
+      "C#CCc1ccc(C=O)cc1"
+    ],
+    "structures": {
+      "P": "C#CCc1ccc(C=O)cc1",
+      "Q": "C#CCc1ccc(CO)cc1",
+      "R": "CC(=O)Cc1ccc(CO)cc1",
+      "S": "O=C(O)Cc1ccc(CO)cc1",
+      "T": "CC(=O)C(Br)c1ccc(CO)cc1"
+    },
+    "steps": [
+      {
+        "label": "S",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "CC(=O)Cc1ccc(CO)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "O=C(O)Cc1ccc(CO)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)Cc1ccc(C(=O)O)cc1",
+        "reason": "Excess alkaline bromine cleaves the methyl ketone by the haloform reaction to ArCH2CO2H and oxidizes the benzyl alcohol side chain to CO2H on acid workup."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261125T210304_57",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-25T21:03:04.619573+00:00",
+    "chain": [
+      "alcohol_to_ether_na",
+      "ketone_to_alcohol_nabh",
+      "alcohol_to_substituted_benzene_4methylbenze",
+      "alcohol_to_alkene_conchso",
+      "alkene_to_diol_oso",
+      "ketone_to_ketone_x2"
+    ],
+    "start": [
+      "4-[4-(hydroxymethyl)phenyl]butan-2-one",
+      "CC(=O)CCc1ccc(CO)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)CCc1ccc(CO)cc1",
+      "Q": "COCc1ccc(CCC(C)=O)cc1",
+      "R": "COCc1ccc(CCC(C)O)cc1",
+      "S": "COCc1ccc(CCC(C)OS(=O)(=O)c2ccc(C)cc2)cc1",
+      "T": "CC=CCc1ccc(COC)cc1",
+      "U": "COCc1ccc(CC(O)C(C)O)cc1",
+      "V": "COCc1ccc(CC(Br)C(C)=O)cc1"
+    },
+    "steps": [
+      {
+        "label": "T",
+        "edge": "alcohol_to_alkene_conchso",
+        "substrate": "COCc1ccc(CCC(C)O)cc1",
+        "reagent": "conc. H₂SO₄, 443 K",
+        "engine": "CC=CCc1ccc(COC)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "Although the secondary alcohol can dehydrate, hot concentrated H₂SO₄ can also cleave the benzyl methyl ether, so the simple alcohol-dehydration textbook rule does not specify a unique major product for this substrate."
+      }
+    ]
   }
 ]

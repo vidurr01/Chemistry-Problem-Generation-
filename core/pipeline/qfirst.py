@@ -231,7 +231,7 @@ def write_and_solve(adapter, cand, twist, bb, rng, previous=None, feedback=None,
             left = [t for t in run.get("unused_steps") or () if t in kept]
             if left:                             # a drawn formula the program never called and that cannot go
                 probs.append(f"the program never calls {', '.join(f'step_{t}' for t in left)}")
-            probs += trace_problems(run, asks)   # K_c used as K_p, data that contradict, an unreal element
+            probs += trace_problems(run, asks, stem)   # K_c as K_p, contradicting data, unreal element, k units
         if not probs:
             probs = coherence_problems(stem)     # only drafts that pass every code check are sent to Jev
         if not probs:                            # does the hidden step change the answer? (one coder call)
@@ -376,6 +376,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"],
                  "stem": stem, "answer": result.answer, "reason": decision.get("reason"), "twist": twist,
                  "council": [{k: g.get(k) for k in ("name", "final_answer", "answer_matches", "counts_as_solved",
+                                                    "failure_label",
                                                     "verdict", "failure_type")} for g in decision.get("graded", [])]})
             if decision["decision"] == "accept":
                 return {"status": "accepted", "payload": {

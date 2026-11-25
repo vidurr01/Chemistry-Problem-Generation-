@@ -36,3 +36,27 @@ class TraceChecks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ShortcutCheck(unittest.TestCase):
+    """qf_shortcut: the hidden step must change the answer (run 2 of 2026-11-25: 0.3% apart, accepted)."""
+
+    def _check(self, reply, key=2.0):
+        from unittest import mock
+        from core import models
+        from core.pipeline import qf_shortcut
+        design = {"hidden_step": "x changes", "trap": "keeps x fixed"}
+        with mock.patch.object(models, "ask_json", lambda *a, **k: reply), mock.patch("builtins.print"):
+            return qf_shortcut.shortcut_problem(design, "Q", "def solve():\n    return a * 2\n", {"answer": key},
+                                                {"a": 1.0})
+
+    def test_close_shortcut_rejected(self):
+        self.assertIn("does not change the answer", self._check({"code": "def solve():\n    return a * 2.01\n"}))
+
+    def test_far_shortcut_passes(self):
+        self.assertIsNone(self._check({"code": "def solve():\n    return a * 3\n"}))
+
+    def test_same_method_rejected_and_broken_shortcut_skipped(self):
+        self.assertIn("does not change the solution", self._check({"same": "the step is never reached here"}))
+        self.assertIsNone(self._check({"code": "def solve():\n    return undefined_name\n"}))
+        self.assertIsNone(self._check({"code": "x"}, key=None))

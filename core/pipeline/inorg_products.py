@@ -5,7 +5,7 @@ inorg_products.py: the JEE Advanced "hidden products" count for INORGANIC chemis
     (i)   Cu(OH)₂, heating  →  [Cu]
     (ii)  KClO₃, MnO₂, heating  →  [O]
     ...
-    The number of reactions in which that product is paramagnetic is
+    The total number of reactions in which the indicated product is paramagnetic is ____.
 
 Three things make real Advanced inorganic questions hard (2026-11-24 analysis of the papers), and this question
 has all three: the products are never named, so the student must first work out each one (hidden identity);
@@ -41,17 +41,20 @@ METAL_CENTRES = {"Be", "Mg", "Al", "Ga", "In", "Tl", "Sn", "Pb", "Bi"}
 # twice); SbOCl is a layered solid
 NO_SHAPE = {"[Cu(NH3)4]SO4", "[Cu(NH3)4]2+", "PH4Br", "N2O", "SbOCl"}
 
-N_MIN, N_MAX = 6, 8            # reactions in the list (real papers: 4 to 8; hp_2 with 5 was too easy)
+# reactions in the list: 4 to 5 since 2026-11-26 (was 6 to 8; real papers 4 to 8). Live review round 3: seven
+# reactions made part of the difficulty the length (one slip changes the count), which the reviewer does not want
+# rewarded; the hard part must be the designed traps (MIN_TRAP_ROWS of them). hp_2 with 5 had ONE trap.
+N_MIN, N_MAX = 4, 5
 MIN_LOOKALIKES = 2             # reactions without the value whose product is of the same kind as a true one
 CHECKER = "openai/gpt-6-luna"  # names each product blind; not used elsewhere in the inorganic pipeline
 
 # family -> (property keys of species.py it reads, stem phrase for a value)
 FAMILIES = {
-    "magnetism": (("metal_ion_magnetism", "complex_magnetism", "mo_magnetism"), "that product is {value}"),
+    "magnetism": (("metal_ion_magnetism", "complex_magnetism", "mo_magnetism"), "the indicated product is {value}"),
     "geometry": (("shape", "central_shape", "complex_geometry"),
-                 "the geometry around the named element in that product is {value}"),
+                 "the geometry around the indicated element in its product is {value}"),
     "hybridisation": (("hybridisation", "central_hybridisation", "complex_hybridisation"),
-                      "the named element in that product is {value} hybridised"),
+                      "the indicated element in its product is {value} hybridised"),
 }
 
 _SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
@@ -299,15 +302,24 @@ def trap_of(row, fam, value, riv) -> dict | None:
     return None
 
 
-def draw(graph_edges, rng, tried=(), bad=()):
+MAX_SHARED = 2                 # reactions a new question may share with any accepted one (hp_10 shared 4 of 8)
+# a reaction may appear in at most this many accepted questions (live review 2026-11-26: CuCl2 -> [CuCl4]2- was in
+# 6 of 18 accepted, Ag + CN- in 5; MAX_SHARED only stops two questions sharing many rows)
+MAX_ROW_USES = 2
+
+
+def draw(graph_edges, rng, tried=(), bad=(), prefer=None, asked=(), used=None):
     """A candidate for one hidden-products question, or None. tried: keys already used; bad: edge ids the blind
-    check did not confirm in this run. At least MIN_TRAP_ROWS reactions carry a designed trap (trap_of)."""
+    check did not confirm (this run and earlier ones); used: {edge id: accepted questions using it}. At least
+    MIN_TRAP_ROWS reactions carry a designed trap (trap_of)."""
     tried = IL.tried_keys(tried)
-    usable = [e for e in graph_edges if e["id"] not in bad]
+    used = used or {}
+    usable = [e for e in graph_edges if e["id"] not in bad and used.get(e["id"], 0) < MAX_ROW_USES]
     pool = _pool(usable)
     riv = rivals(usable)
-    for _ in range(300):
-        fam = rng.choice(sorted(FAMILIES))
+    for attempt in range(300):
+        # the less-used family first (live runs hp_1-6: 5 of 6 were magnetism), any family after 200 tries
+        fam = prefer if (prefer in FAMILIES and attempt < 200) else rng.choice(sorted(FAMILIES))
         rows = pool[fam]
         value = rng.choice(sorted({r["value"] for r in rows}))
         trap_rows = [r for r in rows if trap_of(r, fam, value, riv)]
@@ -344,6 +356,9 @@ def draw(graph_edges, rng, tried=(), bad=()):
         key = f"products:{fam}:{value}:" + ",".join(sorted(r["edge"]["id"] for r in chosen))
         if key in tried:
             continue
+        ids = {r["edge"]["id"] for r in chosen}
+        if any(len(ids & set(a)) > MAX_SHARED for a in asked):
+            continue                                  # a repeat for the student (hp_10)
         truth = [r["value"] == value for r in chosen]
         traps = {i: t for i, r in enumerate(chosen) if (t := trap_of(r, fam, value, riv))}
         if len(traps) < MIN_TRAP_ROWS:
@@ -364,10 +379,12 @@ def question(cand):
     """(stem, ChainResult) for a candidate from draw()."""
     D = cand["_products"]
     value = D["value"].translate(_SUP_DIGITS) if D["family"] == "hybridisation" else D["value"]
-    lines = [f"({ROMAN[i]}) {r['text']}  →  product containing {r['element']}" for i, r in enumerate(D["rows"])]
-    stem = ("Consider the following reactions. In each, look at the product that contains the named element "
-            "(balanced equations are not needed).\n" + "\n".join(lines)
-            + f"\nThe number of reactions in which {FAMILIES[D['family']][1].format(value=value)} is"
+    # JEE Advanced wording (reviewer, 2026-11-26): "Consider the following reactions:" and "The total number of ...
+    # is" as real papers write them; was "In each, look at the product that contains the named element (balanced
+    # equations are not needed)" and "The number of reactions in which that product is ..."
+    lines = [f"({ROMAN[i]}) {r['text']}  →  (product containing {r['element']})" for i, r in enumerate(D["rows"])]
+    stem = ("Consider the following reactions:\n" + "\n".join(lines)
+            + f"\nThe total number of reactions in which {FAMILIES[D['family']][1].format(value=value)} is ____."
               "\nGive the answer as an integer.")
     answer = sum(D["truth"])
     trace = [{"tx": r["edge"].get("tx_ids") or [], "src": r["edge"]["from"], "dst": r["edge"]["to"],
@@ -440,6 +457,53 @@ def same_answer(row, formula, charge) -> bool:
     return vals[0] is not None and vals[0] == vals[1] and oxs[0][1] is not None and oxs[0] == oxs[1]
 
 
+_SPECTATORS = {"Li", "Na", "K", "Rb", "Cs"}
+_EXTRA_KEYS = {"geometry": ("anion_shape",), "hybridisation": ("anion_hybridisation",),
+               "magnetism": ()}                    # a salt's anion property (NaBO2's BO2-) answers the same question
+
+
+def _core(sid):
+    """(element counts without alkali-metal spectators, charge with them taken off) of a species id."""
+    body, q = S.to_formula_charge(sid)
+    counts = dict(parse_formula(body)[0])
+    for el in _SPECTATORS & set(counts):
+        q -= counts.pop(el)
+    return counts, q
+
+
+def _ox_of(props, el):
+    for k in (f"oxidation_state:{el}", "complex_oxidation_state"):
+        if props.get(k) is not None:
+            return props[k]
+    return None
+
+
+def other_form(row, formula, charge) -> bool:
+    """The checker wrote the same product in another form that cannot change the count (live review 2026-11-26,
+    round 2: 2 of 5 refusals were Na2ZnO2 vs [Zn(OH)4]2- and BO2- vs NaBO2): the formulas differ only by alkali-metal
+    spectator ions and whole H2O, the named element keeps its oxidation state, and the asked property computed by
+    the engine is the same for both. SO2 vs H2SO3 with geometry asked (bent vs pyramidal) stays refused."""
+    try:
+        ours, theirs = row["edge"]["to"], _graph_id(formula, charge)
+        (a, qa), (b, qb) = _core(ours), _core(theirs)
+        if qa != qb:
+            return False
+        diff = {el: b.get(el, 0) - a.get(el, 0) for el in set(a) | set(b)}
+        n = diff.get("O", 0)
+        if any(v for el, v in diff.items() if el not in ("H", "O")) or diff.get("H", 0) != 2 * n:
+            return False
+        pa, pb = S.askable(ours), S.askable(theirs)
+        el = row["element"]
+        if _ox_of(pa, el) is None or _ox_of(pa, el) != _ox_of(pb, el):
+            return False
+        keys = FAMILIES[row["family"]][0] + _EXTRA_KEYS.get(row["family"], ())
+        va = next((pa[k] for k in keys if k in pa), None)
+        vb = next((pb[k] for k in keys if k in pb), None)
+        return va is not None and va == vb
+    except (EngineError, ValueError, TypeError, IndexError, KeyError):
+        return False
+
+
 def check(cand, model: str = CHECKER) -> list:
     """Every reaction GPT-6 Luna does not name the graph's product for: [{"edge", "graph", "checker", "reason"}].
     [] means all agree. A failed call holds every reaction (never a pass)."""
@@ -460,7 +524,10 @@ Return JSON: {{"products": [{{"n": 1, "formula": "e.g. K2MnO4 or MnO4", "charge"
     bad = []
     for i, r in enumerate(rows, 1):
         p = got.get(i) or {}
-        if not same_species(r["edge"]["to"], p.get("formula"), p.get("charge")) and                 not same_answer(dict(r, family=cand["_products"]["family"]), p.get("formula"), p.get("charge")):
+        row = dict(r, family=cand["_products"]["family"])
+        if not same_species(r["edge"]["to"], p.get("formula"), p.get("charge")) and \
+                not same_answer(row, p.get("formula"), p.get("charge")) and \
+                not other_form(row, p.get("formula"), p.get("charge")):
             bad.append({"edge": r["edge"]["id"], "graph": r["edge"]["to"],
                         "checker": json.dumps({k: p.get(k) for k in ("formula", "charge")}), "reason": "differs"})
     return bad

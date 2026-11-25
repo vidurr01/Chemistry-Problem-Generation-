@@ -27,7 +27,7 @@ import re
 
 from core import answers, dedup, models
 from core.engine.base import EngineError, round_sig
-from core.pipeline import forms_layer, gate, queues, stages
+from core.pipeline import forms_layer, gate, queues, stages, trace_check
 from core.pipeline.stages import CouncilMemberFailed
 
 MAX_CHAINS = 3          # chains (question ideas) per run
@@ -506,6 +506,27 @@ def _judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
               f"({qid}); the key may be wrong")
         return {"decision": "drop", "reason": "ladder_consensus", "graded": graded}
 
+    # Flawed questions (docs/implementation_spec_2026-11-25.md §2-§3): a chemistry objection holds the question at
+    # once (031247: GLM said the data contradict, and it was only logged); then each member that missed the key is
+    # labelled (trace_check). A "question_flawed" label holds it too; only trap/concept failures count as hard.
+    flawed = [g for g in graded if (g.get("objection") or {}).get("type") == "chemistry"]
+    why = "objection"
+    if not flawed and trace_check.ENABLED:
+        trace_check.label_failures(result, stem, stated_answer(result), graded)
+        flawed = [g for g in graded if g.get("failure_label") == "question_flawed"]
+        why = "trace_check"
+    if flawed:
+        qid = queues.add("question_flawed", adapter.subject, {
+            "chain": cand["edges"], "values": values, "stem": stem, "engine_answer": stated_answer(result),
+            "found_by": why,
+            "members": [{"name": g["name"], "answer": g["final_answer"], "objection": g.get("objection"),
+                         "label": g.get("failure_label"), "quote": g.get("failure_quote"),
+                         "reason": g.get("failure_reason")} for g in flawed]})
+        log({"event": "question_flawed", "chain": cand["edges"], "queue_id": qid, "found_by": why})
+        print(f"    ✗ {', '.join(g['name'] for g in flawed)}: the question looks flawed ({why}); held ({qid}), "
+              f"next draw")
+        return {"decision": "drop", "reason": "question_flawed", "graded": graded}
+
     n_correct = sum(g["answer_matches"] for g in graded)
     n_solved = sum(g["counts_as_solved"] for g in graded)
     bottom = models.LADDER[0][0]
@@ -518,6 +539,17 @@ def _judge(adapter, cand, plan, values, result, stem, bb, log) -> dict:
         print(f"    ladder: {bottom} solved it → too easy")
         return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
                 "skipped": skipped, "first_solver": first_solver}
+    # the bottom step's failure counts only if it was the hard step (trap/concept): a slip, an invented fact, losing
+    # track of a long question or an unexplained failure does not make the question hard. "unchecked" (no checker
+    # reply) keeps the behaviour from before the trace checker.
+    bottom_fail = next((g for g in reversed(graded) if g["name"] == bottom and not g.get("discarded_as_nonsense")),
+                       None)
+    if not bottom_unmeasured and bottom_fail is not None \
+            and bottom_fail.get("failure_label") in trace_check.NOT_DIFFICULTY:
+        print(f"    ladder: {bottom} failed by {bottom_fail['failure_label']}, not by the hard step → too easy")
+        return {"decision": "too_easy", "graded": graded, "n_correct": n_correct, "n_solved": n_solved,
+                "skipped": skipped, "first_solver": first_solver,
+                "reason": f"bottom_failure_{bottom_fail['failure_label']}"}
     label = models.DIFFICULTY_LABELS.get(first_solver, "hard_advanced")
     jev_lvl = None
     if label == "advanced":
@@ -685,6 +717,7 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
             log({"event": decision["decision"], "chain": cand["edges"], "round": bb.current["rounds"],
                  "stem": stem, "answer": round_sig(result.answer), "reason": decision.get("reason"),
                  "council": [{k: g.get(k) for k in ("name", "final_answer", "answer_matches", "counts_as_solved",
+                                                    "failure_label",
                                                     "verdict", "failure_type")} for g in decision.get("graded", [])]})
             if decision["decision"] == "accept":
                 return {"status": "accepted", "payload": {

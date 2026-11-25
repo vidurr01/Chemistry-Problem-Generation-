@@ -31,8 +31,8 @@ def _squash(s) -> str:
     return " ".join(answers.normalise_text(s).replace("−", "-").split())
 
 
-# Dropping an unneeded formula must leave at least this many. 3, as when draws had 3-5 formulas: since draws have
-# 2-3 (2026-11-25), a drawn formula is the design's and a program that skips one goes back to the coder.
+# Dropping an unneeded formula must leave at least this many: with 3-5 formulas a draw keeps at least 3 (a 3-formula
+# draw that skips one goes back to the coder). Unchanged while draws were 2-3 (2026-11-25 to 2026-11-26).
 DROP_KEEPS = 3
 
 
@@ -390,6 +390,71 @@ def answer_real_problems(asks: str, answer) -> list:
             f"{kind}"]
 
 
-def trace_problems(run: dict, asks: str) -> list:
+# Rate-constant units against the reaction (022806, 2026-11-25): K = k_f/k_b (step 210) with N₂O₄ ⇌ 2NO₂ printed
+# both constants in s⁻¹, but the reverse step 2NO₂ → N₂O₄ is second order, so k_b needs a concentration or pressure
+# unit, and which one decides whether k_f/k_b is K_c or K_p (key 364.9 K vs about 310.6 K). Flagged only when all
+# three hold: step 210 is used, the question's equation has a different number of particles on its two sides, and
+# both constants are printed in a first-order unit.
+_EQUILIBRIUM = re.compile(r"([^.;:\n]{1,120}?)\s*(?:⇌|⇄|<=>|<->|\\rightleftharpoons)\s*([^.;:\n,]{1,120})")
+_SPECIES = re.compile(r"^\s*(\d+(?:\.\d+)?)?\s*[A-Z\[(]")
+_NUMBER = r"([-−]?\d+(?:\.\d+)?)(?:\s*(?:×|x|\*)\s*10\s*\^?\s*([-−⁻]?\s*[\d⁰¹²³⁴⁵⁶⁷⁸⁹]+)|[eE]([-+]?\d+))?"
+_FIRST_ORDER = re.compile(_NUMBER + r"\s*(?:s⁻¹|s\^-1|s\^\{-1\}|s-1|/s\b|min⁻¹|min\^-1|h⁻¹|h\^-1)")
+_SUPER = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⁻", "0123456789-")
+
+
+def _particles(side: str):
+    """Sum of the coefficients of the species on one side of an equation, or None if it does not read as one."""
+    side = re.split(r"\s+(?:at|with|in|of|is|has|and the)\s+", side)[0]
+    terms = [t for t in side.split("+") if t.strip()]
+    if not terms:
+        return None
+    total = 0.0
+    for t in terms:
+        m = _SPECIES.match(t)
+        if not m:
+            return None
+        total += float(m.group(1)) if m.group(1) else 1.0
+    return total
+
+
+def _first_order_values(stem: str) -> list:
+    out = []
+    for m in _FIRST_ORDER.finditer(stem or ""):
+        try:
+            v = float(m.group(1).replace("−", "-"))
+            exp = m.group(2) or m.group(3)
+            if exp:
+                v *= 10 ** int(exp.translate(_SUPER).replace("−", "-").replace(" ", ""))
+            out.append(v)
+        except (ValueError, OverflowError):
+            continue
+    return out
+
+
+def rate_unit_problems(stem: str, trace) -> list:
+    recs = [r for r in trace or () if str(r.get("tx")) == "210"]
+    if not recs or not stem:
+        return []
+    m = _EQUILIBRIUM.search(stem)
+    if not m:
+        return []
+    left, right = _particles(m.group(1).split(":")[-1]), _particles(m.group(2))
+    if left is None or right is None or abs(left - right) < 1e-9:
+        return []
+    printed = _first_order_values(stem)
+    for r in recs:
+        ins = r.get("inputs") or {}
+        kf, kb = _num(ins.get("rate_constant")), _num(ins.get("kb"))
+        if kf is None or kb is None:
+            continue
+        if any(_same(kf, x, 2e-3) for x in printed) and any(_same(kb, x, 2e-3) for x in printed):
+            return [f"the forward and backward rate constants are both given in a first-order unit (s⁻¹), but the "
+                    f"reaction's two sides have {left:g} and {right:g} particles, so the steps have different orders: "
+                    f"give the higher-order constant in a concentration unit (L mol⁻¹ s⁻¹, giving K_c) or a pressure "
+                    f"unit (atm⁻¹ s⁻¹, giving K_p), and use K accordingly"]
+    return []
+
+
+def trace_problems(run: dict, asks: str, stem: str = "") -> list:
     return (role_problems(run.get("trace")) + consistency_problems(run.get("trace"))
-            + answer_real_problems(asks, run.get("answer")))
+            + answer_real_problems(asks, run.get("answer")) + rate_unit_problems(stem, run.get("trace")))

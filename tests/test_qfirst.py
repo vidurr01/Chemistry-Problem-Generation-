@@ -266,12 +266,13 @@ class RandomChains(unittest.TestCase):
 
 
 class RandomFormulas(unittest.TestCase):
-    def test_2_to_3_connected_steps(self):
+    def test_formula_count_connected_steps(self):
         a = adapters.PhysicalAdapter(entry.get_subject_config("physical"), random.Random(5))
         seen, linked = set(), 0
+        lo, hi = adapters.FORMULAS_MIN, adapters.FORMULAS_MAX
         for _ in range(300):
             c = a.random_formulas()
-            self.assertTrue(2 <= len(c["txs"]) <= 3 and len(set(c["txs"])) == len(c["txs"]))
+            self.assertTrue(lo <= len(c["txs"]) <= hi and len(set(c["txs"])) == len(c["txs"]))
             self.assertEqual([s.tx for s in c["_plan"].steps], c["txs"])
             seen |= set(c["txs"])
             st = c["_steps"]

@@ -180,6 +180,19 @@ class DesignedTrap(unittest.TestCase):
                                             IP._plain(r["text"])), f"{prod} printed in {r['text']}")
 
 
+class Repeats(unittest.TestCase):
+    def test_at_most_two_reactions_shared_with_an_accepted_question(self):
+        """Live runs hp_8-10 repeated XeF₂, NO₂⁺, the CO shift and Al₄C₃."""
+        first = IP.draw(PIPE, random.Random(3), prefer="geometry")
+        asked = [frozenset(r["edge"]["id"] for r in first["_products"]["rows"])]
+        rng = random.Random(4)
+        for _ in range(20):
+            c = IP.draw(PIPE, rng, prefer="geometry", asked=asked)
+            if c is None:
+                continue
+            self.assertLessEqual(len({r["edge"]["id"] for r in c["_products"]["rows"]} & asked[0]), IP.MAX_SHARED)
+
+
 class Check(unittest.TestCase):
     def setUp(self):
         self.c = IP.draw(PIPE, random.Random(4))

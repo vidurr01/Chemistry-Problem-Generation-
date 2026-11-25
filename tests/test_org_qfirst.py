@@ -30,8 +30,9 @@ def _adapter():
 
 
 def hinge_claims(c) -> list:
-    """An msq whose answer is A: (A) a decisive fact stated right, (B) another decisive fact stated as the wrong
-    turn gives it, (C)/(D) plainly false. A and B both hinge on a selectivity step."""
+    """An msq whose answer is A: (A) a decisive fact stated right, (B) and (C) other decisive facts stated as the
+    wrong turn gives them, (D) plainly false. A, B and C hinge on a selectivity step; at most one filler (O2, live
+    review 2026-11-26). StopIteration if the scheme has no three distinct decisive facts."""
     kinds = OP.PROPERTIES
     facts = []
     for lab, prop, right, wrong, how in c["_hinge"]:
@@ -39,10 +40,11 @@ def hinge_claims(c) -> list:
             facts.append((lab, prop, right, wrong, OQ._source(how)))
     f1 = facts[0]                                    # two decisive facts from DIFFERENT steps
     f2 = next(f for f in facts if f[4] != f1[4] and (f[0], f[1]) != (f1[0], f1[1]))
-    (l1, p1, r1, _, _), (l2, p2, _, w2, _) = f1, f2
+    f3 = next(f for f in facts if (f[0], f[1]) not in {(f1[0], f1[1]), (f2[0], f2[1])})
+    (l1, p1, r1, _, _), (l2, p2, _, w2, _), (l3, p3, _, w3, _) = f1, f2, f3
     return [{"text": "a", "compound": l1, "property": p1, "value": str(r1)},
             {"text": "b", "compound": l2, "property": p2, "value": str(w2)},
-            {"text": "c", "compound": "P", "property": "stereocentres", "value": "7"},
+            {"text": "c", "compound": l3, "property": p3, "value": str(w3)},
             {"text": "d", "compound": "P", "property": "rings", "value": "9"}]
 
 

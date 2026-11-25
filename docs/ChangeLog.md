@@ -2,6 +2,51 @@
 
 This file records every repository change. Newest entries go at the top. Each entry lists which files changed, what changed, why when useful, and any behaviour or configuration impact.
 
+## 2026-11-26
+
+### Live review rounds 1–5: fixes from hand-graded questions (`docs/live_review_2026-11-26.md`)
+- Spend: physical $0.156, organic $0.058 + $0.062 + $0.077, inorganic $0.016 + $0.008 + $0.011 + $0.006
+  (≈ ₹34.9 at ₹88/$). Accepted and graded by hand: physical 1, organic 3, inorganic 2; every key right.
+- `sandbox._input_role`: a non-whole value whose nudge the program refuses counts as used (a whole-number search
+  target, He⁺ f_rev → n, was called unused; a right question was rejected twice). Test `WholeNumberTarget`.
+- `trace_check`: reply limit 1500 → 4000 tokens; "concept" now includes a wrong answer to what the question asks the
+  solver to work out (a product): round 2's best inorganic question was rejected as "hallucination".
+- Inorganic (`inorg_qfirst`, `inorg_products`): kind shares system 0.3 / hidden products 0.7 / species list 0 (lists:
+  Granite solved 8 of 8); an empty system draw falls back to hidden products; `_with_twins` refuses duplicate edges
+  (P4_to_PH3_p / _p_2); product-check refusals remembered across runs (`inorg_system_memory.json`); 4–5 reactions
+  (was 6–8); a reaction in 2 accepted questions is not drawn (`MAX_ROW_USES`); `other_form` accepts the same product in
+  another form when the asked property cannot change (Na₂ZnO₂ / [Zn(OH)₄]²⁻, BO₂⁻ / NaBO₂); JEE-style wording.
+- Organic (`org_qfirst`): writer sees 3 real JEE Advanced stems of the same format for wording only (new
+  `core/pipeline/style_examples.py`; a 10-word shared run is sent back); at most one rote statement in four
+  (`MAX_ROTE_PER_4`); a reaction in 2 accepted questions is not drawn (`MAX_EDGE_USES`; AgNO₂ was in 6 of 10);
+  decorative steps not drawn (`decorative_steps`).
+- Tests: new `tests/test_trace_check.py` classes; `tests/test_org_qfirst.hinge_claims` 3 decisive + 1 filler;
+  `tests/test_inorg_qfirst` system-only helpers turn the products fallback off.
+- Also committed here: the 25 Nov uncommitted work these build on (hidden-products runs hp_7–hp_11, physical
+  `qf_design`/`qf_shortcut` prompt fixes, `fact_share` 0, condition variants).
+
+### Trace checker, objections hold the question, rate-constant units; physical back to 3–5 formulas
+- New `core/pipeline/trace_check.py`; `flow._judge`: each ladder member that missed the key is labelled (trap by code;
+  else one `qwen/qwen3.8-flash` call: concept / hallucination / too_long / slip / question_flawed, its quote checked
+  in the working). A chemistry objection or a question_flawed label holds the question (new queue `question_flawed`,
+  `core/pipeline/queues.py`) and drops it; Granite failing by slip / hallucination / too_long / unexplained → too
+  easy. A failed checker call → `unchecked`, grading as before. `models.TRACE_CHECKER`, `TRACE_CHECKER_EFFORT`,
+  roster entry. Labels saved per member (`run_groundup_final.py`, attempt logs).
+- `qf_checks.rate_unit_problems` (in `trace_problems`, now given the stem): K = k_f/k_b with both constants printed
+  in s⁻¹ while the equation's sides differ in particles is refused (022806). 97 saved physical questions: only
+  022806 flagged.
+- `adapters.FORMULAS_MIN, FORMULAS_MAX` = 3, 5 (were 2, 3); `DROP_KEEPS` unchanged (3), comment updated;
+  `tests/test_qfirst.py` test renamed to the formula-count bounds.
+- New `tests/test_trace_check.py` (12 tests). Suite: 650 run, the one failure is the pre-existing
+  `test_inorganic_fact_question_end_to_end` (fails without these changes too).
+- Spec: §2, §3, §4.1 built; §4.2 (units by code) dropped; §7 already met.
+
+### Spec: physical keeps 3–5 formulas and one hard step (doc only)
+- `docs/implementation_spec_2026-11-25.md` §4: reviewer's decision, 3–5 formulas per draw and one designed hard step
+  (2–3 formulas with two hard traps did worse); set `adapters.FORMULAS_MIN, FORMULAS_MAX` back to 3, 5, keep
+  `MIN_TRAPS = 1`, re-check `DROP_KEEPS`; the redesign plan's "at most 4 steps, 2 chapters" cap does not apply to
+  physical.
+
 ## 2026-11-25
 
 ### Physical number step: computed values checked, answer aimed into range
@@ -62,6 +107,8 @@ This file records every repository change. Newest entries go at the top. Each en
 - New run 1 (GEN_20261125T130513, $0.104 ≈ ₹9.1): PbCl₂(s) + H₂S + HCl, minimum HCl so PbS does not precipitate; HCl is both common ion and acid, so c⁴ = K_sp(PbCl₂)K₁K₂[H₂S]/K_sp(PbS); key 1.744 M checked by hand; both ladder models failed. Advanced, medium.
 - New run 2 (GEN_20261125T130827, $0.056 ≈ ₹4.9): κ₁ − κ₂ of a weak acid at 0.157 M and 1.19 × 10⁻⁴ M. Key right, but the design's hidden step (α ≪ 1 fails when dilute) does not change the answer: the shortcut gives 0.001716 (0.3% off); Granite failed by slips. Mains, medium.
 - New run 4 (GEN_20261125T132235, $0.074 ≈ ₹6.5): K_p and ΔH° given for 2NO₂ ⇌ N₂O₄; find T where N₂O₄ dissociates to α = 0.621 at 0.839 bar. Key 341.2 K checked by hand; the trap (not reversing K) gives 316 K. Advanced, easy. The first draw's design (activities equal at [B]max) was rejected twice by the shortcut check, rightly: missing it only makes the route longer. Design prompt: the hidden step must change the answer, not only save work. Shortcut prompt: no unit slips (its kJ-as-J shortcut gave −7.3 K).
+- New run 5 (GEN_20261125T132651, $0.147 ≈ ₹12.9): S°(SO₃, 800 K) from ΔS°(298 K), ΔC_p and S°(800 K) of SO₂, O₂. Key 280.0 checked by hand. Mains hard: ΔC_p, handed over ready-made, announces the step. Design prompt: data a hidden step needs is given one level earlier, not ready-made.
+- New run 6 (GEN_20261125T133759, $0.216 ≈ ₹19.0): reduced pressure of 295 g SO₂ from T_r and the critical volume of the whole sample; key 1.461 checked by hand (P_c = 3RT_c/8V_c,m = 76.7 atm); the trap (total V_c as 3b) gives 6.73. Advanced, easy. The shortcut check also refused an N₂O₄ heating design (2.6% apart).
 - New run 3 ($0.020 ≈ ₹1.8): a fact (MSQ) run; four statement sets (kinetic theory, basic thermodynamics) all solved by Granite; nothing accepted. `subject_config` physical `fact_share` 0.25 → 0.0: no physical fact question has reached Advanced.
 - New `core/pipeline/qf_shortcut.py`, called in `qfirst.write_and_solve` after the code and coherence checks: the coder writes, in plain Python, the program of a student who misses the design's hidden step; code runs it on the question's values; within 5% of the key (or "the method is the same") the writer must change values or what is asked. A shortcut that does not run skips the check. Offline on runs 1–2 ($0.0007): run 2 caught (0.3% apart), run 1 passes (87.48 vs 1.744). Tests `ShortcutCheck`.
 

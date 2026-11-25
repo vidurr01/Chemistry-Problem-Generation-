@@ -37,6 +37,22 @@ class PlainPythonValues(unittest.TestCase):
         self.assertTrue(run["ok"], run.get("error"))
 
 
+class WholeNumberTarget(unittest.TestCase):
+    """A stated value used only as the target of a whole-number search (live run 2026-11-26, f_rev -> n) is used."""
+
+    CODE = '''
+def solve():
+    n = find(step_61, "n", result=r_given, Z=2)
+    return n * 6.626e-34 / (2 * math.pi)
+'''
+
+    def test_target_of_whole_number_search_is_used(self):
+        r = 0.529 * 4 / 2                     # n = 2, Z = 2
+        run = sandbox._evaluate(self.CODE, [61], preset={"r_given": r})
+        self.assertTrue(run["ok"], run.get("error"))
+        self.assertEqual(run["inputs_unused"], [])
+
+
 class AimAnswer(unittest.TestCase):
     RANGES = {"current": (1.0, 5.0, False), "time_min": (30.0, 180.0, False), "m_total": (2.0, 12.0, False)}
 

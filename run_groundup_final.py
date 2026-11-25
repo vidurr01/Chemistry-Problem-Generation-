@@ -198,6 +198,7 @@ def build_record(subject, config, payload, bb):
         "jev_level": decision.get("jev_level"),
         "council": [{k: g.get(k) for k in ("name", "model", "final_answer", "unit", "answer_matches", "match_by", "counts_as_solved",
                                            "verdict", "failure_type", "slip_confirmed", "objection", "diagnosis",
+                                           "failure_label", "failure_quote", "failure_reason",
                                            "working", "reasoning", "turns")}
                     for g in graded],
         "hint_tests": decision.get("hints", []),
