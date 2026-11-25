@@ -356,7 +356,7 @@ class EndToEnd(unittest.TestCase):
         from core.pipeline import inorg_products as IP
         with open(self.cfg["graph_path"], encoding="utf-8") as f:
             edges = json.load(f)["edges"]
-        cand = IP.draw(edges, random.Random(2))
+        cand = IP.draw(IP.with_naive(edges) + IP.variant_edges(), random.Random(2))   # as the pipeline draws
         rows = cand["_products"]["rows"]
         want = sum(cand["_products"]["truth"])
         bottom = models.LADDER[0][1]

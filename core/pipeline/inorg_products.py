@@ -239,9 +239,20 @@ def variant_edges(path=None) -> list:
 
 def with_naive(graph_edges, path=None) -> list:
     """Graph edges with the tempting wrong products of 'naive_for_graph_edges' attached (copies; graph unchanged)."""
-    naive = _load_variants(path).get("naive_for_graph_edges", {})
-    return [{**e, "naive": naive[e["id"]]["naive"], "naive_why": naive[e["id"]].get("why", "")} if e["id"] in naive
-            else e for e in graph_edges]
+    data = _load_variants(path)
+    naive = data.get("naive_for_graph_edges", {})
+    printed = data.get("print_reagents_for_graph_edges", {})   # alternatives listed as one set (live run hp_4)
+    two = data.get("two_products_contain_the_element", {})     # no single "product containing X" (hp_5)
+    out = []
+    for e in graph_edges:
+        if e["id"] in two:
+            continue
+        if e["id"] in printed:
+            e = {**e, "reagents": printed[e["id"]]}
+        if e["id"] in naive:
+            e = {**e, "naive": naive[e["id"]]["naive"], "naive_why": naive[e["id"]].get("why", "")}
+        out.append(e)
+    return out
 
 
 def _reagent_set(e) -> set:

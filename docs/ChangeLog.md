@@ -4,6 +4,18 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-25
 
+### Inorganic hidden products: live runs hp_1 to hp_6, each graded by hand, fixes between runs
+- Runs (`outputs/live_inorganic_hp_<n>.log`, total $0.0645 ≈ ₹5.68 at ₹88/$; cap $0.05 a run). Hand grade:
+  hp_1 rejected (Cr³⁺ + excess NaOH written [Cr(OH)₆]³⁻ or [Cr(OH)₄]⁻: key 2 or 1); hp_2 Advanced-easy (one trap,
+  three obvious products); hp_3 Advanced-medium (three traps; Granite's wrong answers were the trap answers);
+  hp_4 Advanced easy-medium (alternative oxidants printed together); hp_5 rejected (HNO₂ → HNO₃ + NO: two
+  N products); hp_6 Advanced-medium (both traps hit by Granite; GLM failed). Rejected ones in `results/rejected.json`.
+- Fixes, in order: a variant may name the families it is asked for (`"ask"`, Cr(OH)₆³⁻ magnetism only); no free
+  eliminations (every reaction gives the same kind of product as the counted ones); `MIN_TRAP_ROWS` 2 and `N_MIN` 6;
+  `print_reagents_for_graph_edges` (one reagent set printed, not alternatives); `two_products_contain_the_element`
+  (disproportionations left out). Old draw tests now use the pipeline's edges (graph + variants).
+- Open: 5 of 6 drawn families were magnetism (geometry and hybridisation have few traps).
+
 ### Inorganic: hidden products back, each with a designed trap (redesign plan, inorganic kind 1)
 - Why: on the 25 Nov hand grading, the only inorganic Advanced questions were hidden-products counts (24 Nov); they
   were hard only through their length. The redesign plan puts them first, with one designed trap each.
@@ -25,7 +37,12 @@ This file records every repository change. Newest entries go at the top. Each en
 - Why: run 1 of the batch ($0.33 ≈ ₹29) put 5 drafts to the ladder and Granite solved all 5; by hand all were JEE Main medium (photoelectric speed ratio ×2, Bohr Balmer/Lyman wavelength gap ×3, two of those with a non-integer Z). Refinement only re-dressed them ("ultra-high vacuum photoelectron spectrometer") or bolted on a formula (back-titration purity).
 - `qf_design.design_question`: the designer builds the question around ONE hidden step the usual route skips (kinds stated abstractly, no real-paper system), the situation in at most three sentences, no device/industry/story dressing; new design field `hidden_step`, passed to the writer (`qf_writer`), which also keeps the question short and plain.
 - `refine.CASES["textbook_pattern"]`: no longer "move the problem into an unusual setting (an industrial process …)"; it asks for a hidden step instead. `qfirst.refine_round`: never adds a formula (`too_few_steps` always unavailable).
-- `adapters.FORMULAS_MIN, FORMULAS_MAX`: 3–5 → 2–3 formulas per draw.
+- `adapters.FORMULAS_MIN, FORMULAS_MAX`: 3–5 → 2–3 formulas per draw. `qf_checks.DROP_KEEPS = 3`: an unneeded formula is still dropped only when 3 remain (so a 2–3 formula draw goes back to the coder, as before). Tests in `tests/test_qfirst.py` updated to the new rules.
+- New run 1 (GEN_20261125T130513, $0.104 ≈ ₹9.1): PbCl₂(s) + H₂S + HCl, minimum HCl so PbS does not precipitate; HCl is both common ion and acid, so c⁴ = K_sp(PbCl₂)K₁K₂[H₂S]/K_sp(PbS); key 1.744 M checked by hand; both ladder models failed. Advanced, medium.
+- New run 2 (GEN_20261125T130827, $0.056 ≈ ₹4.9): κ₁ − κ₂ of a weak acid at 0.157 M and 1.19 × 10⁻⁴ M. Key right, but the design's hidden step (α ≪ 1 fails when dilute) does not change the answer: the shortcut gives 0.001716 (0.3% off); Granite failed by slips. Mains, medium.
+- New run 4 (GEN_20261125T132235, $0.074 ≈ ₹6.5): K_p and ΔH° given for 2NO₂ ⇌ N₂O₄; find T where N₂O₄ dissociates to α = 0.621 at 0.839 bar. Key 341.2 K checked by hand; the trap (not reversing K) gives 316 K. Advanced, easy. The first draw's design (activities equal at [B]max) was rejected twice by the shortcut check, rightly: missing it only makes the route longer. Design prompt: the hidden step must change the answer, not only save work. Shortcut prompt: no unit slips (its kJ-as-J shortcut gave −7.3 K).
+- New run 3 ($0.020 ≈ ₹1.8): a fact (MSQ) run; four statement sets (kinetic theory, basic thermodynamics) all solved by Granite; nothing accepted. `subject_config` physical `fact_share` 0.25 → 0.0: no physical fact question has reached Advanced.
+- New `core/pipeline/qf_shortcut.py`, called in `qfirst.write_and_solve` after the code and coherence checks: the coder writes, in plain Python, the program of a student who misses the design's hidden step; code runs it on the question's values; within 5% of the key (or "the method is the same") the writer must change values or what is asked. A shortcut that does not run skips the check. Offline on runs 1–2 ($0.0007): run 2 caught (0.3% apart), run 1 passes (87.48 vs 1.744). Tests `ShortcutCheck`.
 
 ### Physical: trace checks for the three wrong questions of the post-mortem (before the 20-question batch)
 - New `qf_checks.trace_problems`, called in `qfirst.write_and_solve` beside `question_problems`; a draft that fails goes back to the writer with the reason.

@@ -17,6 +17,7 @@ from subject_config import get_subject_config          # noqa: E402
 
 with open(get_subject_config("inorganic")["graph_path"], encoding="utf-8") as _f:
     EDGES = json.load(_f)["edges"]
+PIPE = IP.with_naive(EDGES) + IP.variant_edges()     # the edges the pipeline draws from (graph + condition variants)
 
 
 class Parts(unittest.TestCase):
@@ -98,7 +99,7 @@ class Draw(unittest.TestCase):
     def test_fair_questions_that_never_print_a_product(self):
         rng = random.Random(0)
         for _ in range(100):
-            c = IP.draw(EDGES, rng)
+            c = IP.draw(PIPE, rng)
             self.assertIsNotNone(c)
             D = c["_products"]
             n, k = len(D["rows"]), sum(D["truth"])
@@ -123,20 +124,20 @@ class Draw(unittest.TestCase):
         self.assertIn("[Cu(NH3)4]SO4·H2O", mag)                  # d9: paramagnetic stays askable
 
     def test_bad_and_tried_are_left_out(self):
-        c = IP.draw(EDGES, random.Random(1))
+        c = IP.draw(PIPE, random.Random(1))
         ids = {r["edge"]["id"] for r in c["_products"]["rows"]}
         rng = random.Random(1)
         for _ in range(30):
-            d = IP.draw(EDGES, rng, tried=c["edges"], bad=ids)
+            d = IP.draw(PIPE, rng, tried=c["edges"], bad=ids)
             self.assertNotEqual(d["edges"], c["edges"])
             self.assertFalse(ids & {r["edge"]["id"] for r in d["_products"]["rows"]})
 
     def test_tried_as_the_pipeline_passes_it(self):
         from core.blackboard import Blackboard           # tried_edges() holds tuples (fixed 2026-11-25)
         bb = Blackboard("inorganic")
-        c = IP.draw(EDGES, random.Random(1))
+        c = IP.draw(PIPE, random.Random(1))
         bb.start_chain(c)
-        self.assertNotEqual(IP.draw(EDGES, random.Random(1), tried=bb.tried_edges())["edges"], c["edges"])
+        self.assertNotEqual(IP.draw(PIPE, random.Random(1), tried=bb.tried_edges())["edges"], c["edges"])
 
 
 class DesignedTrap(unittest.TestCase):
@@ -181,7 +182,7 @@ class DesignedTrap(unittest.TestCase):
 
 class Check(unittest.TestCase):
     def setUp(self):
-        self.c = IP.draw(EDGES, random.Random(4))
+        self.c = IP.draw(PIPE, random.Random(4))
         self.rows = self.c["_products"]["rows"]
 
     def test_agreement_and_one_difference(self):
