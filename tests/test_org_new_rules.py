@@ -27,6 +27,19 @@ CASES = {
     "sulfonate_to_nitrile_nacn": ([("CCCOS(=O)(=O)c1ccc(C)cc1", "CCCC#N", {"isocyanide": "[C-]#[N+]CCC"})], []),
     "sulfonate_to_alkyl_halide_nai": ([("CCCOS(=O)(=O)c1ccc(C)cc1", "CCCI", {})], []),
     "carboxylic_acid_to_alkane_kolbe": ([("CCC(=O)O", "CCCC", {"soda_lime_decarboxylation": "CC"})], []),
+    # batch 2
+    "alkyl_halide_to_amine_potassiumphthalimide": ([("CCCBr", "CCCN", {"secondary_amine_overalkylation": "CCCNCCC"})],
+                                                   ["CC(C)Br"]),                # 2° halide: not modelled
+    "amine_to_alkene_moistagoheat": ([("C[N+](C)(C)C(C)CC", "C=CCC", {"zaitsev_alkene": "CC=CC"})], ["CCCN"]),
+    "alkyne_to_benzene_redhotfetube": ([("C#C", "c1ccccc1", {})], ["CC#C"]),
+    "substituted_benzene_to_substituted_benzene_dilhsosteam": ([("Cc1ccc(S(=O)(=O)O)cc1", "Cc1ccccc1", {})], []),
+    "ketone_to_carboxylic_acid_naohheathoo": ([("O=C(C(=O)c1ccccc1)c1ccccc1", "O=C(O)C(O)(c1ccccc1)c1ccccc1", {})],
+                                              ["CC(=O)C(C)=O"]),                 # enolisable: aldol instead
+    "alcohol_to_aldehyde_activatedmno": ([("OCC=CC", "CC=CC=O", {"acid_with_kmno4": "CC=CC(=O)O"})], ["CCCO"]),
+    "alkyl_halide_to_ether_dryago": ([("CCBr", "CCOCC", {"alcohol_with_moist_ag2o": "CCO"})], []),
+    "isocyanide_to_amine_hpt": ([("CC[N+]#[C-]", "CCNC", {"primary_amine_by_hydrolysis": "CCN"})], []),
+    "aldehyde_to_alkyl_halide_naohaq": ([("O=CC(Cl)(Cl)Cl", "ClC(Cl)Cl", {})], ["CC=O"]),
+    "carboxylic_acid_to_ketone_heatbaoh": ([("O=C(O)CCCCC(=O)O", "O=C1CCCC1", {})], ["O=C(O)CCCC(=O)O"]),
 }
 
 

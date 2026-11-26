@@ -33,6 +33,9 @@ Most are not new reactions: elimination stereochemistry (anti-periplanar cases, 
 shifts, SN1/SN2 stereo variants, neighbouring-group participation, aromaticity, acidity and inductive/resonance
 comparisons, nomenclature, degree of unsaturation, elemental analysis, carbohydrate and amino-acid tests.
 
+**Status:** rows 1–8 built (commit be6ff83), rows 9–18 built in batch 2 (same day). All 18 have a rule, a graph
+edge, a label, a scope, a golden case and a test.
+
 **Missing reactions with no engine rule** (each needs an RDKit rule, a scope and a test before a graph edge). The trap
 column is the existing reaction a student confuses it with — the engine's wrong turn.
 

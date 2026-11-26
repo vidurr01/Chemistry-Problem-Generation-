@@ -355,7 +355,14 @@ class EndToEnd(unittest.TestCase):
         self.cfg = dict(CFG, output_file=os.path.join(self.tmp, "out.json"),
                         pending_file=os.path.join(self.tmp, "pending.json"),
                         coverage_state_file=os.path.join(self.tmp, "cov.json"))
-        self.cand = OQ.draw(_adapter(), random.Random(5))
+        # the first scheme with two decisive facts on different steps (new edges change what a seed draws)
+        for seed in range(5, 60):
+            self.cand = OQ.draw(_adapter(), random.Random(seed))
+            try:
+                hinge_claims(self.cand)
+                break
+            except StopIteration:
+                continue
         self.lab = self.cand["_order"][-1]
         self.p = [mock.patch.object(entry, "get_subject_config", lambda s: self.cfg),
                   mock.patch.object(models, "key_is_set", lambda *a: True),

@@ -1454,3 +1454,97 @@ def _kolbe_electrolysis(s):
     soda = one("[CX4:1]C(=O)[OX2H1]>>[C:1]", s).product
     return Result(prods.pop(), traps={"soda_lime_decarboxylation": soda},
                   why="Kolbe electrolysis of the sodium salt: two R• radicals join (R–R), CO2 at the anode")
+
+
+# ── second batch from the concept-book coverage audit (reviewer-approved, 2026-11-26) ──
+
+@rule("alkyl_halide_to_amine_potassiumphthalimide")
+def _gabriel(s):
+    _one_group(s, "[CX4][Cl,Br,I]", "C–X")
+    r = one("[CX4H2:1][Cl,Br,I]>>[C:1]N", s,
+            why="Gabriel synthesis: phthalimide N alkylates once, hydrolysis frees the 1° amine only")
+    sec = run("[CX4H2:1][Cl,Br,I].[CX4H2:2][Cl,Br,I]>>[C:1]N[C:2]", s, s)
+    return Result(r.product, traps={"secondary_amine_overalkylation": smi(sec[0])} if sec else {}, why=r.why)
+
+
+@rule("amine_to_alkene_moistagoheat")
+def _hofmann_elimination(s):
+    _one_group(s, "[NX4+]([CH3])([CH3])[CH3]", "N⁺Me3")
+    prods = run("[CX4;!H0:1][CX4:2][NX4+]([CH3])([CH3])[CH3]>>[C:1]=[C:2]", s)
+    return pick(prods, hofmann, "Hofmann elimination of R–NMe3⁺ OH⁻: the less substituted alkene (bulky leaving "
+                                "group, E2 on the most accessible β-H)", "zaitsev_alkene")
+
+
+@rule("alkyne_to_benzene_redhotfetube")
+def _trimerise(s):
+    if canon(s) != canon("C#C"):
+        raise EngineError("cyclic trimerisation modelled for ethyne only (propyne gives isomer mixtures)")
+    return Result(canon("c1ccccc1"), why="ethyne passed through a red-hot iron tube trimerises to benzene")
+
+
+@rule("substituted_benzene_to_substituted_benzene_dilhsosteam")
+def _desulfonate(s):
+    _need(s, "c[SX4](=O)(=O)[OX2H1]", "Ar–SO3H")
+    return one("[c:1][SX4](=O)(=O)[OX2H1]>>[c:1]", s,
+               why="desulfonation: hot dilute acid / steam removes –SO3H (sulfonation is reversible)")
+
+
+@rule("ketone_to_carboxylic_acid_naohheathoo")
+def _benzilic(s):
+    _one_group(s, "[#6][CX3](=O)[CX3](=O)[#6]", "1,2-diketone")
+    _need(s, "[$(c),$([CX4;H0])][CX3](=O)[CX3](=O)[$(c),$([CX4;H0])]", "1,2-diketone with no α-H (an enolisable one undergoes aldol instead)")
+    prods = {smi(p) for p in run("[#6:3][C:1](=O)[C:2](=O)[#6:4]>>[#6:3][C:1]([#6:4])(O)C(=O)O", s)}
+    if len(prods) != 1:
+        raise EngineError(f"{s}: no single benzilic acid product")
+    return Result(prods.pop(), why="benzilic acid rearrangement: OH⁻ adds, 1,2-shift, α-hydroxy acid")
+
+
+@rule("alcohol_to_aldehyde_activatedmno")
+def _mno2(s):
+    _need(s, "[CX4H2]([OX2H1])[$(c),$([CX3]=[CX3])]", "allylic or benzylic CH2OH")
+    r = one("[CX4H2:1]([OX2H1:3])[$(c),$([CX3]=[CX3]):2]>>[CX3:1](=[O:3])[*:2]", s,
+            why="activated MnO2 oxidises only allylic/benzylic OH, and stops at the aldehyde")
+    traps = {}
+    try:
+        traps["acid_with_kmno4"] = RULES["alcohol_to_carboxylic_acid_kmno"](s).product
+    except EngineError:
+        pass
+    return Result(r.product, traps=traps, why=r.why)
+
+
+@rule("alkyl_halide_to_ether_dryago")
+def _dry_ag2o(s):
+    _one_group(s, "[CX4][Cl,Br,I]", "C–X")
+    prods = {smi(p) for p in run("[CX4H2:1][Cl,Br,I].[CX4H2:2][Cl,Br,I]>>[C:1]O[C:2]", s, s)}
+    if len(prods) != 1:
+        raise EngineError(f"{s}: dry Ag2O ether modelled for one 1° C–X")
+    moist = one("[CX4:1][Cl,Br,I]>>[C:1]O", s).product
+    return Result(prods.pop(), traps={"alcohol_with_moist_ag2o": moist},
+                  why="dry Ag2O: two R–X give the symmetrical ether R–O–R (moist Ag2O gives the alcohol)")
+
+
+@rule("isocyanide_to_amine_hpt")
+def _isocyanide_reduction(s):
+    _one_group(s, "[N+]#[C-]", "isocyanide")
+    r = one("[#6:1][N+]#[C-]>>[#6:1]NC", s, why="H2/Pt reduces R–N≡C to the N-methyl secondary amine R–NH–CH3")
+    hyd = one("[#6:1][N+]#[C-]>>[#6:1]N", s).product
+    return Result(r.product, traps={"primary_amine_by_hydrolysis": hyd}, why=r.why)
+
+
+@rule("aldehyde_to_alkyl_halide_naohaq")
+def _chloral(s):
+    if canon(s) != canon("O=CC(Cl)(Cl)Cl"):
+        raise EngineError("modelled for chloral (CCl3CHO) only")
+    return Result(canon("ClC(Cl)Cl"), coproducts=[canon("O=C[O-]")],
+                  why="aq. NaOH cleaves chloral: CHCl3 and formate (haloform-type)")
+
+
+_DIACID_KETONE = {"O=C(O)CCCCC(=O)O": "O=C1CCCC1", "O=C(O)CCCCCC(=O)O": "O=C1CCCCC1"}
+
+
+@rule("carboxylic_acid_to_ketone_heatbaoh")
+def _diacid_ketone(s):
+    p = _DIACID_KETONE.get(canon(s)) or {canon(k): v for k, v in _DIACID_KETONE.items()}.get(canon(s))
+    if p is None:
+        raise EngineError("modelled for hexanedioic and heptanedioic acid (cyclic ketone on heating)")
+    return Result(canon(p), why="heating the 1,6-/1,7-diacid (Ba(OH)2) gives the cyclic ketone with loss of CO2 and H2O")

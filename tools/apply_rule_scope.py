@@ -148,6 +148,17 @@ SCOPE = {
     'sulfonate_to_nitrile_nacn': {'absent': ['isocyanide', 'quaternary_ammonium', 'alkyl_halide', 'acid_chloride', 'epoxide', 'aldehyde', 'ketone', 'ester', 'anhydride'], 'at_most_one': ['sulfonate_ester']},
     'sulfonate_to_alkyl_halide_nai': {'absent': ['isocyanide', 'quaternary_ammonium', 'alkyl_halide', 'acid_chloride', 'epoxide', 'aldehyde', 'ketone', 'ester', 'anhydride'], 'at_most_one': ['sulfonate_ester']},
     'carboxylic_acid_to_alkane_kolbe': {'absent': ['alkene', 'alkyne', 'alcohol', 'phenol', 'amine_any', 'aldehyde', 'ketone', 'ester', 'alkyl_halide', 'aromatic_ring'], 'at_most_one': ['carboxylic_acid']},
+    # concept-book coverage audit, batch 2 (reviewer-approved, 2026-11-26)
+    'alkyl_halide_to_amine_potassiumphthalimide': {'absent': ['acid_chloride', 'ester', 'anhydride', 'aldehyde', 'ketone', 'epoxide', 'sulfonate_ester'], 'at_most_one': ['alkyl_halide']},
+    'amine_to_alkene_moistagoheat': {'absent': ['alkyl_halide', 'ester', 'acid_chloride', 'aldehyde', 'ketone'], 'requires': ['quaternary_ammonium'], 'at_most_one': ['quaternary_ammonium']},
+    'alkyne_to_benzene_redhotfetube': {'note': 'ethyne only (the rule refuses other alkynes)'},
+    'substituted_benzene_to_substituted_benzene_dilhsosteam': {'absent': ['ester', 'amide', 'nitrile', 'acetal', 'anhydride', 'acid_chloride'], 'note': 'rings carrying –SO3H (the rule refuses the rest)'},
+    'ketone_to_carboxylic_acid_naohheathoo': {'absent': ['ester', 'aldehyde', 'acid_chloride', 'anhydride', 'alkyl_halide']},
+    'alcohol_to_aldehyde_activatedmno': {'absent': ['amine_any', 'phenol', 'aldehyde']},
+    'alkyl_halide_to_ether_dryago': {'absent': ['acid_chloride', 'ester', 'anhydride', 'aldehyde', 'ketone', 'epoxide', 'sulfonate_ester', 'alcohol'], 'at_most_one': ['alkyl_halide']},
+    'isocyanide_to_amine_hpt': {'absent': ['alkene', 'alkyne', 'nitro', 'nitrile', 'aldehyde', 'ketone'], 'at_most_one': ['isocyanide']},
+    'aldehyde_to_alkyl_halide_naohaq': {'note': 'chloral only (the rule refuses the rest)'},
+    'carboxylic_acid_to_ketone_heatbaoh': {'note': 'hexanedioic and heptanedioic acid only'},
 }
 
 # Selectivity audit 2026-11-24 (docs/organic_selectivity_audit.md, groups A and B, approved by the author): the
@@ -521,6 +532,12 @@ for _eid, _spec in (list(REVIEW.items()) + list(PASS3.items()) + list(RUN9.items
             _lst.extend(g for g in _spec[_k] if g not in _lst)
     if _spec.get("note"):
         _cur["note"] = (_cur["note"] + "; " if _cur.get("note") else "") + _spec["note"]
+
+# Groups an edge acts on itself, which the reagent-class layer would otherwise exclude (2026-11-26): chloral IS an
+# alpha-halo carbonyl with a CCl3 group; that edge is modelled for chloral only (the rule refuses the rest).
+LAYER2_EXEMPT = {"aldehyde_to_alkyl_halide_naohaq": {"alpha_halo_carbonyl", "gem_dihalide", "alkyl_halide"}}
+for _eid, _keep in LAYER2_EXEMPT.items():
+    SCOPE[_eid]["absent"] = [g for g in SCOPE[_eid].get("absent", []) if g not in _keep]
 
 # Left out of draws after the blind step check (2026-11-24): the textbook outcome is disputed, so a key built on
 # it is unsafe. The edge keeps its scope; scope.trusted() refuses it.

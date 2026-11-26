@@ -4,6 +4,19 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Concept-book coverage, batch 2: 10 more organic reactions (reviewer: "build them")
+- `rules.py`: Gabriel (1° halides; trap: secondary amine), Hofmann elimination of R–NMe₃⁺ (trap: Saytzeff alkene),
+  ethyne trimerisation, desulfonation, benzilic acid (non-enolisable 1,2-diketones only), activated MnO₂ (allylic or
+  benzylic CH₂OH only; trap: KMnO₄ acid), dry Ag₂O ether (trap: alcohol with moist Ag₂O), isocyanide reduction
+  (trap: hydrolysis amine), chloral → chloroform, hexanedioic/heptanedioic acid → cyclic ketone. 10 graph edges
+  (198 in all), labels, scopes, golden cases, tests.
+- `tools/apply_rule_scope.py`: `LAYER2_EXEMPT` (the chloral edge acts on its own α-halo carbonyl / CCl₃ groups).
+- `core/engine/organic/pool.py`: benzil, chloral, hexanedioic acid, toluene-4-sulfonic acid,
+  N,N,N-trimethylbutan-2-aminium, so the organic audit runs every rule. Organic audit: 174 rules, 0 problems.
+- `tests/test_org_qfirst.EndToEnd` searches seeds for a scheme with two decisive facts (new edges change seed 5's draw).
+- `org_qfirst.full_stem`: scheme lines the generator copies into its lead/ask are dropped (code prints the scheme
+  once). Live run GEN_20261126T024834 (MnO₂ edge, key BCD, hand-checked) printed it twice; stored copy fixed.
+
 ### Concept-book coverage: hand audit, 3 inorganic and 9 organic edges (`docs/concept_coverage_audit.md`)
 - Physical option A (`b858077`): formulas in 2+ accepted questions are not drawn; `PHYS_FIT=off` switch.
 - Audit: `tools/audit_concept_coverage.py` (code shortlist), then every unmapped entry read by hand. Physical: all 82

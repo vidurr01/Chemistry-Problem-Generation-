@@ -772,10 +772,16 @@ def amount_ask(nums) -> str:
             f"Give the answer correct to two decimal places.")
 
 
+def _no_scheme(text) -> str:
+    """The model's lead/ask without scheme lines: code prints the scheme once (the model sometimes copies it)."""
+    keep = [ln for ln in str(text or "").splitlines() if "--[" not in ln and not ln.strip().startswith("P = ")]
+    return " ".join(ln.strip() for ln in keep if ln.strip())
+
+
 def full_stem(cand, q, result) -> str:
     if q["format"] == "amount":
-        return f"{str(q.get('lead') or '').strip()}\n{scheme_text(cand)}\n{amount_ask(q['_amount'])}"
-    head = f"{str(q.get('lead') or '').strip()}\n{scheme_text(cand)}\n{str(q['ask']).strip()}"
+        return f"{_no_scheme(q.get('lead'))}\n{scheme_text(cand)}\n{amount_ask(q['_amount'])}"
+    head = f"{_no_scheme(q.get('lead'))}\n{scheme_text(cand)}\n{_no_scheme(q['ask'])}"
     if q["format"] == "integer":
         return f"{head}\nGive the answer as an integer."
     if q["format"] == "count":

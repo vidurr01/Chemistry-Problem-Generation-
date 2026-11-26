@@ -170,4 +170,15 @@ REAGENT_LABEL = {
     "sulfonate_to_nitrile_nacn": "NaCN, DMSO",
     "sulfonate_to_alkyl_halide_nai": "NaI, acetone",
     "carboxylic_acid_to_alkane_kolbe": "(i) NaOH; (ii) electrolysis",
+    # concept-book coverage audit, batch 2 (2026-11-26)
+    "alkyl_halide_to_amine_potassiumphthalimide": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+    "amine_to_alkene_moistagoheat": "(i) moist Ag₂O; (ii) heat",
+    "alkyne_to_benzene_redhotfetube": "red-hot Fe tube, 873 K",
+    "substituted_benzene_to_substituted_benzene_dilhsosteam": "dil. H₂SO₄, steam, heat",
+    "ketone_to_carboxylic_acid_naohheathoo": "(i) NaOH, heat; (ii) H₃O⁺",
+    "alcohol_to_aldehyde_activatedmno": "MnO₂ (activated), CH₂Cl₂",
+    "alkyl_halide_to_ether_dryago": "dry Ag₂O, heat",
+    "isocyanide_to_amine_hpt": "H₂, Pt",
+    "aldehyde_to_alkyl_halide_naohaq": "NaOH (aq)",
+    "carboxylic_acid_to_ketone_heatbaoh": "Ba(OH)₂, heat",
 }
