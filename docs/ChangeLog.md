@@ -4,6 +4,22 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Fixes from the 60-question batch (first 9 questions, keys hand-checked)
+- `core/pipeline/org_qfirst.py`: no crash when the start picker refuses on the first draw (the start_refused note
+  was written with no chain open: RuntimeError "no chain started").
+- `core/pipeline/org_start.py`: `check_start` counts only reactions not yet used up (`overused_edges`,
+  MAX_EDGE_USES), and the reagent menu shown to the picker leaves used-up ones out. Alkene + ketone starts whose
+  remaining reactions all refused them gave "no new scheme from this start" for whole runs (26 of 168 edges used up
+  after 27 accepted questions). The picker is now told why and picks another family.
+- `tests/test_org_qfirst.py`: the test adapter reads no accepted questions (tests no longer change as the output
+  file grows); new test for used-up reactions.
+- `core/pipeline/trace_check.py`: `MAX_TOKENS` 4000 → 8000 (12 empty replies, finish_reason=length, in 9 questions).
+- `tools/apply_rule_scope.py` (graph rewritten): scopes the blind step checker kept objecting to, each correctly:
+  H₂/Ni nitrile reduction not with a ketone; Br₂/NaOH haloform not with an amide (Hofmann); Gabriel not with an
+  amide or nitrile (hot NaOH hydrolysis); Br₂/AcOH α-bromination not with an isocyanide. Organic audit clean.
+- Not changed (checked with data): a rule against two formulas for the same quantity would have blocked 12 of 28
+  accepted physical questions; the designer's refusal (~₹3) stays the filter.
+
 ### Physical draws: at most one word-answer formula
 - `core/pipeline/adapters.py` `WORD_RESULTS`: formulas whose result is a word (equilibrium-shift direction,
   precipitation: 157, 161, 162, 164, 166, 167, 194, 198) no longer link formulas through that shared node, and a draw

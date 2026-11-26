@@ -1,0 +1,197 @@
+{
+ "subject": "organic",
+ "saved_at": "20261126T092345",
+ "spend": {
+  "total_cost_usd": 0.04908,
+  "by_role": {
+   "start_picker": {
+    "calls": 6,
+    "prompt_tokens": 13192,
+    "completion_tokens": 7724,
+    "cost": 0.038859
+   },
+   "name_checker": {
+    "calls": 4,
+    "prompt_tokens": 412,
+    "completion_tokens": 486,
+    "cost": 0.0002842
+   },
+   "step_checker": {
+    "calls": 12,
+    "prompt_tokens": 1980,
+    "completion_tokens": 19469,
+    "cost": 0.009932500000000002
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alkyl_halide_to_alcohol_naoh",
+     "alcohol_to_carboxylic_acid_kmno",
+     "ketone_to_cyanohydrin_hcn",
+     "nitrile_to_aldehyde_dibalhdiisob",
+     "carboxylic_acid_to_acid_chloride_socl",
+     "acid_chloride_to_aldehyde_hpdbaso"
+    ],
+    "nodes": [
+     "alkyl_halide",
+     "alcohol",
+     "carboxylic_acid",
+     "cyanohydrin",
+     "aldehyde",
+     "acid_chloride",
+     "aldehyde"
+    ],
+    "chapters": [
+     "Alkyl Halides",
+     "Carboxylic Acids & Derivatives",
+     "Aldehydes & Ketones",
+     "Amines"
+    ],
+    "txs": [
+     16,
+     205,
+     258,
+     259,
+     286,
+     26,
+     271,
+     490,
+     41,
+     430,
+     44,
+     402
+    ],
+    "trap_ids": [],
+    "description": "4-(2-bromoethyl)cyclohexan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:15:54.410341+00:00",
+     "held": "STE_20261126T091554_62",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alcohol_to_carboxylic_acid_kmno",
+       "substrate": "O=C1CCC(CCO)CC1",
+       "reagent": "KMnO₄, H⁺, heat",
+       "engine": "O=C(O)CC1CCC(=O)CC1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)CCC(CC(=O)O)CC(=O)O",
+       "reason": "Under hot acidic KMnO₄, the primary alcohol is oxidized to a carboxylic acid and oxidative cleavage of the cyclohexanone ring gives the substituted tricarboxylic acid, with no rearrangement required."
+      },
+      {
+       "label": "S",
+       "edge": "ketone_to_cyanohydrin_hcn",
+       "substrate": "O=C(O)CC1CCC(=O)CC1",
+       "reagent": "HCN, KCN (cat.)",
+       "engine": "N#CC1(O)CCC(CC(=O)O)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The carboxylic acid protonates the catalytic CN⁻, suppressing cyanohydrin formation at the ketone, so there is no single major organic product."
+      },
+      {
+       "label": "T",
+       "edge": "nitrile_to_aldehyde_dibalhdiisob",
+       "substrate": "N#CC1(O)CCC(CC(=O)O)CC1",
+       "reagent": "(i) DIBAL-H; (ii) H₂O",
+       "engine": "O=CC1(O)CCC(CC(=O)O)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The carboxylic acid (and the alcohol) consumes DIBAL-H by proton transfer before nitrile reduction, so without specified excess and conditions the textbook nitrile-to-aldehyde outcome cannot be assigned."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alkyl_halide_to_alcohol_naoh",
+     "alcohol_to_carboxylic_acid_kmno",
+     "carboxylic_acid_to_acid_chloride_socl",
+     "ketone_to_lactone_diazomethane",
+     "alcohol_to_sulfonate_conchso",
+     "acid_chloride_to_aldehyde_hpdbaso"
+    ],
+    "nodes": [
+     "alkyl_halide",
+     "alcohol",
+     "carboxylic_acid",
+     "acid_chloride",
+     "ketone",
+     "sulfonate",
+     "aldehyde"
+    ],
+    "chapters": [
+     "Alkyl Halides",
+     "Carboxylic Acids & Derivatives",
+     "Aldehydes & Ketones",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     16,
+     205,
+     258,
+     259,
+     286,
+     26,
+     271,
+     490,
+     44,
+     656,
+     150,
+     245,
+     246,
+     402
+    ],
+    "trap_ids": [],
+    "description": "4-(2-bromoethyl)cyclohexan-1-one: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:18:05.237786+00:00",
+     "held": "STE_20261126T091805_63",
+     "steps": [
+      {
+       "label": "R",
+       "edge": "alcohol_to_carboxylic_acid_kmno",
+       "substrate": "O=C1CCC(CCO)CC1",
+       "reagent": "KMnO₄, H⁺, heat",
+       "engine": "O=C(O)CC1CCC(=O)CC1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)CCC(CC(=O)O)CCC(=O)O",
+       "reason": "Hot acidic KMnO₄ oxidizes the primary alcohol to a carboxylic acid and can cleave the cyclohexanone at either equivalent α C–C bond, giving the same ring-opened triacid."
+      },
+      {
+       "label": "T",
+       "edge": "ketone_to_lactone_diazomethane",
+       "substrate": "O=C(Cl)CC1CCC(=O)CC1",
+       "reagent": "CH₂N₂, BF₃·Et₂O",
+       "engine": "O=C(Cl)CC1CCCC(=O)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The acid chloride reacts preferentially with CH₂N₂ to form an α-diazoketone, while BF₃ can promote its rearrangement and also activate the pendant ketone; without specified stoichiometry and trapping/workup conditions, no single textbook product is defined."
+      },
+      {
+       "label": "U",
+       "edge": "alcohol_to_sulfonate_conchso",
+       "substrate": "O=C1CCC(CCO)CC1",
+       "reagent": "conc. H₂SO₄, 383 K",
+       "engine": "O=C1CCC(CCOS(=O)(=O)O)CC1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The substrate has a primary alcohol and a ketone, but 383 K is not the standard textbook condition for dehydrating a primary alcohol, and the ketone does not provide a unique alternative transformation under these conditions."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

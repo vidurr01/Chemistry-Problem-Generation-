@@ -1,0 +1,20 @@
+Question kind this run: chains
+Organic Chemistry: 26 accepted so far.
+  [start] try 1: (E)-4-(4-(2-oxopropyl)phenyl)but-3-en-1-ol (CC(=O)Cc1ccc(/C=C/CCO)cc1) → refused: groups that can react with each other: OH and C=C are 4 bonds apart. Keep every OH, NH2 or COOH at least 6 bonds from any C=O, ester, C–X, e
+  [start] try 2: 4-(2-bromoethyl)benzaldehyde (O=Cc1ccc(CCBr)cc1) → refused: an accepted question already starts from this molecule: invent a different one
+  [start] try 3: 4-(prop-2-yn-1-yl)benzaldehyde (O=Cc1ccc(CC#C)cc1) → refused: an accepted question already starts from this molecule: invent a different one
+Traceback (most recent call last):
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 505, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 451, in main
+    outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\flow.py", line 660, in run
+    return org_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_qfirst.py", line 822, in run
+    bb.note("start_refused", tries=org_start.PICK_TRIES)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\blackboard.py", line 35, in note
+    raise RuntimeError("no chain started")
+RuntimeError: no chain started

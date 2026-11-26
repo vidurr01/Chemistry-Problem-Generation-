@@ -1,0 +1,104 @@
+{
+ "subject": "organic",
+ "saved_at": "20261126T100618",
+ "spend": {
+  "total_cost_usd": 0.06553,
+  "by_role": {
+   "start_picker": {
+    "calls": 10,
+    "prompt_tokens": 22181,
+    "completion_tokens": 11885,
+    "cost": 0.0612045
+   },
+   "name_checker": {
+    "calls": 5,
+    "prompt_tokens": 518,
+    "completion_tokens": 422,
+    "cost": 0.0002628
+   },
+   "step_checker": {
+    "calls": 6,
+    "prompt_tokens": 1035,
+    "completion_tokens": 7922,
+    "cost": 0.0040644999999999995
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_ether_conchso413k",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "ether_to_alkyl_halide_conchxhihbra",
+     "alkyl_halide_to_amine_potassiumphthalimide",
+     "ether_to_alkyl_halide_conchxhihbra",
+     "carboxylic_acid_to_acid_chloride_socl"
+    ],
+    "nodes": [
+     "ketone",
+     "ether",
+     "carboxylic_acid",
+     "alkyl_halide",
+     "amine",
+     "alkyl_halide",
+     "acid_chloride"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Aldehydes & Ketones",
+     "Amines",
+     "Carboxylic Acids & Derivatives"
+    ],
+    "txs": [
+     639,
+     210,
+     136,
+     137,
+     192,
+     272,
+     273,
+     93,
+     136,
+     137,
+     192,
+     272,
+     273,
+     44
+    ],
+    "trap_ids": [],
+    "description": "1-[4-(2-hydroxyethyl)phenyl]ethan-1-one: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T10:01:28.171010+00:00",
+     "held": "STE_20261126T100128_72",
+     "steps": [
+      {
+       "label": "S",
+       "edge": "ether_to_alkyl_halide_conchxhihbra",
+       "substrate": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+       "reagent": "HI (1 equiv)",
+       "engine": "O=C(O)c1ccc(CCI)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)c1ccc(CCO)cc1.O=C(O)c1ccc(CCI)cc1",
+       "reason": "HI cleaves the symmetrical dialkyl ether by substitution at either equivalent primary ethyl group, giving one hydroxyethyl benzoic acid and one iodoethyl benzoic acid; the carboxylic acids remain unchanged."
+      },
+      {
+       "label": "T",
+       "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+       "substrate": "O=C(O)c1ccc(CCI)cc1",
+       "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+       "engine": "NCCc1ccc(C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The carboxylic acid protonates potassium phthalimide before Gabriel alkylation, and hot aqueous NaOH may instead substitute the primary iodide, so the textbook amination is not a defined outcome."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -34,7 +34,9 @@ TRAP_TOL = 0.02                                   # as flow.CONSENSUS_TOL
 MIN_QUOTE = 8                                     # characters: a shorter quote proves nothing
 # reply limit, thinking included: 1500 cut Qwen off twice on one GLM working (live run 2026-11-26: ~1460 tokens
 # a call at effort "low", one empty, one truncated JSON)
-MAX_TOKENS = 4000
+# 4000 still ran out on 12 of ~30 calls in the 60-question batch of 2026-11-26 (long physical workings):
+# 8000 (about +$0.002 a call)
+MAX_TOKENS = 8000
 
 _SYSTEM = """You read one solver's working on a chemistry question. The answer key was computed by code from the
 question's data. The solver's final answer differs from the key. Say WHY, with one label:

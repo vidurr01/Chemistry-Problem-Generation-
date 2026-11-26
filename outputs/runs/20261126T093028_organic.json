@@ -1,0 +1,325 @@
+{
+ "subject": "organic",
+ "saved_at": "20261126T093028",
+ "spend": {
+  "total_cost_usd": 0.04699,
+  "by_role": {
+   "start_picker": {
+    "calls": 5,
+    "prompt_tokens": 10975,
+    "completion_tokens": 5691,
+    "cost": 0.0295725
+   },
+   "name_checker": {
+    "calls": 4,
+    "prompt_tokens": 400,
+    "completion_tokens": 487,
+    "cost": 0.0002835
+   },
+   "step_checker": {
+    "calls": 24,
+    "prompt_tokens": 4169,
+    "completion_tokens": 33426,
+    "cost": 0.017129900000000003
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_ether_conchso413k",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "carboxylic_acid_to_amide_nh",
+     "ether_to_alkyl_halide_conchxhihbra",
+     "alkyl_halide_to_amine_potassiumphthalimide",
+     "amine_to_isocyanide_carbylaminetest"
+    ],
+    "nodes": [
+     "alcohol",
+     "ether",
+     "carboxylic_acid",
+     "amide",
+     "alkyl_halide",
+     "amine",
+     "isocyanide"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Aldehydes & Ketones",
+     "Carboxylic Acids & Derivatives",
+     "Amines"
+    ],
+    "txs": [
+     639,
+     210,
+     45,
+     136,
+     137,
+     192,
+     272,
+     273,
+     93,
+     383
+    ],
+    "trap_ids": [],
+    "description": "1-(4-(2-hydroxyethyl)phenyl)ethan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:25:44.244429+00:00",
+     "held": "STE_20261126T092544_64",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "alcohol_to_ether_conchso413k",
+       "substrate": "CC(=O)c1ccc(CCO)cc1",
+       "reagent": "conc. H₂SO₄, 413 K",
+       "engine": "CC(=O)c1ccc(CCOCCc2ccc(C(C)=O)cc2)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "At 413 K, concentrated H₂SO₄ can promote alcohol dehydration (including intermolecular ether formation) while also sulfonating the acetyl-substituted aromatic ring, so the simple-alcohol textbook conditions do not establish a unique major product for this substrate."
+      },
+      {
+       "label": "T",
+       "edge": "ether_to_alkyl_halide_conchxhihbra",
+       "substrate": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+       "reagent": "HI (1 equiv)",
+       "engine": "O=C(O)c1ccc(CCI)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)c1ccc(CCI)cc1.O=C(O)c1ccc(CCO)cc1",
+       "reason": "HI cleaves the ether by SN2 attack at a primary carbon, giving the iodoethyl and hydroxyethyl benzoic acids while leaving both carboxylic acids unchanged."
+      },
+      {
+       "label": "U",
+       "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+       "substrate": "O=C(O)c1ccc(CCI)cc1",
+       "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+       "engine": "NCCc1ccc(C(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The carboxylic acid protonates potassium phthalimide before Gabriel alkylation, so the standard Gabriel sequence does not apply to this substrate."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "alcohol_to_ether_conchso413k",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "carboxylic_acid_to_acid_chloride_socl",
+     "ether_to_alkyl_halide_conchxhihbra",
+     "acid_chloride_to_alcohol_1lialh4lithi",
+     "alcohol_to_aldehyde_activatedmno"
+    ],
+    "nodes": [
+     "alcohol",
+     "ether",
+     "carboxylic_acid",
+     "acid_chloride",
+     "alkyl_halide",
+     "alcohol",
+     "aldehyde"
+    ],
+    "chapters": [
+     "Alcohols, Phenols & Ethers",
+     "Aldehydes & Ketones",
+     "Carboxylic Acids & Derivatives"
+    ],
+    "txs": [
+     639,
+     210,
+     44,
+     136,
+     137,
+     192,
+     272,
+     273,
+     496,
+     491
+    ],
+    "trap_ids": [],
+    "description": "1-(4-(2-hydroxyethyl)phenyl)ethan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:26:23.443906+00:00",
+     "held": "STE_20261126T092623_65",
+     "steps": [
+      {
+       "label": "T",
+       "edge": "ether_to_alkyl_halide_conchxhihbra",
+       "substrate": "O=C(Cl)c1ccc(CCOCCc2ccc(C(=O)Cl)cc2)cc1",
+       "reagent": "HI (1 equiv)",
+       "engine": "O=C(Cl)c1ccc(CCI)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The usual aqueous HI conditions hydrolyze the acid chlorides, while anhydrous iodide can instead undergo acyl-halide exchange and compete with ether cleavage, so the unspecified medium does not determine a unique major product."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "alcohol_to_alkene_conchso",
+     "carboxylic_acid_to_alcohol_lialh",
+     "alkene_to_vicinal_dihalide_x",
+     "alcohol_to_aldehyde_activatedmno",
+     "alkene_to_alcohol_bhthfhonaoh"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "carboxylic_acid",
+     "alkene",
+     "alcohol",
+     "vicinal_dihalide",
+     "aldehyde",
+     "alcohol"
+    ],
+    "chapters": [
+     "Aldehydes & Ketones",
+     "Hydrocarbons",
+     "Carboxylic Acids & Derivatives",
+     "Alcohols, Phenols & Ethers"
+    ],
+    "txs": [
+     210,
+     27,
+     148,
+     151,
+     152,
+     154,
+     155,
+     640,
+     46,
+     432,
+     11,
+     491,
+     629
+    ],
+    "trap_ids": [],
+    "description": "1-(4-(2-hydroxyethyl)phenyl)ethan-1-one: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:27:07.261173+00:00",
+     "held": "STE_20261126T092707_66",
+     "steps": [
+      {
+       "label": "V",
+       "edge": "alkene_to_alcohol_bhthfhonaoh",
+       "substrate": "C=Cc1ccc(CO)cc1",
+       "reagent": "(i) BH₃·THF; (ii) H₂O₂, NaOH",
+       "engine": "OCCc1ccc(CO)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The free alcohol protonolyzes/complexes BH₃ before alkene hydroboration, so without specified reagent equivalents the alkene may remain unchanged or undergo hydroboration; the standard textbook outcome is not uniquely determined."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "nitrile_to_amine_h",
+     "amine_to_isocyanide_carbylaminetest",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "ketone_to_cyanohydrin_hcn",
+     "ketone_to_ketone_x2",
+     "isocyanide_to_amine_hydrolysis"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "amine",
+     "isocyanide",
+     "carboxylic_acid",
+     "cyanohydrin",
+     "ketone",
+     "amine"
+    ],
+    "chapters": [
+     "Amines",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     66,
+     81,
+     383,
+     210,
+     41,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     659
+    ],
+    "trap_ids": [],
+    "description": "4-(3-oxobutyl)benzonitrile: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:30:28.144152+00:00",
+     "held": "STE_20261126T093028_67",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "nitrile_to_amine_h",
+       "substrate": "CC(=O)CCc1ccc(C#N)cc1",
+       "reagent": "H₂, Ni",
+       "engine": "CC(=O)CCc1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(O)CCc1ccc(CN)cc1",
+       "reason": "Under the standard exhaustive H₂/Ni outcome, the ketone is reduced to a secondary alcohol and the aryl nitrile to a benzylamine, giving the alcohol as a racemate."
+      },
+      {
+       "label": "S",
+       "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+       "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+       "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+       "engine": "[C-]#[N+]Cc1ccc(CCC(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=C(O)CCc1ccc(CN)cc1.O=CO.BrC(Br)Br",
+       "reason": "Excess Br₂/NaOH cleaves the methyl ketone by the haloform reaction, while acidic hydrolysis of the isocyanide gives the benzylamine and formic acid."
+      },
+      {
+       "label": "U",
+       "edge": "ketone_to_ketone_x2",
+       "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+       "reagent": "Br₂, CH₃COOH",
+       "engine": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The isocyanide is highly reactive toward Br₂ and can undergo bromine addition before or alongside acid-mediated ketone α-bromination, so the textbook ketone bromination does not define a unique major product for these conditions."
+      },
+      {
+       "label": "V",
+       "edge": "isocyanide_to_amine_hydrolysis",
+       "substrate": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+       "reagent": "dil. HCl, H₂O",
+       "engine": "CC(=O)C(Br)Cc1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "O=CNCc1ccc(CC(Br)C(C)=O)cc1",
+       "reason": "Dilute aqueous HCl hydrolyzes the isocyanide to the N-formyl derivative, while the α-bromoketone remains intact under these conditions and does not undergo a base-driven Favorskii rearrangement."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

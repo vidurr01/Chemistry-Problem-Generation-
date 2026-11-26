@@ -136,7 +136,7 @@ SCOPE = {
                               "note": "only CH3NH2, CH3CH2NH2 and ArCH2NH2: other 1° amines rearrange (mixtures)"},
     "amine_to_amide_rcocl": {"absent": ["alcohol", "phenol"]},
     "nitrile_to_aldehyde_dibalhdiisob": {"absent": ["ester", "ketone", "aldehyde"]},
-    "nitrile_to_amine_h": {"absent": ["alkene", "alkyne", "nitro"]},
+    "nitrile_to_amine_h": {"absent": ["alkene", "alkyne", "nitro", "ketone"]},   # H2/Ni reduces C=O too (batch 2026-11-26)
     "nitrile_to_carboxylic_acid_ho": {"absent": ["ester", "amide"]},
     # added from the concept-book coverage audit (reviewer-approved, 2026-11-26)
     'alkene_to_alcohol_bhthfhonaoh': {'absent': ['acetal', 'acid_chloride', 'activated_cx', 'alcohol_3', 'aldehyde', 'alkyne', 'amide', 'amine_any', 'anhydride', 'benzylic_allylic_ether', 'beta_hydroxy_carbonyl', 'carboxylic_acid', 'conj_cc', 'cyanohydrin', 'epoxide', 'ester', 'gem_dihalide', 'imine', 'ketone', 'nitrile', 'oxime', 'sulfonate_ester', 'vinyl_halide'], 'at_most_one': ['alkene']},
@@ -149,7 +149,7 @@ SCOPE = {
     'sulfonate_to_alkyl_halide_nai': {'absent': ['isocyanide', 'quaternary_ammonium', 'alkyl_halide', 'acid_chloride', 'epoxide', 'aldehyde', 'ketone', 'ester', 'anhydride'], 'at_most_one': ['sulfonate_ester']},
     'carboxylic_acid_to_alkane_kolbe': {'absent': ['alkene', 'alkyne', 'alcohol', 'phenol', 'amine_any', 'aldehyde', 'ketone', 'ester', 'alkyl_halide', 'aromatic_ring'], 'at_most_one': ['carboxylic_acid']},
     # concept-book coverage audit, batch 2 (reviewer-approved, 2026-11-26)
-    'alkyl_halide_to_amine_potassiumphthalimide': {'absent': ['acid_chloride', 'ester', 'anhydride', 'aldehyde', 'ketone', 'epoxide', 'sulfonate_ester'], 'at_most_one': ['alkyl_halide']},
+    'alkyl_halide_to_amine_potassiumphthalimide': {'absent': ['acid_chloride', 'ester', 'anhydride', 'aldehyde', 'ketone', 'epoxide', 'sulfonate_ester', 'amide', 'nitrile'], 'at_most_one': ['alkyl_halide']},
     'amine_to_alkene_moistagoheat': {'absent': ['alkyl_halide', 'ester', 'acid_chloride', 'aldehyde', 'ketone'], 'requires': ['quaternary_ammonium'], 'at_most_one': ['quaternary_ammonium']},
     'alkyne_to_benzene_redhotfetube': {'note': 'ethyne only (the rule refuses other alkynes)'},
     'substituted_benzene_to_substituted_benzene_dilhsosteam': {'absent': ['ester', 'amide', 'nitrile', 'acetal', 'anhydride', 'acid_chloride'], 'note': 'rings carrying –SO3H (the rule refuses the rest)'},
@@ -186,9 +186,9 @@ SELECTIVITY = {
     "benzene_to_aryl_halide_x": ["alkyne"],
     "carboxylic_acid_to_alkyl_halide_agohtomakeag": ["alkyne"],
     "alkene_to_halohydrin_br": ["aldehyde", "alkyne"],
-    "ketone_to_ketone_x2": ["alkene", "alkyne", "phenol", "aryl_nh2"],
+    "ketone_to_ketone_x2": ["alkene", "alkyne", "phenol", "aryl_nh2", "isocyanide"],
     "ketone_to_carboxylic_acid_x2cl2br2ori2": ["methyl_carbinol", "ester", "acid_chloride", "anhydride", "phenol",
-                                               "aryl_nh2"],
+                                               "aryl_nh2", "amide"],   # Br2/NaOH: Hofmann on a CONH2 (2026-11-26)
     "carboxylic_acid_to_carboxylic_acid_x": ["alcohol", "alkene", "alkyne", "ketone"],
     "acid_chloride_to_alcohol_1lialh4lithi": ["alkyl_halide"],
     "carboxylic_acid_to_alcohol_lialh": ["alkyl_halide"],

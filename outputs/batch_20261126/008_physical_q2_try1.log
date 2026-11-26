@@ -1,0 +1,76 @@
+Question kind this run: chains
+Physical Chemistry: 45 accepted so far.
+
+  [fit] Jev scored 6 random formula sets: 46%, 50%, 16%, 27%, 50%, 67%; writing the first over the floor (67%), floor 50%
+
+╔═══ DRAW 1: txs [49, 17, 1] (Stoichiometry); twist: the designer's choice ═══╗
+    49: degree of hardness (ppm of CaCO3) [hardness = (mass as CaCO3 / mass of water) × 10⁶]
+    17: mass of solute (g) [m_solute = (% w/W)/100 × m_solution]
+    1: amount (in mol) of the compound [n = m / M]
+  [design] An aqueous solution of magnesium chloride (MgCl2) with a specific mass percentage. | insight: The definition of hardness uses the mass of the solvent (water), not the mass of the solution, which becomes s
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks mass percentage (% w/W) of magnesium chloride in the solution (%)
+    [level] Jev: 1.44 (JEE Main medium); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): hardness = 43500.0, M_MgCl2 = 95.21, M_CaCO3 = 100.09
+    question rejected (1/2): the question states 1e+06, which is a result the solution has to compute; remove it
+  [question] attempt 2: asks mass percentage of magnesium chloride in the solution (%)
+    [level] Jev: 1.54 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): hardness = 113000.0, M_MgCl2 = 95.21, M_CaCO3 = 100.09
+    question rejected (2/2): the result of 'degree of hardness (ppm of CaCO3)' does not change the answer; every formula must matter
+
+  [fit] Jev scored 3 random formula sets: 22%, 41%, 52%; writing the first over the floor (52%), floor 50%
+
+╔═══ DRAW 2: txs [186, 187, 191] (Ionic Equilibrium); twist: the designer's choice ═══╗
+    186: pH after the addition [added base converts acid → salt; then Henderson]
+    187: [salt]/[acid] ratio [WA + insufficient SB: salt = n_SB, acid = n_WA − n_SB]
+    191: K_a of the acid [at half-equivalence [salt] = [acid] so pH = pK_a]
+  [design] A fixed volume of an unknown monoprotic weak acid is titrated with a strong base (NaOH). | insight: The half-equivalence point is defined by the unknown total amount of weak acid, not by the specific volume of 
+  [twist] inverse (chosen by the designer)
+  [question] attempt 1: asks the initial amount of the weak acid in the solution (mol)
+    [level] Jev: 1.83 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): pH_buf = 4.96, n_base = 0.00924, pH_half = 5.47
+    question rejected (1/2): the result of '[salt]/[acid] ratio' does not change the answer; every formula must matter
+  [question] attempt 2: asks the initial amount of the weak acid in the solution (mol)
+    [level] Jev: 2.15 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): n_base_1 = 0.0111, n_base_extra = 0.00963, pH_final = 4.46, pH_half = 4.89
+    shortcut check: missing the hidden step gives 0.0222 against 0.07653 (71.0% apart)
+  [engine] answer 0.07653 mol; traps: ['weak_acid_formula', 'ignores_addition']
+  [council] closed-book solves (cheaper members first)...
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 3
+    [granite-4.2-8b] 0.0747 mol  → failed
+    [glm-5.3-flash] 0.0765 mol  → solved
+    [trace] granite-4.2-8b: slip — The solver made an arithmetic addition error, using 0.0201 mol instead of the correct total base amount 0.02073 mol.
+    ladder: granite-4.2-8b failed by slip, not by the hard step → too easy
+    Jev's pick: plugin_order (confidence 34%)
+  [refine] too easy because: plugin_order; twist now condition
+  [design] An aqueous solution of a monoprotic weak acid (HA) to which solid barium hydroxide, Ba(OH)2, is added. | insight: That the added strong base is divalent (Ba(OH)2), so each mole of the base neutralizes two moles of the weak a
+  [question] attempt 1: asks mass of solid barium hydroxide required to reach the target pH (g)
+    [level] Jev: 2.29 (JEE Main hard); floor 1.16
+    program written (attempt 1); it runs on values from the question's ranges
+    numbers picked (1 set tried): V_acid = 0.286, C_acid = 0.442, pH_half = 5.46, pH_target = 5.89, M_BaOH2 = 171.34
+    shortcut check: missing the hidden step gives 15.79 against 7.896 (50.0% apart)
+  [engine] new answer 7.896 g
+  [council] closed-book solves (cheaper members first)...
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 1
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 2
+    [council glm-5.3-flash] calc tool: 1 call(s) in round 3
+    [granite-4.2-8b] 0.0187 g  → failed
+    [glm-5.3-flash] 7.89 g  → solved
+    [trace_checker] unusable reply (empty completion (finish_reason=length)) — asking again (1/2)
+    [trace_checker] unusable reply (empty completion (finish_reason=length)) — asking again (2/2)
+    [trace] granite-4.2-8b: unchecked — checker call failed: empty completion (finish_reason=length)
+    ladder: granite-4.2-8b failed; first solved by glm-5.3-flash → advanced (Jev level 2.24)
+    [hint] granite-4.2-8b: insight → solved (difficulty confirmed)
+
+✓ ACCEPTED GEN_20261126T095202 — answer 7.9 g; difficulty advanced (first solved by glm-5.3-flash); tags {'knowledge': 'closed_book', 'trap_types': ['weak_acid_formula']}
+============================================================
+A 0.286 L aqueous solution of a weak monoprotic acid HA of concentration 0.442 mol L^-1 is prepared at 298 K. In a preliminary titration of this acid, the pH at the half-neutralisation point was found to be 5.46. Calculate the mass of solid barium hydroxide (Ba(OH)2) that must be dissolved into the original 0.286 L solution without changing its volume so that the pH of the resulting solution becomes 5.89. (Given: Molar mass of Ba(OH)2 = 171.34 g mol^-1) Give the answer in g, to 3 significant figures.
+============================================================
+
+Spend this run: $0.1135  {"total_cost_usd": 0.1135, "by_role": {"formula_fit": {"calls": 12, "prompt_tokens": 6820, "completion_tokens": 0, "cost": 0.0002864}, "designer": {"calls": 3, "prompt_tokens": 6935, "completion_tokens": 4355, "cost": 0.06613}, "design_check": {"calls": 3, "prompt_tokens": 1849, "completion_tokens": 0, "cost": 7.766e-05}, "generator": {"calls": 5, "prompt_tokens": 16137, "completion_tokens": 2169, "cost": 0.02024}, "level_check": {"calls": 6, "prompt_tokens": 3222, "completion_tokens": 0, "cost": 0.0001353}, "coder": {"calls": 5, "prompt_tokens": 15851, "completion_tokens": 10755, "cost": 0.007358}, "coherence_check": {"calls": 2, "prompt_tokens": 1097, "completion_tokens": 0, "cost": 4.607e-05}, "shortcut_coder": {"calls": 2, "prompt_tokens": 2071, "completion_tokens": 1934, "cost": 0.001201}, "council": {"calls": 11, "prompt_tokens": 9398, "completion_tokens": 7352, "cost": 0.002303}, "trace_checker": {"calls": 4, "prompt_tokens": 5146, "completion_tokens": 12694, "cost": 0.006464}, "refiner": {"calls": 1, "prompt_tokens": 1222, "completion_tokens": 0, "cost": 5.132e-05}, "solution_writer": {"calls": 1, "prompt_tokens": 689, "completion_tokens": 2159, "cost": 0.008613}, "solution_checker": {"calls": 1, "prompt_tokens": 1617, "completion_tokens": 871, "cost": 0.0005972}}}

@@ -1,0 +1,254 @@
+{
+ "subject": "organic",
+ "saved_at": "20261126T095902",
+ "spend": {
+  "total_cost_usd": 0.05223,
+  "by_role": {
+   "start_picker": {
+    "calls": 6,
+    "prompt_tokens": 13340,
+    "completion_tokens": 7145,
+    "cost": 0.03679875
+   },
+   "name_checker": {
+    "calls": 4,
+    "prompt_tokens": 403,
+    "completion_tokens": 309,
+    "cost": 0.0001948
+   },
+   "step_checker": {
+    "calls": 17,
+    "prompt_tokens": 2860,
+    "completion_tokens": 29899,
+    "cost": 0.015235499999999999
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "nitrile_to_amine_h",
+     "amine_to_isocyanide_carbylaminetest",
+     "ketone_to_ketone_x2",
+     "amine_to_alcohol_nano",
+     "ketone_to_ketone_x2",
+     "alcohol_to_aldehyde_pcc"
+    ],
+    "nodes": [
+     "nitrile",
+     "amine",
+     "isocyanide",
+     "ketone",
+     "alcohol",
+     "ketone",
+     "aldehyde"
+    ],
+    "chapters": [
+     "Amines",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     66,
+     81,
+     383,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     252,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     24,
+     434
+    ],
+    "trap_ids": [],
+    "description": "4-(2-oxopropyl)benzonitrile: 6 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:56:52.540099+00:00",
+     "held": "STE_20261126T095652_69",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "nitrile_to_amine_h",
+       "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+       "reagent": "H₂, Ni",
+       "engine": "CC(=O)Cc1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(O)Cc1ccc(CN)cc1",
+       "reason": "Under the standard textbook assumption of catalytic hydrogenation to completion, the ketone becomes a secondary alcohol and the nitrile becomes a primary amine, giving the racemic amino alcohol without changing the carbon skeleton."
+      },
+      {
+       "label": "S",
+       "edge": "ketone_to_ketone_x2",
+       "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+       "reagent": "Br₂, CH₃COOH",
+       "engine": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The isocyanide is itself highly reactive toward Br₂, so the usual acid-catalyzed ketone α-bromination cannot be assigned as a clean, unique outcome without further conditions or stoichiometry."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "nitrile_to_amine_h",
+     "amine_to_isocyanide_carbylaminetest",
+     "ketone_to_carboxylic_acid_x2cl2br2ori2",
+     "isocyanide_to_amine_hpt",
+     "ketone_to_ketone_x2",
+     "carboxylic_acid_to_amide_nh"
+    ],
+    "nodes": [
+     "ketone",
+     "amine",
+     "isocyanide",
+     "carboxylic_acid",
+     "amine",
+     "ketone",
+     "amide"
+    ],
+    "chapters": [
+     "Amines",
+     "Aldehydes & Ketones",
+     "Carboxylic Acids & Derivatives"
+    ],
+    "txs": [
+     66,
+     81,
+     383,
+     210,
+     82,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     45
+    ],
+    "trap_ids": [],
+    "description": "4-(2-oxopropyl)benzonitrile: 6 steps, 2 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:57:20.957459+00:00",
+     "held": "STE_20261126T095720_70",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "nitrile_to_amine_h",
+       "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+       "reagent": "H₂, Ni",
+       "engine": "CC(=O)Cc1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(O)Cc1ccc(CN)cc1",
+       "reason": "Under the standard assumption of sufficient H₂, Ni reduces both the ketone to a secondary alcohol and the nitrile to a benzylamine, with no rearrangement."
+      },
+      {
+       "label": "S",
+       "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+       "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+       "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+       "engine": "[C-]#[N+]Cc1ccc(CC(=O)O)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "The methyl ketone can undergo haloform cleavage, but the isocyanide is also reactive toward brominating conditions and acidic hydrolysis, so the stated conditions do not define a unique major organic product."
+      },
+      {
+       "label": "U",
+       "edge": "ketone_to_ketone_x2",
+       "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+       "reagent": "Br₂, CH₃COOH",
+       "engine": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+       "verdict": "disagree",
+       "checker_product": "CC(=O)Cc1ccc(CN=C(Br)Br)cc1",
+       "reason": "Br₂ is rapidly trapped by the isocyanide to form the dibromoformamidine, leaving the ketone intact rather than undergoing the usual acid-catalyzed α-bromination."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "chain": {
+    "edges": [
+     "nitrile_to_amine_h",
+     "amine_to_alcohol_nano",
+     "ketone_to_ketone_x2",
+     "amine_to_amine_heatsn2",
+     "ketone_to_ketone_x2"
+    ],
+    "nodes": [
+     "substituted_benzene",
+     "amine",
+     "alcohol",
+     "ketone",
+     "amine",
+     "ketone"
+    ],
+    "chapters": [
+     "Amines",
+     "Aldehydes & Ketones"
+    ],
+    "txs": [
+     66,
+     81,
+     252,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451,
+     86,
+     104,
+     355,
+     360,
+     211,
+     441,
+     442,
+     443,
+     450,
+     451
+    ],
+    "trap_ids": [],
+    "description": "4-(2-oxopropyl)benzonitrile: 5 steps, 1 branch point(s)"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "step_check",
+     "at": "2026-11-26T09:57:44.052429+00:00",
+     "held": "STE_20261126T095744_71",
+     "steps": [
+      {
+       "label": "Q",
+       "edge": "nitrile_to_amine_h",
+       "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+       "reagent": "H₂, Ni",
+       "engine": "CC(=O)Cc1ccc(CN)cc1",
+       "verdict": "disagree",
+       "checker_product": "",
+       "reason": "H₂/Ni can reduce both the nitrile to a primary amine and the ketone to a secondary alcohol, and without conditions or chemoselectivity information the major product cannot be specified."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -44,11 +44,13 @@ def features(smiles: str) -> dict:
             "stereocentres": len(Chem.FindMolChiralCenters(m, includeUnassigned=True, useLegacyImplementation=False))}
 
 
-def _reaction_menu(graph) -> str:
-    """What the engine can do, per functional group (node): the reagents as a question prints them."""
+def _reaction_menu(graph, avoid=()) -> str:
+    """What the engine can do, per functional group (node): the reagents as a question prints them. avoid: edge ids
+    used up (overused_edges), left out so the picker does not build on reagents no scheme may use."""
     lines = []
     for node in sorted(graph["out"]):
-        labs = sorted({REAGENT_LABEL[e["id"]] for e in graph["out"][node] if e["id"] in REAGENT_LABEL})
+        labs = sorted({REAGENT_LABEL[e["id"]] for e in graph["out"][node]
+                       if e["id"] in REAGENT_LABEL and e["id"] not in avoid})
         if labs:
             lines.append(f"- {node}: " + "; ".join(labs))
     return "\n".join(lines)
@@ -84,9 +86,12 @@ def check_start(adapter, smiles: str, rng=None) -> tuple:
     except EngineError as e:
         return False, f"its properties cannot be computed ({e})", st
     g = O._graph(adapter)
+    used_up = O.overused_edges(adapter)   # batch 2026-11-26: starts whose only reactions were used up built no scheme
     first, nodes_used = [], set()
     for n in sorted(classes(smi)):
         for e in g["out"].get(n, []):
+            if e["id"] in used_up:
+                continue
             try:
                 r = R.apply(e, smi)
             except EngineError:
@@ -203,7 +208,7 @@ def pick_start(adapter, rng=None, avoid=(), log=None) -> dict | None:
     """{"name", "smiles", "why", "stats", "tries"} for a start the engine accepts, or None after PICK_TRIES."""
     from core.pipeline import org_qfirst as O
     rng = rng or random.Random()
-    menu = _reaction_menu(O._graph(adapter))
+    menu = _reaction_menu(O._graph(adapter), O.overused_edges(adapter))
     avoid_txt = ("\nDo not reuse any of these (already used): " + "; ".join(avoid)) if avoid else ""
     feedback = ""
     for t in range(1, PICK_TRIES + 1):

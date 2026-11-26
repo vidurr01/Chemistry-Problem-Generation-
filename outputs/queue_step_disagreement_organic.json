@@ -2646,5 +2646,1125 @@
         "reason": "HCN adds preferentially to the less conjugated aliphatic ketone, leaving the acetophenone carbonyl intact; cyanohydrin formation creates a racemic stereocenter and involves no rearrangement."
       }
     ]
+  },
+  {
+    "id": "STE_20261126T091554_62",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:15:54.406093+00:00",
+    "chain": [
+      "alkyl_halide_to_alcohol_naoh",
+      "alcohol_to_carboxylic_acid_kmno",
+      "ketone_to_cyanohydrin_hcn",
+      "nitrile_to_aldehyde_dibalhdiisob",
+      "carboxylic_acid_to_acid_chloride_socl",
+      "acid_chloride_to_aldehyde_hpdbaso"
+    ],
+    "start": [
+      "4-(2-bromoethyl)cyclohexan-1-one",
+      "O=C1CCC(CCBr)CC1"
+    ],
+    "structures": {
+      "P": "O=C1CCC(CCBr)CC1",
+      "Q": "O=C1CCC(CCO)CC1",
+      "R": "O=C(O)CC1CCC(=O)CC1",
+      "S": "N#CC1(O)CCC(CC(=O)O)CC1",
+      "T": "O=CC1(O)CCC(CC(=O)O)CC1",
+      "U": "O=C(Cl)CC1CCC(=O)CC1",
+      "V": "O=CCC1CCC(=O)CC1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "alcohol_to_carboxylic_acid_kmno",
+        "substrate": "O=C1CCC(CCO)CC1",
+        "reagent": "KMnO₄, H⁺, heat",
+        "engine": "O=C(O)CC1CCC(=O)CC1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)CCC(CC(=O)O)CC(=O)O",
+        "reason": "Under hot acidic KMnO₄, the primary alcohol is oxidized to a carboxylic acid and oxidative cleavage of the cyclohexanone ring gives the substituted tricarboxylic acid, with no rearrangement required."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_cyanohydrin_hcn",
+        "substrate": "O=C(O)CC1CCC(=O)CC1",
+        "reagent": "HCN, KCN (cat.)",
+        "engine": "N#CC1(O)CCC(CC(=O)O)CC1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The carboxylic acid protonates the catalytic CN⁻, suppressing cyanohydrin formation at the ketone, so there is no single major organic product."
+      },
+      {
+        "label": "T",
+        "edge": "nitrile_to_aldehyde_dibalhdiisob",
+        "substrate": "N#CC1(O)CCC(CC(=O)O)CC1",
+        "reagent": "(i) DIBAL-H; (ii) H₂O",
+        "engine": "O=CC1(O)CCC(CC(=O)O)CC1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The carboxylic acid (and the alcohol) consumes DIBAL-H by proton transfer before nitrile reduction, so without specified excess and conditions the textbook nitrile-to-aldehyde outcome cannot be assigned."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T091805_63",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:18:05.233109+00:00",
+    "chain": [
+      "alkyl_halide_to_alcohol_naoh",
+      "alcohol_to_carboxylic_acid_kmno",
+      "carboxylic_acid_to_acid_chloride_socl",
+      "ketone_to_lactone_diazomethane",
+      "alcohol_to_sulfonate_conchso",
+      "acid_chloride_to_aldehyde_hpdbaso"
+    ],
+    "start": [
+      "4-(2-bromoethyl)cyclohexan-1-one",
+      "O=C1CCC(CCBr)CC1"
+    ],
+    "structures": {
+      "P": "O=C1CCC(CCBr)CC1",
+      "Q": "O=C1CCC(CCO)CC1",
+      "R": "O=C(O)CC1CCC(=O)CC1",
+      "S": "O=C(Cl)CC1CCC(=O)CC1",
+      "T": "O=C(Cl)CC1CCCC(=O)CC1",
+      "U": "O=C1CCC(CCOS(=O)(=O)O)CC1",
+      "V": "O=CCC1CCC(=O)CC1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "alcohol_to_carboxylic_acid_kmno",
+        "substrate": "O=C1CCC(CCO)CC1",
+        "reagent": "KMnO₄, H⁺, heat",
+        "engine": "O=C(O)CC1CCC(=O)CC1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)CCC(CC(=O)O)CCC(=O)O",
+        "reason": "Hot acidic KMnO₄ oxidizes the primary alcohol to a carboxylic acid and can cleave the cyclohexanone at either equivalent α C–C bond, giving the same ring-opened triacid."
+      },
+      {
+        "label": "T",
+        "edge": "ketone_to_lactone_diazomethane",
+        "substrate": "O=C(Cl)CC1CCC(=O)CC1",
+        "reagent": "CH₂N₂, BF₃·Et₂O",
+        "engine": "O=C(Cl)CC1CCCC(=O)CC1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The acid chloride reacts preferentially with CH₂N₂ to form an α-diazoketone, while BF₃ can promote its rearrangement and also activate the pendant ketone; without specified stoichiometry and trapping/workup conditions, no single textbook product is defined."
+      },
+      {
+        "label": "U",
+        "edge": "alcohol_to_sulfonate_conchso",
+        "substrate": "O=C1CCC(CCO)CC1",
+        "reagent": "conc. H₂SO₄, 383 K",
+        "engine": "O=C1CCC(CCOS(=O)(=O)O)CC1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The substrate has a primary alcohol and a ketone, but 383 K is not the standard textbook condition for dehydrating a primary alcohol, and the ketone does not provide a unique alternative transformation under these conditions."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T092544_64",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:25:44.240162+00:00",
+    "chain": [
+      "alcohol_to_ether_conchso413k",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_amide_nh",
+      "ether_to_alkyl_halide_conchxhihbra",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "amine_to_isocyanide_carbylaminetest"
+    ],
+    "start": [
+      "1-(4-(2-hydroxyethyl)phenyl)ethan-1-one",
+      "CC(=O)c1ccc(CCO)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)c1ccc(CCO)cc1",
+      "Q": "CC(=O)c1ccc(CCOCCc2ccc(C(C)=O)cc2)cc1",
+      "R": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+      "S": "NC(=O)c1ccc(CCOCCc2ccc(C(N)=O)cc2)cc1",
+      "T": "O=C(O)c1ccc(CCI)cc1",
+      "U": "NCCc1ccc(C(=O)O)cc1",
+      "V": "[C-]#[N+]CCc1ccc(C(=O)O)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "alcohol_to_ether_conchso413k",
+        "substrate": "CC(=O)c1ccc(CCO)cc1",
+        "reagent": "conc. H₂SO₄, 413 K",
+        "engine": "CC(=O)c1ccc(CCOCCc2ccc(C(C)=O)cc2)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "At 413 K, concentrated H₂SO₄ can promote alcohol dehydration (including intermolecular ether formation) while also sulfonating the acetyl-substituted aromatic ring, so the simple-alcohol textbook conditions do not establish a unique major product for this substrate."
+      },
+      {
+        "label": "T",
+        "edge": "ether_to_alkyl_halide_conchxhihbra",
+        "substrate": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+        "reagent": "HI (1 equiv)",
+        "engine": "O=C(O)c1ccc(CCI)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)c1ccc(CCI)cc1.O=C(O)c1ccc(CCO)cc1",
+        "reason": "HI cleaves the ether by SN2 attack at a primary carbon, giving the iodoethyl and hydroxyethyl benzoic acids while leaving both carboxylic acids unchanged."
+      },
+      {
+        "label": "U",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "O=C(O)c1ccc(CCI)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCCc1ccc(C(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The carboxylic acid protonates potassium phthalimide before Gabriel alkylation, so the standard Gabriel sequence does not apply to this substrate."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T092623_65",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:26:23.439659+00:00",
+    "chain": [
+      "alcohol_to_ether_conchso413k",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_acid_chloride_socl",
+      "ether_to_alkyl_halide_conchxhihbra",
+      "acid_chloride_to_alcohol_1lialh4lithi",
+      "alcohol_to_aldehyde_activatedmno"
+    ],
+    "start": [
+      "1-(4-(2-hydroxyethyl)phenyl)ethan-1-one",
+      "CC(=O)c1ccc(CCO)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)c1ccc(CCO)cc1",
+      "Q": "CC(=O)c1ccc(CCOCCc2ccc(C(C)=O)cc2)cc1",
+      "R": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+      "S": "O=C(Cl)c1ccc(CCOCCc2ccc(C(=O)Cl)cc2)cc1",
+      "T": "O=C(Cl)c1ccc(CCI)cc1",
+      "U": "OCc1ccc(CCOCCc2ccc(CO)cc2)cc1",
+      "V": "O=Cc1ccc(CCOCCc2ccc(C=O)cc2)cc1"
+    },
+    "steps": [
+      {
+        "label": "T",
+        "edge": "ether_to_alkyl_halide_conchxhihbra",
+        "substrate": "O=C(Cl)c1ccc(CCOCCc2ccc(C(=O)Cl)cc2)cc1",
+        "reagent": "HI (1 equiv)",
+        "engine": "O=C(Cl)c1ccc(CCI)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The usual aqueous HI conditions hydrolyze the acid chlorides, while anhydrous iodide can instead undergo acyl-halide exchange and compete with ether cleavage, so the unspecified medium does not determine a unique major product."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T092707_66",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:27:07.256671+00:00",
+    "chain": [
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "alcohol_to_alkene_conchso",
+      "carboxylic_acid_to_alcohol_lialh",
+      "alkene_to_vicinal_dihalide_x",
+      "alcohol_to_aldehyde_activatedmno",
+      "alkene_to_alcohol_bhthfhonaoh"
+    ],
+    "start": [
+      "1-(4-(2-hydroxyethyl)phenyl)ethan-1-one",
+      "CC(=O)c1ccc(CCO)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)c1ccc(CCO)cc1",
+      "Q": "O=C(O)c1ccc(CCO)cc1",
+      "R": "C=Cc1ccc(C(=O)O)cc1",
+      "S": "C=Cc1ccc(CO)cc1",
+      "T": "OCc1ccc(C(Br)CBr)cc1",
+      "U": "O=Cc1ccc(C(Br)CBr)cc1",
+      "V": "OCCc1ccc(CO)cc1"
+    },
+    "steps": [
+      {
+        "label": "V",
+        "edge": "alkene_to_alcohol_bhthfhonaoh",
+        "substrate": "C=Cc1ccc(CO)cc1",
+        "reagent": "(i) BH₃·THF; (ii) H₂O₂, NaOH",
+        "engine": "OCCc1ccc(CO)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The free alcohol protonolyzes/complexes BH₃ before alkene hydroboration, so without specified reagent equivalents the alkene may remain unchanged or undergo hydroboration; the standard textbook outcome is not uniquely determined."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T093028_67",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:30:28.138874+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "ketone_to_cyanohydrin_hcn",
+      "ketone_to_ketone_x2",
+      "isocyanide_to_amine_hydrolysis"
+    ],
+    "start": [
+      "4-(3-oxobutyl)benzonitrile",
+      "CC(=O)CCc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)CCc1ccc(C#N)cc1",
+      "Q": "CC(=O)CCc1ccc(CN)cc1",
+      "R": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+      "S": "[C-]#[N+]Cc1ccc(CCC(=O)O)cc1",
+      "T": "CC(O)(C#N)CCc1ccc(CN)cc1",
+      "U": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+      "V": "CC(=O)C(Br)Cc1ccc(CN)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)CCc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)CCc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "CC(O)CCc1ccc(CN)cc1",
+        "reason": "Under the standard exhaustive H₂/Ni outcome, the ketone is reduced to a secondary alcohol and the aryl nitrile to a benzylamine, giving the alcohol as a racemate."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "[C-]#[N+]Cc1ccc(CCC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)CCc1ccc(CN)cc1.O=CO.BrC(Br)Br",
+        "reason": "Excess Br₂/NaOH cleaves the methyl ketone by the haloform reaction, while acidic hydrolysis of the isocyanide gives the benzylamine and formic acid."
+      },
+      {
+        "label": "U",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The isocyanide is highly reactive toward Br₂ and can undergo bromine addition before or alongside acid-mediated ketone α-bromination, so the textbook ketone bromination does not define a unique major product for these conditions."
+      },
+      {
+        "label": "V",
+        "edge": "isocyanide_to_amine_hydrolysis",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+        "reagent": "dil. HCl, H₂O",
+        "engine": "CC(=O)C(Br)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=CNCc1ccc(CC(Br)C(C)=O)cc1",
+        "reason": "Dilute aqueous HCl hydrolyzes the isocyanide to the N-formyl derivative, while the α-bromoketone remains intact under these conditions and does not undergo a base-driven Favorskii rearrangement."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T093900_68",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:39:00.804323+00:00",
+    "chain": [
+      "ester_to_acid_chloride_pcl5",
+      "acid_chloride_to_alcohol_1lialh4lithi",
+      "alcohol_to_aldehyde_activatedmno",
+      "alkene_to_vicinal_dihalide_x",
+      "alcohol_to_aldehyde_pcc",
+      "alkene_to_alcohol_bhthfhonaoh"
+    ],
+    "start": [
+      "methyl 4-(2-methylprop-2-en-1-yl)benzoate",
+      "C=C(C)Cc1ccc(C(=O)OC)cc1"
+    ],
+    "structures": {
+      "P": "C=C(C)Cc1ccc(C(=O)OC)cc1",
+      "Q": "C=C(C)Cc1ccc(C(=O)Cl)cc1",
+      "R": "C=C(C)Cc1ccc(CO)cc1",
+      "S": "C=C(C)Cc1ccc(C=O)cc1",
+      "T": "CC(Br)(CBr)Cc1ccc(CO)cc1",
+      "U": "CC(Br)(CBr)Cc1ccc(C=O)cc1",
+      "V": "CC(CO)Cc1ccc(CO)cc1"
+    },
+    "steps": [
+      {
+        "label": "V",
+        "edge": "alkene_to_alcohol_bhthfhonaoh",
+        "substrate": "C=C(C)Cc1ccc(CO)cc1",
+        "reagent": "(i) BH₃·THF; (ii) H₂O₂, NaOH",
+        "engine": "CC(CO)Cc1ccc(CO)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The alcohol O–H consumes BH₃ by alcoholysis before alkene hydroboration, and with no reagent equivalents specified the extent of alkene reaction is not uniquely determined."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T095652_69",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:56:52.534757+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_ketone_x2",
+      "amine_to_alcohol_nano",
+      "ketone_to_ketone_x2",
+      "alcohol_to_aldehyde_pcc"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzonitrile",
+      "CC(=O)Cc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C#N)cc1",
+      "Q": "CC(=O)Cc1ccc(CN)cc1",
+      "R": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+      "S": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+      "T": "CC(=O)Cc1ccc(CO)cc1",
+      "U": "CC(=O)C(Br)c1ccc(CO)cc1",
+      "V": "CC(=O)C(Br)c1ccc(C=O)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "CC(O)Cc1ccc(CN)cc1",
+        "reason": "Under the standard textbook assumption of catalytic hydrogenation to completion, the ketone becomes a secondary alcohol and the nitrile becomes a primary amine, giving the racemic amino alcohol without changing the carbon skeleton."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The isocyanide is itself highly reactive toward Br₂, so the usual acid-catalyzed ketone α-bromination cannot be assigned as a clean, unique outcome without further conditions or stoichiometry."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T095720_70",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:57:20.952542+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "isocyanide_to_amine_hpt",
+      "ketone_to_ketone_x2",
+      "carboxylic_acid_to_amide_nh"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzonitrile",
+      "CC(=O)Cc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C#N)cc1",
+      "Q": "CC(=O)Cc1ccc(CN)cc1",
+      "R": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+      "S": "[C-]#[N+]Cc1ccc(CC(=O)O)cc1",
+      "T": "CNCc1ccc(CC(=O)O)cc1",
+      "U": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+      "V": "[C-]#[N+]Cc1ccc(CC(N)=O)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "CC(O)Cc1ccc(CN)cc1",
+        "reason": "Under the standard assumption of sufficient H₂, Ni reduces both the ketone to a secondary alcohol and the nitrile to a benzylamine, with no rearrangement."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "[C-]#[N+]Cc1ccc(CC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The methyl ketone can undergo haloform cleavage, but the isocyanide is also reactive toward brominating conditions and acidic hydrolysis, so the stated conditions do not define a unique major organic product."
+      },
+      {
+        "label": "U",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "CC(=O)Cc1ccc(CN=C(Br)Br)cc1",
+        "reason": "Br₂ is rapidly trapped by the isocyanide to form the dibromoformamidine, leaving the ketone intact rather than undergoing the usual acid-catalyzed α-bromination."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T095744_71",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T09:57:44.047529+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_alcohol_nano",
+      "ketone_to_ketone_x2",
+      "amine_to_amine_heatsn2",
+      "ketone_to_ketone_x2"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzonitrile",
+      "CC(=O)Cc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C#N)cc1",
+      "Q": "CC(=O)Cc1ccc(CN)cc1",
+      "R": "CC(=O)Cc1ccc(CO)cc1",
+      "S": "CC(=O)C(Br)c1ccc(CO)cc1",
+      "T": "CC(=O)Cc1ccc(C[N+](C)(C)C)cc1",
+      "U": "CC(=O)C(Br)c1ccc(C[N+](C)(C)C)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "H₂/Ni can reduce both the nitrile to a primary amine and the ketone to a secondary alcohol, and without conditions or chemoselectivity information the major product cannot be specified."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T100128_72",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:01:28.165912+00:00",
+    "chain": [
+      "alcohol_to_ether_conchso413k",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "ether_to_alkyl_halide_conchxhihbra",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "ether_to_alkyl_halide_conchxhihbra",
+      "carboxylic_acid_to_acid_chloride_socl"
+    ],
+    "start": [
+      "1-[4-(2-hydroxyethyl)phenyl]ethan-1-one",
+      "CC(=O)c1ccc(CCO)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)c1ccc(CCO)cc1",
+      "Q": "CC(=O)c1ccc(CCOCCc2ccc(C(C)=O)cc2)cc1",
+      "R": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+      "S": "O=C(O)c1ccc(CCI)cc1",
+      "T": "NCCc1ccc(C(=O)O)cc1",
+      "U": "CC(=O)c1ccc(CCI)cc1",
+      "V": "O=C(Cl)c1ccc(CCI)cc1"
+    },
+    "steps": [
+      {
+        "label": "S",
+        "edge": "ether_to_alkyl_halide_conchxhihbra",
+        "substrate": "O=C(O)c1ccc(CCOCCc2ccc(C(=O)O)cc2)cc1",
+        "reagent": "HI (1 equiv)",
+        "engine": "O=C(O)c1ccc(CCI)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)c1ccc(CCO)cc1.O=C(O)c1ccc(CCI)cc1",
+        "reason": "HI cleaves the symmetrical dialkyl ether by substitution at either equivalent primary ethyl group, giving one hydroxyethyl benzoic acid and one iodoethyl benzoic acid; the carboxylic acids remain unchanged."
+      },
+      {
+        "label": "T",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "O=C(O)c1ccc(CCI)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCCc1ccc(C(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The carboxylic acid protonates potassium phthalimide before Gabriel alkylation, and hot aqueous NaOH may instead substitute the primary iodide, so the textbook amination is not a defined outcome."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T104707_73",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:47:07.971306+00:00",
+    "chain": [
+      "carboxylic_acid_to_amide_nh",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+      "alkyl_halide_to_ether_dryago",
+      "amide_to_amine_lah",
+      "alkyl_halide_to_amine_potassiumphthalimide"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzoic acid",
+      "CC(=O)Cc1ccc(C(=O)O)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C(=O)O)cc1",
+      "Q": "CC(=O)Cc1ccc(C(N)=O)cc1",
+      "R": "NC(=O)c1ccc(CC(=O)O)cc1",
+      "S": "NC(=O)c1ccc(CBr)cc1",
+      "T": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1",
+      "U": "NCc1ccc(COCc2ccc(CN)cc2)cc1",
+      "V": "NCc1ccc(C(N)=O)cc1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "CC(=O)Cc1ccc(C(N)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "NC(=O)c1ccc(CC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "C(Br)(Br)Br.Nc1ccc(CC(=O)O)cc1",
+        "reason": "The methyl ketone undergoes haloform cleavage to give bromoform and an arylacetate, while the primary aryl amide undergoes Hofmann rearrangement to the para amino group, yielding 4-aminophenylacetic acid after acid workup."
+      },
+      {
+        "label": "T",
+        "edge": "alkyl_halide_to_ether_dryago",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "dry Ag₂O, heat",
+        "engine": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1",
+        "verdict": "disagree",
+        "checker_product": "NC(=O)c1ccc(COc2ccc(C(N)=O)cc2)cc1",
+        "reason": "Under dry Ag₂O and heat, the benzylic bromide groups of two molecules form a symmetrical benzyl ether while the amide groups remain unchanged."
+      },
+      {
+        "label": "V",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCc1ccc(C(N)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "NCc1ccc(C(=O)[O-])cc1",
+        "reason": "Phthalimide displaces benzylic bromide by SN2, and hot aqueous NaOH hydrolyzes both the imide and the para benzamide, giving 4-(aminomethyl)benzoate (with phthalate as a coproduct)."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T104753_74",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:47:53.376729+00:00",
+    "chain": [
+      "carboxylic_acid_to_amide_nh",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+      "alkyl_halide_to_ether_dryago",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "carboxylic_acid_to_carboxylic_acid_x"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzoic acid",
+      "CC(=O)Cc1ccc(C(=O)O)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C(=O)O)cc1",
+      "Q": "CC(=O)Cc1ccc(C(N)=O)cc1",
+      "R": "NC(=O)c1ccc(CC(=O)O)cc1",
+      "S": "NC(=O)c1ccc(CBr)cc1",
+      "T": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1",
+      "U": "NCc1ccc(C(N)=O)cc1",
+      "V": "NC(=O)c1ccc(C(Br)C(=O)O)cc1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "CC(=O)Cc1ccc(C(N)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "NC(=O)c1ccc(CC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "Nc1ccc(CC(=O)O)cc1.C(Br)(Br)Br",
+        "reason": "Excess Br₂/NaOH converts the methyl ketone to the carboxylate (giving CHBr₃) and the primary amide by Hofmann rearrangement to an amino group; acid workup gives 4-aminophenylacetic acid."
+      },
+      {
+        "label": "U",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCc1ccc(C(N)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "NCC1=CC=C(C(=O)[O-])C=C1.O=C([O-])c1ccccc1C(=O)[O-]",
+        "reason": "Phthalimide displaces bromide at the benzylic carbon, then hot aqueous NaOH releases the primary amine and phthalate while also hydrolyzing the benzamide to the benzoate."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T104907_75",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:49:07.044379+00:00",
+    "chain": [
+      "carboxylic_acid_to_amide_nh",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "amide_to_amine_lah",
+      "alkyl_halide_to_ether_dryago"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzoic acid",
+      "CC(=O)Cc1ccc(C(=O)O)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C(=O)O)cc1",
+      "Q": "CC(=O)Cc1ccc(C(N)=O)cc1",
+      "R": "NC(=O)c1ccc(CC(=O)O)cc1",
+      "S": "NC(=O)c1ccc(CBr)cc1",
+      "T": "NCc1ccc(C(N)=O)cc1",
+      "U": "NCc1ccc(CN)cc1",
+      "V": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "CC(=O)Cc1ccc(C(N)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "NC(=O)c1ccc(CC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "Nc1ccc(CC(=O)O)cc1",
+        "reason": "Excess alkaline bromine effects both haloform cleavage of the methyl ketone to a carboxylate and Hofmann rearrangement of the primary amide to an amine, giving 4-aminophenylacetic acid after acid workup."
+      },
+      {
+        "label": "T",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCc1ccc(C(N)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "[O-]C(=O)c1ccc(CN)cc1",
+        "reason": "Phthalimide displaces bromide at the benzylic carbon, and hot aqueous NaOH both releases the primary amine and hydrolyzes the benzamide to the carboxylate."
+      },
+      {
+        "label": "V",
+        "edge": "alkyl_halide_to_ether_dryago",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "dry Ag₂O, heat",
+        "engine": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1",
+        "verdict": "disagree",
+        "checker_product": "NC(=O)c1ccc(COc2ccc(C(N)=O)cc2)cc1",
+        "reason": "Dry Ag₂O couples two benzylic bromide groups to form the symmetrical ether, while the amide groups remain unchanged."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T104956_76",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:49:56.592472+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_amine_heatsn2",
+      "ketone_to_ketone_x2",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "amine_to_alcohol_nano",
+      "ketone_to_ketone_x2"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzonitrile",
+      "CC(=O)Cc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C#N)cc1",
+      "Q": "CC(=O)Cc1ccc(CN)cc1",
+      "R": "CC(=O)Cc1ccc(C[N+](C)(C)C)cc1",
+      "S": "CC(=O)C(Br)c1ccc(C[N+](C)(C)C)cc1",
+      "T": "C[N+](C)(C)Cc1ccc(CC(=O)O)cc1",
+      "U": "CC(=O)Cc1ccc(CO)cc1",
+      "V": "CC(=O)C(Br)c1ccc(CO)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "H₂/Ni can reduce both the ketone to an alcohol and the nitrile to an aminomethyl group, and without conditions specifying selectivity or extent of hydrogenation there is no unique major product."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105017_77",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:50:17.970149+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_alcohol_nano",
+      "ketone_to_ketone_x2",
+      "alcohol_to_aldehyde_pcc",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_ketone_x2"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzonitrile",
+      "CC(=O)Cc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C#N)cc1",
+      "Q": "CC(=O)Cc1ccc(CN)cc1",
+      "R": "CC(=O)Cc1ccc(CO)cc1",
+      "S": "CC(=O)C(Br)c1ccc(CO)cc1",
+      "T": "CC(=O)C(Br)c1ccc(C=O)cc1",
+      "U": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+      "V": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "H₂/Ni can reduce both the ketone to an alcohol and the nitrile to a primary amine, and without conditions specifying chemoselectivity there is no uniquely determined major product."
+      },
+      {
+        "label": "V",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The isocyanide group reacts directly with Br₂, so the reagent is not selectively available for the ketone’s usual acid-catalysed α-bromination, and without specified stoichiometry or workup no single major product can be assigned."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105040_78",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:50:40.399528+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_ketone_x2",
+      "amine_to_amine_heatsn2",
+      "ketone_to_ketone_x2"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzonitrile",
+      "CC(=O)Cc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C#N)cc1",
+      "Q": "CC(=O)Cc1ccc(CN)cc1",
+      "R": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+      "S": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+      "T": "CC(=O)Cc1ccc(C[N+](C)(C)C)cc1",
+      "U": "CC(=O)C(Br)c1ccc(C[N+](C)(C)C)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)Cc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "H₂/Ni can hydrogenate both the nitrile to an aminomethyl group and the ketone to an alcohol, and without specified conditions or selectivity there is no unique major product."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(C(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The isocyanide group is itself reactive toward Br₂, so Br₂/AcOH cannot be assumed to selectively α-brominate the ketone and does not justify a single textbook product for this substrate."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105135_79",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:51:35.003754+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_ketone_x2",
+      "isocyanide_to_amine_hydrolysis",
+      "amine_to_alcohol_nano"
+    ],
+    "start": [
+      "4-(3-oxobutyl)benzonitrile",
+      "CC(=O)CCc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)CCc1ccc(C#N)cc1",
+      "Q": "CC(=O)CCc1ccc(CN)cc1",
+      "R": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+      "S": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+      "T": "CC(=O)C(Br)Cc1ccc(CN)cc1",
+      "U": "CC(=O)CCc1ccc(CO)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)CCc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)CCc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "H₂/Ni can reduce both the nitrile to –CH₂NH₂ and the ketone to –CHOH–, so without conditions specifying chemoselectivity or extent of reduction there is no unique major product."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "CC(=O)CCc1ccc(CN=C(Br)Br)cc1",
+        "reason": "The isocyanide carbon preferentially adds Br₂ to form the dibromo imine, so the ketone’s usual acid-catalyzed α-bromination is not the expected outcome."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105219_80",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:52:19.755163+00:00",
+    "chain": [
+      "nitrile_to_amine_h",
+      "amine_to_isocyanide_carbylaminetest",
+      "ketone_to_ketone_x2",
+      "isocyanide_to_amine_hydrolysis",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "amine_to_alcohol_nano"
+    ],
+    "start": [
+      "4-(3-oxobutyl)benzonitrile",
+      "CC(=O)CCc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)CCc1ccc(C#N)cc1",
+      "Q": "CC(=O)CCc1ccc(CN)cc1",
+      "R": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+      "S": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+      "T": "CC(=O)C(Br)Cc1ccc(CN)cc1",
+      "U": "[C-]#[N+]Cc1ccc(CCC(=O)O)cc1",
+      "V": "CC(=O)CCc1ccc(CO)cc1"
+    },
+    "steps": [
+      {
+        "label": "Q",
+        "edge": "nitrile_to_amine_h",
+        "substrate": "CC(=O)CCc1ccc(C#N)cc1",
+        "reagent": "H₂, Ni",
+        "engine": "CC(=O)CCc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "CC(O)CCc1ccc(CN)cc1",
+        "reason": "Under the standard complete hydrogenation outcome, H₂/Ni reduces both the ketone to a secondary alcohol and the nitrile to a primary amine without cleaving the molecule; the alcohol is formed as a racemate."
+      },
+      {
+        "label": "S",
+        "edge": "ketone_to_ketone_x2",
+        "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+        "reagent": "Br₂, CH₃COOH",
+        "engine": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "Br₂ reacts readily with the isocyanide group, so the usual acid-catalyzed α-bromination outcome for the ketone cannot be assigned as a unique major product under these conditions."
+      },
+      {
+        "label": "T",
+        "edge": "isocyanide_to_amine_hydrolysis",
+        "substrate": "[C-]#[N+]Cc1ccc(CC(Br)C(C)=O)cc1",
+        "reagent": "dil. HCl, H₂O",
+        "engine": "CC(=O)C(Br)Cc1ccc(CN)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=CNc1ccc(CC(Br)C(C)=O)cc1",
+        "reason": "Dilute aqueous HCl hydrolyzes the isocyanide to the N-formyl derivative, while the acidic conditions do not trigger the base-driven Favorskii rearrangement of the α-bromoketone."
+      },
+      {
+        "label": "U",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "[C-]#[N+]Cc1ccc(CCC(C)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "[C-]#[N+]Cc1ccc(CCC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The methyl ketone can undergo haloform cleavage, but the isocyanide is also reactive toward bromine and acidic hydrolysis, so these conditions do not specify a unique clean textbook product."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105237_81",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:52:37.331256+00:00",
+    "chain": [
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+      "alkyl_halide_to_ether_dryago",
+      "ether_to_alkyl_halide_conchxhihbra",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "alkyl_halide_to_ether_rona"
+    ],
+    "start": [
+      "4-(3-oxobutyl)benzonitrile",
+      "CC(=O)CCc1ccc(C#N)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)CCc1ccc(C#N)cc1",
+      "Q": "N#Cc1ccc(CCC(=O)O)cc1",
+      "R": "N#Cc1ccc(CCBr)cc1",
+      "S": "N#Cc1ccc(CCOCCc2ccc(C#N)cc2)cc1",
+      "T": "N#Cc1ccc(CCI)cc1",
+      "U": "N#Cc1ccc(CCN)cc1",
+      "V": "COCCc1ccc(C#N)cc1"
+    },
+    "steps": [
+      {
+        "label": "S",
+        "edge": "alkyl_halide_to_ether_dryago",
+        "substrate": "N#Cc1ccc(CCBr)cc1",
+        "reagent": "dry Ag₂O, heat",
+        "engine": "N#Cc1ccc(CCOCCc2ccc(C#N)cc2)cc1",
+        "verdict": "disagree",
+        "checker_product": "N#Cc1ccc(CCOc2ccc(C#N)cc2)cc1",
+        "reason": "Dry Ag₂O couples two primary bromoethyl groups to form the symmetrical ether, while the aryl nitrile remains unchanged."
+      },
+      {
+        "label": "T",
+        "edge": "ether_to_alkyl_halide_conchxhihbra",
+        "substrate": "N#Cc1ccc(CCOCCc2ccc(C#N)cc2)cc1",
+        "reagent": "HI (1 equiv)",
+        "engine": "N#Cc1ccc(CCI)cc1",
+        "verdict": "disagree",
+        "checker_product": "N#Cc1ccc(CCI)cc1.N#Cc1ccc(CCO)cc1",
+        "reason": "HI cleaves the symmetrical primary alkyl ether by iodide SN2 attack at either equivalent ethyl group, giving the corresponding iodide and alcohol while leaving the nitriles unchanged."
+      },
+      {
+        "label": "U",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "N#Cc1ccc(CCI)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "N#Cc1ccc(CCN)cc1",
+        "verdict": "disagree",
+        "checker_product": "NCCc1ccc(C(=O)[O-])cc1.[O-]C(=O)c1ccccc1C(=O)[O-]",
+        "reason": "Phthalimide displaces the primary iodide by SN2, then alkaline heating releases the amine and also hydrolyzes the nitrile to a carboxylate, with phthalate formed on deprotection."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105407_82",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:54:07.076383+00:00",
+    "chain": [
+      "carboxylic_acid_to_amide_nh",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "amine_to_amide_rcocl",
+      "alkyl_halide_to_ether_dryago"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzoic acid",
+      "CC(=O)Cc1ccc(C(=O)O)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C(=O)O)cc1",
+      "Q": "CC(=O)Cc1ccc(C(N)=O)cc1",
+      "R": "NC(=O)c1ccc(CC(=O)O)cc1",
+      "S": "NC(=O)c1ccc(CBr)cc1",
+      "T": "NCc1ccc(C(N)=O)cc1",
+      "U": "CC(=O)NCc1ccc(C(N)=O)cc1",
+      "V": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "CC(=O)Cc1ccc(C(N)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "NC(=O)c1ccc(CC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "O=C(O)Cc1ccc(N)cc1.BrC(Br)Br",
+        "reason": "With excess Br₂/NaOH, the methyl ketone undergoes haloform cleavage to CHBr₃ and the aryl primary amide undergoes Hofmann rearrangement to the para-amino group, giving 4-aminophenylacetic acid after acid workup."
+      },
+      {
+        "label": "T",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCc1ccc(C(N)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "NCc1ccc(C(=O)[O-])cc1",
+        "reason": "Phthalimide displaces the benzylic bromide by SN2, and hot aqueous NaOH releases the primary amine while also hydrolyzing the benzamide to the carboxylate."
+      }
+    ]
+  },
+  {
+    "id": "STE_20261126T105455_83",
+    "reason": "step_disagreement",
+    "queued_at": "2026-11-26T10:54:55.979692+00:00",
+    "chain": [
+      "carboxylic_acid_to_amide_nh",
+      "ketone_to_carboxylic_acid_x2cl2br2ori2",
+      "carboxylic_acid_to_alkyl_halide_agohtomakeag",
+      "alkyl_halide_to_amine_potassiumphthalimide",
+      "alkyl_halide_to_ether_dryago",
+      "carboxylic_acid_to_ester_roh"
+    ],
+    "start": [
+      "4-(2-oxopropyl)benzoic acid",
+      "CC(=O)Cc1ccc(C(=O)O)cc1"
+    ],
+    "structures": {
+      "P": "CC(=O)Cc1ccc(C(=O)O)cc1",
+      "Q": "CC(=O)Cc1ccc(C(N)=O)cc1",
+      "R": "NC(=O)c1ccc(CC(=O)O)cc1",
+      "S": "NC(=O)c1ccc(CBr)cc1",
+      "T": "NCc1ccc(C(N)=O)cc1",
+      "U": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1",
+      "V": "COC(=O)Cc1ccc(C(N)=O)cc1"
+    },
+    "steps": [
+      {
+        "label": "R",
+        "edge": "ketone_to_carboxylic_acid_x2cl2br2ori2",
+        "substrate": "CC(=O)Cc1ccc(C(N)=O)cc1",
+        "reagent": "(i) Br₂, NaOH (excess); (ii) H₃O⁺",
+        "engine": "NC(=O)c1ccc(CC(=O)O)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "Br₂/NaOH can drive both haloform cleavage of the methyl ketone and Hofmann rearrangement of the primary amide, while the resulting activated aniline may also brominate, so these conditions do not specify one unambiguous major product."
+      },
+      {
+        "label": "T",
+        "edge": "alkyl_halide_to_amine_potassiumphthalimide",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "(i) potassium phthalimide; (ii) NaOH (aq), heat",
+        "engine": "NCc1ccc(C(N)=O)cc1",
+        "verdict": "disagree",
+        "checker_product": "NCc1ccc(C(=O)[O-])cc1.O=C([O-])c1ccccc1C(=O)[O-]",
+        "reason": "Phthalimide substitutes at the benzylic bromide by SN2, and hot aqueous NaOH hydrolyzes both the N-substituted phthalimide to the primary amine plus phthalate and the benzamide to the benzoate."
+      },
+      {
+        "label": "U",
+        "edge": "alkyl_halide_to_ether_dryago",
+        "substrate": "NC(=O)c1ccc(CBr)cc1",
+        "reagent": "dry Ag₂O, heat",
+        "engine": "NC(=O)c1ccc(COCc2ccc(C(N)=O)cc2)cc1",
+        "verdict": "disagree",
+        "checker_product": "",
+        "reason": "The usual dry-Ag₂O etherification of a simple haloalkane is not uniquely predictive here: the benzylic bromide can undergo intermolecular ether formation, while the tethered primary amide offers a competing intramolecular N-alkylation pathway under heating."
+      }
+    ]
   }
 ]

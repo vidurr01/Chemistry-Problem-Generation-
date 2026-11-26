@@ -819,7 +819,8 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 from core.pipeline import org_start
                 pick = org_start.pick_start(adapter, rng, avoid=used_starts, log=log)
                 if pick is None:
-                    bb.note("start_refused", tries=org_start.PICK_TRIES)
+                    if bb.current is not None:        # the first draw has no chain open yet (batch crash 2026-11-26)
+                        bb.note("start_refused", tries=org_start.PICK_TRIES)
                     print("  start picker: no acceptable starting molecule this draw")
                     start = None
                     continue

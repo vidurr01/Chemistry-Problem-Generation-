@@ -25,8 +25,10 @@ from subject_config import get_subject_config                   # noqa: E402
 CFG = get_subject_config("organic")
 
 
-def _adapter():
-    return SimpleNamespace(config=dict(CFG, display_name="Organic Chemistry"), subject="organic")
+def _adapter(output_file=os.path.join(os.path.dirname(__file__), "_no_such_output.json")):
+    """No accepted questions by default: what the real output file has used up must not change the tests."""
+    return SimpleNamespace(config=dict(CFG, display_name="Organic Chemistry", output_file=output_file),
+                           subject="organic")
 
 
 def hinge_claims(c) -> list:
@@ -281,6 +283,25 @@ class StartPicker(unittest.TestCase):
         ok, why, st = S.check_start(_adapter(), "C=CCc1ccc(C(C)=O)cc1", random.Random(1))
         self.assertTrue(ok, why)
         self.assertTrue(OQ.STEPS_MIN <= st["scheme_steps"] <= OQ.STEPS_MAX)
+
+    def test_used_up_reactions_do_not_count(self):
+        """A start whose reactions are all used up (MAX_EDGE_USES) is refused and the menu leaves them out
+        (batch 2026-11-26: such starts built no scheme, draw after draw)."""
+        import tempfile
+        from core.pipeline import org_start as S
+        smi = "C=CCc1ccc(C(C)=O)cc1"
+        g = OQ._graph(_adapter())
+        from core.engine.organic.mol import classes
+        edges = [e["id"] for n in classes(smi) for e in g["out"].get(n, [])]
+        with tempfile.TemporaryDirectory() as d:
+            out = os.path.join(d, "out.json")
+            with open(out, "w", encoding="utf-8") as f:
+                json.dump([{"engine": {"graph_edges": edges}}] * OQ.MAX_EDGE_USES, f)
+            ok, why, _ = S.check_start(_adapter(out), smi, random.Random(1))
+            self.assertFalse(ok)
+            self.assertIn("only 0", why)
+            menu = S._reaction_menu(g, OQ.overused_edges(_adapter(out)))
+            self.assertNotIn("- alkene:", menu)
 
     def test_groups_that_react_together_are_refused(self):
         """2026-11-24 (runs 8, 12-14): starts whose groups react with each other gave the held schemes."""
