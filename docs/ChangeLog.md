@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Inorganic: 11 new trap reactions (reviewer-approved)
+- `knowledge/inorg_condition_variants.json`: tempting wrong products for 9 graph edges (SO₂ + H₂O → H₂SO₄;
+  NCl₃ → HNO₂; perxenate → XeO₃; AsCl₃ → H₃AsO₄; Devarda → NO₂⁻; chromyl chloride → CrCl₃; CrO₂Cl₂ + NaOH →
+  Cr(OH)₃; NH₃ + O₂/Pt → N₂; chalcopyrite → CuO) and variants `cv_s_f2` (SF₆, trap SF₄) and `cv_i2_f2`
+  (IF₅ / IF₇). Each checked to be a trap row (engine values differ). Simulated: 30+ drawable (11 hybridisation,
+  15 magnetism, 4 geometry) against 25 mostly magnetism without them. SO₂ + Cl₂ → SO₂Cl₂ left out (no SOCl₂ shape).
+
 ### Organic near-copies blocked; inorganic per-reaction limit removed (reviewer decisions)
 - `core/pipeline/org_qfirst.py`: `scheme_compounds` replays an accepted question's scheme from its printed lines and
   graph edges; `draw(accepted=...)` skips a scheme sharing more than `MAX_SHARED_COMPOUNDS` = 2 compounds with any
