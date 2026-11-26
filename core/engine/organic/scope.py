@@ -31,6 +31,10 @@ GROUPS: dict = {
     "anhydride":         ("[CX3](=O)[OX2][CX3]=O", "anhydride"),
     "amide":             ("[CX3](=O)[NX3]", "amide"),
     "nitrile":           ("[CX2]#[NX1]", "C≡N"),
+    # 2026-11-26 (live run of the new edges): the blind step check held an acid step on an isocyanide and an SN2 step
+    # next to a benzylic NMe3⁺ (a second SN2 site)
+    "isocyanide":        ("[N+]#[C-]", "isocyanide N≡C"),
+    "quaternary_ammonium": ("[NX4+;!$([N+][O-])]", "quaternary ammonium N⁺"),
     "epoxide":           ("C1OC1", "epoxide"),
     "nitro_aliphatic":   ("[CX4][N+](=O)[O-]", "aliphatic NO2"),
     "nitro":             ("[#6][N+](=O)[O-]", "NO2"),

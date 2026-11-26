@@ -4,6 +4,23 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Concept-book coverage: hand audit, 3 inorganic and 9 organic edges (`docs/concept_coverage_audit.md`)
+- Physical option A (`b858077`): formulas in 2+ accepted questions are not drawn; `PHYS_FIT=off` switch.
+- Audit: `tools/audit_concept_coverage.py` (code shortlist), then every unmapped entry read by hand. Physical: all 82
+  are qualitative facts. Inorganic: almost none are reactions; 3 added as variants (`cv_no3_cu`, `cv_hgcl2_ki`,
+  `cv_cro4_ba`), blind-checked. Organic: 18 JEE-relevant reactions had no rule; the reviewer approved the top 8.
+- `core/engine/organic/rules.py`: hydroboration–oxidation (trap: Markovnikov alcohol), Rosenmund (trap: alcohol),
+  pinacol (3°,3° diols with one migration; trap: diene), allylic chlorination at 773 K (only when the allyl radical's
+  ends are equivalent; trap: addition), ether from a 1° alcohol at 413 K (trap: alkene at 443 K), Grignard
+  protonolysis, tosylate + NaCN (trap: isocyanide) / NaI, Kolbe electrolysis (trap: soda-lime R–H). 9 graph edges
+  (`knowledge/reaction_graph.json`, additions only), labels (`labels.py`), scopes in `tools/apply_rule_scope.py`
+  (`OWN` gains `sulfonate`), golden cases, `tests/test_org_new_rules.py`; edge count 179 → 188.
+- `scope.GROUPS`: `isocyanide`, `quaternary_ammonium` (live run: the step check held conc. H₂SO₄ on an isocyanide and
+  NaCN next to a benzylic NMe₃⁺); excluded from the ether and tosylate edges.
+- Live organic runs: first crashed (no reagent label for the new edges — fixed); second accepted
+  `GEN_20261126T021009` (hydroboration vs acid hydration on the same alkene, meso count; key 4 checked by hand;
+  Advanced medium), $0.121 ≈ ₹10.6. Organic audit: 164 rules, 0 missing / wrong class / crashed.
+
 ### Pipeline frozen (tag `pipeline-final-20261126`)
 - Final check: one run per subject ($0.335 ≈ ₹29.5 at ₹88/$): organic and inorganic accepted (keys right by hand),
   physical none (quality refusals only, no error). Full suite 659 pass; engine audit 0 flags.

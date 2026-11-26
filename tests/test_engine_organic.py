@@ -61,7 +61,7 @@ class Edges(unittest.TestCase):
     def test_suspect_edges_resolved(self):
         # the user's 2026-11-20 decisions: 20 deleted, 12 fixed with rules, 1 moved to the polymer lookups
         self.assertEqual(edges.SUSPECT, {})
-        self.assertEqual(len(GRAPH["edges"]), 179)
+        self.assertEqual(len(GRAPH["edges"]), 188)    # + 9 from the concept-book coverage audit (2026-11-26)
         self.assertNotIn("ketone_to_phenol_h", EDGE)
         self.assertEqual(EDGE["vicinal_dihalide_to_alkyne_zndeltaexces"]["to"], "alkene")
 

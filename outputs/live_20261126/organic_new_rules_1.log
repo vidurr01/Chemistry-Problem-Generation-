@@ -1,0 +1,27 @@
+Question kind this run: chains
+Organic Chemistry: 23 accepted so far.
+  [start] try 1: methyl (E)-3-(4-acetylphenyl)acrylate (COC(=O)/C=C/c1ccc(C(=O)C)cc1) → refused: no branched 4-6 step scheme can be built from it with the listed reagents
+  [start] try 2: 4-(2-bromoethyl)benzaldehyde (O=Cc1ccc(CCBr)cc1) → accepted
+  no new scheme from this start
+  [start] try 1: 1-[4-(2-bromoethyl)phenyl]ethan-1-one (CC(=O)c1ccc(CCBr)cc1) → refused: an accepted question already starts from this molecule: invent a different one
+  [start] try 2: 4-(prop-2-en-1-yl)cyclohexan-1-one (C=CCC1CCC(=O)CC1) → refused: an accepted question already starts from this molecule: invent a different one
+    [start_picker] unusable reply (Could not parse JSON from model output: '{\n  "name": "4-(but-3-en-1-yl)benzalde) — asking again (1/2)
+  [start] try 3: 4-(3-oxobutyl)benzonitrile (CC(=O)CCc1ccc(C#N)cc1) → accepted
+
+╔═══ DRAW 2: 4-(3-oxobutyl)benzonitrile: 6 steps, 1 branch point(s) (Aldehydes & Ketones, Alcohols, Phenols & Ethers, Alkyl Halides, Amines) ═══╗
+Traceback (most recent call last):
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 505, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\run_groundup_final.py", line 451, in main
+    outcome = flow.run(run_adapter, coverage, bb, log, chapter=args.chapter, rng=rng)
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\flow.py", line 660, in run
+    return org_qfirst.run(adapter, coverage, bb, log, chapter=chapter, rng=rng)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_qfirst.py", line 836, in run
+    print("  " + scheme_text(cand).replace("\n", "\n  "))
+                 ~~~~~~~~~~~^^^^^^
+  File "D:\Downloads\Prahlada-Chemistry-Problem-Generation\core\pipeline\org_qfirst.py", line 422, in scheme_text
+    reag = REAGENT_LABEL[e["id"]]
+           ~~~~~~~~~~~~~^^^^^^^^^
+KeyError: 'sulfonate_to_alkyl_halide_nai'

@@ -160,4 +160,14 @@ REAGENT_LABEL = {
     "substituted_benzene_to_phenol_1conch2so4de": "(i) conc. H₂SO₄, heat; (ii) conc. HNO₃",
     "substituted_benzene_to_substituted_benzene_conchno3": "conc. HNO₃, conc. H₂SO₄, 323 K",
     "vicinal_dihalide_to_alkyne_zndeltaexces": "Zn dust, CH₃OH, heat",
+    # added from the concept-book coverage audit, 2026-11-26
+    "alkene_to_alcohol_bhthfhonaoh": "(i) BH₃·THF; (ii) H₂O₂, NaOH",
+    "acid_chloride_to_aldehyde_hpdbaso": "H₂, Pd/BaSO₄",
+    "diol_to_ketone_conchso": "conc. H₂SO₄",
+    "alkene_to_alkyl_halide_cl773k": "Cl₂, 773 K",
+    "alcohol_to_ether_conchso413k": "conc. H₂SO₄, 413 K",
+    "grignard_to_alkane_ho": "H₂O",
+    "sulfonate_to_nitrile_nacn": "NaCN, DMSO",
+    "sulfonate_to_alkyl_halide_nai": "NaI, acetone",
+    "carboxylic_acid_to_alkane_kolbe": "(i) NaOH; (ii) electrolysis",
 }

@@ -138,6 +138,16 @@ SCOPE = {
     "nitrile_to_aldehyde_dibalhdiisob": {"absent": ["ester", "ketone", "aldehyde"]},
     "nitrile_to_amine_h": {"absent": ["alkene", "alkyne", "nitro"]},
     "nitrile_to_carboxylic_acid_ho": {"absent": ["ester", "amide"]},
+    # added from the concept-book coverage audit (reviewer-approved, 2026-11-26)
+    'alkene_to_alcohol_bhthfhonaoh': {'absent': ['acetal', 'acid_chloride', 'activated_cx', 'alcohol_3', 'aldehyde', 'alkyne', 'amide', 'amine_any', 'anhydride', 'benzylic_allylic_ether', 'beta_hydroxy_carbonyl', 'carboxylic_acid', 'conj_cc', 'cyanohydrin', 'epoxide', 'ester', 'gem_dihalide', 'imine', 'ketone', 'nitrile', 'oxime', 'sulfonate_ester', 'vinyl_halide'], 'at_most_one': ['alkene']},
+    'acid_chloride_to_aldehyde_hpdbaso': {'absent': ['alkene', 'alkyne', 'nitro', 'aldehyde', 'nitrile', 'alkyl_halide'], 'at_most_one': ['acid_chloride']},
+    'diol_to_ketone_conchso': {'absent': ['alkene', 'alkyne', 'aldehyde', 'ketone', 'amine_any', 'phenol', 'carboxylic_acid', 'ester', 'acid_chloride', 'anhydride', 'amide', 'nitrile'], 'note': 'modelled for 3°,3° vicinal diols with one possible migration (the rule refuses the rest)'},
+    'alkene_to_alkyl_halide_cl773k': {'absent': ['alkyne', 'benzylic_ch', 'aldehyde', 'alcohol', 'amine_any', 'phenol', 'alkyl_halide', 'ketone', 'carboxylic_acid', 'ester', 'acid_chloride', 'anhydride', 'amide', 'nitrile'], 'at_most_one': ['alkene']},
+    'alcohol_to_ether_conchso413k': {'absent': ['isocyanide', 'quaternary_ammonium', 'acetal', 'activated_cx', 'aldehyde', 'alkene', 'alkyne', 'amide', 'amine_any', 'beta_hydroxy_carbonyl', 'cyanohydrin', 'epoxide', 'ester', 'halohydrin', 'imine', 'nitrile', 'oxime', 'phenol'], 'requires': ['alcohol_1'], 'at_most_one': ['alcohol']},
+    'grignard_to_alkane_ho': {'note': 'alkyl Grignard reagents (the rule refuses aryl)'},
+    'sulfonate_to_nitrile_nacn': {'absent': ['isocyanide', 'quaternary_ammonium', 'alkyl_halide', 'acid_chloride', 'epoxide', 'aldehyde', 'ketone', 'ester', 'anhydride'], 'at_most_one': ['sulfonate_ester']},
+    'sulfonate_to_alkyl_halide_nai': {'absent': ['isocyanide', 'quaternary_ammonium', 'alkyl_halide', 'acid_chloride', 'epoxide', 'aldehyde', 'ketone', 'ester', 'anhydride'], 'at_most_one': ['sulfonate_ester']},
+    'carboxylic_acid_to_alkane_kolbe': {'absent': ['alkene', 'alkyne', 'alcohol', 'phenol', 'amine_any', 'aldehyde', 'ketone', 'ester', 'alkyl_halide', 'aromatic_ring'], 'at_most_one': ['carboxylic_acid']},
 }
 
 # Selectivity audit 2026-11-24 (docs/organic_selectivity_audit.md, groups A and B, approved by the author): the
@@ -408,6 +418,7 @@ OWN = {
     "phenol": {"phenol"}, "amide": {"amide"}, "lactam": {"amide"}, "acid_chloride": {"acid_chloride"},
     "anhydride": {"anhydride"}, "ether": {"dialkyl_ether", "benzylic_allylic_ether", "alkoxy_aryl"},
     "nitro_compound": {"nitro", "nitro_aliphatic"}, "oxime": {"oxime"},
+    "sulfonate": {"sulfonate_ester"},            # tosylate SN2 edges (concept-book coverage audit, 2026-11-26)
 }
 HYDROLYTIC = ["ester", "amide", "nitrile", "acid_chloride", "anhydride", "acetal", "oxime", "imine", "cyanohydrin",
               "gem_dihalide", "activated_cx", "sulfonate_ester", "epoxide", "alcohol_3", "beta_hydroxy_carbonyl",

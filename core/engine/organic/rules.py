@@ -1356,3 +1356,101 @@ def _oxylene(s):
     if canon(s) != canon("Cc1ccccc1C"):
         raise EngineError("modelled for o-xylene")
     return Result(canon("O=C1OC(=O)c2ccccc21"), why="V2O5/air oxidises o-xylene to phthalic anhydride")
+
+
+# ── reactions added from the concept-book coverage audit (reviewer-approved, 2026-11-26) ──
+# docs/concept_coverage_audit.md: the concept book had these reactions but the graph and engine did not. Each pairs with
+# an existing reaction a student confuses it with; that product is the trap.
+
+@rule("alkene_to_alcohol_bhthfhonaoh")
+def _hydroboration(s):
+    _one_group(s, ALKENE, "C=C")
+    return pick(run("[C:1]=[C:2]>>[C:1](O)[C:2]", s), anti_markovnikov,
+                "hydroboration–oxidation: syn addition, OH on the less substituted carbon (anti-Markovnikov), no "
+                "rearrangement", "markovnikov_product")
+
+
+@rule("acid_chloride_to_aldehyde_hpdbaso")
+def _rosenmund(s):
+    _one_group(s, "[CX3](=O)Cl", "COCl")
+    r = one("[C:1](=[O:2])Cl>>[C:1]=[O:2]", s, why="Rosenmund: H2 over poisoned Pd/BaSO4 stops at the aldehyde")
+    over = one("[C:1](=[O:2])Cl>>[C:1][O:2]", s).product
+    return Result(r.product, traps={"over_reduced_alcohol": over}, why=r.why)
+
+
+_PINACOL = "[OX2H1][C:1]([#6:3])([#6:4])[C:2]([OX2H1])([#6:5])[#6:6]>>[#6:3][C:1](=O)[C:2]([#6:4])([#6:5])[#6:6]"
+
+
+@rule("diol_to_ketone_conchso")
+def _pinacol(s):
+    _one_group(s, "[OX2H1][CX4][CX4][OX2H1]", "vicinal diol")
+    prods = {smi(p) for p in run(_PINACOL, s)}
+    if len(prods) != 1:
+        raise EngineError(f"{s}: pinacol modelled for a 3°,3° diol with one possible migration (got {len(prods)})")
+    traps = {}
+    diene = run("[CX4;!H0:7][C:1]([OX2H1])[C:2]([OX2H1])[CX4;!H0:8]>>[C:7]=[C:1][C:2]=[C:8]", s)
+    if diene:
+        traps["double_dehydration_diene"] = smi(diene[0])
+    return Result(prods.pop(), traps=traps, why="pinacol rearrangement: carbocation, 1,2-shift, C=O")
+
+
+@rule("alkene_to_alkyl_halide_cl773k")
+def _allylic_chlorination(s):
+    _one_group(s, ALKENE, "C=C")
+    direct = {smi(p) for p in run("[C:1]=[C:2][CX4;!H0:3]>>[C:1]=[C:2][C:3]Cl", s)}
+    shifted = {smi(p) for p in run("[C:1]=[C:2][CX4;!H0:3]>>[C:1](Cl)[C:2]=[C:3]", s)}
+    prods = direct | shifted
+    if len(prods) != 1:
+        raise EngineError(f"{s}: allylic chlorination gives {len(prods)} products (modelled when the allyl radical's "
+                          f"two ends are equivalent)")
+    add = one("[C:1]=[C:2]>>[C:1](Cl)[C:2]Cl", s).product
+    return Result(prods.pop(), traps={"addition_dichloride": add},
+                  why="Cl2 at 773 K: radical substitution at the allylic C–H, the C=C is kept")
+
+
+@rule("alcohol_to_ether_conchso413k")
+def _ether_413k(s):
+    _one_group(s, "[CX4][OX2H1]", "alcohol OH")
+    _need(s, "[CX4;H2,H3][OX2H1]", "primary OH (2° and 3° alcohols dehydrate to alkenes)")
+    prods = {smi(p) for p in run("[C:1][OX2H1].[C:2][OX2H1]>>[C:1]O[C:2]", s, s)}
+    if len(prods) != 1:
+        raise EngineError(f"{s}: no single ether")
+    traps = {}
+    try:
+        traps["alkene_at_443K"] = RULES["alcohol_to_alkene_conchso"](s).product
+    except EngineError:
+        pass
+    return Result(prods.pop(), traps=traps, why="conc. H2SO4 at 413 K: SN2 of a 1° alcohol on its oxonium ion gives the "
+                                              "symmetrical ether (443 K gives the alkene)")
+
+
+@rule("grignard_to_alkane_ho")
+def _protonolysis(s):
+    return one("[CX4:1][Mg][Cl,Br,I]>>[C:1]", s, why="water protonates the carbanion carbon: R–MgX gives R–H")
+
+
+@rule("sulfonate_to_nitrile_nacn")
+def _tosylate_cyanide(s):
+    _one_group(s, "[CX4][OX2]S(=O)(=O)[#6]", "sulfonate ester")
+    pat = "[CX4;!$(C([#6])([#6])[#6]):1][OX2]S(=O)(=O)[#6]>>"
+    r = one(pat + "[C:1]C#N", s, why="SN2: CN⁻ displaces the tosylate (C attacks)")
+    iso = one(pat + "[C:1][N+]#[C-]", s).product
+    return Result(r.product, traps={"isocyanide": iso}, why=r.why)
+
+
+@rule("sulfonate_to_alkyl_halide_nai")
+def _tosylate_iodide(s):
+    _one_group(s, "[CX4][OX2]S(=O)(=O)[#6]", "sulfonate ester")
+    return one("[CX4;!$(C([#6])([#6])[#6]):1][OX2]S(=O)(=O)[#6]>>[C:1]I", s,
+               why="SN2: I⁻ displaces the tosylate")
+
+
+@rule("carboxylic_acid_to_alkane_kolbe")
+def _kolbe_electrolysis(s):
+    _one_group(s, "[CX3](=O)[OX2H1]", "COOH")
+    prods = {smi(p) for p in run("[CX4:1]C(=O)[OX2H1].[CX4:2]C(=O)[OX2H1]>>[C:1][C:2]", s, s)}
+    if len(prods) != 1:
+        raise EngineError(f"{s}: Kolbe electrolysis modelled for one aliphatic COOH")
+    soda = one("[CX4:1]C(=O)[OX2H1]>>[C:1]", s).product
+    return Result(prods.pop(), traps={"soda_lime_decarboxylation": soda},
+                  why="Kolbe electrolysis of the sodium salt: two R• radicals join (R–R), CO2 at the anode")
