@@ -211,6 +211,22 @@ work it out (an unusual arrangement, a non-standard condition)."""
     return q
 
 
+_ASKS = re.compile(r"\?|_{2,}|\b(calculate|find|determine|what|how (much|many|long)|compute|estimate|evaluate|deduce|"
+                   r"obtain|work out|predict|identify|express|give)\b|\b(is|are)\s*:?\s*$", re.I)
+
+def ask_problem(stem: str):
+    """None, or why the stem asks nothing: it must say what to find (batch 2026-11-26: a magnetite titration stem
+    ended at "... titrated with 0.0627 N KMnO4." and only the added "Give the answer in mL" hinted at the volume).
+    The Given line and the answer-format sentence do not count. 27 of 30 accepted physical stems had an asking
+    verb or a question mark, 2 ended "... is:", 1 (that one) asked nothing."""
+    body = re.split(r"\(Given", str(stem or ""))[0]
+    body = re.sub(r"Give the answer.*$", "", body, flags=re.S).strip()
+    if _ASKS.search(body):
+        return None
+    return ("the question never asks anything: end the stem with one sentence that asks for the quantity "
+            "(\"Calculate the ... (in unit).\") before the Given line")
+
+
 # Constants a question states in its Given line that the formulas hold themselves (R, F, N_A, h, c, k_B ...):
 # a stated value equal to one of these need not be used by the program.
 STANDARD_CONSTANTS = (8.314, 8.3145, 0.0821, 0.08206, 0.0831, 1.987, 96500, 96485, 6.022e23, 6.023e23, 6.02e23,

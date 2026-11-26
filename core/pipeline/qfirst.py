@@ -60,7 +60,7 @@ from core.pipeline.qf_design import (  # noqa: F401, E402
     design_problems)
 from core.pipeline.qf_writer import (  # noqa: F401, E402
     WRITE_TRIES, BLANK_RULES, write_question, STANDARD_CONSTANTS, _RESERVED, _num, parse_values,
-    blank_problems, constant_names, _typical, preview_text, previous_text, blank_names, blank_spec)
+    blank_problems, constant_names, _typical, preview_text, previous_text, blank_names, blank_spec, ask_problem)
 from core.pipeline.qf_checks import (  # noqa: F401, E402
     COHERENCE_REJECT_AT, MIN_TRAPS, _squash, unneeded, question_problems, trace_problems, COHERENCE_QUESTIONS,
     COHERENCE_PERCENTILE, LOOSER_PERCENTILE, _pct, _coherence_cuts, coherence_scores, coherence_problems,
@@ -194,6 +194,15 @@ def write_and_solve(adapter, cand, twist, bb, rng, previous=None, feedback=None,
             bb.note("question_rejected", attempt=attempt + 1, problems=[why], at="level")
             print(f"    question rejected ({attempt + 1}/{WRITE_TRIES}): {why[:220]}")
             previous, feedback, solved = previous_text(q), "Fix these problems: " + why, None
+            continue
+        asked = ask_problem(stem)      # a stem that asks nothing (batch 2026-11-26): exact fix, retried
+        if asked:
+            bb.note("question_rejected", attempt=attempt + 1, problems=[asked], at="ask")
+            print(f"    question asks nothing ({attempt + 1}/{WRITE_TRIES})")
+            previous, feedback, solved = previous_text(q), "Fix these problems: " + asked, None
+            if slips < UNREADABLE_RETRIES:       # a format slip with an exact fix: retried without using up the draft
+                slips += 1
+                attempt -= 1
             continue
         blanks = REQUIRE_PLACEHOLDERS or bool(PLACEHOLDER.search(stem))
         probs = blank_problems(q) if blanks else []

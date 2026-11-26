@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Physical: a stem must ask something
+- `core/pipeline/qf_writer.py` `ask_problem`, called in `qfirst.py` before any program is paid for: a stem with no
+  question mark, asking verb (calculate, find, determine ...), blank, or closing "... is:" goes back to the writer
+  with the exact fix (a format slip, like blanks). Batch question GEN_20261126T112613 (magnetite titration, key
+  37.5 mL, hand-checked) ended "... titrated with 0.0627 N KMnO4." and asked nothing; its stored text now ends
+  with the writer's own asked quantity. Of 30 accepted physical stems only that one is flagged.
+
 ### Fixes from the 60-question batch (first 9 questions, keys hand-checked)
 - `core/pipeline/org_qfirst.py`: no crash when the start picker refuses on the first draw (the start_refused note
   was written with no chain open: RuntimeError "no chain started").
