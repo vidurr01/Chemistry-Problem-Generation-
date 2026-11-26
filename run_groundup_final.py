@@ -286,6 +286,9 @@ def _rebuild_parked(item, chain_adapter, config, rng):
     if item.get("qfirst"):                       # question first: random formulas, run its program again
         from types import SimpleNamespace
         from core.pipeline.qfirst import rebuild_result
+        if not hasattr(chain_adapter, "engine"):   # organic: no formulas to rebuild from (batch crash 2026-11-26)
+            raise NotImplementedError("an organic question is not rebuilt from formulas: it resumes from its "
+                                      "checkpoint (run with --resume)")
         plan = SimpleNamespace(steps=[chain_adapter.engine.step(t) for t in item["txs"]], constants=[], branches=())
         result = rebuild_result(item)
     elif item.get("form_result"):                # asked in a form: judged as that question

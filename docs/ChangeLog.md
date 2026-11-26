@@ -4,6 +4,13 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Parked organic questions held, not crashed
+- `run_groundup_final.py` `_rebuild_parked`: a parked organic question (question-first, no physical engine) raised
+  AttributeError 'OrganicAdapter' object has no attribute 'engine' when judged again; it is now held with the reason
+  "resumes from its checkpoint (run with --resume)". Hit when the OpenRouter key's weekly limit (403) stopped the
+  60-question batch mid-ladder: PENDING_20261126T122431 (4-(4-bromobutyl)benzonitrile; all three ladder models
+  failed, MiniMax cut off at 32k tokens) is in outputs/org_checkpoint.json at the question stage.
+
 ### Inorganic: 11 new trap reactions (reviewer-approved)
 - `knowledge/inorg_condition_variants.json`: tempting wrong products for 9 graph edges (SO₂ + H₂O → H₂SO₄;
   NCl₃ → HNO₂; perxenate → XeO₃; AsCl₃ → H₃AsO₄; Devarda → NO₂⁻; chromyl chloride → CrCl₃; CrO₂Cl₂ + NaOH →

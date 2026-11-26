@@ -1,0 +1,135 @@
+{
+ "subject": "inorganic",
+ "saved_at": "20261126T113830",
+ "spend": {
+  "total_cost_usd": 0.00576,
+  "by_role": {
+   "generator": {
+    "calls": 2,
+    "prompt_tokens": 549,
+    "completion_tokens": 1399,
+    "cost": 0.005658
+   },
+   "step_checker": {
+    "calls": 1,
+    "prompt_tokens": 130,
+    "completion_tokens": 133,
+    "cost": 7.95e-05
+   },
+   "level_check": {
+    "calls": 1,
+    "prompt_tokens": 523,
+    "completion_tokens": 0,
+    "cost": 2.1966e-05
+   }
+  }
+ },
+ "chains": [
+  {
+   "chain": {
+    "edges": [
+     "system:SO2_to_H2SO3_so,SO2_to_H2SO4_so"
+    ],
+    "nodes": [
+     "SO2",
+     "H2SO3",
+     "H2SO4"
+    ],
+    "chapters": [
+     "hydrolysis",
+     "p_block"
+    ],
+    "txs": [
+     387,
+     619
+    ],
+    "trap_ids": [],
+    "description": "one system (fork, 2 reactions): SO2 → H2SO3, H2SO4"
+   },
+   "rounds": 0,
+   "events": [
+    {
+     "stage": "letter_check",
+     "at": "2026-11-26T11:38:27.652643+00:00",
+     "disagree": []
+    },
+    {
+     "stage": "qfirst",
+     "at": "2026-11-26T11:38:27.652731+00:00",
+     "stem": "Reaction of SO₂ with H₂O produces the S-containing product <G>. Treatment of SO₂ with aqueous H₂O₂ yields the S-containing product <R>.\nChoose the correct option(s).\n(A) <R> has a tetrahedral shape around S\n(B) The shape around the S atom in <G> is trigonal pyramidal\n(C) <R> is a dibasic acid\n(D) The hybridisation state of the S atom in <G> is sp²",
+     "answer": "ABC",
+     "trace": [
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "central_shape",
+       "formula": "central_shape computed by code (species H2SO4)",
+       "inputs": {
+        "statement": "<R> has a tetrahedral shape around S"
+       },
+       "outputs": {
+        "computed value": "tetrahedral",
+        "statement true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "G",
+       "dst": "central_shape",
+       "formula": "central_shape computed by code (species H2SO3)",
+       "inputs": {
+        "statement": "The shape around the S atom in <G> is trigonal pyramidal",
+        "code wording": "<G> has a trigonal pyramidal shape around S"
+       },
+       "outputs": {
+        "computed value": "trigonal pyramidal",
+        "statement true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "R",
+       "dst": "basicity",
+       "formula": "basicity computed by code (species H2SO4)",
+       "inputs": {
+        "statement": "<R> is a dibasic acid"
+       },
+       "outputs": {
+        "computed value": 2,
+        "statement true": true
+       }
+      },
+      {
+       "tx": [],
+       "src": "G",
+       "dst": "central_hybridisation",
+       "formula": "central_hybridisation computed by code (species H2SO3)",
+       "inputs": {
+        "statement": "The hybridisation state of the S atom in <G> is sp²",
+        "code wording": "S in <G> is sp² hybridised"
+       },
+       "outputs": {
+        "computed value": "sp3",
+        "statement true": false,
+        "trap": "true for the rival product SO3"
+       }
+      }
+     ],
+     "traps": [
+      {
+       "id": "optionD",
+       "desc": "chooses option D",
+       "wrong_answer": "D"
+      }
+     ]
+    },
+    {
+     "stage": "level",
+     "at": "2026-11-26T11:38:28.472179+00:00",
+     "score": 1.28,
+     "floor": 1.594
+    }
+   ]
+  }
+ ]
+}
