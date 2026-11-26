@@ -4,6 +4,17 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Organic near-copies blocked; inorganic per-reaction limit removed (reviewer decisions)
+- `core/pipeline/org_qfirst.py`: `scheme_compounds` replays an accepted question's scheme from its printed lines and
+  graph edges; `draw(accepted=...)` skips a scheme sharing more than `MAX_SHARED_COMPOUNDS` = 2 compounds with any
+  accepted one (code only, before any model call). Batch question GEN_20261126T113750 (a nitrile start that became
+  the accepted GEN_20261126T075710 after one DIBAL-H step: 4 shared compounds, same steps and statements) is
+  rejected (`tools/results.py reject`; `"rejected"` in outputs). Of the 16 replayable accepted questions, one older
+  pair shares 3; both stay.
+- `core/pipeline/inorg_products.py`: `MAX_ROW_USES = None` (no limit per reaction). The trap reactions ran out
+  after 50 accepted inorganic questions (every draw empty, $0 runs). `MAX_SHARED` = 2 still applies between any
+  two questions. Simulated: 25 more drawable (19 magnetism, 4 hybridisation, 2 geometry); new trap reactions next.
+
 ### Physical: a stem must ask something
 - `core/pipeline/qf_writer.py` `ask_problem`, called in `qfirst.py` before any program is paid for: a stem with no
   question mark, asking verb (calculate, find, determine ...), blank, or closing "... is:" goes back to the writer

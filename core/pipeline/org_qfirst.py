@@ -176,10 +176,54 @@ def overused_edges(adapter) -> set:
     return {e for e, n in c.items() if n >= MAX_EDGE_USES}
 
 
-def draw(adapter, rng, tried=(), start=None, attempts=800, avoid=()):
+MAX_SHARED_COMPOUNDS = 2   # compounds a new scheme may share with any accepted one (batch 2026-11-26: a nitrile start
+                           # became the accepted 4-(2-bromoethyl)benzaldehyde question after one DIBAL-H step: 4 shared)
+_SCHEME_LINE = re.compile(r"^([A-Z]) --\[(.+)\]--> ([A-Z])$")
+
+
+def scheme_compounds(rec: dict, g: dict) -> set:
+    """Canonical SMILES of every compound of an accepted question's scheme, replayed from its printed scheme lines
+    (in order, one per graph edge) and its start; empty if the record cannot be replayed."""
+    eng = rec.get("engine") or {}
+    start = (eng.get("givens") or {}).get("start")
+    ids = eng.get("graph_edges") or []
+    lines = [m for ln in str(rec.get("question") or "").splitlines() if (m := _SCHEME_LINE.match(ln.strip()))]
+    seen_lines, steps = set(), []
+    for m in lines:                                  # a scheme printed twice (fixed 2026-11-26) counts once
+        if m.group(0) not in seen_lines:
+            seen_lines.add(m.group(0))
+            steps.append(m)
+    if not start or not ids or len(steps) != len(ids):
+        return set()
+    smi = {"P": canon(start)}
+    try:
+        for m, eid in zip(steps, ids):
+            parent, child = m.group(1), m.group(3)
+            smi[child] = canon(R.apply(g["edges"][eid], smi[parent]).product)
+    except (EngineError, KeyError):
+        return set()
+    return set(smi.values())
+
+
+def accepted_compound_sets(adapter) -> list:
+    """scheme_compounds of every accepted (not rejected) organic question, read once per run."""
+    if not hasattr(adapter, "_accepted_sets"):
+        try:
+            with open(adapter.config.get("output_file", ""), encoding="utf-8") as f:
+                recs = json.load(f)
+        except (OSError, ValueError, TypeError):
+            recs = []
+        g = _graph(adapter)
+        sets = [scheme_compounds(r, g) for r in recs if isinstance(r, dict) and not r.get("rejected")]
+        adapter._accepted_sets = [x for x in sets if x]
+    return adapter._accepted_sets
+
+
+def draw(adapter, rng, tried=(), start=None, attempts=800, avoid=(), accepted=()):
     """A scheme of STEPS_MIN..STEPS_MAX steps with 1..MAX_BRANCHES branch points. A candidate dict, or None.
     start=(name, smiles): build from that molecule (the start picker's); otherwise a random pool molecule.
-    avoid: edge ids never used (overused_edges)."""
+    avoid: edge ids never used (overused_edges). accepted: compound sets of accepted questions
+    (accepted_compound_sets); a scheme sharing more than MAX_SHARED_COMPOUNDS with one is a near-copy."""
     from core.engine.organic.mol import classes
     avoid = set(avoid)
     g = _graph(adapter)
@@ -245,6 +289,9 @@ def draw(adapter, rng, tried=(), start=None, attempts=800, avoid=()):
             continue
         if decorative_steps(comps, order):
             continue                                  # a step that changes nothing (O1)
+        mine = {comps[k]["smiles"] for k in order}
+        if any(len(mine & a) > MAX_SHARED_COMPOUNDS for a in accepted):
+            continue                                  # a near-copy of an accepted question
         cand = _candidate(comps, order, name, start_smi, branches)
         if len({(h[0], h[1]) for h in cand["_hinge"]}) < MIN_HINGE or len(hinge_sources(cand)) < MIN_HINGE:
             continue                                  # fewer than two steps where a wrong turn changes a fact: not hard
@@ -830,7 +877,8 @@ def run(adapter, coverage, bb, log, chapter=None, rng=None) -> dict:
                 print(f"  [start] same molecule, scheme {uses + 1} of {SCHEMES_PER_START}: {start[0]}")
         if not saved:
             clear_checkpoint()                        # the previous scheme ended (held, rejected): nothing to resume
-            cand = draw(adapter, rng, tried=bb.tried_edges(), start=start, avoid=overused_edges(adapter))
+            cand = draw(adapter, rng, tried=bb.tried_edges(), start=start, avoid=overused_edges(adapter),
+                        accepted=accepted_compound_sets(adapter))
             uses += 1
         if cand is None:
             if start is not None:

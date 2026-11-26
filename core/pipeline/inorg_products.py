@@ -306,7 +306,9 @@ def trap_of(row, fam, value, riv) -> dict | None:
 MAX_SHARED = 2                 # reactions a new question may share with any accepted one (hp_10 shared 4 of 8)
 # a reaction may appear in at most this many accepted questions (live review 2026-11-26: CuCl2 -> [CuCl4]2- was in
 # 6 of 18 accepted, Ag + CN- in 5; MAX_SHARED only stops two questions sharing many rows)
-MAX_ROW_USES = 2
+# None: no limit (reviewer, batch 2026-11-26: the trap reactions ran out after 50 accepted questions; MAX_SHARED
+# still stops a new question sharing more than 2 reactions with any accepted one)
+MAX_ROW_USES = None
 
 
 def draw(graph_edges, rng, tried=(), bad=(), prefer=None, asked=(), used=None):
@@ -315,7 +317,7 @@ def draw(graph_edges, rng, tried=(), bad=(), prefer=None, asked=(), used=None):
     MIN_TRAP_ROWS reactions carry a designed trap (trap_of)."""
     tried = IL.tried_keys(tried)
     used = used or {}
-    usable = [e for e in graph_edges if e["id"] not in bad and used.get(e["id"], 0) < MAX_ROW_USES]
+    usable = [e for e in graph_edges if e["id"] not in bad and (MAX_ROW_USES is None or used.get(e["id"], 0) < MAX_ROW_USES)]
     pool = _pool(usable)
     riv = rivals(usable)
     for attempt in range(300):
