@@ -4,6 +4,12 @@ This file records every repository change. Newest entries go at the top. Each en
 
 ## 2026-11-26
 
+### Physical draws: at most one word-answer formula
+- `core/pipeline/adapters.py` `WORD_RESULTS`: formulas whose result is a word (equilibrium-shift direction,
+  precipitation: 157, 161, 162, 164, 166, 167, 194, 198) no longer link formulas through that shared node, and a draw
+  holds at most one. Final run 2026-11-26 drew 167 + 157 together (program failed on "forward", writer refused);
+  2.3 % of 2,000 simulated draws had two, now 0 (mean draw size unchanged, 3.9).
+
 ### Concept-book coverage, batch 2: 10 more organic reactions (reviewer: "build them")
 - `rules.py`: Gabriel (1° halides; trap: secondary amine), Hofmann elimination of R–NMe₃⁺ (trap: Saytzeff alkene),
   ethyne trimerisation, desulfonation, benzilic acid (non-enolisable 1,2-diketones only), activated MnO₂ (allylic or

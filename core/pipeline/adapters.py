@@ -30,6 +30,10 @@ CONDITION_SHARE = 0.10
 # with one (docs/implementation_spec_2026-11-25.md §4)
 FORMULAS_MIN, FORMULAS_MAX = 3, 5
 CHAIN_PREFER = 0.7                  # share of next-formula picks taken from chain links when there are any (P3)
+# results that are a word, not a number ("forward", "precipitates"): nothing can be computed from them, so a draw
+# holds at most one such formula and they do not link formulas (run of 2026-11-26: 167 + 157 drawn together
+# through the shared direction node, writer refused; 2.3 % of draws)
+WORD_RESULTS = {"direction_of_shift", "precipitation"}
 MAX_FORMULA_USES = 2                # a formula already in this many accepted physical questions is not drawn (option A)
 CHAIN_MIN, CHAIN_MAX = 3, 5         # all_chains / random_chain: 3 to 5 linked steps
 SHAPE_TRIES = 40              # random attempts per shaped idea before giving up on it
@@ -397,7 +401,10 @@ class PhysicalAdapter:
             return None
         def quantities(t):
             st = ph.step(t)
-            return {st.src, st.dst}
+            return {st.src, st.dst} - WORD_RESULTS
+
+        def word(t):
+            return ph.step(t).dst in WORD_RESULTS
 
         for _ in range(50):
             # CONNECTED random draw: the first formula at random, each next one at random among the
@@ -408,7 +415,8 @@ class PhysicalAdapter:
             txs = [self.rng.choice(pool)]
             while len(txs) < k:
                 shared = set().union(*(quantities(t) for t in txs))
-                nxt = [t for t in pool if t not in txs and quantities(t) & shared]
+                nxt = [t for t in pool if t not in txs and quantities(t) & shared
+                       and not (word(t) and any(word(u) for u in txs))]
                 if not nxt:
                     break
                 # P3 (live review 2026-11-26): prefer a formula whose result feeds a drawn one or that takes a drawn
